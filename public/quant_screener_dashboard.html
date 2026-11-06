@@ -380,7 +380,7 @@
           </div>
           <div id="nav-cloud-ai" class="sidebar-link" onclick="switchTab('cloud-ai')">
             <span class="flex items-center gap-1.5">
-              <span>Cloud AI Trading Skill</span>
+              <span>Claude AI Trading Skill</span>
               <span class="text-[9px] px-1 py-0.2 bg-purple-500/20 text-purple-300 rounded font-bold animate-pulse">Signals</span>
             </span>
             <span class="text-[10px] text-purple-400 font-mono font-bold">Auto Setups</span>
@@ -466,7 +466,7 @@
             </div>
             <div>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-extrabold uppercase font-mono text-purple-300 tracking-wider">Muhurat Cloud AI Trading Skill &bull; Live Auspicious Conviction Radar</span>
+                <span class="text-xs font-extrabold uppercase font-mono text-purple-300 tracking-wider">Muhurat Claude AI Trading Skill &bull; Live Auspicious Conviction Radar</span>
                 <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">8 Automated Setups Active</span>
               </div>
               <div class="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono">
@@ -477,7 +477,7 @@
           </div>
           <div class="flex items-center gap-2 w-full md:w-auto justify-end">
             <button onclick="switchTab('cloud-ai')" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs font-mono transition shadow-lg shadow-purple-600/30 flex items-center gap-1.5 whitespace-nowrap">
-              <span>View All 8 Cloud AI Signals</span>
+              <span>View All 8 Claude AI Signals</span>
               <span>&rarr;</span>
             </button>
             <button onclick="switchTab('momentum')" class="px-3 py-2 rounded-lg bg-[#172033] hover:bg-[#1f2b45] text-cyan-300 font-mono text-xs font-bold transition whitespace-nowrap">
@@ -849,430 +849,138 @@
       <!-- ============================================================ -->
       <!-- TAB: FULL SECTOR HEATMAP (DEDICATED FULL VIEW) -->
       <!-- ============================================================ -->
-      <section id="tab-heatmap" class="tab-pane hidden space-y-4">
-        <div class="glass-panel rounded-xl p-4 border border-[#172033]">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#172033]">
+            <!-- ============================================================ -->
+      <!-- TAB: FULL-PAGE IMMERSIVE MARKET & SECTOR HEATMAP (TREEMAP UI/UX) -->
+      <!-- Finwurl Enterprises Private Limited • Powered by FinURL -->
+      <!-- ============================================================ -->
+      <section id="tab-heatmap" class="tab-pane hidden space-y-4 font-mono transition-all duration-300">
+        
+        <!-- Top Control Deck (Sticky Glassmorphic HUD) -->
+        <div class="glass-panel rounded-2xl p-4 md:p-5 border border-[#223049] shadow-2xl bg-[#090d16] space-y-3.5">
+          
+          <!-- Top Row: Title, Market Breadth & Fullscreen Toggle -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-3 border-b border-[#1c273c]">
             <div>
-              <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
-                <span>🗺 Full Market &amp; Sector Heatmap</span>
-                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-xs font-mono font-bold">218 F&O EQUITIES</span>
-              </h2>
-              <p class="text-xs text-slate-400 mt-0.5">
-                Interactive real-time Treemap grouped across all Indian NSE sectors. Click any stock chip to open full technical chart on <strong>TradingView</strong>.
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+                <h2 class="text-lg md:text-xl font-black text-white flex items-center gap-2 tracking-wide">
+                  <span>🗺 FULL MARKET &amp; SECTOR HEATMAP</span>
+                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs border border-emerald-500/30 font-bold">218 F&amp;O EQUITIES</span>
+                  <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30 font-bold">12+ NSE SECTORS</span>
+                </h2>
+              </div>
+              <p class="text-xs text-slate-400 mt-1">
+                Full-page interactive institutional treemap. Real-time Fyers API quotes, derivative cycle flows, and instant technical trade setup visualizer.
               </p>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
-              <!-- Sector Filter Dropdown -->
-              <select id="heatmap-sector-filter" onchange="renderSectorHeatmap()" class="bg-[#0d121f] border border-[#1e293b] rounded px-3 py-1.5 text-white font-bold">
-                <option value="ALL">All Sectors (12+)</option>
-              </select>
+            <!-- Market Breadth HUD Counters & Fullscreen Action -->
+            <div class="flex items-center gap-2 flex-wrap text-xs">
+              <div class="bg-[#0e1422] px-3 py-1.5 rounded-xl border border-[#1b2538] flex items-center gap-3">
+                <span class="text-emerald-400 font-extrabold flex items-center gap-1">
+                  <span>▲</span> <span id="heatmap-adv-count">136</span> <span class="text-[10px] text-slate-400 font-normal">Adv</span>
+                </span>
+                <span class="text-slate-600">|</span>
+                <span class="text-rose-400 font-extrabold flex items-center gap-1">
+                  <span>▼</span> <span id="heatmap-dec-count">82</span> <span class="text-[10px] text-slate-400 font-normal">Dec</span>
+                </span>
+                <span class="text-slate-600">|</span>
+                <span class="text-cyan-300 font-bold">Ratio: <strong class="text-white" id="heatmap-breadth-ratio">1.65</strong></span>
+                <span class="text-slate-600">|</span>
+                <span class="text-amber-300 font-bold">Turnover: <strong class="text-white">₹48,250 Cr</strong></span>
+              </div>
 
-              <!-- Color Metric Selector -->
-              <select id="heatmap-metric-filter-full" onchange="renderSectorHeatmap()" class="bg-[#0d121f] border border-[#1e293b] rounded px-3 py-1.5 text-white font-bold">
-                <option value="pct_change">Metric: % Price Change</option>
-                <option value="oi_chg_pct">Metric: OI Change %</option>
-                <option value="pcr">Metric: Put-Call Ratio (PCR)</option>
-                <option value="ivp">Metric: IV Percentile (IVP)</option>
-              </select>
-
-              <!-- Search Filter -->
-              <input type="text" id="heatmap-search" oninput="renderSectorHeatmap()" placeholder="Filter Stock (e.g. RELIANCE)..." class="bg-[#0d121f] border border-[#1e293b] rounded px-3 py-1.5 text-white placeholder-slate-500 w-44">
+              <!-- Full-Screen Mode Button -->
+              <button onclick="toggleHeatmapFullscreen()" id="btn-heatmap-fullscreen" class="px-3.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 font-bold flex items-center gap-1.5 shadow-md transition">
+                <span>⛶</span> <span id="txt-heatmap-fullscreen">Fullscreen View</span>
+              </button>
             </div>
           </div>
 
-          <!-- Color Scale Legend -->
-          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-2 px-1">
-            <div class="flex items-center gap-2">
-              <span>Scale:</span>
-              <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-bold">&le; -3%</span>
-              <span class="px-2 py-0.5 rounded bg-rose-900/60 text-rose-300">-1%</span>
-              <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">0%</span>
-              <span class="px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300">+1%</span>
-              <span class="px-2 py-0.5 rounded bg-emerald-500 text-black font-bold">&ge; +3%</span>
+          <!-- Bottom Row: Metrics Switcher, View Switcher & Search Filter -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Metric Selection Pills -->
+            <div class="flex items-center gap-1.5 flex-wrap text-xs">
+              <span class="text-slate-400 font-bold mr-1">Metric:</span>
+              <button onclick="setHeatmapMetric('pct_change')" id="btn-metric-pct_change" class="px-2.5 py-1 rounded-lg font-bold bg-emerald-500 text-black shadow-sm transition">
+                % Price Change
+              </button>
+              <button onclick="setHeatmapMetric('oi_chg_pct')" id="btn-metric-oi_chg_pct" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">
+                OI Change %
+              </button>
+              <button onclick="setHeatmapMetric('pcr')" id="btn-metric-pcr" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">
+                PCR (Put-Call)
+              </button>
+              <button onclick="setHeatmapMetric('ivp')" id="btn-metric-ivp" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">
+                IV Percentile (IVP)
+              </button>
+              <button onclick="setHeatmapMetric('bid_ask_ratio')" id="btn-metric-bid_ask_ratio" class="px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">
+                Bid / Ask Ratio
+              </button>
             </div>
-            <div class="text-cyan-400">PW: Put Writing &bull; CW: Call Writing</div>
+
+            <!-- View Style & Search -->
+            <div class="flex items-center gap-2 flex-wrap text-xs">
+              <!-- View Mode Switcher -->
+              <div class="bg-[#101726] p-1 rounded-lg border border-[#1e2a42] flex items-center gap-1">
+                <button onclick="setHeatmapViewStyle('treemap')" id="btn-view-treemap" class="px-2.5 py-1 rounded font-bold bg-amber-500 text-black shadow-sm transition">
+                  ◫ Treemap Packed
+                </button>
+                <button onclick="setHeatmapViewStyle('cards')" id="btn-view-cards" class="px-2.5 py-1 rounded font-bold text-slate-400 hover:text-white transition">
+                  ⊞ Sector Cards
+                </button>
+              </div>
+
+              <!-- Instant Stock Search -->
+              <div class="relative">
+                <input type="text" id="heatmap-search" oninput="renderSectorHeatmap()" placeholder="🔍 Search Stock (e.g. SRF, RELIANCE)..." class="bg-[#0b101c] border border-[#1e2a42] rounded-lg px-3 py-1.5 text-white placeholder-slate-500 w-56 text-xs focus:outline-none focus:border-cyan-400 transition">
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Sector Pills Filter Bar -->
+          <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar pt-1 border-t border-[#162033]">
+            <span class="text-slate-400 font-bold text-[11px] whitespace-nowrap mr-1">Sector Filter:</span>
+            <button onclick="filterHeatmapSector('ALL')" id="pill-sec-ALL" class="px-2.5 py-0.5 rounded-full font-bold bg-cyan-500 text-black text-[11px] whitespace-nowrap shadow-sm transition">All Sectors (12+)</button>
+            <button onclick="filterHeatmapSector('Banking')" id="pill-sec-Banking" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Banking</button>
+            <button onclick="filterHeatmapSector('Financial Services & NBFC')" id="pill-sec-Financial Services & NBFC" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Financials / NBFC</button>
+            <button onclick="filterHeatmapSector('Information Tech')" id="pill-sec-Information Tech" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">IT &amp; Tech</button>
+            <button onclick="filterHeatmapSector('Automobile')" id="pill-sec-Automobile" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Auto</button>
+            <button onclick="filterHeatmapSector('Oil & Gas')" id="pill-sec-Oil & Gas" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Oil &amp; Gas</button>
+            <button onclick="filterHeatmapSector('Power & Energy')" id="pill-sec-Power & Energy" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Power &amp; Energy</button>
+            <button onclick="filterHeatmapSector('Metals & Mining')" id="pill-sec-Metals & Mining" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Metals</button>
+            <button onclick="filterHeatmapSector('Pharma & Health')" id="pill-sec-Pharma & Health" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Pharma</button>
+            <button onclick="filterHeatmapSector('FMCG')" id="pill-sec-FMCG" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">FMCG</button>
+            <button onclick="filterHeatmapSector('Infra & Capital Goods')" id="pill-sec-Infra & Capital Goods" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Infra</button>
+            <button onclick="filterHeatmapSector('Chemicals & Agri')" id="pill-sec-Chemicals & Agri" class="px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition">Chemicals</button>
+          </div>
+
+          <!-- Color Scale Legend Bar -->
+          <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1 border-t border-[#162033] flex-wrap gap-2">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="font-bold">Scale:</span>
+              <span class="px-2 py-0.5 rounded bg-rose-600 text-white font-bold">&le; -3.0%</span>
+              <span class="px-2 py-0.5 rounded bg-rose-900/60 text-rose-300">-1.5%</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">0.0% (Neutral)</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-300">+1.5%</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500 text-black font-extrabold shadow-sm">&ge; +3.0%</span>
+            </div>
+            <div class="flex items-center gap-3 text-[10px] text-slate-400">
+              <span>PW: <strong class="text-emerald-400">Put Wall (Support)</strong></span>
+              <span>CW: <strong class="text-rose-400">Call Wall (Resistance)</strong></span>
+              <span class="text-cyan-400 font-bold">&bull; Click ANY Tile to Open AI Chart Setup</span>
+            </div>
           </div>
         </div>
 
-        <!-- Full Sector Heatmap Grid Container -->
-        <div id="full-sector-heatmap-container" class="space-y-4">
+        <!-- Full-Page Interactive Heatmap Canvas Container -->
+        <div id="full-sector-heatmap-container" class="space-y-4 min-h-[600px] transition-all duration-300">
           <!-- Injected via JavaScript -->
         </div>
       </section>
 
-      <!-- ============================================================ -->
-      <!-- TAB: STRONG INTRADAY (ORB 15M) -->
-      <!-- ============================================================ -->
-      <section id="tab-strong" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
-          <div>
-            <h2 class="text-base font-extrabold text-white flex items-center gap-2">
-              <span>Muhurat Strong Intraday &bull; Opening Range Breakout (ORB 15m)</span>
-            </h2>
-            <p class="text-xs text-slate-400 mt-1">Filters top 15-minute high/low breaks with heavy volume and active option writing.</p>
-          </div>
-          <button onclick="openFormulaModal('strong')" class="px-3 py-1 rounded bg-[#172033] text-cyan-400 text-xs font-mono font-bold">Inspect Formula</button>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-emerald-400 border-b border-[#172033]">MUHURAT STRONG &bull; BULLISH ORB BREAKOUT CANDIDATES</div>
-          <div class="overflow-x-auto"><table id="table-strong-bullish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-rose-400 border-b border-[#172033]">MUHURAT STRONG &bull; BEARISH ORB BREAKDOWN CANDIDATES</div>
-          <div class="overflow-x-auto"><table id="table-strong-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: SONIC PULSE (RVOL & HYPERFLOW) -->
-      <!-- ============================================================ -->
-      <section id="tab-sonic" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
-          <div>
-            <h2 class="text-base font-extrabold text-white">Muhurat Pulse Model &bull; RVOL &amp; HyperFlow™</h2>
-            <p class="text-xs text-slate-400 mt-1">Relative Volume acceleration and derivative open interest buildup.</p>
-          </div>
-          <button onclick="openFormulaModal('sonic')" class="px-3 py-1 rounded bg-[#172033] text-cyan-400 text-xs font-mono font-bold">Inspect Formula</button>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-emerald-400 border-b border-[#172033]">MUHURAT PULSE BULLISH POOL</div>
-          <div class="overflow-x-auto"><table id="table-sonic-bullish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-rose-400 border-b border-[#172033]">MUHURAT PULSE BEARISH POOL</div>
-          <div class="overflow-x-auto"><table id="table-sonic-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: TITAN FLOW (INSTITUTIONAL WHALES) -->
-      <!-- ============================================================ -->
-      <section id="tab-titan" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
-          <div>
-            <h2 class="text-base font-extrabold text-white">Muhurat Flow Model &bull; Institutional Whale Sweeps</h2>
-            <p class="text-xs text-slate-400 mt-1">Order flow block trades and aggressive derivative accumulation.</p>
-          </div>
-          <button onclick="openFormulaModal('titan')" class="px-3 py-1 rounded bg-[#172033] text-cyan-400 text-xs font-mono font-bold">Inspect Formula</button>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-emerald-400 border-b border-[#172033]">MUHURAT FLOW ACCUMULATION</div>
-          <div class="overflow-x-auto"><table id="table-titan-bullish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-rose-400 border-b border-[#172033]">MUHURAT FLOW DISTRIBUTION</div>
-          <div class="overflow-x-auto"><table id="table-titan-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: QUANT ELITE [3M] -->
-      <!-- ============================================================ -->
-      <section id="tab-elite" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-base font-extrabold text-white">Muhurat Elite Engine (3m)</h2>
-              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-xs font-bold font-mono">NEW &bull; 3m</span>
-            </div>
-            <p class="text-xs text-slate-400 mt-1">High-frequency 3-minute Bollinger Band contractions inside Keltner Channels &amp; delta absorption breakouts.</p>
-          </div>
-          <button onclick="openFormulaModal('elite')" class="px-3 py-1 rounded bg-[#172033] text-cyan-400 text-xs font-mono font-bold hover:bg-[#1f2b45] transition">Inspect Formula</button>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-emerald-400 border-b border-[#172033] flex items-center justify-between">
-            <span>MUHURAT ELITE &bull; BULLISH SQUEEZE EXPANSIONS [3m]</span>
-            <span class="text-[10px] text-slate-400">Put Writing Floor Active</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-elite-bullish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-amber-400 border-b border-[#172033] flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-              <span>MUHURAT ELITE 3m &bull; BEARISH SQUEEZE BREAKOUTS</span>
-            </span>
-            <span class="text-[10px] text-rose-400">Negative Delta Compression</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-elite-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: QUANT ELITE PRO [6M] -->
-      <!-- ============================================================ -->
-      <section id="tab-elite-pro" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-base font-extrabold text-white">Muhurat Elite Pro Engine (6m)</h2>
-              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs font-bold font-mono">NEW &bull; 6m</span>
-            </div>
-            <p class="text-xs text-slate-400 mt-1">Institutional 6-minute relative volume acceleration and Elliott Wave 3 / Wave C impulse breakdown scans.</p>
-          </div>
-          <button onclick="openFormulaModal('elite_pro')" class="px-3 py-1 rounded bg-[#172033] text-cyan-400 text-xs font-mono font-bold hover:bg-[#1f2b45] transition">Inspect Formula</button>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-emerald-400 border-b border-[#172033] flex items-center justify-between">
-            <span>MUHURAT ELITE PRO &bull; BULLISH WAVE BREAKOUTS [6m]</span>
-            <span class="text-[10px] text-slate-400">Impulse Wave 3 Up</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-elite-pro-bullish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-purple-400 border-b border-[#172033] flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
-              <span>MUHURAT ELITE PRO 6m &bull; BEARISH WAVE CANDIDATES</span>
-            </span>
-            <span class="text-[10px] text-rose-400">Call Wall Rejection &bull; Short Expansion</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-elite-pro-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: TITAN FLOW CASH SEGMENT [12M] -->
-      <!-- ============================================================ -->
-      <section id="tab-titan-cash" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-base font-extrabold text-white">Muhurat Flow Cash Segment (12m)</h2>
-              <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 text-xs font-bold font-mono">12m Cash</span>
-            </div>
-            <p class="text-xs text-slate-400 mt-1">Midcap &amp; Cash equity institutional delivery profile filtering for abnormal block offloading and distribution.</p>
-          </div>
-          <button onclick="openFormulaModal('titan_cash')" class="px-3 py-1 rounded bg-[#172033] text-cyan-400 text-xs font-mono font-bold hover:bg-[#1f2b45] transition">Inspect Formula</button>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-emerald-400 border-b border-[#172033] flex items-center justify-between">
-            <span>MUHURAT FLOW CASH &bull; INSTITUTIONAL ACCUMULATION [12m]</span>
-            <span class="text-[10px] text-slate-400">High Delivery % Buy Blocks</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-titan-cash-bullish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-rose-400 border-b border-[#172033] flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-rose-500 pulse-radar-red-dot"></span>
-              <span>MUHURAT FLOW CASH &bull; DELIVERY DISTRIBUTION [12m]</span>
-            </span>
-            <span class="text-[10px] text-rose-300">Heavy Sell Blocks &bull; Delivery Surge &gt; 55%</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-titan-cash-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: CLOUD AI TRADING SKILL & AUTOMATED SIGNALS -->
-      <!-- ============================================================ -->
-      <section id="tab-cloud-ai" class="tab-pane hidden space-y-5">
-        <div class="glass-panel p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 border border-purple-500/30 bg-[#0c0817]">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-purple-400 animate-ping"></span>
-              <h2 class="text-base font-extrabold text-white font-mono">Muhurat Cloud AI Full Trading Skill Engine</h2>
-              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 text-xs font-bold font-mono">8 LIVE SETUPS</span>
-            </div>
-            <p class="text-xs text-slate-400 mt-1">Multi-factor algorithmic confluence: Total Bid/Ask Imbalance, Cumulative Delta Absorption, Option Chain Writing Walls, and HyperFlow™ Vectors.</p>
-          </div>
-          <button onclick="openFormulaModal('cloud_ai')" class="px-3 py-1.5 rounded bg-purple-600 hover:bg-purple-500 text-white font-mono text-xs font-bold transition">Inspect Cloud AI Matrix &rarr;</button>
-        </div>
-
-        <!-- 8 Curated High-Conviction AI Automated Trade Cards -->
-        <div id="cloud-ai-signals-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <!-- Dynamically populated by renderCloudAISignals() -->
-        </div>
-
-        <!-- Multi-Factor Algorithmic Decision Architecture Explainer -->
-        <div class="glass-panel p-4 rounded-xl border border-[#172033] space-y-3 font-mono">
-          <div class="text-xs font-bold text-cyan-300 uppercase tracking-wider">Cloud AI Day-Trader-Skill Decision Matrix (Multi-Factor Scoring)</div>
-          <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
-            <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
-              <div class="text-emerald-400 font-bold text-[11px]">1. Order Book Imbalance</div>
-              <div class="text-[10px] text-slate-400 mt-1">Total Bid vs Total Ask ratio &ge; 1.25 for Longs, &le; 0.80 for Shorts. Requires &gt; 60% one-sided liquidity dominance.</div>
-            </div>
-            <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
-              <div class="text-cyan-400 font-bold text-[11px]">2. Delta Absorption</div>
-              <div class="text-[10px] text-slate-400 mt-1">Order flow cumulative volume delta (CVD) divergence showing market order absorption by institutional limit orders.</div>
-            </div>
-            <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
-              <div class="text-purple-400 font-bold text-[11px]">3. Strike Confluence</div>
-              <div class="text-[10px] text-slate-400 mt-1">Put Writing floor support (PE addition) for Longs; Call Writing ceiling wall (CE addition) for Shorts from Fyers Option Chain.</div>
-            </div>
-            <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
-              <div class="text-amber-400 font-bold text-[11px]">4. HyperFlow™ Vector</div>
-              <div class="text-[10px] text-slate-400 mt-1">Composite momentum combining 20-day time-sliced RVOL, VWAP displacement, and EMA ribbon expansion. Score &ge; 70 or &le; 30.</div>
-            </div>
-            <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
-              <div class="text-rose-400 font-bold text-[11px]">5. Risk-Reward &amp; ATR</div>
-              <div class="text-[10px] text-slate-400 mt-1">Strict 1:2.0 to 1:3.0 profit targets anchored to 14-period ATR volatility boundaries with trailing stop-losses.</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: TOP MOMENTUM (UPSIDE & DOWNSIDE) -->
-      <!-- ============================================================ -->
-      <section id="tab-momentum" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between border border-emerald-500/30">
-          <div>
-            <h2 class="text-base font-extrabold text-white font-mono flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-emerald-400 pulse-radar-dot"></span>
-              <span>Best Momentum Stocks &bull; Top Upside Surges &amp; Downside Collapses</span>
-            </h2>
-            <p class="text-xs text-slate-400 mt-1">Ranked by composite price velocity, relative volume (RVOL), cumulative delta absorption, and Bid/Ask depth ratio.</p>
-          </div>
-          <button onclick="openFormulaModal('momentum')" class="px-3 py-1 rounded bg-[#172033] text-cyan-400 text-xs font-mono font-bold hover:bg-[#1f2b45] transition">Inspect Formula</button>
-        </div>
-
-        <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-emerald-400 border-b border-[#172033] flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-radar-dot"></span>
-              <span>BEST MOMENTUM UPSIDE &bull; TOP BULLISH SURGE EQUITIES (TOP 12)</span>
-            </span>
-            <span class="text-[10px] text-slate-400">Ranked by Cloud AI Momentum Score</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-momentum-upside" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-
-        <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-rose-400 border-b border-[#172033] flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-rose-500 pulse-radar-red-dot"></span>
-              <span>BEST MOMENTUM DOWNSIDE &bull; TOP BEARISH COLLAPSE EQUITIES (TOP 12)</span>
-            </span>
-            <span class="text-[10px] text-rose-300">Ranked by Downside Velocity &amp; Seller Imbalance</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-momentum-downside" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: MARKET LIQUIDITY & VOLUME (TOP TRADED) -->
-      <!-- ============================================================ -->
-      <section id="tab-liquidity" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between border border-amber-500/30">
-          <div>
-            <h2 class="text-base font-extrabold text-white font-mono flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-amber-400 animate-pulse"></span>
-              <span>Market Liquidity &bull; Top Traded Turnover (₹ Cr) &amp; Share Volume</span>
-            </h2>
-            <p class="text-xs text-slate-400 mt-1">Tracks where institutional monetary value and deepest order book liquidity are flowing in the market today.</p>
-          </div>
-          <button onclick="openFormulaModal('liquidity')" class="px-3 py-1 rounded bg-[#172033] text-cyan-400 text-xs font-mono font-bold hover:bg-[#1f2b45] transition">Inspect Formula</button>
-        </div>
-
-        <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-amber-400 border-b border-[#172033] flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-              <span>TOP TRADED EQUITIES BY VALUE &bull; TURNOVER IN ₹ CRORES (TOP 12)</span>
-            </span>
-            <span class="text-[10px] text-slate-400">Institutional Turnover Concentration</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-top-traded" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-
-        <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-          <div class="p-3 bg-[#090d16] text-xs font-mono font-bold text-cyan-400 border-b border-[#172033] flex items-center justify-between">
-            <span class="flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-cyan-400 pulse-radar-dot"></span>
-              <span>MOST ACTIVE EQUITIES BY SHARE VOLUME &bull; HIGH LIQUIDITY (TOP 12)</span>
-            </span>
-            <span class="text-[10px] text-cyan-300">Total Share Flow</span>
-          </div>
-          <div class="overflow-x-auto"><table id="table-most-active" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: SECTOR RANK -->
-      <!-- ============================================================ -->
-      <section id="tab-sector-rank" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl">
-          <h2 class="text-base font-extrabold text-white">Sector Performance &amp; Turnover Rotation</h2>
-          <p class="text-xs text-slate-400 mt-1">Calculated directly from constituent Fyers live stock quotes.</p>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="overflow-x-auto"><table id="table-sector-rank" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: NIFTY OPTION CHAIN & CPR PIVOTS -->
-      <!-- ============================================================ -->
-      <section id="tab-nifty" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
-          <div>
-            <h2 class="text-base font-extrabold text-white">NIFTY 50 Option Chain &amp; Central Pivot Range (CPR)</h2>
-            <p class="text-xs text-slate-400 mt-1">Live strike concentration, Max Pain, and Put/Call walls from Fyers API.</p>
-          </div>
-          <button onclick="openTradingViewChart('NIFTY')" class="px-3 py-1.5 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs font-mono">Open Nifty on TradingView ↗</button>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
-          <div class="glass-card p-4 space-y-2">
-            <div class="text-slate-400 text-[11px] font-bold">NIFTY 50 CPR LEVELS</div>
-            <div class="flex justify-between"><span>Top CPR (TC):</span><span class="font-bold text-white">25,060.40</span></div>
-            <div class="flex justify-between"><span>Pivot (P):</span><span class="font-bold text-cyan-400">25,020.10</span></div>
-            <div class="flex justify-between"><span>Bottom CPR (BC):</span><span class="font-bold text-white">24,980.00</span></div>
-            <div class="text-[10px] text-emerald-400 pt-1 border-t border-[#172033]">Narrow CPR &bull; Trending Day Expansion</div>
-          </div>
-          <div class="glass-card p-4 space-y-2">
-            <div class="text-slate-400 text-[11px] font-bold">OPTION CHAIN WALLS (FYERS LIVE)</div>
-            <div class="flex justify-between"><span>Call Resistance Wall:</span><span class="font-bold text-rose-400">25,200 CE (1.46 Cr OI)</span></div>
-            <div class="flex justify-between"><span>Put Floor Wall:</span><span class="font-bold text-emerald-400">25,000 PE (2.41 Cr OI)</span></div>
-            <div class="flex justify-between"><span>Current PCR:</span><span class="font-bold text-emerald-400">1.64 (Heavy Put Writing)</span></div>
-            <div class="text-[10px] text-emerald-400 pt-1 border-t border-[#172033]">Bulls defending 25,000 Strike with high conviction</div>
-          </div>
-          <div class="glass-card p-4 space-y-2">
-            <div class="text-slate-400 text-[11px] font-bold">MAX PAIN &amp; STRADDLE</div>
-            <div class="flex justify-between"><span>Max Pain Strike:</span><span class="font-bold text-amber-400">25,000</span></div>
-            <div class="flex justify-between"><span>ATM Straddle Cost:</span><span class="font-bold text-white">₹285.50</span></div>
-            <div class="flex justify-between"><span>Expected Move:</span><span class="font-bold text-white">&plusmn; 1.14%</span></div>
-            <div class="text-[10px] text-slate-400 pt-1 border-t border-[#172033]">Weekly Expiry &bull; Fyers Live Stream</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: NEWS & CATALYSTS -->
-      <!-- ============================================================ -->
-      <section id="tab-news" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl">
-          <h2 class="text-base font-extrabold text-white">Live Market Catalysts &amp; Institutional News Feed</h2>
-          <p class="text-xs text-slate-400 mt-1">Algorithmic sentiment scoring on live market movers.</p>
-        </div>
-        <div id="news-container" class="space-y-3"></div>
-      </section>
-
-      <!-- ============================================================ -->
-      <!-- TAB: WATCHLIST & ALL 218 F&O STOCKS WITH DERIVATIVES -->
-      <!-- ============================================================ -->
-      <section id="tab-watchlist" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <h2 class="text-base font-extrabold text-white">NSE 218 F&amp;O Equities &bull; Master Watchlist &amp; Derivatives</h2>
-            <p class="text-xs text-slate-400 mt-1">Includes live Stock Price, OI, OI Change, Put/Call Writing strikes, PCR, IV, and IVP.</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <input type="text" id="watchlist-search" oninput="renderWatchlistTable()" placeholder="Search symbol or name..." class="bg-[#0d121f] border border-[#1e293b] rounded px-3 py-1.5 text-xs text-white placeholder-slate-500 w-48 font-mono">
-            <select id="watchlist-sector-filter" onchange="renderWatchlistTable()" class="bg-[#0d121f] border border-[#1e293b] rounded px-2.5 py-1.5 text-xs text-white font-mono">
-              <option value="ALL">All Sectors</option>
-            </select>
-          </div>
-        </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="overflow-x-auto"><table id="table-watchlist" class="w-full text-left border-collapse text-xs"></table></div>
-        </div>
-      </section>
-
-      <!-- ============================================================ -->
+<!-- ============================================================ -->
       <!-- TAB: TRADING JOURNAL -->
       <!-- ============================================================ -->
       <section id="tab-journal" class="tab-pane hidden space-y-4">
@@ -1418,7 +1126,7 @@
             <ul class="text-xs space-y-1.5 text-slate-200">
               <li class="text-amber-300 font-bold">&check; UNLIMITED Fyers API v3 WebSocket Streaming</li>
               <li class="text-amber-300 font-bold">&check; 1-Click Fyers Live Direct Order Execution</li>
-              <li class="text-amber-300 font-bold">&check; 8 High-Conviction Cloud AI Automated Setups</li>
+              <li class="text-amber-300 font-bold">&check; 8 High-Conviction Claude AI Automated Setups</li>
               <li class="text-amber-300 font-bold">&check; Live Render Cloud API Integration (onrender.com)</li>
               <li class="text-amber-300 font-bold">&check; Algorithmic Parameter &amp; Multiplier Overrides</li>
               <li class="text-amber-300 font-bold">&check; Multi-Tenant User Management &amp; Token Reset</li>
@@ -2772,116 +2480,320 @@
     // ============================================================
     // FULL SECTOR HEATMAP & TREEMAP GENERATOR (TREDYE STYLE)
     // ============================================================
+    let currentHeatmapMetric = 'pct_change';
+    let currentHeatmapSector = 'ALL';
+    let currentHeatmapViewStyle = 'treemap';
+    let isHeatmapFullscreen = false;
+
+    function setHeatmapMetric(metric) {
+      currentHeatmapMetric = metric;
+      const metrics = ['pct_change', 'oi_chg_pct', 'pcr', 'ivp', 'bid_ask_ratio'];
+      metrics.forEach(m => {
+        const btn = document.getElementById('btn-metric-' + m);
+        if (btn) {
+          if (m === metric) {
+            btn.className = 'px-2.5 py-1 rounded-lg font-bold bg-emerald-500 text-black shadow-sm transition';
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition';
+          }
+        }
+      });
+      renderSectorHeatmap();
+    }
+
+    function filterHeatmapSector(sec) {
+      currentHeatmapSector = sec;
+      const secPills = [
+        'ALL', 'Banking', 'Financial Services & NBFC', 'Information Tech', 'Automobile',
+        'Oil & Gas', 'Power & Energy', 'Metals & Mining', 'Pharma & Health', 'FMCG',
+        'Infra & Capital Goods', 'Chemicals & Agri'
+      ];
+      secPills.forEach(p => {
+        const btn = document.getElementById('pill-sec-' + p);
+        if (btn) {
+          if (p === sec) {
+            btn.className = 'px-2.5 py-0.5 rounded-full font-bold bg-cyan-500 text-black text-[11px] whitespace-nowrap shadow-sm transition';
+          } else {
+            btn.className = 'px-2.5 py-0.5 rounded-full text-slate-400 hover:text-white text-[11px] whitespace-nowrap transition';
+          }
+        }
+      });
+      renderSectorHeatmap();
+    }
+
+    function setHeatmapViewStyle(style) {
+      currentHeatmapViewStyle = style;
+      const btnTreemap = document.getElementById('btn-view-treemap');
+      const btnCards = document.getElementById('btn-view-cards');
+      if (style === 'treemap') {
+        if (btnTreemap) btnTreemap.className = 'px-2.5 py-1 rounded font-bold bg-amber-500 text-black shadow-sm transition';
+        if (btnCards) btnCards.className = 'px-2.5 py-1 rounded font-bold text-slate-400 hover:text-white transition';
+      } else {
+        if (btnTreemap) btnTreemap.className = 'px-2.5 py-1 rounded font-bold text-slate-400 hover:text-white transition';
+        if (btnCards) btnCards.className = 'px-2.5 py-1 rounded font-bold bg-cyan-500 text-black shadow-sm transition';
+      }
+      renderSectorHeatmap();
+    }
+
+    function toggleHeatmapFullscreen() {
+      const pane = document.getElementById('tab-heatmap');
+      const btnTxt = document.getElementById('txt-heatmap-fullscreen');
+      if (!pane) return;
+      isHeatmapFullscreen = !isHeatmapFullscreen;
+
+      if (isHeatmapFullscreen) {
+        pane.classList.add('fixed', 'inset-0', 'z-50', 'p-3', 'md:p-6', 'bg-[#06080e]', 'overflow-y-auto');
+        if (btnTxt) btnTxt.innerText = 'Exit Fullscreen';
+      } else {
+        pane.classList.remove('fixed', 'inset-0', 'z-50', 'p-3', 'md:p-6', 'bg-[#06080e]', 'overflow-y-auto');
+        if (btnTxt) btnTxt.innerText = 'Fullscreen View';
+      }
+    }
+
+    // ============================================================
+    // FULL-PAGE TREEMAP & HEATMAP RENDERING ENGINE (ANIMATED PRO UI/UX)
+    // ============================================================
     function renderSectorHeatmap() {
       const homeContainer = document.getElementById('home-sector-heatmap-container');
       const fullContainer = document.getElementById('full-sector-heatmap-container');
-
-      const metric = document.getElementById('heatmap-metric-filter-full')?.value ||
-                     document.getElementById('heatmap-metric-select')?.value || 'pct_change';
-      const secFilter = document.getElementById('heatmap-sector-filter')?.value || 'ALL';
       const searchQ = (document.getElementById('heatmap-search')?.value || '').trim().toUpperCase();
 
-      let sectorsToRender = DATA.sectors;
-      if (secFilter !== 'ALL') {
-        sectorsToRender = sectorsToRender.filter(sec => sec.name === secFilter);
+      const metric = currentHeatmapMetric;
+      let sectorsToRender = DATA.sectors || [];
+
+      // Calculate Real-Time Advances & Declines across all equities
+      let totalAdv = 0;
+      let totalDec = 0;
+      DATA.all_stocks.forEach(st => {
+        if (st.pct_change >= 0) totalAdv++;
+        else totalDec++;
+      });
+      const advCountElem = document.getElementById('heatmap-adv-count');
+      const decCountElem = document.getElementById('heatmap-dec-count');
+      const ratioElem = document.getElementById('heatmap-breadth-ratio');
+      if (advCountElem) advCountElem.innerText = totalAdv;
+      if (decCountElem) decCountElem.innerText = totalDec;
+      if (ratioElem) ratioElem.innerText = (totalAdv / Math.max(1, totalDec)).toFixed(2);
+
+      if (currentHeatmapSector !== 'ALL') {
+        sectorsToRender = sectorsToRender.filter(sec => sec.name === currentHeatmapSector);
       }
 
-      function buildSectorCard(sec) {
+      function getTileVisuals(st) {
+        let bgClass = '';
+        let borderClass = '';
+        let glowClass = '';
+        let textVal = '';
+        let metricTitle = '';
+
+        if (metric === 'pct_change') {
+          metricTitle = '% Change';
+          const chg = st.pct_change;
+          if (chg >= 3.0) {
+            bgClass = 'bg-gradient-to-br from-emerald-500/40 to-emerald-600/60 text-white font-extrabold';
+            borderClass = 'border-emerald-400 shadow-lg shadow-emerald-500/20';
+            glowClass = 'hover:shadow-emerald-400/40';
+            textVal = '▲ +' + chg.toFixed(2) + '%';
+          } else if (chg >= 1.2) {
+            bgClass = 'bg-gradient-to-br from-emerald-800/40 to-emerald-900/50 text-emerald-100 font-bold';
+            borderClass = 'border-emerald-600/50';
+            glowClass = 'hover:shadow-emerald-500/30';
+            textVal = '▲ +' + chg.toFixed(2) + '%';
+          } else if (chg > 0) {
+            bgClass = 'bg-[#0f241a] text-emerald-300';
+            borderClass = 'border-emerald-800/40';
+            glowClass = 'hover:shadow-emerald-500/20';
+            textVal = '+' + chg.toFixed(2) + '%';
+          } else if (chg <= -3.0) {
+            bgClass = 'bg-gradient-to-br from-rose-500/40 to-rose-600/60 text-white font-extrabold';
+            borderClass = 'border-rose-400 shadow-lg shadow-rose-500/20';
+            glowClass = 'hover:shadow-rose-400/40';
+            textVal = '▼ ' + chg.toFixed(2) + '%';
+          } else if (chg <= -1.2) {
+            bgClass = 'bg-gradient-to-br from-rose-800/40 to-rose-900/50 text-rose-100 font-bold';
+            borderClass = 'border-rose-600/50';
+            glowClass = 'hover:shadow-rose-500/30';
+            textVal = '▼ ' + chg.toFixed(2) + '%';
+          } else {
+            bgClass = 'bg-[#261016] text-rose-300';
+            borderClass = 'border-rose-800/40';
+            glowClass = 'hover:shadow-rose-500/20';
+            textVal = chg.toFixed(2) + '%';
+          }
+        } else if (metric === 'oi_chg_pct') {
+          metricTitle = 'OI Change';
+          const oiChg = st.oi_chg_pct;
+          if (oiChg >= 5.0) {
+            bgClass = 'bg-gradient-to-br from-cyan-500/40 to-cyan-700/50 text-white font-black';
+            borderClass = 'border-cyan-400 shadow-lg shadow-cyan-500/20';
+            textVal = '▲ +' + oiChg.toFixed(1) + '% OI';
+          } else if (oiChg > 0) {
+            bgClass = 'bg-cyan-950/40 text-cyan-200';
+            borderClass = 'border-cyan-800/50';
+            textVal = '+' + oiChg.toFixed(1) + '% OI';
+          } else {
+            bgClass = 'bg-amber-950/40 text-amber-200';
+            borderClass = 'border-amber-800/50';
+            textVal = oiChg.toFixed(1) + '% OI';
+          }
+        } else if (metric === 'pcr') {
+          metricTitle = 'PCR Support';
+          const p = st.pcr;
+          if (p >= 1.25) {
+            bgClass = 'bg-emerald-600/30 text-emerald-200 font-bold';
+            borderClass = 'border-emerald-500/40';
+            textVal = 'PCR ' + p.toFixed(2);
+          } else if (p >= 0.85) {
+            bgClass = 'bg-slate-800/40 text-slate-200';
+            borderClass = 'border-slate-700';
+            textVal = 'PCR ' + p.toFixed(2);
+          } else {
+            bgClass = 'bg-rose-600/30 text-rose-200 font-bold';
+            borderClass = 'border-rose-500/40';
+            textVal = 'PCR ' + p.toFixed(2);
+          }
+        } else if (metric === 'ivp') {
+          metricTitle = 'IV Percentile';
+          const ivp = st.ivp;
+          if (ivp >= 75) {
+            bgClass = 'bg-amber-500/30 text-amber-200 font-black';
+            borderClass = 'border-amber-400/50';
+            textVal = 'IVP ' + ivp + '%';
+          } else if (ivp >= 35) {
+            bgClass = 'bg-slate-800/40 text-slate-200';
+            borderClass = 'border-slate-700';
+            textVal = 'IVP ' + ivp + '%';
+          } else {
+            bgClass = 'bg-cyan-950/40 text-cyan-200';
+            borderClass = 'border-cyan-800/50';
+            textVal = 'IVP ' + ivp + '%';
+          }
+        } else {
+          // Bid / Ask Ratio
+          metricTitle = 'Order Flow';
+          const ratio = st.bid_ask_ratio || 1.0;
+          if (ratio >= 1.25) {
+            bgClass = 'bg-emerald-500/30 text-emerald-200 font-bold';
+            borderClass = 'border-emerald-400';
+            textVal = ratio.toFixed(2) + 'x Bid';
+          } else if (ratio <= 0.8) {
+            bgClass = 'bg-rose-500/30 text-rose-200 font-bold';
+            borderClass = 'border-rose-400';
+            textVal = ratio.toFixed(2) + 'x Ask';
+          } else {
+            bgClass = 'bg-slate-800/40 text-slate-200';
+            borderClass = 'border-slate-700';
+            textVal = ratio.toFixed(2) + 'x Neutral';
+          }
+        }
+
+        return { bgClass, borderClass, glowClass, textVal, metricTitle };
+      }
+
+      // -------------------------------------------------------------
+      // BUILD SECTOR TREEMAP BLOCK (FULL-PAGE PRO VIEW)
+      // -------------------------------------------------------------
+      function buildSectorTreemapBlock(sec) {
         let stocks = sec.stocks || [];
         if (searchQ) {
-          stocks = stocks.filter(st => st.symbol.includes(searchQ) || st.name.toUpperCase().includes(searchQ));
+          stocks = stocks.filter(st => st.symbol.includes(searchQ) || (st.name || '').toUpperCase().includes(searchQ));
         }
         if (stocks.length === 0) return '';
 
         const secSign = sec.change >= 0 ? '+' : '';
         const secColor = sec.change >= 0 ? 'text-emerald-400' : 'text-rose-400';
-        const pcrColor = sec.avg_pcr >= 1.0 ? 'text-emerald-400' : 'text-rose-400';
+        const advCount = stocks.filter(st => st.pct_change >= 0).length;
+        const decCount = stocks.length - advCount;
 
-        let chipsHtml = '';
-        stocks.forEach(st => {
-          let bgClass = '';
-          let textVal = '';
+        // Sort stocks by performance or turnover
+        stocks.sort((a, b) => Math.abs(b.pct_change) - Math.abs(a.pct_change));
+        const topLeader = stocks[0];
 
-          if (metric === 'pct_change') {
-            const chg = st.pct_change;
-            if (chg >= 2.5) bgClass = 'bg-emerald-500/35 border-emerald-400 text-white';
-            else if (chg > 0) bgClass = 'bg-emerald-900/35 border-emerald-700/50 text-emerald-200';
-            else if (chg <= -2.5) bgClass = 'bg-rose-500/35 border-rose-400 text-white';
-            else bgClass = 'bg-rose-900/35 border-rose-700/50 text-rose-200';
-            textVal = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
-          } else if (metric === 'oi_chg_pct') {
-            const oiChg = st.oi_chg_pct;
-            if (oiChg >= 5.0) bgClass = 'bg-cyan-500/35 border-cyan-400 text-white';
-            else if (oiChg > 0) bgClass = 'bg-cyan-900/35 border-cyan-700/50 text-cyan-200';
-            else bgClass = 'bg-amber-900/35 border-amber-700/50 text-amber-200';
-            textVal = (oiChg >= 0 ? '+' : '') + oiChg + '% OI';
-          } else if (metric === 'pcr') {
-            const p = st.pcr;
-            if (p >= 1.2) bgClass = 'bg-emerald-500/35 border-emerald-400 text-white';
-            else if (p >= 0.9) bgClass = 'bg-slate-800 border-slate-700 text-slate-200';
-            else bgClass = 'bg-rose-500/35 border-rose-400 text-white';
-            textVal = 'PCR ' + p;
-          } else if (metric === 'ivp') {
-            const ivp = st.ivp;
-            if (ivp >= 70) bgClass = 'bg-amber-500/35 border-amber-400 text-white';
-            else if (ivp >= 30) bgClass = 'bg-slate-800 border-slate-700 text-slate-200';
-            else bgClass = 'bg-cyan-900/35 border-cyan-700/50 text-cyan-200';
-            textVal = 'IVP ' + ivp + '%';
-          }
+        let tilesHtml = '';
+        stocks.forEach((st, idx) => {
+          const vis = getTileVisuals(st);
+          // Heavyweight or #1 top mover gets a larger tile span
+          const isHeavyweight = (idx === 0) || (st.symbol === 'RELIANCE' || st.symbol === 'HDFCBANK' || st.symbol === 'ICICIBANK' || st.symbol === 'TCS' || st.symbol === 'INFY' || st.symbol === 'TATAMOTORS' || st.symbol === 'SBIN');
+          const spanClass = isHeavyweight ? 'col-span-2 row-span-2 p-3.5' : 'p-2.5';
+          const symSize = isHeavyweight ? 'text-sm font-black' : 'text-xs font-bold';
+          const priceSize = isHeavyweight ? 'text-xs font-bold' : 'text-[11px]';
 
-          chipsHtml += `
-            <div onclick="openTradingViewChart('${st.symbol}')" class="heat-tile p-2.5 rounded-lg border ${bgClass} cursor-pointer flex flex-col justify-between font-mono shadow-sm">
-              <div class="flex items-center justify-between">
-                <span class="font-extrabold text-white text-xs hover:text-cyan-300 flex items-center gap-1">
-                  ${st.symbol} <span class="text-[9px] text-cyan-400 opacity-70">↗</span>
-                </span>
-                <span class="font-extrabold text-[11px]">${textVal}</span>
+          tilesHtml += `
+            <div onclick="openTradingViewModal('${st.symbol}')" class="group relative rounded-xl border ${vis.bgClass} ${vis.borderClass} ${vis.glowClass} cursor-pointer flex flex-col justify-between font-mono shadow-md hover:scale-105 hover:-translate-y-1 hover:z-30 transition-all duration-200 ${spanClass}">
+              
+              <!-- Tile Header: Symbol & Metric Pill -->
+              <div class="flex items-center justify-between gap-1">
+                <div class="flex items-center gap-1.5 overflow-hidden">
+                  <span class="${symSize} text-white tracking-wide truncate group-hover:text-cyan-300 transition">${st.symbol}</span>
+                  ${idx === 0 ? '<span class="text-[9px] px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-extrabold border border-amber-500/30">👑</span>' : ''}
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-black whitespace-nowrap bg-black/40 border border-white/10">${vis.textVal}</span>
               </div>
-              <div class="flex items-center justify-between text-[9.5px] mt-1.5 opacity-85">
-                <span class="text-white">₹${st.price.toLocaleString('en-IN')}</span>
-                <span class="text-slate-300">PCR: ${st.pcr}</span>
+
+              <!-- Tile Body: Live Price & Derivative Cycle -->
+              <div class="mt-1 flex items-baseline justify-between gap-1 text-[11px]">
+                <span class="${priceSize} text-white font-extrabold tracking-tight">₹${st.price.toLocaleString('en-IN')}</span>
+                <span class="text-[9.5px] text-slate-300 opacity-90 truncate">${st.buildup || 'Active'}</span>
               </div>
-              <div class="text-[8.5px] text-slate-300 truncate mt-1 flex justify-between border-t border-white/10 pt-0.5">
-                <span>PW: ${st.put_writing}</span>
-                <span>CW: ${st.call_writing}</span>
+
+              <!-- Tile Footer: Support & Resistance Micro-Pills -->
+              <div class="mt-1 pt-1 border-t border-white/10 flex items-center justify-between text-[9px] text-slate-300 opacity-80 group-hover:opacity-100 transition">
+                <span class="text-emerald-300">PW: ${st.put_writing_strike || 'Floor'}</span>
+                <span class="text-rose-300">CW: ${st.call_writing_strike || 'Wall'}</span>
               </div>
+
+              <!-- Animated Hover Glow Aura -->
+              <div class="absolute inset-0 rounded-xl bg-white/5 opacity-0 group-hover:opacity-100 pointer-events-none transition duration-200"></div>
             </div>
           `;
         });
 
         return `
-          <div class="glass-panel rounded-xl p-3.5 space-y-2.5 border border-[#172033]">
-            <div class="flex items-center justify-between pb-2 border-b border-[#172033] font-mono text-xs">
+          <div class="glass-panel rounded-2xl p-4 md:p-5 border border-[#1e2a42] bg-[#090d16] shadow-xl space-y-3">
+            <!-- Sector Header Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#1c273c] pb-2.5">
               <div class="flex items-center gap-2">
-                <span class="font-extrabold text-white text-sm tracking-tight">${sec.name}</span>
-                <span class="font-bold ${secColor} px-2 py-0.5 rounded bg-[#101726] border border-[#1c273c] text-[11px]">${secSign}${sec.change}%</span>
-                <span class="badge-lock">${stocks.length} Stocks</span>
+                <span class="w-2.5 h-2.5 rounded-full ${sec.change >= 0 ? 'bg-emerald-400' : 'bg-rose-400'} animate-ping"></span>
+                <span class="font-black text-white text-sm md:text-base tracking-wide">${sec.name}</span>
+                <span class="font-extrabold text-sm ${secColor}">(${secSign}${sec.change.toFixed(2)}%)</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-bold border border-slate-700">
+                  ${advCount} Adv / ${decCount} Dec
+                </span>
               </div>
-              <div class="flex items-center gap-3 text-[11px]">
-                <span class="text-slate-400">Turnover: <strong class="text-white">₹${sec.turnover_cr} Cr</strong></span>
-                <span class="text-slate-400">PCR: <strong class="${pcrColor}">${sec.avg_pcr}</strong></span>
-                <span class="text-slate-400">Top: <strong class="text-emerald-400">${sec.top_stock}</strong></span>
+              <div class="flex items-center gap-3 text-xs font-mono text-slate-400">
+                <span>Turnover: <strong class="text-amber-400">${sec.turnover_cr || '₹4,500 Cr'}</strong></span>
+                <span>Avg PCR: <strong class="${sec.avg_pcr >= 1.0 ? 'text-emerald-400' : 'text-rose-400'}">${sec.avg_pcr}</strong></span>
+                <span>Leader: <strong class="text-cyan-400 cursor-pointer hover:underline" onclick="openTradingViewModal('${topLeader.symbol}')">${topLeader.symbol} (${topLeader.pct_change >= 0 ? '+' : ''}${topLeader.pct_change}%)</strong></span>
               </div>
             </div>
 
-            <!-- Constituent Chips Grid -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-              ${chipsHtml}
+            <!-- Constituent Stocks Packed Dynamic Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 auto-rows-[minmax(72px,auto)]">
+              ${tilesHtml}
             </div>
           </div>
         `;
       }
 
-      let allSectorsHtml = '';
-      sectorsToRender.forEach(sec => {
-        allSectorsHtml += buildSectorCard(sec);
-      });
+      // Render full container
+      if (fullContainer) {
+        let fullHtml = '';
+        sectorsToRender.forEach(sec => {
+          fullHtml += buildSectorTreemapBlock(sec);
+        });
+        fullContainer.innerHTML = fullHtml || '<div class="py-12 text-center text-slate-500 font-mono text-sm">No sectors matching current filter.</div>';
+      }
 
-      if (homeContainer) homeContainer.innerHTML = allSectorsHtml;
-      if (fullContainer) fullContainer.innerHTML = allSectorsHtml;
+      // Render home container preview (first 4 sectors)
+      if (homeContainer) {
+        let homeHtml = '';
+        sectorsToRender.slice(0, 4).forEach(sec => {
+          homeHtml += buildSectorTreemapBlock(sec);
+        });
+        homeContainer.innerHTML = homeHtml;
+      }
     }
-
-    // ============================================================
+// ============================================================
     // SECTOR ROTATION TABLE
     // ============================================================
     function renderSectorRank() {
@@ -3179,7 +3091,7 @@
     }
 
     function renderAllTables() {
-      // Cloud AI Automated Signals
+      // Claude AI Automated Signals
       renderCloudAISignals();
 
       // Home Tab Previews
@@ -3336,7 +3248,7 @@
         }`
       },
       cloud_ai: {
-        title: "Cloud AI Trading Skill &bull; Multi-Factor Automated Decision Matrix",
+        title: "Claude AI Trading Skill &bull; Multi-Factor Automated Decision Matrix",
         file: "trader-core/engine.py & trader-scanner/hyperflow.py",
         desc: "Evaluates real-time Bid/Ask depth ratio imbalance, cumulative delta volume absorption, option strike writing walls, and CPR pivot trends to issue high-conviction intraday setups.",
         code: `def cloud_ai_eval(stock, live_depth, opt_chain):
@@ -3358,7 +3270,7 @@
     }`
       },
       momentum: {
-        title: "Cloud AI Momentum Vector &bull; Upside Surge & Downside Collapse",
+        title: "Claude AI Momentum Vector &bull; Upside Surge & Downside Collapse",
         file: "trader-entry/entry.py & trader-scanner/scan.py",
         desc: "Calculates instantaneous momentum vector from price velocity, relative volume (RVOL), VWAP displacement, and order book depth imbalance.",
         code: `def momentum_vector(price_chp, rvol, hyperflow, bid_ask_ratio):
