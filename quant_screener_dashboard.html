@@ -166,7 +166,7 @@
   <header class="bg-[#090d16] border-b border-[#172033] px-3 md:px-4 py-2 md:py-2.5 flex items-center justify-between sticky top-0 z-50">
     <!-- Left Logo & Pulse Status -->
     <div class="flex items-center gap-2.5 md:gap-3 min-w-0">
-      <button onclick="toggleMobileMenu()" class="md:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[#151c2e] transition shrink-0" title="Open Navigation Menu">
+      <button onclick="toggleMobileMenu()" id="btn-mobile-menu" class="md:hidden text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[#151c2e] transition shrink-0" title="Toggle Navigation Menu">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
       </button>
 
@@ -286,13 +286,19 @@
 
     <!-- LEFT SIDEBAR -->
         <!-- MOBILE SIDEBAR BACKDROP OVERLAY -->
-    <div id="sidebar-backdrop" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden md:hidden transition-opacity"></div>
+    <div id="sidebar-backdrop" onclick="closeMobileMenu()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[55] hidden md:hidden transition-opacity"></div>
 
-    <aside id="sidebar-drawer" class="w-64 bg-[#080b12] border-r border-[#172033] p-3 flex flex-col justify-between overflow-y-auto hidden md:flex flex-shrink-0 z-40 fixed md:static inset-y-0 left-0 transition-transform duration-200">
+    <aside id="sidebar-drawer" class="w-72 max-w-[85vw] bg-[#080b12] border-r border-[#172033] p-3 pb-24 md:pb-3 flex flex-col justify-between overflow-y-auto hidden md:flex flex-shrink-0 z-[60] fixed md:static inset-y-0 left-0 transition-transform duration-200 shadow-2xl">
       <div class="space-y-4">
-        <div class="md:hidden flex items-center justify-between pb-2 border-b border-[#172033]">
-          <span class="font-bold text-white text-xs">Navigation Menu</span>
-          <button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-white text-base">&times;</button>
+        <div class="md:hidden flex items-center justify-between pb-2.5 mb-2 border-b border-[#172033]">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span class="font-bold text-white text-xs tracking-wider uppercase font-mono">Navigation Menu</span>
+          </div>
+          <button onclick="closeMobileMenu()" class="text-slate-400 hover:text-white px-2 py-1 rounded-lg bg-[#121927] hover:bg-[#1a253d] border border-[#23314f] transition text-xs flex items-center gap-1 font-mono" title="Close Navigation Menu">
+            <span>Close</span>
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
         </div>
 
                 <!-- Brand Identity Banner inside Sidebar -->
@@ -2865,19 +2871,89 @@
       }
     }
 
-    // Toggle Mobile Navigation Drawer & Backdrop
-    function toggleMobileMenu() {
+    // ============================================================
+    // ROBUST MOBILE NAVIGATION & DRAWER SYSTEM
+    // ============================================================
+    function isMobileView() {
+      return window.matchMedia('(max-width: 767px)').matches || window.innerWidth < 768;
+    }
+
+    function closeMobileMenu() {
       const drawer = document.getElementById('sidebar-drawer');
       const backdrop = document.getElementById('sidebar-backdrop');
-      if (drawer) {
-        drawer.classList.toggle('hidden');
-      }
       if (backdrop) {
-        backdrop.classList.toggle('hidden');
+        backdrop.classList.add('hidden');
+      }
+      if (drawer && isMobileView()) {
+        drawer.classList.add('hidden');
       }
     }
 
+    function openMobileMenu() {
+      const drawer = document.getElementById('sidebar-drawer');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (drawer) {
+        drawer.classList.remove('hidden');
+      }
+      if (backdrop) {
+        backdrop.classList.remove('hidden');
+      }
+    }
+
+    function toggleMobileMenu() {
+      const drawer = document.getElementById('sidebar-drawer');
+      if (!drawer) return;
+      if (drawer.classList.contains('hidden')) {
+        openMobileMenu();
+      } else {
+        closeMobileMenu();
+      }
+    }
+
+    // Auto-sync sidebar visibility on window resize
+    window.addEventListener('resize', () => {
+      const drawer = document.getElementById('sidebar-drawer');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      if (!isMobileView()) {
+        if (drawer) drawer.classList.remove('hidden');
+        if (backdrop) backdrop.classList.add('hidden');
+      } else {
+        if (backdrop && backdrop.classList.contains('hidden') && drawer && !drawer.classList.contains('hidden')) {
+          drawer.classList.add('hidden');
+        }
+      }
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeMobileMenu();
+      }
+    });
+
+    // Close mobile menu when clicking outside drawer on mobile
+    document.addEventListener('click', (e) => {
+      if (!isMobileView()) return;
+      const drawer = document.getElementById('sidebar-drawer');
+      const menuBtn = document.getElementById('btn-mobile-menu');
+      const bottomAllTabsBtn = document.getElementById('btn-mobile-alltabs');
+
+      if (drawer && !drawer.classList.contains('hidden')) {
+        const clickedInsideDrawer = drawer.contains(e.target);
+        const clickedMenuBtn = menuBtn && menuBtn.contains(e.target);
+        const clickedBottomBtn = bottomAllTabsBtn && bottomAllTabsBtn.contains(e.target);
+
+        if (!clickedInsideDrawer && !clickedMenuBtn && !clickedBottomBtn) {
+          closeMobileMenu();
+        }
+      }
+    });
+
     function switchTab(tabId) {
+      // 1. Instantly close mobile navigation menu whenever any tab is chosen
+      closeMobileMenu();
+
+      // 2. Hide all tab panes and deactivate sidebar links
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('active'));
 
@@ -2886,27 +2962,34 @@
       if (targetPane) targetPane.classList.remove('hidden');
       if (targetNav) targetNav.classList.add('active');
 
-      if (tabId === 'heatmap') {
-        renderSectorHeatmap();
-      } else if (tabId === 'indices-options') {
-        renderClaudeIndicesOptions();
-      } else if (tabId === 'home' || tabId === 'nifty') {
-        renderNiftyOptionChain();
-        renderAllTables();
-      } else if (tabId === 'sector-rank') {
-        renderSectorRank();
-      } else if (tabId === 'news') {
-        renderNews();
-      } else if (tabId === 'watchlist') {
-        renderWatchlistTable();
-      } else if (tabId === 'cloud-ai') {
-        renderCloudAISignals();
-      } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(tabId)) {
-        renderAllTables();
+      // 3. Render tab content safely
+      try {
+        if (tabId === 'heatmap') {
+          renderSectorHeatmap();
+        } else if (tabId === 'indices-options') {
+          renderClaudeIndicesOptions();
+        } else if (tabId === 'home' || tabId === 'nifty') {
+          renderNiftyOptionChain();
+          renderAllTables();
+        } else if (tabId === 'sector-rank') {
+          renderSectorRank();
+        } else if (tabId === 'news') {
+          renderNews();
+        } else if (tabId === 'watchlist') {
+          renderWatchlistTable();
+        } else if (tabId === 'cloud-ai') {
+          renderCloudAISignals();
+        } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(tabId)) {
+          renderAllTables();
+        }
+      } catch (err) {
+        console.warn('Error rendering tab ' + tabId, err);
       }
 
-      if (window.innerWidth < 768) {
-        document.getElementById('sidebar-drawer').classList.add('hidden');
+      // 4. Reset scroll position to top of main view
+      const mainView = document.querySelector('main');
+      if (mainView) {
+        mainView.scrollTo({ top: 0, behavior: 'smooth' });
       }
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -5635,7 +5718,7 @@
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
       <span>Watchlist</span>
     </button>
-    <button onclick="toggleMobileMenu()" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-cyan-300 p-1">
+    <button onclick="toggleMobileMenu()" id="btn-mobile-alltabs" class="flex flex-col items-center gap-0.5 text-slate-400 hover:text-cyan-300 p-1">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
       <span>All Tabs</span>
     </button>
