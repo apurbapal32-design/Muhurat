@@ -699,6 +699,23 @@ async function startServer() {
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     
+    // Explicitly serve Android APK download
+    app.get(['/Muhurat_Quant_Screener.apk', '/muhurat.apk', '/Muhurat.apk', '/app-debug.apk', '/download-apk'], (req, res) => {
+      const candidates = [
+        path.join(process.cwd(), 'public', 'Muhurat_Quant_Screener.apk'),
+        path.join(process.cwd(), 'dist', 'Muhurat_Quant_Screener.apk'),
+        path.join(process.cwd(), 'Muhurat_Quant_Screener.apk')
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+          res.setHeader('Content-Disposition', 'attachment; filename="Muhurat_Quant_Screener.apk"');
+          return res.sendFile(p);
+        }
+      }
+      res.status(404).send('Muhurat Android APK not found');
+    });
+
     // Serve Muhurat Quant Screener Dashboard directly on root /
     app.get(['/', '/muhurat', '/dashboard', '/quant_screener_dashboard.html'], (req, res) => {
       const dashboardFile = path.join(process.cwd(), 'quant_screener_dashboard.html');

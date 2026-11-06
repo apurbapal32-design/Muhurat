@@ -214,6 +214,13 @@
     <!-- Right Controls: Full Page View, Sync, Heatmap & User Profile -->
     <div class="flex items-center gap-1.5 md:gap-2.5 shrink-0">
       <!-- Full Page / Fullscreen View Toggle -->
+      <!-- Android App APK Download Header Button -->
+      <a href="/Muhurat_Quant_Screener.apk" download="Muhurat_Quant_Screener.apk" class="px-2 md:px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 border border-amber-400/40 text-amber-300 text-xs font-mono font-bold flex items-center gap-1.5 transition shadow-sm" title="Download Muhurat Quant Android App (APK)">
+        <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5896 8.4116 13.8436 8 12 8s-3.5896.4116-5.1368.9507L4.8409 5.4477a.416.416 0 00-.5676-.1521.416.416 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/></svg>
+        <span class="hidden sm:inline">Get APK</span>
+        <span class="sm:hidden">APK</span>
+      </a>
+
       <button id="btn-full-page" onclick="toggleFullPageView()" class="px-2 md:px-2.5 py-1 rounded-lg bg-[#131b2e] hover:bg-[#1a253d] border border-[#23314f] text-cyan-300 text-xs font-mono font-bold flex items-center gap-1.5 transition shadow-sm" title="Toggle Full Page / Fullscreen View">
         <svg class="w-3.5 h-3.5 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
         <span class="hidden sm:inline" id="fullpage-label">Full Page View</span>
@@ -298,6 +305,21 @@
             <div class="text-[8.5px] text-slate-400 font-mono truncate">Celebrating Auspicious Beginnings</div>
           </div>
         </div>
+
+        <!-- Android Mobile App APK Download Banner -->
+        <a href="/Muhurat_Quant_Screener.apk" download="Muhurat_Quant_Screener.apk" class="flex items-center gap-2.5 p-2 rounded-xl bg-gradient-to-r from-amber-500/15 via-emerald-500/15 to-cyan-500/15 border border-amber-500/40 hover:border-amber-400 text-amber-300 transition shadow-md shadow-amber-500/10 group mb-3">
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/40 flex items-center justify-center shrink-0 shadow-inner">
+            <svg class="w-4 h-4 text-amber-300 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5896 8.4116 13.8436 8 12 8s-3.5896.4116-5.1368.9507L4.8409 5.4477a.416.416 0 00-.5676-.1521.416.416 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[11px] font-bold text-white flex items-center gap-1.5">
+              <span>Android App</span>
+              <span class="px-1 py-0.2 bg-emerald-500/25 text-emerald-400 border border-emerald-500/40 rounded text-[8.5px] font-mono">APK v1.0</span>
+            </div>
+            <div class="text-[8.5px] text-amber-200/80 font-mono">1-Click Install (.apk)</div>
+          </div>
+          <svg class="w-3.5 h-3.5 text-amber-400 group-hover:translate-y-0.5 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        </a>
 
         <!-- Home: Muhurat Overview -->
                 <!-- 1st: Muhurat Home -->
