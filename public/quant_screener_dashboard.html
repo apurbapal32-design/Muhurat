@@ -848,204 +848,27 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <!-- Card 1: Market Buildup Momentum Flow -->
-          <div class="glass-panel p-4 rounded-xl border border-[#1b263b] shadow-xl hover:border-emerald-500/40 transition flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-                <span class="font-bold flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  MARKET BUILDUP FLOW
-                </span>
-                <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">218 F&amp;O</span>
-              </div>
-              <div class="flex items-baseline justify-between text-xs font-mono mb-2">
-                <span class="text-emerald-400 font-black text-sm" id="pulse-long-buildup">135 Long Buildup</span>
-                <span class="text-rose-400 font-bold" id="pulse-short-buildup">82 Short Buildup</span>
-              </div>
-              <!-- Progress Bar -->
-              <div class="w-full bg-[#162033] rounded-full h-2.5 overflow-hidden flex shadow-inner">
-                <div class="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full" id="pulse-buildup-bar" style="width: 63%"></div>
-                <div class="bg-gradient-to-r from-rose-500 to-rose-600 h-full" style="width: 37%"></div>
-              </div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-3 pt-2 border-t border-[#162033]">
-              <span>Short Covering: <strong class="text-cyan-400" id="pulse-short-covering">1</strong></span>
-              <span>Long Unwind: <strong class="text-amber-400" id="pulse-long-unwinding">0</strong></span>
-            </div>
-          </div>
-
-          <!-- Card 2: Open Interest (OI) Accumulation -->
-          <div class="glass-panel p-4 rounded-xl border border-[#1b263b] shadow-xl hover:border-cyan-500/40 transition flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-                <span class="font-bold flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                  OPEN INTEREST (OI)
-                </span>
-                <span class="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">TOTAL F&amp;O</span>
-              </div>
-              <div class="text-xl font-black font-mono text-white tracking-wide" id="pulse-total-oi">823.3 Cr Contracts</div>
-              <div class="text-[11px] text-slate-400 font-mono mt-1">
-                Net Delta: <strong class="text-emerald-400 font-bold">+485,000 FII Flow</strong>
-              </div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-3 pt-2 border-t border-[#162033]">
-              <span>Put Floor: <strong class="text-emerald-400" id="pulse-put-writing">24800 PE</strong></span>
-              <span>Call Cap: <strong class="text-rose-400" id="pulse-call-writing">25200 CE</strong></span>
-            </div>
-          </div>
-
-          <!-- Card 3: Put-Call Ratio (PCR) Compass -->
-          <div class="glass-panel p-4 rounded-xl border border-[#1b263b] shadow-xl hover:border-emerald-500/40 transition flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-                <span class="font-bold flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                  PUT-CALL RATIO (PCR)
-                </span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">BULLISH FLOOR</span>
-              </div>
-              <div class="text-2xl font-black font-mono text-emerald-400 tracking-wide" id="pulse-market-pcr">1.12</div>
-              <div class="text-[11px] text-slate-400 font-mono mt-1">
-                Floor Support: <strong class="text-white font-bold">Strong Put Writing Base</strong>
-              </div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-3 pt-2 border-t border-[#162033]">
-              <span>Nifty: <strong class="text-emerald-300">1.64</strong></span>
-              <span>Bank Nifty: <strong class="text-emerald-300">1.08</strong></span>
-            </div>
-          </div>
-
-          <!-- Card 4: India VIX Volatility Thermometer -->
-          <div class="glass-panel p-4 rounded-xl border border-[#1b263b] shadow-xl hover:border-amber-500/40 transition flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-                <span class="font-bold flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                  INDIA VIX VOLATILITY
-                </span>
-                <span class="text-[10px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">IV CRUSH</span>
-              </div>
-              <div class="text-2xl font-black font-mono text-white tracking-wide" id="pulse-vix-val">17.47</div>
-              <div class="text-[11px] text-rose-400 font-mono mt-1">
-                ▼ -12.13% Volatility Drop &bull; Option Sellers Dominate
-              </div>
-            </div>
-            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-3 pt-2 border-t border-[#162033]">
-              <span>High IVP Equities: <strong class="text-amber-400">48</strong></span>
-              <span class="text-emerald-400 font-bold">Safe Theta Decay</span>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- 5. INSTITUTIONAL TRADING ENGINES SHOWROOM (PREVIEW TABLES) -->
-        <!-- ============================================================ -->
-        <div class="space-y-4">
-          <div class="flex items-center justify-between border-b border-[#1c273c] pb-3">
-            <div class="flex items-center gap-2">
-              <span class="text-amber-400 text-lg">⚡</span>
-              <h2 class="text-lg font-black text-white tracking-wide">
-                INSTITUTIONAL ALGORITHMIC ENGINES
-              </h2>
-              <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
-                TOP 5 PICKS
-              </span>
-            </div>
-            <span class="text-xs text-slate-400">Click ANY stock to launch Screenshot-Matched AI Trade Setup</span>
-          </div>
-
-          <!-- Grid: Top Upside Momentum & Top Downside Momentum -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            
-            <!-- Table 1: Top Upside Momentum -->
-            <div class="glass-panel p-4 rounded-xl border border-emerald-500/30 shadow-xl space-y-2">
-              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+                      <!-- Table 1: High Liquidity Top Traded (Upside) -->
+            <div class="glass-panel p-4 rounded-xl border border-[#1e2a42] bg-[#0c111d] shadow-lg">
+              <div class="flex items-center justify-between pb-2 border-b border-[#172033] mb-2">
                 <span class="font-bold text-emerald-400 text-xs flex items-center gap-1.5">
-                  <span>🚀</span> TOP MOMENTUM UPSIDE BREAKOUTS (BULLISH)
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> HIGH LIQUIDITY &bull; TOP TRADED UPSIDE
                 </span>
-                <span class="text-[10px] text-slate-400">Ranked by Velocity</span>
+                <button onclick="switchTab('liquidity')" class="text-[10px] text-amber-400 hover:underline">View All &rarr;</button>
               </div>
-              <div class="overflow-x-auto"><table id="table-home-momentum-upside" class="w-full text-left border-collapse text-xs"></table></div>
+              <div class="overflow-x-auto"><table id="table-home-top-traded" class="w-full text-left border-collapse text-xs"></table></div>
             </div>
 
-            <!-- Table 2: Top Downside Momentum -->
-            <div class="glass-panel p-4 rounded-xl border border-rose-500/30 shadow-xl space-y-2">
-              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+            <!-- Table 2: High Liquidity Top Traded (Downside) -->
+            <div class="glass-panel p-4 rounded-xl border border-[#1e2a42] bg-[#0c111d] shadow-lg">
+              <div class="flex items-center justify-between pb-2 border-b border-[#172033] mb-2">
                 <span class="font-bold text-rose-400 text-xs flex items-center gap-1.5">
-                  <span>📉</span> TOP MOMENTUM DOWNSIDE COLLAPSES (BEARISH)
+                  <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span> HIGH LIQUIDITY &bull; TOP TRADED DOWNSIDE (HEAVY SELLING)
                 </span>
-                <span class="text-[10px] text-slate-400">Ranked by Sell Delta</span>
+                <button onclick="switchTab('liquidity')" class="text-[10px] text-rose-400 hover:underline">View All &rarr;</button>
               </div>
-              <div class="overflow-x-auto"><table id="table-home-momentum-downside" class="w-full text-left border-collapse text-xs"></table></div>
+              <div class="overflow-x-auto"><table id="table-home-top-traded-downside" class="w-full text-left border-collapse text-xs"></table></div>
             </div>
-
-          </div>
-
-          <!-- Grid: Muhurat Pulse Model & Muhurat Flow Model -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            
-            <!-- Table 3: Muhurat Pulse Model (Sonic Pulse) -->
-            <div class="glass-panel p-4 rounded-xl border border-cyan-500/30 shadow-xl space-y-2">
-              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
-                <span class="font-bold text-cyan-300 text-xs flex items-center gap-1.5">
-                  <span>🌊</span> MUHURAT PULSE MODEL &bull; RVOL &amp; HYPERFLOW™
-                </span>
-                <button onclick="switchTab('sonic-pulse')" class="text-[10px] text-cyan-400 hover:underline">View All &rarr;</button>
-              </div>
-              <div class="overflow-x-auto"><table id="table-home-sonic-bullish" class="w-full text-left border-collapse text-xs"></table></div>
-            </div>
-
-            <!-- Table 4: Muhurat Flow Model (Titan Flow) -->
-            <div class="glass-panel p-4 rounded-xl border border-amber-500/30 shadow-xl space-y-2">
-              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
-                <span class="font-bold text-amber-300 text-xs flex items-center gap-1.5">
-                  <span>🐋</span> MUHURAT FLOW MODEL &bull; WHALE SWEEPS
-                </span>
-                <button onclick="switchTab('titan-flow')" class="text-[10px] text-amber-400 hover:underline">View All &rarr;</button>
-              </div>
-              <div class="overflow-x-auto"><table id="table-home-titan-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-            </div>
-
-          </div>
-
-          <!-- Grid: Muhurat Elite 3m & Muhurat Elite Pro 6m -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            
-            <!-- Table 5: Muhurat Elite Engine (3m Squeeze) -->
-            <div class="glass-panel p-4 rounded-xl border border-rose-500/30 shadow-xl space-y-2">
-              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
-                <span class="font-bold text-rose-300 text-xs flex items-center gap-1.5">
-                  <span>🎯</span> MUHURAT ELITE ENGINE (3m) &bull; SQUEEZE BREAKOUTS
-                </span>
-                <button onclick="switchTab('quant-elite')" class="text-[10px] text-rose-400 hover:underline">View All &rarr;</button>
-              </div>
-              <div class="overflow-x-auto"><table id="table-home-elite-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-            </div>
-
-            <!-- Table 6: Muhurat Elite Pro Engine (6m Bearish Waves) -->
-            <div class="glass-panel p-4 rounded-xl border border-purple-500/30 shadow-xl space-y-2">
-              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
-                <span class="font-bold text-purple-300 text-xs flex items-center gap-1.5">
-                  <span>🌊</span> MUHURAT ELITE PRO ENGINE (6m) &bull; BEARISH WAVES
-                </span>
-                <button onclick="switchTab('quant-elite-pro')" class="text-[10px] text-purple-400 hover:underline">View All &rarr;</button>
-              </div>
-              <div class="overflow-x-auto"><table id="table-home-elite-pro-bearish" class="w-full text-left border-collapse text-xs"></table></div>
-            </div>
-
-          </div>
-
-          <!-- Table 7: Market Liquidity & Top Traded Value -->
-          <div class="glass-panel p-4 rounded-xl border border-amber-500/30 shadow-xl space-y-2">
-            <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
-              <span class="font-bold text-amber-300 text-xs flex items-center gap-1.5">
-                <span>💧</span> HIGH LIQUIDITY &bull; MOST ACTIVE TOP TRADED VALUE
-              </span>
-              <button onclick="switchTab('liquidity')" class="text-[10px] text-amber-400 hover:underline">View All &rarr;</button>
-            </div>
-            <div class="overflow-x-auto"><table id="table-home-top-traded" class="w-full text-left border-collapse text-xs"></table></div>
-          </div>
         </div>
 
         <!-- ============================================================ -->
@@ -2291,15 +2114,18 @@
       <!-- ========================================== -->
       <!-- TAB: MARKET LIQUIDITY (TOP TRADED)         -->
       <!-- ========================================== -->
+      <!-- ========================================== -->
+      <!-- TAB: MARKET LIQUIDITY (UPSIDE & DOWNSIDE)  -->
+      <!-- ========================================== -->
       <section id="tab-liquidity" class="tab-pane hidden space-y-6 font-mono">
         <div class="card p-4 border-l-4 border-amber-500 bg-[#121622] flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <div class="flex items-center gap-2">
-              <h2 class="text-lg font-bold text-white">Market Liquidity &bull; Most Active by Turnover & Value</h2>
-              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px]">TOP TRADED</span>
+              <h2 class="text-lg font-bold text-white">Market Liquidity &bull; Most Active by Turnover &amp; Value (Top Traded)</h2>
+              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px]">UPSIDE &bull; DOWNSIDE</span>
             </div>
             <p class="text-xs text-slate-300 mt-1 max-w-2xl font-sans">
-              Identifies stocks commanding the highest monetary turnover, deepest market liquidity, and lowest slippage for large lot institutional execution.
+              Identifies stocks commanding the highest monetary turnover, deepest market liquidity, and lowest slippage for large lot institutional execution &mdash; split by Bullish Accumulation vs. Bearish Institutional Distribution.
             </p>
           </div>
           <div class="text-right font-mono text-xs text-slate-400">
@@ -2308,13 +2134,31 @@
           </div>
         </div>
 
-        <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl">
+        <!-- Table 1: Most Active Upside Traded -->
+        <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl shadow-xl">
           <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between">
-            <span class="font-bold text-sm text-amber-400">Most Active Stocks by Turnover &amp; Value</span>
-            <span class="text-xs font-mono text-slate-400">Liquidity Depth Verified</span>
+            <span class="font-bold text-sm text-emerald-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              Most Active Stocks by Turnover &bull; Upside Momentum (Top Traded Longs)
+            </span>
+            <span class="text-xs font-mono text-slate-400">Institutional Net Inflow</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-top-traded"></table>
+          </div>
+        </div>
+
+        <!-- Table 2: Most Active Downside Traded -->
+        <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl shadow-xl">
+          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between">
+            <span class="font-bold text-sm text-rose-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
+              Most Active Stocks by Turnover &bull; Downside Distribution (Top Traded Shorts)
+            </span>
+            <span class="text-xs font-mono text-slate-400">Institutional Net Outflow &amp; Dumps</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs" id="table-top-traded-downside"></table>
           </div>
         </div>
       </section>
@@ -4361,7 +4205,23 @@
       renderTable('table-home-titan-cash-bearish', DATA.titan_cash_bearish.slice(0, 5), false);
       renderTable('table-home-momentum-upside', DATA.best_momentum_upside.slice(0, 5), true);
       renderTable('table-home-momentum-downside', DATA.best_momentum_downside.slice(0, 5), false);
-      renderTable('table-home-top-traded', DATA.top_traded_value.slice(0, 5), true);
+      // Compute Top Traded Upside and Downside by Turnover
+      const allStocks = (DATA && DATA.all_stocks) ? DATA.all_stocks : [];
+
+      let upsideTraded = allStocks.filter(s => s.pct_change >= 0);
+      upsideTraded.sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0));
+      if (upsideTraded.length === 0 && DATA.top_traded_value) {
+        upsideTraded = DATA.top_traded_value;
+      }
+
+      let downsideTraded = allStocks.filter(s => s.pct_change < 0);
+      downsideTraded.sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0));
+      if (downsideTraded.length === 0) {
+        downsideTraded = [...allStocks].sort((a, b) => (a.pct_change || 0) - (b.pct_change || 0));
+      }
+
+      renderTable('table-home-top-traded', upsideTraded.slice(0, 5), true);
+      renderTable('table-home-top-traded-downside', downsideTraded.slice(0, 5), false);
 
       // Dedicated Engine Tabs
       renderTable('table-strong-bullish', DATA.strong_bullish, true);
@@ -4380,7 +4240,8 @@
       // New Momentum & Liquidity Tables
       renderTable('table-momentum-upside', DATA.best_momentum_upside, true);
       renderTable('table-momentum-downside', DATA.best_momentum_downside, false);
-      renderTable('table-top-traded', DATA.top_traded_value, true);
+      renderTable('table-top-traded', upsideTraded, true);
+      renderTable('table-top-traded-downside', downsideTraded, false);
       renderTable('table-most-active', DATA.most_active_volume, true);
     }
 
