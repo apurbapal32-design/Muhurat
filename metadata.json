@@ -1,0 +1,6 @@
+{
+  "name": "Nifty200 Intraday AI Scanner",
+  "description": "Production-ready Indian Index Options & Stock Intelligence Scanner for Nifty 200 with Real-Time 16-Pillar Confluence Engine (Price, Volume, VWAP, Market Structure, Liquidity, SMC, Wyckoff Phase, Delta, CVD, Futures OI, Option OI, Option Premium, IV, Greeks, Sector Regime, Nifty Regime), Stage Pipeline (WATCH, SETUP, CONFIRMED), and Dynamic Trade Execution Ladder (Entry, Stop Loss, Target 1, Target 2, Target 3, Exit Rules).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
