@@ -2978,16 +2978,13 @@
         <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white text-2xl font-bold px-2">&times;</button>
       </div>
 
-      <!-- Auth Navigation Tabs (Sign In / Sign Up / Forgot Password) -->
+      <!-- Auth Navigation Header (Exclusive Admin Sign In) -->
       <div class="flex border-b border-[#1c273c] bg-[#070a12] text-xs">
         <button id="auth-tab-btn-signin" onclick="switchAuthTab('signin')" class="flex-1 py-2.5 font-bold text-center border-b-2 border-amber-400 text-amber-300 transition">
-          Sign In
+          ⭐ Master Admin Sign In
         </button>
-        <button id="auth-tab-btn-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 font-bold text-center border-b-2 border-transparent text-slate-400 hover:text-white transition">
-          Sign Up
-        </button>
-        <button id="auth-tab-btn-forgot" onclick="switchAuthTab('forgot')" class="flex-1 py-2.5 font-bold text-center border-b-2 border-transparent text-slate-400 hover:text-white transition">
-          Forgot Password
+        <button id="auth-tab-btn-forgot" onclick="switchAuthTab('forgot')" class="py-2.5 px-4 font-bold text-center border-b-2 border-transparent text-slate-400 hover:text-white transition">
+          Forgot Password?
         </button>
       </div>
 
@@ -2995,27 +2992,6 @@
       <div class="p-5 space-y-4">
         <!-- VIEW 1: SIGN IN -->
         <div id="auth-view-signin" class="space-y-3.5">
-          <!-- Fast 1-Click Sign In Banner -->
-          <div class="p-3 rounded-xl bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 border border-amber-500/40 flex items-center justify-between gap-3 shadow-lg">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-lg bg-amber-500/25 text-amber-300 font-extrabold flex items-center justify-center text-sm shadow-inner shrink-0">
-                ⚡
-              </div>
-              <div>
-                <div class="text-xs font-black text-amber-300 tracking-wide">FAST INSTANT ACCESS</div>
-                <div class="text-[10px] text-slate-300 font-sans">Apurba Pal &bull; <span class="text-amber-400 font-bold">⭐ ADMIN PLAN</span></div>
-              </div>
-            </div>
-            <button onclick="handleFastLogin()" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 hover:from-amber-300 hover:to-yellow-200 text-black font-extrabold text-xs shadow-md shadow-amber-500/20 active:scale-95 transition cursor-pointer shrink-0">
-              ⚡ Fast Sign In
-            </button>
-          </div>
-
-          <div class="flex items-center gap-2 text-[10px] text-slate-500 uppercase my-1 font-mono">
-            <span class="flex-1 border-t border-[#1c273c]"></span>
-            <span>Or Sign In with Credentials</span>
-            <span class="flex-1 border-t border-[#1c273c]"></span>
-          </div>
           <div>
             <label class="text-[11px] font-bold text-slate-300">Email Address or Fyers Client ID</label>
             <input id="auth-signin-email" type="text" value="apurbapal32@gmail.com" class="w-full bg-[#06080e] border border-[#1f2b45] rounded-lg p-2.5 text-xs text-white mt-1 outline-none focus:border-amber-400 transition" placeholder="you@domain.com or YA49011">
@@ -3025,7 +3001,12 @@
               <label class="text-[11px] font-bold text-slate-300">Password</label>
               <button type="button" onclick="switchAuthTab('forgot')" class="text-[10px] text-amber-400 hover:underline">Forgot password?</button>
             </div>
-            <input id="auth-signin-password" type="password" value="MasterAdmin@2026" class="w-full bg-[#06080e] border border-[#1f2b45] rounded-lg p-2.5 text-xs text-white mt-1 outline-none focus:border-amber-400 transition" placeholder="••••••••••••">
+            <div class="relative mt-1">
+              <input id="auth-signin-password" type="password" value="MasterAdmin@2026" class="w-full bg-[#06080e] border border-[#1f2b45] rounded-lg p-2.5 pr-10 text-xs text-white outline-none focus:border-amber-400 transition" placeholder="MasterAdmin@2026">
+              <button type="button" onclick="togglePasswordVisibility('auth-signin-password', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-mono cursor-pointer" title="Show / Hide Password">
+                👁️
+              </button>
+            </div>
           </div>
           <div class="flex items-center justify-between text-xs text-slate-400">
             <label class="flex items-center gap-1.5 cursor-pointer">
@@ -3039,15 +3020,7 @@
             Sign In to Muhurat &rarr;
           </button>
 
-          <div class="pt-2 border-t border-[#1c273c] text-center">
-            <button onclick="handleFyersQuickLogin()" class="w-full py-2 rounded-lg bg-[#0e1626] hover:bg-[#16223b] border border-[#233554] text-xs text-cyan-300 font-bold transition flex items-center justify-center gap-1.5">
-              <span>⚡ Quick Sign In with Fyers API (YA49011)</span>
-            </button>
-            <div class="text-[10.5px] text-slate-400 mt-2">
-              Don't have an account? <button onclick="switchAuthTab('signup')" class="text-amber-300 font-bold hover:underline">Create Account (Sign Up)</button>
-            </div>
-            <button type="button" onclick="closeAuthModal()" class="w-full mt-2 py-1.5 rounded-lg bg-transparent hover:bg-slate-800/40 text-slate-400 hover:text-slate-200 text-xs font-mono transition">Continue to Terminal (Guest Preview) &rarr;</button>
-          </div>
+          
         </div>
 
         <!-- VIEW 2: SIGN UP -->
@@ -6717,6 +6690,19 @@
     // ============================================================
     // AUTHENTICATION MODAL LOGIC (SIGN IN, SIGN UP, FORGOT PASSWORD)
     // ============================================================
+    
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerText = '🙈';
+      } else {
+        input.type = 'password';
+        btn.innerText = '👁️';
+      }
+    }
+
     function openAuthModal(view = 'signin') {
       document.getElementById('modal-auth').classList.remove('hidden');
       switchAuthTab(view);
@@ -6752,10 +6738,25 @@
     }
 
     function handleSignInSubmit() {
-      const email = document.getElementById('auth-signin-email').value || 'Apurba Pal';
-      alert(`[Muhurat Authentication Successful]\n\nWelcome back, ${email}!\nPlan: 👑 ADMIN PLAN (Master Access Active)\nBroker: Fyers API v3 (YA49011 Connected)\nStatus: 200 OK Authenticated`);
+      const emailInput = document.getElementById('auth-signin-email');
+      const passInput = document.getElementById('auth-signin-password');
+      const email = (emailInput ? emailInput.value : '').trim() || 'apurbapal32@gmail.com';
+      const pass = (passInput ? passInput.value : '').trim() || 'MasterAdmin@2026';
+
+      const user = {
+        name: 'Apurba Pal',
+        email: email,
+        clientId: 'YA49011',
+        plan: 'ADMIN PLAN',
+        token: 'Active'
+      };
+      try {
+        localStorage.setItem('muhurat_auth_user', JSON.stringify(user));
+      } catch (e) {}
+
+      showToast('⭐ Welcome back, Apurba Pal! Admin Plan Master Access Active.');
       closeAuthModal();
-      switchTab('admin-plan');
+      switchTab('home');
     }
 
     function handleFyersQuickLogin() {
