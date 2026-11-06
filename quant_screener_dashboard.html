@@ -303,20 +303,22 @@
         </div>
 
         <!-- Home: Muhurat Overview -->
-                <!-- Claude AI Indices Options Hub Link -->
-        <div id="nav-indices-options" class="sidebar-link" onclick="switchTab('indices-options')">
-          <span class="flex items-center gap-2 font-semibold">
-            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Claude AI Options Hub
-          </span>
-          <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500/20 text-cyan-300 font-mono">ALL INDICES</span>
-        </div>
+                <!-- 1st: Muhurat Home -->
         <div id="nav-home" class="sidebar-link active" onclick="switchTab('home')">
           <span class="flex items-center gap-2 font-semibold">
             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             Muhurat Home
           </span>
-          <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-amber-500/20 text-amber-300 font-mono">LIVE</span>
+          <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-amber-500/20 text-amber-300 font-mono">1ST</span>
+        </div>
+
+        <!-- 2nd: Claude AI Options Hub -->
+        <div id="nav-indices-options" class="sidebar-link" onclick="switchTab('indices-options')">
+          <span class="flex items-center gap-2 font-semibold">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Claude AI Options Hub
+          </span>
+          <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500/20 text-cyan-300 font-mono">2ND &bull; ALL INDICES</span>
         </div>
 
         <!-- Section: Market Structure & Sector Heatmap -->
@@ -616,6 +618,9 @@
                 <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
                 <h2 class="text-lg md:text-xl font-black text-white tracking-wide flex items-center gap-2">
                   <span>📊 NIFTY OPTION CHAIN &amp; CENTRAL PIVOT RANGE (CPR)</span>
+                  <button onclick="switchTab('indices-options')" class="text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border border-cyan-500/40 font-bold transition flex items-center gap-1">
+                    <span>2nd: Claude AI Options Hub &rarr;</span>
+                  </button>
                   <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase">LIVE FYERS v3</span>
                 </h2>
               </div>
@@ -2030,8 +2035,10 @@
 
       if (tabId === 'heatmap') {
         renderSectorHeatmap();
-      renderClaudeIndicesOptions();
-      renderNiftyOptionChain();
+      } else if (tabId === 'indices-options') {
+        renderClaudeIndicesOptions();
+      } else if (tabId === 'home') {
+        renderNiftyOptionChain();
       }
 
       if (window.innerWidth < 768) {
