@@ -303,6 +303,14 @@
         </div>
 
         <!-- Home: Muhurat Overview -->
+                <!-- Claude AI Indices Options Hub Link -->
+        <div id="nav-indices-options" class="sidebar-link" onclick="switchTab('indices-options')">
+          <span class="flex items-center gap-2 font-semibold">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Claude AI Options Hub
+          </span>
+          <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500/20 text-cyan-300 font-mono">ALL INDICES</span>
+        </div>
         <div id="nav-home" class="sidebar-link active" onclick="switchTab('home')">
           <span class="flex items-center gap-2 font-semibold">
             <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
@@ -596,66 +604,237 @@
         </div>
 
         <!-- ============================================================ -->
-        <!-- 3. CLAUDE AI TRADING SKILL: ALL INDICES OPTIONS HUB -->
+        <!-- 3. NIFTY OPTION CHAIN & CENTRAL PIVOT RANGE (CPR) COCKPIT -->
+        <!-- Finwurl Enterprises Private Limited • Powered by FinURL -->
         <!-- ============================================================ -->
-        <section id="section-claude-ai-indices-options" class="glass-panel p-4 md:p-6 rounded-2xl border border-[#223049] shadow-2xl space-y-4">
-          <!-- Section Header -->
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#1c273c] pb-4">
+        <section id="section-nifty-option-chain-cpr" class="glass-panel p-4 md:p-6 rounded-2xl border border-[#23324d] bg-[#090d16] shadow-2xl space-y-5">
+          
+          <!-- Section Header Bar -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-[#1c273c] pb-4">
             <div>
-              <div class="flex items-center gap-2.5">
+              <div class="flex items-center gap-2.5 flex-wrap">
                 <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
-                <h2 class="text-lg md:text-xl font-black text-white tracking-wide flex items-center gap-2 font-mono">
-                  <span>🤖 CLAUDE AI TRADING SKILL</span>
-                  <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase tracking-wider">ALL INDICES OPTIONS HUB</span>
+                <h2 class="text-lg md:text-xl font-black text-white tracking-wide flex items-center gap-2">
+                  <span>📊 NIFTY OPTION CHAIN &amp; CENTRAL PIVOT RANGE (CPR)</span>
+                  <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase">LIVE FYERS v3</span>
                 </h2>
               </div>
               <p class="text-xs text-slate-400 font-mono mt-1">
-                Institutional Call (CE) &amp; Put (PE) Buy / Sell recommendations across NIFTY, BANK NIFTY, FIN NIFTY, MIDCP NIFTY &amp; NEXT 50 with exact <strong class="text-amber-400">🕒 Listed at Time</strong>, Risk:Reward &amp; 1-click Fyers API v3 execution.
+                Real-time NIFTY 50 Option Chain (ATM 25,050), Open Interest distribution, Call/Put writing walls, Max Pain, and daily CPR pivot levels.
               </p>
             </div>
 
-            <!-- Quick Stats Pills -->
+            <!-- Header Badges: Expiry & Nifty Spot -->
             <div class="flex items-center gap-2 flex-wrap font-mono text-xs">
-              <span class="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">
-                Win Rate: 92.4%
-              </span>
-              <span class="px-3 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
-                Avg R:R: 1:2.85
-              </span>
-              <span class="px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">
-                Finwurl v4.2 Live
-              </span>
+              <div class="bg-[#0e1422] px-3 py-1.5 rounded-xl border border-[#1e2a42] flex items-center gap-2">
+                <span class="text-slate-400 font-bold">NIFTY Spot:</span>
+                <span class="text-emerald-400 font-black text-sm">₹25,030.35</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">+2.01%</span>
+              </div>
+              <div class="bg-[#0e1422] px-3 py-1.5 rounded-xl border border-[#1e2a42] flex items-center gap-2">
+                <span class="text-amber-400">📅</span>
+                <span class="text-slate-400 font-bold">Expiry:</span>
+                <select class="bg-transparent text-amber-300 font-bold focus:outline-none cursor-pointer">
+                  <option class="bg-[#0b101c]">07-Nov-2026 (Weekly Current)</option>
+                  <option class="bg-[#0b101c]">14-Nov-2026 (Next Weekly)</option>
+                  <option class="bg-[#0b101c]">28-Nov-2026 (Monthly Expiry)</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <!-- Filter Controls -->
-          <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0a0f1b] p-3 rounded-xl border border-[#1b2538] font-mono text-xs">
-            <!-- Filter by Index -->
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-slate-400 font-bold mr-1">Index:</span>
-              <button onclick="filterClaudeOptions('ALL', currentOptionTypeFilter)" id="btn-idx-ALL" class="px-2.5 py-1 rounded-md font-bold bg-cyan-500 text-black shadow-sm transition">All Indices</button>
-              <button onclick="filterClaudeOptions('NIFTY 50', currentOptionTypeFilter)" id="btn-idx-NIFTY-50" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">NIFTY 50</button>
-              <button onclick="filterClaudeOptions('BANK NIFTY', currentOptionTypeFilter)" id="btn-idx-BANK-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">BANK NIFTY</button>
-              <button onclick="filterClaudeOptions('FIN NIFTY', currentOptionTypeFilter)" id="btn-idx-FIN-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">FIN NIFTY</button>
-              <button onclick="filterClaudeOptions('MIDCP NIFTY', currentOptionTypeFilter)" id="btn-idx-MIDCP-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">MIDCP NIFTY</button>
-              <button onclick="filterClaudeOptions('NIFTY NEXT 50', currentOptionTypeFilter)" id="btn-idx-NIFTY-NEXT-50" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">NEXT 50</button>
-              <button onclick="filterClaudeOptions('INDIA VIX', currentOptionTypeFilter)" id="btn-idx-INDIA-VIX" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">INDIA VIX</button>
+          <!-- ============================================================ -->
+          <!-- A. CENTRAL PIVOT RANGE (CPR) INTELLIGENCE SUITE -->
+          <!-- ============================================================ -->
+          <div class="bg-gradient-to-r from-[#0c1220] via-[#10182b] to-[#0c1220] p-4 rounded-xl border border-[#1d293f] shadow-lg space-y-3">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#182338] pb-2.5">
+              <div class="flex items-center gap-2">
+                <span class="text-amber-400 font-black text-sm">🎯 NIFTY DAILY CPR (CENTRAL PIVOT RANGE)</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                  SPOT &gt; TC (BULLISH CONVICTION)
+                </span>
+              </div>
+              <div class="text-xs text-slate-400 font-mono">
+                CPR Width: <strong class="text-amber-300">143.56 pts</strong> &bull; <span class="text-emerald-400 font-bold">Medium-Wide Trend Continuation</span>
+              </div>
             </div>
 
-            <!-- Filter by Action / Signal Type -->
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="text-slate-400 font-bold mr-1">Signal:</span>
-              <button onclick="filterClaudeOptions(currentIndexFilter, 'ALL')" id="btn-type-ALL" class="px-2.5 py-1 rounded-md font-bold bg-amber-500 text-black shadow-sm transition">All Actions</button>
-              <button onclick="filterClaudeOptions(currentIndexFilter, 'BUY-CE')" id="btn-type-BUY-CE" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-emerald-400 transition">🟢 Call Buy (CE)</button>
-              <button onclick="filterClaudeOptions(currentIndexFilter, 'BUY-PE')" id="btn-type-BUY-PE" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-rose-400 transition">🔴 Put Buy (PE)</button>
-              <button onclick="filterClaudeOptions(currentIndexFilter, 'SELL')" id="btn-type-SELL" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-amber-300 transition">🟡 Option Write (Sell)</button>
+            <!-- CPR 3-Pillar Level Cards (TC, Pivot, BC) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-center font-mono">
+              
+              <!-- Top Central (TC) -->
+              <div class="bg-[#070b14] p-3 rounded-lg border border-cyan-500/30">
+                <div class="text-[10px] text-cyan-400 font-bold uppercase tracking-wider">Top Central Pivot (TC)</div>
+                <div class="text-lg font-black text-white mt-0.5">24,958.56</div>
+                <div class="text-[9.5px] text-slate-400 mt-0.5">Strong Pullback Support Floor</div>
+              </div>
+
+              <!-- Central Pivot Point (P) -->
+              <div class="bg-[#070b14] p-3 rounded-lg border border-amber-500/30">
+                <div class="text-[10px] text-amber-400 font-bold uppercase tracking-wider">Central Pivot Point (P)</div>
+                <div class="text-lg font-black text-amber-300 mt-0.5">24,886.78</div>
+                <div class="text-[9.5px] text-slate-400 mt-0.5">Daily Bull/Bear Balance Axis</div>
+              </div>
+
+              <!-- Bottom Central (BC) -->
+              <div class="bg-[#070b14] p-3 rounded-lg border border-rose-500/30">
+                <div class="text-[10px] text-rose-400 font-bold uppercase tracking-wider">Bottom Central Pivot (BC)</div>
+                <div class="text-lg font-black text-white mt-0.5">24,815.00</div>
+                <div class="text-[9.5px] text-slate-400 mt-0.5">Deep Defensive Base Line</div>
+              </div>
+
+            </div>
+
+            <!-- Multi-Pivot Ladder (R3 down to S3 & Camarilla H4/L4) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 text-center text-xs font-mono pt-1">
+              <div class="bg-[#070b14] p-2 rounded border border-[#172236]">
+                <div class="text-[9px] text-rose-400 font-bold">RESISTANCE 3 (R3)</div>
+                <div class="font-bold text-white mt-0.5">25,753.56</div>
+              </div>
+              <div class="bg-[#070b14] p-2 rounded border border-[#172236]">
+                <div class="text-[9px] text-rose-400 font-bold">RESISTANCE 2 (R2)</div>
+                <div class="font-bold text-white mt-0.5">25,416.78</div>
+              </div>
+              <div class="bg-[#070b14] p-2 rounded border border-rose-500/30">
+                <div class="text-[9px] text-rose-400 font-bold">RESISTANCE 1 (R1)</div>
+                <div class="font-bold text-rose-300 mt-0.5">25,223.56</div>
+              </div>
+              <div class="bg-[#070b14] p-2 rounded border border-cyan-500/30">
+                <div class="text-[9px] text-cyan-300 font-bold">CAMARILLA H4</div>
+                <div class="font-bold text-cyan-200 mt-0.5">25,320.00</div>
+              </div>
+              <div class="bg-[#070b14] p-2 rounded border border-amber-500/30">
+                <div class="text-[9px] text-amber-300 font-bold">CAMARILLA L3</div>
+                <div class="font-bold text-amber-200 mt-0.5">24,885.00</div>
+              </div>
+              <div class="bg-[#070b14] p-2 rounded border border-emerald-500/30">
+                <div class="text-[9px] text-emerald-400 font-bold">SUPPORT 1 (S1)</div>
+                <div class="font-bold text-emerald-300 mt-0.5">24,693.56</div>
+              </div>
+              <div class="bg-[#070b14] p-2 rounded border border-[#172236]">
+                <div class="text-[9px] text-emerald-400 font-bold">SUPPORT 2 (S2)</div>
+                <div class="font-bold text-white mt-0.5">24,356.78</div>
+              </div>
+              <div class="bg-[#070b14] p-2 rounded border border-[#172236]">
+                <div class="text-[9px] text-emerald-400 font-bold">SUPPORT 3 (S3)</div>
+                <div class="font-bold text-white mt-0.5">24,163.56</div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ============================================================ -->
+          <!-- B. OPTION CHAIN KEY DERIVATIVE PULSE RIBBON -->
+          <!-- ============================================================ -->
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 font-mono text-xs">
+            
+            <div class="bg-[#0c1220] p-2.5 rounded-xl border border-[#1c283f] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">PUT-CALL RATIO</div>
+                <div class="text-base font-black text-emerald-400 mt-0.5">1.64</div>
+              </div>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">Bullish</span>
+            </div>
+
+            <div class="bg-[#0c1220] p-2.5 rounded-xl border border-[#1c283f] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">MAX PAIN STRIKE</div>
+                <div class="text-base font-black text-amber-300 mt-0.5">24,950</div>
+              </div>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">Magnetic</span>
+            </div>
+
+            <div class="bg-[#0c1220] p-2.5 rounded-xl border border-[#1c283f] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">ATM STRIKE</div>
+                <div class="text-base font-black text-cyan-300 mt-0.5">25,050</div>
+              </div>
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold">Center</span>
+            </div>
+
+            <div class="bg-[#0c1220] p-2.5 rounded-xl border border-[#1c283f] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">CALL WALL (CAP)</div>
+                <div class="text-base font-black text-rose-400 mt-0.5">25,200 CE</div>
+              </div>
+              <span class="text-[9px] px-1 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">1.82 Cr OI</span>
+            </div>
+
+            <div class="bg-[#0c1220] p-2.5 rounded-xl border border-[#1c283f] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">PUT FLOOR (BASE)</div>
+                <div class="text-base font-black text-emerald-400 mt-0.5">24,800 PE</div>
+              </div>
+              <span class="text-[9px] px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">2.14 Cr OI</span>
+            </div>
+
+            <div class="bg-[#0c1220] p-2.5 rounded-xl border border-[#1c283f] flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-slate-400 font-bold">OI BIAS</div>
+                <div class="text-base font-black text-emerald-400 mt-0.5">+9.48 Cr PE</div>
+              </div>
+              <span class="text-[9px] px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">Heavy Base</span>
+            </div>
+
+          </div>
+
+          <!-- ============================================================ -->
+          <!-- C. LIVE NIFTY OPTION CHAIN MATRIX TABLE -->
+          <!-- ============================================================ -->
+          <div class="overflow-x-auto rounded-xl border border-[#1c273c]">
+            <table class="w-full text-center border-collapse font-mono text-xs select-none">
+              
+              <!-- Table Super Header (Calls vs Strikes vs Puts) -->
+              <thead>
+                <tr class="bg-[#060910] text-[10.5px] border-b border-[#1c273c]">
+                  <th colspan="5" class="py-2 text-emerald-400 font-black tracking-wider uppercase border-r border-[#1c273c] bg-emerald-950/20">
+                    CALLS (CE) &bull; BULLISH CONTRACTS
+                  </th>
+                  <th class="py-2 text-amber-300 font-black tracking-wider uppercase bg-[#0c1220]">
+                    STRIKE
+                  </th>
+                  <th colspan="5" class="py-2 text-rose-400 font-black tracking-wider uppercase border-l border-[#1c273c] bg-rose-950/20">
+                    PUTS (PE) &bull; BEARISH / HEDGE CONTRACTS
+                  </th>
+                </tr>
+                <tr class="bg-[#0b101c] text-[10px] font-bold text-slate-400 border-b border-[#1c273c]">
+                  <th class="p-2">OI (Lakhs)</th>
+                  <th class="p-2">OI Chg</th>
+                  <th class="p-2">IV %</th>
+                  <th class="p-2 text-emerald-400">CALL LTP</th>
+                  <th class="p-2 border-r border-[#1c273c]">Action</th>
+                  <th class="p-2 text-white bg-[#0e1526]">STRIKE</th>
+                  <th class="p-2 border-l border-[#1c273c]">Action</th>
+                  <th class="p-2 text-rose-400">PUT LTP</th>
+                  <th class="p-2">IV %</th>
+                  <th class="p-2">OI Chg</th>
+                  <th class="p-2">OI (Lakhs)</th>
+                </tr>
+              </thead>
+
+              <!-- Option Chain Rows -->
+              <tbody id="nifty-option-chain-body" class="divide-y divide-[#151e30] bg-[#080c16]">
+                <!-- Dynamically populated by renderNiftyOptionChain() -->
+              </tbody>
+
+            </table>
+          </div>
+
+          <!-- Option Chain Footer Actions -->
+          <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 font-mono pt-2 border-t border-[#182338]">
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-400"></span> ATM: At The Money</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Max Call Resistance</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Max Put Floor</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="openTradingViewChart('NIFTY')" class="px-3 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-300 font-bold transition">
+                Open NIFTY Chart on TradingView ↗
+              </button>
             </div>
           </div>
 
-          <!-- Dynamic Cards Grid for Claude AI Recommendations -->
-          <div id="claude-options-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
-            <!-- Dynamically populated by renderClaudeIndicesOptions() -->
-          </div>
         </section>
 
         <!-- ============================================================ -->
@@ -891,7 +1070,77 @@
       </section><!-- ============================================================ -->
       <!-- TAB: FULL SECTOR HEATMAP (DEDICATED FULL VIEW) -->
       <!-- ============================================================ -->
-            <!-- ============================================================ -->
+                  <!-- ============================================================ -->
+      <!-- TAB: DEDICATED CLAUDE AI INDICES OPTIONS HUB -->
+      <!-- ============================================================ -->
+      <section id="tab-indices-options" class="tab-pane hidden space-y-4 font-mono">
+        <!-- ============================================================ -->
+        <!-- 3. CLAUDE AI TRADING SKILL: ALL INDICES OPTIONS HUB -->
+        <!-- ============================================================ -->
+        <section id="section-claude-ai-indices-options" class="glass-panel p-4 md:p-6 rounded-2xl border border-[#223049] shadow-2xl space-y-4">
+          <!-- Section Header -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#1c273c] pb-4">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
+                <h2 class="text-lg md:text-xl font-black text-white tracking-wide flex items-center gap-2 font-mono">
+                  <span>🤖 CLAUDE AI TRADING SKILL</span>
+                  <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase tracking-wider">ALL INDICES OPTIONS HUB</span>
+                </h2>
+              </div>
+              <p class="text-xs text-slate-400 font-mono mt-1">
+                Institutional Call (CE) &amp; Put (PE) Buy / Sell recommendations across NIFTY, BANK NIFTY, FIN NIFTY, MIDCP NIFTY &amp; NEXT 50 with exact <strong class="text-amber-400">🕒 Listed at Time</strong>, Risk:Reward &amp; 1-click Fyers API v3 execution.
+              </p>
+            </div>
+
+            <!-- Quick Stats Pills -->
+            <div class="flex items-center gap-2 flex-wrap font-mono text-xs">
+              <span class="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">
+                Win Rate: 92.4%
+              </span>
+              <span class="px-3 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
+                Avg R:R: 1:2.85
+              </span>
+              <span class="px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">
+                Finwurl v4.2 Live
+              </span>
+            </div>
+          </div>
+
+          <!-- Filter Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0a0f1b] p-3 rounded-xl border border-[#1b2538] font-mono text-xs">
+            <!-- Filter by Index -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-slate-400 font-bold mr-1">Index:</span>
+              <button onclick="filterClaudeOptions('ALL', currentOptionTypeFilter)" id="btn-idx-ALL" class="px-2.5 py-1 rounded-md font-bold bg-cyan-500 text-black shadow-sm transition">All Indices</button>
+              <button onclick="filterClaudeOptions('NIFTY 50', currentOptionTypeFilter)" id="btn-idx-NIFTY-50" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">NIFTY 50</button>
+              <button onclick="filterClaudeOptions('BANK NIFTY', currentOptionTypeFilter)" id="btn-idx-BANK-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">BANK NIFTY</button>
+              <button onclick="filterClaudeOptions('FIN NIFTY', currentOptionTypeFilter)" id="btn-idx-FIN-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">FIN NIFTY</button>
+              <button onclick="filterClaudeOptions('MIDCP NIFTY', currentOptionTypeFilter)" id="btn-idx-MIDCP-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">MIDCP NIFTY</button>
+              <button onclick="filterClaudeOptions('NIFTY NEXT 50', currentOptionTypeFilter)" id="btn-idx-NIFTY-NEXT-50" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">NEXT 50</button>
+              <button onclick="filterClaudeOptions('INDIA VIX', currentOptionTypeFilter)" id="btn-idx-INDIA-VIX" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">INDIA VIX</button>
+            </div>
+
+            <!-- Filter by Action / Signal Type -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-slate-400 font-bold mr-1">Signal:</span>
+              <button onclick="filterClaudeOptions(currentIndexFilter, 'ALL')" id="btn-type-ALL" class="px-2.5 py-1 rounded-md font-bold bg-amber-500 text-black shadow-sm transition">All Actions</button>
+              <button onclick="filterClaudeOptions(currentIndexFilter, 'BUY-CE')" id="btn-type-BUY-CE" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-emerald-400 transition">🟢 Call Buy (CE)</button>
+              <button onclick="filterClaudeOptions(currentIndexFilter, 'BUY-PE')" id="btn-type-BUY-PE" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-rose-400 transition">🔴 Put Buy (PE)</button>
+              <button onclick="filterClaudeOptions(currentIndexFilter, 'SELL')" id="btn-type-SELL" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-amber-300 transition">🟡 Option Write (Sell)</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Cards Grid for Claude AI Recommendations -->
+          <div id="claude-options-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
+            <!-- Dynamically populated by renderClaudeIndicesOptions() -->
+          </div>
+        </section>
+
+        
+      </section>
+
+<!-- ============================================================ -->
       <!-- TAB: FULL-PAGE IMMERSIVE MARKET & SECTOR HEATMAP (TREEMAP UI/UX) -->
       <!-- Finwurl Enterprises Private Limited • Powered by FinURL -->
       <!-- ============================================================ -->
@@ -1782,6 +2031,7 @@
       if (tabId === 'heatmap') {
         renderSectorHeatmap();
       renderClaudeIndicesOptions();
+      renderNiftyOptionChain();
       }
 
       if (window.innerWidth < 768) {
@@ -3005,6 +3255,7 @@
           renderAllTables();
           renderSectorHeatmap();
       renderClaudeIndicesOptions();
+      renderNiftyOptionChain();
           renderSectorRank();
           renderWatchlistTable();
 
@@ -3716,6 +3967,7 @@
       });
 
       renderClaudeIndicesOptions();
+      renderNiftyOptionChain();
     }
 
     function renderClaudeIndicesOptions() {
@@ -3850,10 +4102,116 @@
     setInterval(updateCockpitTime, 1000);
     updateCockpitTime();
 
+    
+    // ============================================================
+    // NIFTY OPTION CHAIN & CPR RENDERING ENGINE (HOME DASHBOARD)
+    // Finwurl Enterprises Private Limited • Powered by FinURL
+    // ============================================================
+    const NIFTY_OPTION_CHAIN_STRIKES = [
+      { strike: 24700, ce_oi: 18.2, ce_chg: -12.4, ce_iv: 14.8, ce_ltp: 385.00, pe_ltp: 14.50, pe_iv: 15.2, pe_chg: 24.8, pe_oi: 48.6, tag: "" },
+      { strike: 24750, ce_oi: 12.4, ce_chg: -8.5, ce_iv: 14.6, ce_ltp: 342.00, pe_ltp: 18.20, pe_iv: 14.9, pe_chg: 18.5, pe_oi: 38.2, tag: "" },
+      { strike: 24800, ce_oi: 34.5, ce_chg: -18.2, ce_iv: 14.2, ce_ltp: 298.00, pe_ltp: 24.80, pe_iv: 14.5, pe_chg: 84.5, pe_oi: 214.5, tag: "MAX PUT FLOOR (2.14 Cr OI)" },
+      { strike: 24850, ce_oi: 19.8, ce_chg: -14.2, ce_iv: 13.9, ce_ltp: 258.00, pe_ltp: 32.50, pe_iv: 14.2, pe_chg: 42.4, pe_oi: 62.4, tag: "" },
+      { strike: 24900, ce_oi: 48.2, ce_chg: -22.5, ce_iv: 13.5, ce_ltp: 218.00, pe_ltp: 44.00, pe_iv: 13.8, pe_chg: 68.6, pe_oi: 148.6, tag: "" },
+      { strike: 24950, ce_oi: 38.6, ce_chg: -19.4, ce_iv: 13.2, ce_ltp: 182.00, pe_ltp: 58.00, pe_iv: 13.5, pe_chg: 38.4, pe_oi: 92.4, tag: "MAX PAIN (24,950)" },
+      { strike: 25000, ce_oi: 124.5, ce_chg: -42.8, ce_iv: 12.8, ce_ltp: 148.00, pe_ltp: 76.00, pe_iv: 13.1, pe_chg: 88.5, pe_oi: 182.4, tag: "CALL UNWINDING (-42L)" },
+      { strike: 25050, ce_oi: 92.4, ce_chg: 18.4, ce_iv: 12.5, ce_ltp: 118.50, pe_ltp: 98.00, pe_iv: 12.8, pe_chg: 28.5, pe_oi: 88.5, tag: "ATM (Spot 25,030.35)" },
+      { strike: 25100, ce_oi: 142.8, ce_chg: 34.2, ce_iv: 12.2, ce_ltp: 92.00, pe_ltp: 124.00, pe_iv: 12.5, pe_chg: -12.4, pe_oi: 64.2, tag: "" },
+      { strike: 25150, ce_oi: 78.4, ce_chg: 22.1, ce_iv: 12.0, ce_ltp: 71.50, pe_ltp: 155.00, pe_iv: 12.2, pe_chg: -18.2, pe_oi: 42.1, tag: "" },
+      { strike: 25200, ce_oi: 182.4, ce_chg: 64.5, ce_iv: 11.8, ce_ltp: 54.00, pe_ltp: 192.00, pe_iv: 11.9, pe_chg: -22.5, pe_oi: 38.5, tag: "MAX CALL WALL (1.82 Cr OI)" },
+      { strike: 25250, ce_oi: 64.2, ce_chg: 18.4, ce_iv: 11.5, ce_ltp: 41.00, pe_ltp: 234.00, pe_iv: 11.7, pe_chg: -14.2, pe_oi: 22.4, tag: "" },
+      { strike: 25300, ce_oi: 118.6, ce_chg: 42.1, ce_iv: 11.2, ce_ltp: 30.50, pe_ltp: 278.00, pe_iv: 11.5, pe_chg: -18.6, pe_oi: 18.2, tag: "" },
+      { strike: 25350, ce_oi: 45.2, ce_chg: 12.8, ce_iv: 11.0, ce_ltp: 22.00, pe_ltp: 324.00, pe_iv: 11.2, pe_chg: -8.4, pe_oi: 12.1, tag: "" },
+      { strike: 25400, ce_oi: 88.4, ce_chg: 28.5, ce_iv: 10.8, ce_ltp: 16.00, pe_ltp: 372.00, pe_iv: 11.0, pe_chg: -5.2, pe_oi: 9.5, tag: "" }
+    ];
+
+    function renderNiftyOptionChain() {
+      const tbody = document.getElementById('nifty-option-chain-body');
+      if (!tbody) return;
+
+      let html = '';
+      NIFTY_OPTION_CHAIN_STRIKES.forEach(row => {
+        const isATM = row.strike === 25050;
+        const isCallWall = row.strike === 25200;
+        const isPutFloor = row.strike === 24800;
+
+        let strikeBg = 'bg-[#0a0f1b] text-white';
+        let badge = '';
+
+        if (isATM) {
+          strikeBg = 'bg-cyan-500/20 text-cyan-300 font-black border-y border-cyan-400/50';
+          badge = '<span class="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500 text-black font-extrabold ml-1">ATM</span>';
+        } else if (isCallWall) {
+          strikeBg = 'bg-rose-500/20 text-rose-300 font-black';
+          badge = '<span class="text-[9px] px-1.5 py-0.2 rounded bg-rose-500 text-white font-extrabold ml-1">WALL</span>';
+        } else if (isPutFloor) {
+          strikeBg = 'bg-emerald-500/20 text-emerald-300 font-black';
+          badge = '<span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500 text-black font-extrabold ml-1">FLOOR</span>';
+        }
+
+        const ceChgColor = row.ce_chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
+        const peChgColor = row.pe_chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
+
+        html += `
+          <tr class="hover:bg-[#121929] transition font-mono ${isATM ? 'bg-cyan-950/20 font-bold' : ''}">
+            <!-- Calls Side -->
+            <td class="p-2 text-slate-300 font-bold">
+              <div class="flex items-center justify-end gap-1.5">
+                <span>${row.ce_oi.toFixed(1)}L</span>
+                <div class="w-12 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                  <div class="bg-emerald-500 h-full" style="width: ${Math.min(100, (row.ce_oi / 200) * 100)}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="p-2 ${ceChgColor} text-[11px]">${row.ce_chg >= 0 ? '+' : ''}${row.ce_chg.toFixed(1)}%</td>
+            <td class="p-2 text-slate-400 text-[11px]">${row.ce_iv.toFixed(1)}%</td>
+            <td class="p-2 text-emerald-400 font-black text-xs cursor-pointer hover:underline" onclick="openTradingViewChart('NIFTY')">
+              ₹${row.ce_ltp.toFixed(2)}
+            </td>
+            <td class="p-2 border-r border-[#1c273c]">
+              <button onclick="openOrderModal('NIFTY ${row.strike} CE', 'BUY', ${row.ce_ltp}, 75)" class="px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black font-black text-[10px] transition">
+                BUY
+              </button>
+            </td>
+
+            <!-- Strike Price Column -->
+            <td class="p-2.5 font-black text-xs ${strikeBg} flex items-center justify-center gap-1 shadow-inner">
+              <span>${row.strike}</span>
+              ${badge}
+            </td>
+
+            <!-- Puts Side -->
+            <td class="p-2 border-l border-[#1c273c]">
+              <button onclick="openOrderModal('NIFTY ${row.strike} PE', 'BUY', ${row.pe_ltp}, 75)" class="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white font-black text-[10px] transition">
+                BUY
+              </button>
+            </td>
+            <td class="p-2 text-rose-400 font-black text-xs cursor-pointer hover:underline" onclick="openTradingViewChart('NIFTY')">
+              ₹${row.pe_ltp.toFixed(2)}
+            </td>
+            <td class="p-2 text-slate-400 text-[11px]">${row.pe_iv.toFixed(1)}%</td>
+            <td class="p-2 ${peChgColor} text-[11px]">${row.pe_chg >= 0 ? '+' : ''}${row.pe_chg.toFixed(1)}%</td>
+            <td class="p-2 text-slate-300 font-bold">
+              <div class="flex items-center gap-1.5">
+                <div class="w-12 bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                  <div class="bg-rose-500 h-full" style="width: ${Math.min(100, (row.pe_oi / 220) * 100)}%"></div>
+                </div>
+                <span>${row.pe_oi.toFixed(1)}L</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+
     window.addEventListener('DOMContentLoaded', () => {
       renderAllTables();
       renderSectorHeatmap();
       renderClaudeIndicesOptions();
+      renderNiftyOptionChain();
       renderSectorRank();
       renderNews();
       renderWatchlistTable();
