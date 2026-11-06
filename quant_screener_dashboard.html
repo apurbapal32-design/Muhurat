@@ -250,12 +250,7 @@
         Fyers Live v3
       </span>
 
-      <!-- Open Render Cloud Hosting Badge -->
-      <a href="https://muhurat-quant-screener.onrender.com" target="_blank" title="Open Official Render Cloud Service (onrender.com)" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gradient-to-r from-purple-600/30 to-cyan-600/30 hover:from-purple-600/50 hover:to-cyan-600/50 border border-purple-500/40 text-xs font-mono text-purple-300 transition shadow-md shadow-purple-500/10">
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-        <span class="font-bold">Render Cloud:</span>
-        <span class="text-cyan-300 underline font-bold">muhurat-quant-screener.onrender.com ↗</span>
-      </a>
+      
 
       <!-- Sign In / Sign Up Action Button -->
       <button onclick="openAuthModal('signin')" class="px-2.5 py-1.5 rounded-lg bg-[#121927] hover:bg-[#1a2336] border border-[#223049] text-xs font-mono text-cyan-300 transition flex items-center gap-1.5 shadow-sm">
@@ -456,397 +451,444 @@
       <!-- ============================================================ -->
       <!-- TAB: HOME / TREDYE PULSE OVERVIEW & DERIVATIVE DASHBOARD -->
       <!-- ============================================================ -->
-      <section id="tab-home" class="tab-pane space-y-5">
+      <section id="tab-home" class="tab-pane space-y-6 font-mono transition-all duration-300">
 
-        <!-- CLOUD AI TOP MOMENTUM & TRADE SIGNALS BANNER -->
-        <div class="glass-panel p-4 rounded-xl border border-purple-500/30 bg-gradient-to-r from-[#120824]/90 via-[#0a0f1d]/90 to-[#07131d]/90 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xl shadow-lg shadow-purple-500/20">
-              ⚡
+        <!-- ============================================================ -->
+        <!-- 1. AUSPICIOUS MUHURAT TRADING COCKPIT HERO BANNER -->
+        <!-- ============================================================ -->
+        <div class="relative overflow-hidden rounded-2xl border border-[#23324d] bg-gradient-to-r from-[#0b101c] via-[#101728] to-[#0b101c] p-4 md:p-6 shadow-2xl">
+          <!-- Ambient Neon Glow Auras -->
+          <div class="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
+          <div class="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none"></div>
+
+          <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <!-- Left Branding & Identity -->
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/30 border border-amber-500/40 flex items-center justify-center text-xl shadow-lg shadow-amber-500/10">
+                  🕉️
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h1 class="text-xl md:text-2xl font-black text-white tracking-wide">
+                      MUHURAT TRADING COCKPIT
+                    </h1>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shadow-sm">
+                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                      AUSPICIOUS SESSION ACTIVE
+                    </span>
+                  </div>
+                  <div class="text-xs text-slate-400 font-mono flex items-center gap-2 mt-0.5">
+                    <span class="text-amber-400 font-bold">Finwurl Enterprises Private Limited</span>
+                    <span>&bull;</span>
+                    <span class="text-cyan-300 font-bold">Powered by FinURL</span>
+                    <span>&bull;</span>
+                    <span class="text-slate-500">Institutional F&amp;O Order Flow Terminal</span>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <!-- Right Telemetry Status Pills -->
+            <div class="flex items-center gap-2.5 flex-wrap font-mono text-xs">
+              <div class="bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-[#1d273a] shadow-inner flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-slate-400 font-bold">NSE F&amp;O:</span>
+                <span class="text-emerald-400 font-black">STREAMING LIVE</span>
+              </div>
+              <div class="bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-[#1d273a] shadow-inner flex items-center gap-2">
+                <span class="text-amber-400">🕒</span>
+                <span class="text-slate-400 font-bold">Clock:</span>
+                <span class="text-amber-300 font-black" id="cockpit-ist-time">LIVE IST</span>
+              </div>
+              <div class="bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-[#1d273a] shadow-inner flex items-center gap-2">
+                <span class="text-cyan-400">⚡</span>
+                <span class="text-slate-400 font-bold">Fyers v3:</span>
+                <span class="text-cyan-300 font-black">YA49011 (12ms)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 2. MAJOR INDIAN INDICES LIVE SPARKLINE TICKER CARDS -->
+        <!-- ============================================================ -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          
+          <!-- Card 1: NIFTY 50 -->
+          <div onclick="openTradingViewModal('NIFTY')" class="glass-panel p-3.5 rounded-xl border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-white group-hover:text-cyan-300 transition">NIFTY 50</span>
+              <span class="text-emerald-400">▲ +2.01%</span>
+            </div>
+            <div class="text-base font-black text-white mt-1">₹25,030.35</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1 pt-1 border-t border-[#182338]">
+              <span>PCR: <strong class="text-emerald-300">1.64</strong></span>
+              <span class="text-emerald-400 font-bold">+493.20</span>
+            </div>
+          </div>
+
+          <!-- Card 2: BANK NIFTY -->
+          <div onclick="openTradingViewModal('BANKNIFTY')" class="glass-panel p-3.5 rounded-xl border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-white group-hover:text-cyan-300 transition">BANK NIFTY</span>
+              <span class="text-emerald-400">▲ +1.84%</span>
+            </div>
+            <div class="text-base font-black text-white mt-1">₹52,380.00</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1 pt-1 border-t border-[#182338]">
+              <span>PCR: <strong class="text-emerald-300">1.08</strong></span>
+              <span class="text-emerald-400 font-bold">+945.10</span>
+            </div>
+          </div>
+
+          <!-- Card 3: FIN NIFTY -->
+          <div onclick="openTradingViewModal('FINNIFTY')" class="glass-panel p-3.5 rounded-xl border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-white group-hover:text-cyan-300 transition">FIN NIFTY</span>
+              <span class="text-emerald-400">▲ +1.62%</span>
+            </div>
+            <div class="text-base font-black text-white mt-1">₹24,150.00</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1 pt-1 border-t border-[#182338]">
+              <span>PCR: <strong class="text-emerald-300">1.34</strong></span>
+              <span class="text-emerald-400 font-bold">+385.00</span>
+            </div>
+          </div>
+
+          <!-- Card 4: MIDCP NIFTY -->
+          <div onclick="openTradingViewModal('MIDCPNIFTY')" class="glass-panel p-3.5 rounded-xl border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-white group-hover:text-cyan-300 transition">MIDCP NIFTY</span>
+              <span class="text-emerald-400">▲ +2.25%</span>
+            </div>
+            <div class="text-base font-black text-white mt-1">₹13,120.00</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1 pt-1 border-t border-[#182338]">
+              <span>PCR: <strong class="text-emerald-300">1.15</strong></span>
+              <span class="text-emerald-400 font-bold">+288.00</span>
+            </div>
+          </div>
+
+          <!-- Card 5: NIFTY NEXT 50 -->
+          <div onclick="openTradingViewModal('NIFTYNXT50')" class="glass-panel p-3.5 rounded-xl border border-emerald-500/30 hover:border-emerald-400/60 shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-white group-hover:text-cyan-300 transition">NEXT 50</span>
+              <span class="text-emerald-400">▲ +1.95%</span>
+            </div>
+            <div class="text-base font-black text-white mt-1">₹71,850.00</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1 pt-1 border-t border-[#182338]">
+              <span>PCR: <strong class="text-emerald-300">1.10</strong></span>
+              <span class="text-emerald-400 font-bold">+1,375.00</span>
+            </div>
+          </div>
+
+          <!-- Card 6: INDIA VIX -->
+          <div onclick="openTradingViewModal('INDIAVIX')" class="glass-panel p-3.5 rounded-xl border border-rose-500/30 hover:border-rose-400/60 shadow-lg hover:shadow-rose-500/20 hover:-translate-y-1 transition duration-200 cursor-pointer group">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-white group-hover:text-rose-300 transition">INDIA VIX</span>
+              <span class="text-rose-400">▼ -12.13%</span>
+            </div>
+            <div class="text-base font-black text-white mt-1">17.47</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1 pt-1 border-t border-[#182338]">
+              <span class="text-cyan-300 font-bold">IV Crush</span>
+              <span class="text-rose-400 font-bold">-2.41</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- 3. CLAUDE AI TRADING SKILL: ALL INDICES OPTIONS HUB -->
+        <!-- ============================================================ -->
+        <section id="section-claude-ai-indices-options" class="glass-panel p-4 md:p-6 rounded-2xl border border-[#223049] shadow-2xl space-y-4">
+          <!-- Section Header -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#1c273c] pb-4">
             <div>
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-extrabold uppercase font-mono text-purple-300 tracking-wider">Muhurat Claude AI Trading Skill &bull; Live Auspicious Conviction Radar</span>
-                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/30">8 Automated Setups Active</span>
+              <div class="flex items-center gap-2.5">
+                <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
+                <h2 class="text-lg md:text-xl font-black text-white tracking-wide flex items-center gap-2 font-mono">
+                  <span>🤖 CLAUDE AI TRADING SKILL</span>
+                  <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase tracking-wider">ALL INDICES OPTIONS HUB</span>
+                </h2>
               </div>
-              <div class="text-xs text-slate-300 mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono">
-                <span>Top Upside: <strong class="text-emerald-400 font-bold hover:underline cursor-pointer" onclick="openTradingViewChart('HAVELLS')">HAVELLS ₹1,128 (+5.61%)</strong> <span class="text-[10px] text-cyan-300 font-bold">🕒 09:21 &bull; 1.84x Bid/Ask &bull; 97.4% AI Score</span></span>
-                <span>Top Downside: <strong class="text-rose-400 font-bold hover:underline cursor-pointer" onclick="openTradingViewChart('ASTRAL')">ASTRAL ₹1,253 (-9.68%)</strong> <span class="text-[10px] text-rose-300 font-bold">🕒 09:18 &bull; 0.42x Bid/Ask &bull; 98.1% AI Score</span></span>
-              </div>
+              <p class="text-xs text-slate-400 font-mono mt-1">
+                Institutional Call (CE) &amp; Put (PE) Buy / Sell recommendations across NIFTY, BANK NIFTY, FIN NIFTY, MIDCP NIFTY &amp; NEXT 50 with exact <strong class="text-amber-400">🕒 Listed at Time</strong>, Risk:Reward &amp; 1-click Fyers API v3 execution.
+              </p>
             </div>
-          </div>
-          <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-            <button onclick="switchTab('cloud-ai')" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs font-mono transition shadow-lg shadow-purple-600/30 flex items-center gap-1.5 whitespace-nowrap">
-              <span>View All 8 Claude AI Signals</span>
-              <span>&rarr;</span>
-            </button>
-            <button onclick="switchTab('momentum')" class="px-3 py-2 rounded-lg bg-[#172033] hover:bg-[#1f2b45] text-cyan-300 font-mono text-xs font-bold transition whitespace-nowrap">
-              <span>Top Momentum &rarr;</span>
-            </button>
-            <button onclick="switchTab('liquidity')" class="px-3 py-2 rounded-lg bg-[#172033] hover:bg-[#1f2b45] text-amber-300 font-mono text-xs font-bold transition whitespace-nowrap">
-              <span>Top Traded &rarr;</span>
-            </button>
-          </div>
-        </div>
 
-        
-      <!-- ============================================================ -->
-      <!-- CLAUDE AI TRADING SKILL: ALL INDICES CALL & PUT OPTION BUY/SELL RECOMMENDATIONS -->
-      <!-- Finwurl Enterprises Private Limited • Powered by FinURL -->
-      <!-- ============================================================ -->
-      <section id="section-claude-ai-indices-options" class="glass-panel p-4 md:p-6 rounded-2xl border border-[#223049] shadow-2xl space-y-4">
-        <!-- Section Header -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-[#1c273c] pb-4">
-          <div>
-            <div class="flex items-center gap-2.5">
-              <span class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
-              <h2 class="text-lg md:text-xl font-black text-white tracking-wide flex items-center gap-2 font-mono">
-                <span>🤖 CLAUDE AI TRADING SKILL</span>
-                <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase tracking-wider">ALL INDICES OPTIONS HUB</span>
-              </h2>
-            </div>
-            <p class="text-xs text-slate-400 font-mono mt-1">
-              High-accuracy Call (CE) &amp; Put (PE) Buy / Sell recommendations across NIFTY, BANK NIFTY, FIN NIFTY, MIDCP NIFTY &amp; NEXT 50 with exact <strong class="text-amber-400">🕒 Listed at Time</strong>, Risk:Reward &amp; 1-click Fyers API v3 execution.
-            </p>
-          </div>
-
-          <!-- Quick Stats Pills -->
-          <div class="flex items-center gap-2 flex-wrap font-mono text-xs">
-            <span class="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">
-              Win Rate: 92.4%
-            </span>
-            <span class="px-3 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
-              Avg R:R: 1:2.85
-            </span>
-            <span class="px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">
-              Finwurl v4.2 Live
-            </span>
-          </div>
-        </div>
-
-        <!-- Filter Controls -->
-        <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0a0f1b] p-3 rounded-xl border border-[#1b2538] font-mono text-xs">
-          <!-- Filter by Index -->
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-slate-400 font-bold mr-1">Index:</span>
-            <button onclick="filterClaudeOptions('ALL', currentOptionTypeFilter)" id="btn-idx-ALL" class="px-2.5 py-1 rounded-md font-bold bg-cyan-500 text-black shadow-sm transition">All Indices</button>
-            <button onclick="filterClaudeOptions('NIFTY 50', currentOptionTypeFilter)" id="btn-idx-NIFTY-50" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">NIFTY 50</button>
-            <button onclick="filterClaudeOptions('BANK NIFTY', currentOptionTypeFilter)" id="btn-idx-BANK-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">BANK NIFTY</button>
-            <button onclick="filterClaudeOptions('FIN NIFTY', currentOptionTypeFilter)" id="btn-idx-FIN-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">FIN NIFTY</button>
-            <button onclick="filterClaudeOptions('MIDCP NIFTY', currentOptionTypeFilter)" id="btn-idx-MIDCP-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">MIDCP NIFTY</button>
-            <button onclick="filterClaudeOptions('NIFTY NEXT 50', currentOptionTypeFilter)" id="btn-idx-NIFTY-NEXT-50" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">NEXT 50</button>
-            <button onclick="filterClaudeOptions('INDIA VIX', currentOptionTypeFilter)" id="btn-idx-INDIA-VIX" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">INDIA VIX</button>
-          </div>
-
-          <!-- Filter by Action / Signal Type -->
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="text-slate-400 font-bold mr-1">Signal:</span>
-            <button onclick="filterClaudeOptions(currentIndexFilter, 'ALL')" id="btn-type-ALL" class="px-2.5 py-1 rounded-md font-bold bg-amber-500 text-black shadow-sm transition">All Actions</button>
-            <button onclick="filterClaudeOptions(currentIndexFilter, 'BUY-CE')" id="btn-type-BUY-CE" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-emerald-400 transition">🟢 Call Buy (CE)</button>
-            <button onclick="filterClaudeOptions(currentIndexFilter, 'BUY-PE')" id="btn-type-BUY-PE" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-rose-400 transition">🔴 Put Buy (PE)</button>
-            <button onclick="filterClaudeOptions(currentIndexFilter, 'SELL')" id="btn-type-SELL" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-amber-300 transition">🟡 Option Write (Sell)</button>
-          </div>
-        </div>
-
-        <!-- Dynamic Cards Grid for Claude AI Recommendations -->
-        <div id="claude-options-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
-          <!-- Dynamically populated by renderClaudeIndicesOptions() -->
-        </div>
-      </section>
-
-
-      <!-- DERIVATIVE PULSE RIBBON (TREDYE PULSE STYLE) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          <!-- Pulse 1: Market Buildup & Sentiment -->
-          <div class="glass-card p-3.5 flex flex-col justify-between">
-            <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase font-mono">
-              <span>MARKET BUILDUP</span>
-              <span class="text-emerald-400 font-bold flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-radar-dot"></span>
-                BULLISH 63%
+            <!-- Quick Stats Pills -->
+            <div class="flex items-center gap-2 flex-wrap font-mono text-xs">
+              <span class="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">
+                Win Rate: 92.4%
+              </span>
+              <span class="px-3 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
+                Avg R:R: 1:2.85
+              </span>
+              <span class="px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">
+                Finwurl v4.2 Live
               </span>
             </div>
-            <div class="mt-2 space-y-1.5">
-              <div class="flex justify-between items-center text-xs font-mono">
-                <span class="text-emerald-400 font-bold" id="pulse-long-buildup">135 Long Buildup</span>
+          </div>
+
+          <!-- Filter Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-[#0a0f1b] p-3 rounded-xl border border-[#1b2538] font-mono text-xs">
+            <!-- Filter by Index -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-slate-400 font-bold mr-1">Index:</span>
+              <button onclick="filterClaudeOptions('ALL', currentOptionTypeFilter)" id="btn-idx-ALL" class="px-2.5 py-1 rounded-md font-bold bg-cyan-500 text-black shadow-sm transition">All Indices</button>
+              <button onclick="filterClaudeOptions('NIFTY 50', currentOptionTypeFilter)" id="btn-idx-NIFTY-50" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">NIFTY 50</button>
+              <button onclick="filterClaudeOptions('BANK NIFTY', currentOptionTypeFilter)" id="btn-idx-BANK-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">BANK NIFTY</button>
+              <button onclick="filterClaudeOptions('FIN NIFTY', currentOptionTypeFilter)" id="btn-idx-FIN-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">FIN NIFTY</button>
+              <button onclick="filterClaudeOptions('MIDCP NIFTY', currentOptionTypeFilter)" id="btn-idx-MIDCP-NIFTY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">MIDCP NIFTY</button>
+              <button onclick="filterClaudeOptions('NIFTY NEXT 50', currentOptionTypeFilter)" id="btn-idx-NIFTY-NEXT-50" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">NEXT 50</button>
+              <button onclick="filterClaudeOptions('INDIA VIX', currentOptionTypeFilter)" id="btn-idx-INDIA-VIX" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-white transition">INDIA VIX</button>
+            </div>
+
+            <!-- Filter by Action / Signal Type -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-slate-400 font-bold mr-1">Signal:</span>
+              <button onclick="filterClaudeOptions(currentIndexFilter, 'ALL')" id="btn-type-ALL" class="px-2.5 py-1 rounded-md font-bold bg-amber-500 text-black shadow-sm transition">All Actions</button>
+              <button onclick="filterClaudeOptions(currentIndexFilter, 'BUY-CE')" id="btn-type-BUY-CE" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-emerald-400 transition">🟢 Call Buy (CE)</button>
+              <button onclick="filterClaudeOptions(currentIndexFilter, 'BUY-PE')" id="btn-type-BUY-PE" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-rose-400 transition">🔴 Put Buy (PE)</button>
+              <button onclick="filterClaudeOptions(currentIndexFilter, 'SELL')" id="btn-type-SELL" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-amber-300 transition">🟡 Option Write (Sell)</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Cards Grid for Claude AI Recommendations -->
+          <div id="claude-options-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 font-mono">
+            <!-- Dynamically populated by renderClaudeIndicesOptions() -->
+          </div>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- 4. DERIVATIVE PULSE RIBBON (4 PILLAR COMMAND CARDS) -->
+        <!-- ============================================================ -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Card 1: Market Buildup Momentum Flow -->
+          <div class="glass-panel p-4 rounded-xl border border-[#1b263b] shadow-xl hover:border-emerald-500/40 transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="font-bold flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  MARKET BUILDUP FLOW
+                </span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-300">218 F&amp;O</span>
+              </div>
+              <div class="flex items-baseline justify-between text-xs font-mono mb-2">
+                <span class="text-emerald-400 font-black text-sm" id="pulse-long-buildup">135 Long Buildup</span>
                 <span class="text-rose-400 font-bold" id="pulse-short-buildup">82 Short Buildup</span>
               </div>
-              <div class="w-full h-1.5 bg-rose-500/30 rounded-full overflow-hidden flex">
-                <div class="bg-emerald-500 h-full" id="pulse-buildup-bar" style="width: 63%"></div>
+              <!-- Progress Bar -->
+              <div class="w-full bg-[#162033] rounded-full h-2.5 overflow-hidden flex shadow-inner">
+                <div class="bg-gradient-to-r from-emerald-500 to-emerald-400 h-full" id="pulse-buildup-bar" style="width: 63%"></div>
+                <div class="bg-gradient-to-r from-rose-500 to-rose-600 h-full" style="width: 37%"></div>
               </div>
-              <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono pt-1">
-                <span>Short Covering: <strong class="text-cyan-400" id="pulse-short-covering">1</strong></span>
-                <span>Unwinding: <strong class="text-amber-400" id="pulse-long-unwinding">0</strong></span>
-              </div>
+            </div>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-3 pt-2 border-t border-[#162033]">
+              <span>Short Covering: <strong class="text-cyan-400" id="pulse-short-covering">1</strong></span>
+              <span>Long Unwind: <strong class="text-amber-400" id="pulse-long-unwinding">0</strong></span>
             </div>
           </div>
 
-          <!-- Pulse 2: Open Interest (OI) & Writing Bias -->
-          <div class="glass-card p-3.5 flex flex-col justify-between">
-            <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase font-mono">
-              <span>DERIVATIVE OPEN INTEREST</span>
-              <span class="text-cyan-400 font-bold font-mono">F&O TOTAL</span>
-            </div>
-            <div class="mt-1">
-              <div class="text-xl font-extrabold font-mono text-white" id="pulse-total-oi">823.3 Cr Contracts</div>
-              <div class="text-xs font-mono font-bold text-emerald-400 mt-0.5">
-                Put Writers Dominating &bull; Support Strong
+          <!-- Card 2: Open Interest (OI) Accumulation -->
+          <div class="glass-panel p-4 rounded-xl border border-[#1b263b] shadow-xl hover:border-cyan-500/40 transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="font-bold flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                  OPEN INTEREST (OI)
+                </span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">TOTAL F&amp;O</span>
+              </div>
+              <div class="text-xl font-black font-mono text-white tracking-wide" id="pulse-total-oi">823.3 Cr Contracts</div>
+              <div class="text-[11px] text-slate-400 font-mono mt-1">
+                Net Delta: <strong class="text-emerald-400 font-bold">+485,000 FII Flow</strong>
               </div>
             </div>
-            <div class="pt-2 mt-1 border-t border-[#172033] flex justify-between items-center text-[10.5px] font-mono text-slate-400">
-              <span>Call Resistance: <span class="text-rose-400 font-bold">25,200 CE</span></span>
-              <span>Put Floor: <span class="text-emerald-400 font-bold">24,800 PE</span></span>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-3 pt-2 border-t border-[#162033]">
+              <span>Put Floor: <strong class="text-emerald-400" id="pulse-put-writing">24800 PE</strong></span>
+              <span>Call Cap: <strong class="text-rose-400" id="pulse-call-writing">25200 CE</strong></span>
             </div>
           </div>
 
-          <!-- Pulse 3: Put-Call Ratio (PCR) -->
-          <div class="glass-card p-3.5 flex flex-col justify-between">
-            <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase font-mono">
-              <span>PUT-CALL RATIO (PCR)</span>
-              <span class="text-emerald-400 font-bold font-mono">BULL BIAS</span>
-            </div>
-            <div class="mt-1 flex items-baseline justify-between">
-              <div class="text-2xl font-extrabold font-mono text-emerald-400" id="pulse-market-pcr">1.12</div>
-              <div class="text-xs font-mono text-right">
-                <div class="text-slate-300">Nifty PCR: <strong class="text-emerald-400">1.64</strong></div>
-                <div class="text-slate-400 text-[10px]">BankNifty: <strong class="text-emerald-400">1.08</strong></div>
+          <!-- Card 3: Put-Call Ratio (PCR) Compass -->
+          <div class="glass-panel p-4 rounded-xl border border-[#1b263b] shadow-xl hover:border-emerald-500/40 transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="font-bold flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  PUT-CALL RATIO (PCR)
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">BULLISH FLOOR</span>
+              </div>
+              <div class="text-2xl font-black font-mono text-emerald-400 tracking-wide" id="pulse-market-pcr">1.12</div>
+              <div class="text-[11px] text-slate-400 font-mono mt-1">
+                Floor Support: <strong class="text-white font-bold">Strong Put Writing Base</strong>
               </div>
             </div>
-            <div class="pt-2 mt-1 border-t border-[#172033] flex justify-between items-center text-[10.5px] font-mono text-slate-400">
-              <span>Threshold: &gt;1.0 Bullish</span>
-              <span class="text-emerald-400 font-bold">Heavy Put Writing</span>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-3 pt-2 border-t border-[#162033]">
+              <span>Nifty: <strong class="text-emerald-300">1.64</strong></span>
+              <span>Bank Nifty: <strong class="text-emerald-300">1.08</strong></span>
             </div>
           </div>
 
-          <!-- Pulse 4: India VIX & Volatility Environment -->
-          <div class="glass-card p-3.5 flex flex-col justify-between">
-            <div class="flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase font-mono">
-              <span>INDIA VIX & IVP</span>
-              <span class="text-amber-400 font-bold font-mono">PREMIUM SPIKE</span>
-            </div>
-            <div class="mt-1 flex items-baseline justify-between">
-              <div>
-                <div class="text-2xl font-extrabold font-mono text-white" id="pulse-vix-val">17.47</div>
-                <div class="text-[10px] text-emerald-400 font-mono font-bold">+12.13% Vol Expansion</div>
+          <!-- Card 4: India VIX Volatility Thermometer -->
+          <div class="glass-panel p-4 rounded-xl border border-[#1b263b] shadow-xl hover:border-amber-500/40 transition flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
+                <span class="font-bold flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+                  INDIA VIX VOLATILITY
+                </span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-bold">IV CRUSH</span>
               </div>
-              <div class="text-right font-mono text-[11px]">
-                <div class="text-amber-400 font-bold">High IVP Mode</div>
-                <div class="text-[10px] text-slate-400">Options Seller Edge</div>
+              <div class="text-2xl font-black font-mono text-white tracking-wide" id="pulse-vix-val">17.47</div>
+              <div class="text-[11px] text-rose-400 font-mono mt-1">
+                ▼ -12.13% Volatility Drop &bull; Option Sellers Dominate
               </div>
             </div>
-            <div class="pt-2 mt-1 border-t border-[#172033] flex justify-between items-center text-[10.5px] font-mono text-slate-400">
-              <span>Avg Stock IV: <strong class="text-white">22.4%</strong></span>
+            <div class="flex justify-between items-center text-[10px] text-slate-400 font-mono mt-3 pt-2 border-t border-[#162033]">
               <span>High IVP Equities: <strong class="text-amber-400">48</strong></span>
+              <span class="text-emerald-400 font-bold">Safe Theta Decay</span>
             </div>
           </div>
+
         </div>
 
         <!-- ============================================================ -->
-        <!-- INTERACTIVE FULL SECTOR HEATMAP PREVIEW ON HOME TAB -->
-        <!-- ============================================================ -->
-        <div class="glass-panel rounded-xl p-4 space-y-3.5 border border-[#172033]">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2 border-b border-[#172033]">
-            <div class="flex items-center gap-2">
-              <span class="text-lg">🗺</span>
-              <div>
-                <h2 class="text-sm md:text-base font-extrabold text-white flex items-center gap-2">
-                  <span>NSE F&O Sector Heatmap & Money Flow</span>
-                  <span class="px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-mono font-bold tracking-wide">FINWURL AI ENGINE</span>
-                </h2>
-                <div class="text-[11px] text-slate-400">Click ANY stock tile to open live chart on <strong>TradingView.com</strong></div>
-              </div>
-            </div>
-
-            <!-- Heatmap Controls -->
-            <div class="flex items-center gap-2 text-xs font-mono">
-              <div class="flex items-center gap-1 bg-[#090d16] border border-[#1e293b] rounded p-1">
-                <span class="text-[10px] text-slate-400 px-1 uppercase">Metric:</span>
-                <select id="heatmap-metric-select" onchange="renderSectorHeatmap()" class="bg-[#0f1524] text-white text-[11px] rounded px-2 py-0.5 border-none outline-none font-bold">
-                  <option value="pct_change">% Price Change</option>
-                  <option value="oi_chg_pct">OI Change %</option>
-                  <option value="pcr">Put-Call Ratio (PCR)</option>
-                  <option value="ivp">IV Percentile (IVP)</option>
-                </select>
-              </div>
-
-              <button onclick="switchTab('heatmap')" class="px-3 py-1 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-xs transition">
-                Full-Screen Heatmap &rarr;
-              </button>
-            </div>
-          </div>
-
-          <!-- Heatmap Container Grid -->
-          <div id="home-sector-heatmap-container" class="space-y-4">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-        <!-- ============================================================ -->
-        <!-- CANDIDATE ENGINES PREVIEW (LIVE RADARS & CLOUD AI MODELS) -->
+        <!-- 5. INSTITUTIONAL TRADING ENGINES SHOWROOM (PREVIEW TABLES) -->
         <!-- ============================================================ -->
         <div class="space-y-4">
-          <!-- Sonic Pulse Model Table -->
-          <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-            <div class="p-3.5 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-radar-dot"></div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Muhurat Pulse Model &bull; <span class="text-emerald-400">Bullish Momentum &amp; Put Writing</span>
-                </h3>
-              </div>
-              <div class="flex items-center gap-3">
-                <button onclick="switchTab('sonic')" class="text-xs text-slate-400 hover:text-white font-mono">View All 10 &rarr;</button>
-                <button onclick="openFormulaModal('sonic')" class="text-xs text-cyan-400 hover:underline font-mono">Formula &rarr;</button>
-              </div>
+          <div class="flex items-center justify-between border-b border-[#1c273c] pb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-amber-400 text-lg">⚡</span>
+              <h2 class="text-lg font-black text-white tracking-wide">
+                INSTITUTIONAL ALGORITHMIC ENGINES
+              </h2>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                TOP 5 PICKS
+              </span>
             </div>
-            <div class="overflow-x-auto">
-              <table id="table-home-sonic-bullish" class="w-full text-left border-collapse text-xs"></table>
-            </div>
+            <span class="text-xs text-slate-400">Click ANY stock to launch Screenshot-Matched AI Trade Setup</span>
           </div>
 
-          <!-- Titan Flow Model Table -->
-          <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-            <div class="p-3.5 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-rose-400 pulse-radar-red-dot"></div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Muhurat Flow Model &bull; <span class="text-rose-400">Whale Distribution &amp; Call Writing Pressure</span>
-                </h3>
+          <!-- Grid: Top Upside Momentum & Top Downside Momentum -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            <!-- Table 1: Top Upside Momentum -->
+            <div class="glass-panel p-4 rounded-xl border border-emerald-500/30 shadow-xl space-y-2">
+              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+                <span class="font-bold text-emerald-400 text-xs flex items-center gap-1.5">
+                  <span>🚀</span> TOP MOMENTUM UPSIDE BREAKOUTS (BULLISH)
+                </span>
+                <span class="text-[10px] text-slate-400">Ranked by Velocity</span>
               </div>
-              <div class="flex items-center gap-3">
-                <button onclick="switchTab('titan')" class="text-xs text-slate-400 hover:text-white font-mono">View All 10 &rarr;</button>
-                <button onclick="openFormulaModal('titan')" class="text-xs text-cyan-400 hover:underline font-mono">Formula &rarr;</button>
+              <div class="overflow-x-auto"><table id="table-home-momentum-upside" class="w-full text-left border-collapse text-xs"></table></div>
+            </div>
+
+            <!-- Table 2: Top Downside Momentum -->
+            <div class="glass-panel p-4 rounded-xl border border-rose-500/30 shadow-xl space-y-2">
+              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+                <span class="font-bold text-rose-400 text-xs flex items-center gap-1.5">
+                  <span>📉</span> TOP MOMENTUM DOWNSIDE COLLAPSES (BEARISH)
+                </span>
+                <span class="text-[10px] text-slate-400">Ranked by Sell Delta</span>
               </div>
+              <div class="overflow-x-auto"><table id="table-home-momentum-downside" class="w-full text-left border-collapse text-xs"></table></div>
             </div>
-            <div class="overflow-x-auto">
-              <table id="table-home-titan-bearish" class="w-full text-left border-collapse text-xs"></table>
-            </div>
+
           </div>
 
-          <!-- Quant Elite 3m Bearish Squeeze Breakouts Table -->
-          <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-            <div class="p-3.5 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Muhurat Elite 3m &bull; <span class="text-amber-400">Bearish Squeeze Breakouts</span>
-                  <span class="ml-2 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">NEW &bull; 3m</span>
-                </h3>
+          <!-- Grid: Muhurat Pulse Model & Muhurat Flow Model -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            <!-- Table 3: Muhurat Pulse Model (Sonic Pulse) -->
+            <div class="glass-panel p-4 rounded-xl border border-cyan-500/30 shadow-xl space-y-2">
+              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+                <span class="font-bold text-cyan-300 text-xs flex items-center gap-1.5">
+                  <span>🌊</span> MUHURAT PULSE MODEL &bull; RVOL &amp; HYPERFLOW™
+                </span>
+                <button onclick="switchTab('sonic-pulse')" class="text-[10px] text-cyan-400 hover:underline">View All &rarr;</button>
               </div>
-              <div class="flex items-center gap-3">
-                <button onclick="switchTab('elite')" class="text-xs text-slate-400 hover:text-white font-mono">View All 12 &rarr;</button>
-                <button onclick="openFormulaModal('elite')" class="text-xs text-cyan-400 hover:underline font-mono">Formula &rarr;</button>
+              <div class="overflow-x-auto"><table id="table-home-sonic-bullish" class="w-full text-left border-collapse text-xs"></table></div>
+            </div>
+
+            <!-- Table 4: Muhurat Flow Model (Titan Flow) -->
+            <div class="glass-panel p-4 rounded-xl border border-amber-500/30 shadow-xl space-y-2">
+              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+                <span class="font-bold text-amber-300 text-xs flex items-center gap-1.5">
+                  <span>🐋</span> MUHURAT FLOW MODEL &bull; WHALE SWEEPS
+                </span>
+                <button onclick="switchTab('titan-flow')" class="text-[10px] text-amber-400 hover:underline">View All &rarr;</button>
               </div>
+              <div class="overflow-x-auto"><table id="table-home-titan-bearish" class="w-full text-left border-collapse text-xs"></table></div>
             </div>
-            <div class="overflow-x-auto">
-              <table id="table-home-elite-bearish" class="w-full text-left border-collapse text-xs"></table>
-            </div>
+
           </div>
 
-          <!-- Quant Elite Pro 6m Bearish Wave Candidates Table -->
-          <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-            <div class="p-3.5 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-purple-400 animate-pulse"></div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Muhurat Elite Pro 6m &bull; <span class="text-purple-400">Bearish Wave Candidates</span>
-                  <span class="ml-2 px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[10px] font-bold">NEW &bull; 6m</span>
-                </h3>
+          <!-- Grid: Muhurat Elite 3m & Muhurat Elite Pro 6m -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            
+            <!-- Table 5: Muhurat Elite Engine (3m Squeeze) -->
+            <div class="glass-panel p-4 rounded-xl border border-rose-500/30 shadow-xl space-y-2">
+              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+                <span class="font-bold text-rose-300 text-xs flex items-center gap-1.5">
+                  <span>🎯</span> MUHURAT ELITE ENGINE (3m) &bull; SQUEEZE BREAKOUTS
+                </span>
+                <button onclick="switchTab('quant-elite')" class="text-[10px] text-rose-400 hover:underline">View All &rarr;</button>
               </div>
-              <div class="flex items-center gap-3">
-                <button onclick="switchTab('elite-pro')" class="text-xs text-slate-400 hover:text-white font-mono">View All 12 &rarr;</button>
-                <button onclick="openFormulaModal('elite_pro')" class="text-xs text-cyan-400 hover:underline font-mono">Formula &rarr;</button>
+              <div class="overflow-x-auto"><table id="table-home-elite-bearish" class="w-full text-left border-collapse text-xs"></table></div>
+            </div>
+
+            <!-- Table 6: Muhurat Elite Pro Engine (6m Bearish Waves) -->
+            <div class="glass-panel p-4 rounded-xl border border-purple-500/30 shadow-xl space-y-2">
+              <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+                <span class="font-bold text-purple-300 text-xs flex items-center gap-1.5">
+                  <span>🌊</span> MUHURAT ELITE PRO ENGINE (6m) &bull; BEARISH WAVES
+                </span>
+                <button onclick="switchTab('quant-elite-pro')" class="text-[10px] text-purple-400 hover:underline">View All &rarr;</button>
               </div>
+              <div class="overflow-x-auto"><table id="table-home-elite-pro-bearish" class="w-full text-left border-collapse text-xs"></table></div>
             </div>
-            <div class="overflow-x-auto">
-              <table id="table-home-elite-pro-bearish" class="w-full text-left border-collapse text-xs"></table>
-            </div>
+
           </div>
 
-          <!-- Titan Flow Cash Delivery Distribution Table -->
-          <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-            <div class="p-3.5 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-rose-500 pulse-radar-red-dot"></div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Muhurat Flow Cash Segment &bull; <span class="text-rose-400">Delivery Distribution (12m)</span>
-                  <span class="ml-2 px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">12m Cash</span>
-                </h3>
-              </div>
-              <div class="flex items-center gap-3">
-                <button onclick="switchTab('titan-cash')" class="text-xs text-slate-400 hover:text-white font-mono">View All 12 &rarr;</button>
-                <button onclick="openFormulaModal('titan_cash')" class="text-xs text-cyan-400 hover:underline font-mono">Formula &rarr;</button>
-              </div>
+          <!-- Table 7: Market Liquidity & Top Traded Value -->
+          <div class="glass-panel p-4 rounded-xl border border-amber-500/30 shadow-xl space-y-2">
+            <div class="flex items-center justify-between border-b border-[#1c273c] pb-2">
+              <span class="font-bold text-amber-300 text-xs flex items-center gap-1.5">
+                <span>💧</span> HIGH LIQUIDITY &bull; MOST ACTIVE TOP TRADED VALUE
+              </span>
+              <button onclick="switchTab('liquidity')" class="text-[10px] text-amber-400 hover:underline">View All &rarr;</button>
             </div>
-            <div class="overflow-x-auto">
-              <table id="table-home-titan-cash-bearish" class="w-full text-left border-collapse text-xs"></table>
-            </div>
-          </div>
-
-          <!-- Best Momentum Upside Preview Table -->
-          <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-            <div class="p-3.5 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 pulse-radar-dot"></div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Best Momentum Upside &bull; <span class="text-emerald-400">Top Bullish Surge Equities</span>
-                  <span class="ml-2 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">High Buyer Absorption</span>
-                </h3>
-              </div>
-              <div class="flex items-center gap-3">
-                <button onclick="switchTab('momentum')" class="text-xs text-slate-400 hover:text-white font-mono">View All 12 &rarr;</button>
-                <button onclick="openFormulaModal('momentum')" class="text-xs text-cyan-400 hover:underline font-mono">Formula &rarr;</button>
-              </div>
-            </div>
-            <div class="overflow-x-auto">
-              <table id="table-home-momentum-upside" class="w-full text-left border-collapse text-xs"></table>
-            </div>
-          </div>
-
-          <!-- Best Momentum Downside Preview Table -->
-          <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-            <div class="p-3.5 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-rose-400 pulse-radar-red-dot"></div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Best Momentum Downside &bull; <span class="text-rose-400">Top Bearish Collapse Equities</span>
-                  <span class="ml-2 px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 text-[10px] font-bold">Heavy Short Buildup</span>
-                </h3>
-              </div>
-              <div class="flex items-center gap-3">
-                <button onclick="switchTab('momentum')" class="text-xs text-slate-400 hover:text-white font-mono">View All 12 &rarr;</button>
-                <button onclick="openFormulaModal('momentum')" class="text-xs text-cyan-400 hover:underline font-mono">Formula &rarr;</button>
-              </div>
-            </div>
-            <div class="overflow-x-auto">
-              <table id="table-home-momentum-downside" class="w-full text-left border-collapse text-xs"></table>
-            </div>
-          </div>
-
-          <!-- Top Traded by Value (Turnover) Table -->
-          <div class="glass-panel rounded-xl overflow-hidden border border-[#172033]">
-            <div class="p-3.5 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <div class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></div>
-                <h3 class="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  Market Liquidity &bull; <span class="text-amber-400">Top Traded Equities by Turnover (₹ Crores)</span>
-                  <span class="ml-2 px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-bold">Institutional Volume</span>
-                </h3>
-              </div>
-              <div class="flex items-center gap-3">
-                <button onclick="switchTab('liquidity')" class="text-xs text-slate-400 hover:text-white font-mono">View All 12 &rarr;</button>
-                <button onclick="openFormulaModal('liquidity')" class="text-xs text-cyan-400 hover:underline font-mono">Formula &rarr;</button>
-              </div>
-            </div>
-            <div class="overflow-x-auto">
-              <table id="table-home-top-traded" class="w-full text-left border-collapse text-xs"></table>
-            </div>
+            <div class="overflow-x-auto"><table id="table-home-top-traded" class="w-full text-left border-collapse text-xs"></table></div>
           </div>
         </div>
 
-      </section>
+        <!-- ============================================================ -->
+        <!-- 6. SECTOR HEATMAP PREVIEW (TOP SECTORS) -->
+        <!-- ============================================================ -->
+        <div class="glass-panel p-4 md:p-6 rounded-2xl border border-[#1e2a42] bg-[#090d16] shadow-xl space-y-3">
+          <div class="flex items-center justify-between border-b border-[#1c273c] pb-3">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">🗺</span>
+              <h2 class="text-base md:text-lg font-black text-white tracking-wide">
+                SECTOR HEATMAP SNAPSHOT
+              </h2>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                12+ SECTORS
+              </span>
+            </div>
+            <button onclick="switchTab('heatmap')" class="text-xs text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1">
+              <span>Open Full-Page Treemap</span>
+              <span>&rarr;</span>
+            </button>
+          </div>
+          <div id="home-sector-heatmap-container" class="space-y-3">
+            <!-- Populated via JavaScript -->
+          </div>
+        </div>
 
-      <!-- ============================================================ -->
+      </section><!-- ============================================================ -->
       <!-- TAB: FULL SECTOR HEATMAP (DEDICATED FULL VIEW) -->
       <!-- ============================================================ -->
             <!-- ============================================================ -->
@@ -3795,6 +3837,18 @@
       container.innerHTML = html;
     }
 
+
+    
+    function updateCockpitTime() {
+      const elem = document.getElementById('cockpit-ist-time');
+      if (elem) {
+        const now = new Date();
+        const options = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        elem.innerText = now.toLocaleTimeString('en-GB', options) + ' IST';
+      }
+    }
+    setInterval(updateCockpitTime, 1000);
+    updateCockpitTime();
 
     window.addEventListener('DOMContentLoaded', () => {
       renderAllTables();
