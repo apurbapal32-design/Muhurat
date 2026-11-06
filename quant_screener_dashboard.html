@@ -2994,7 +2994,7 @@
         <div id="auth-view-signin" class="space-y-3.5">
           <div>
             <label class="text-[11px] font-bold text-slate-300">Email Address or Fyers Client ID</label>
-            <input id="auth-signin-email" type="text" value="apurbapal32@gmail.com" class="w-full bg-[#06080e] border border-[#1f2b45] rounded-lg p-2.5 text-xs text-white mt-1 outline-none focus:border-amber-400 transition" placeholder="you@domain.com or YA49011">
+            <input id="auth-signin-email" type="text" value="apurbapal32@gmail.com" onkeydown="if(event.key === 'Enter') handleSignInSubmit();" class="w-full bg-[#06080e] border border-[#1f2b45] rounded-lg p-2.5 text-xs text-white mt-1 outline-none focus:border-amber-400 transition" placeholder="apurbapal32@gmail.com">
           </div>
           <div>
             <div class="flex justify-between items-center">
@@ -3002,7 +3002,7 @@
               <button type="button" onclick="switchAuthTab('forgot')" class="text-[10px] text-amber-400 hover:underline">Forgot password?</button>
             </div>
             <div class="relative mt-1">
-              <input id="auth-signin-password" type="password" value="MasterAdmin@2026" class="w-full bg-[#06080e] border border-[#1f2b45] rounded-lg p-2.5 pr-10 text-xs text-white outline-none focus:border-amber-400 transition" placeholder="MasterAdmin@2026">
+              <input id="auth-signin-password" type="password" value="" onkeydown="if(event.key === 'Enter') handleSignInSubmit();" class="w-full bg-[#06080e] border border-[#1f2b45] rounded-lg p-2.5 pr-10 text-xs text-white outline-none focus:border-amber-400 transition" placeholder="Enter password (or leave blank to open)">
               <button type="button" onclick="togglePasswordVisibility('auth-signin-password', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white text-xs font-mono cursor-pointer" title="Show / Hide Password">
                 👁️
               </button>
@@ -6741,7 +6741,7 @@
       const emailInput = document.getElementById('auth-signin-email');
       const passInput = document.getElementById('auth-signin-password');
       const email = (emailInput ? emailInput.value : '').trim() || 'apurbapal32@gmail.com';
-      const pass = (passInput ? passInput.value : '').trim() || 'MasterAdmin@2026';
+      const pass = passInput ? passInput.value : ''; // Accepts blank password directly to open page
 
       const user = {
         name: 'Apurba Pal',
@@ -6754,7 +6754,7 @@
         localStorage.setItem('muhurat_auth_user', JSON.stringify(user));
       } catch (e) {}
 
-      showToast('⭐ Welcome back, Apurba Pal! Admin Plan Master Access Active.');
+      showToast('⭐ Welcome Apurba Pal! Terminal Unlocked (Admin Plan Active).');
       closeAuthModal();
       switchTab('home');
     }
