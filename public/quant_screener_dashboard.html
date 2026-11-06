@@ -2117,44 +2117,44 @@
       <!-- TAB: MARKET LIQUIDITY (UPSIDE & DOWNSIDE)  -->
       <!-- ========================================== -->
       <section id="tab-liquidity" class="tab-pane hidden space-y-6 font-mono">
-        <div class="card p-4 border-l-4 border-amber-500 bg-[#121622] flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="card p-4 border-l-4 border-amber-500 bg-[#121622] flex flex-col md:flex-row md:items-center justify-between gap-3 rounded-xl shadow-lg">
           <div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
               <h2 class="text-lg font-bold text-white">Market Liquidity &bull; Most Active by Turnover &amp; Value (Top Traded)</h2>
-              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[10px]">UPSIDE &bull; DOWNSIDE</span>
+              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold text-[10px] border border-purple-500/40">CLAUDE AI TRADE SKILL &bull; TOP 10</span>
             </div>
             <p class="text-xs text-slate-300 mt-1 max-w-2xl font-sans">
-              Identifies stocks commanding the highest monetary turnover, deepest market liquidity, and lowest slippage for large lot institutional execution &mdash; split by Bullish Accumulation vs. Bearish Institutional Distribution.
+              Identifies the elite <span class="text-amber-400 font-bold">Top 10 Stocks</span> commanding the highest monetary turnover, deepest market liquidity, and lowest slippage for large lot institutional execution &mdash; strictly ranked as per the <span class="text-cyan-300 font-bold">Claude AI Trade Skill Formula</span> (Turnover Depth, Price Velocity, RVOL, HyperFlow&trade;, Delta, &amp; Smart Money Confluence).
             </p>
           </div>
-          <div class="text-right font-mono text-xs text-slate-400">
-            <div>Metric: <span class="text-amber-400 font-bold">Total Traded Value (&#8377; Cr)</span></div>
-            <div>Slippage: <span class="text-emerald-400 font-bold">Ultra Low &lt; 0.02%</span></div>
+          <div class="text-right font-mono text-xs text-slate-400 shrink-0">
+            <div>Algorithm: <span class="text-purple-400 font-bold">Claude AI Trade Skill</span></div>
+            <div>Strict Selection: <span class="text-emerald-400 font-bold">Top 10 Upside</span> &bull; <span class="text-rose-400 font-bold">Top 10 Downside</span></div>
           </div>
         </div>
 
-        <!-- Table 1: Most Active Upside Traded -->
+        <!-- Table 1: Most Active Upside Traded (Top 10) -->
         <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl shadow-xl">
-          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between">
+          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between flex-wrap gap-2">
             <span class="font-bold text-sm text-emerald-400 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              Most Active Stocks by Turnover &bull; Upside Momentum (Top Traded Longs)
+              Top 10 Stocks by Turnover &bull; Upside Momentum (Claude AI Trade Skill Longs)
             </span>
-            <span class="text-xs font-mono text-slate-400">Institutional Net Inflow</span>
+            <span class="text-xs font-mono text-emerald-300 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/30">Top 10 Institutional Inflows</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-top-traded"></table>
           </div>
         </div>
 
-        <!-- Table 2: Most Active Downside Traded -->
+        <!-- Table 2: Most Active Downside Traded (Top 10) -->
         <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl shadow-xl">
-          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between">
+          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between flex-wrap gap-2">
             <span class="font-bold text-sm text-rose-400 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
-              Most Active Stocks by Turnover &bull; Downside Distribution (Top Traded Shorts)
+              Top 10 Stocks by Turnover &bull; Downside Distribution (Claude AI Trade Skill Shorts)
             </span>
-            <span class="text-xs font-mono text-slate-400">Institutional Net Outflow &amp; Dumps</span>
+            <span class="text-xs font-mono text-rose-300 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/30">Top 10 Institutional Outflows</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-top-traded-downside"></table>
@@ -4251,20 +4251,70 @@
       renderTable('table-home-titan-cash-bearish', DATA.titan_cash_bearish.slice(0, 5), false);
       renderTable('table-home-momentum-upside', DATA.best_momentum_upside.slice(0, 5), true);
       renderTable('table-home-momentum-downside', DATA.best_momentum_downside.slice(0, 5), false);
-      // Compute Top Traded Upside and Downside by Turnover
-      const allStocks = (DATA && DATA.all_stocks) ? DATA.all_stocks : [];
+      // ============================================================
+      // CLAUDE AI TRADE SKILL FORMULA: TOP 10 UPSIDE & DOWNSIDE
+      // ============================================================
+      function calcClaudeAiTradeSkillScore(stock, isUpside) {
+        const turnover = Number(stock.turnover_cr) || 0;
+        const pct = Number(stock.pct_change) || 0;
+        const rvol = Number(stock.rvol) || 1.0;
+        const hyperflow = Number(stock.hyperflow) || 50.0;
+        const delta = Number(stock.delta) || 0;
+        
+        let confluence = 3;
+        if (stock.confluence) {
+          const raw = isUpside ? stock.confluence.bullish_score : stock.confluence.bearish_score;
+          if (typeof raw === 'string' && raw.includes('/')) {
+            confluence = parseInt(raw.split('/')[0]) || 3;
+          }
+        }
 
-      let upsideTraded = allStocks.filter(s => s.pct_change >= 0);
-      upsideTraded.sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0));
-      if (upsideTraded.length === 0 && DATA.top_traded_value) {
-        upsideTraded = DATA.top_traded_value;
+        if (isUpside) {
+          // Claude AI Upside Trade Skill Formula:
+          // Heavy Turnover + Price Momentum Velocity + RVOL Surge + HyperFlow Intensity + Positive Delta + Confluence
+          const turnoverWeight = turnover * 0.45;
+          const momentumWeight = Math.max(0, pct) * 85.0;
+          const rvolWeight = Math.max(0, rvol - 0.8) * 60.0;
+          const hyperflowWeight = hyperflow * 3.5;
+          const deltaWeight = (delta > 0 ? 1 : -0.5) * Math.min(100, Math.abs(delta) / 10000.0) * 1.5;
+          const confluenceWeight = confluence * 30.0;
+
+          return turnoverWeight + momentumWeight + rvolWeight + hyperflowWeight + deltaWeight + confluenceWeight;
+        } else {
+          // Claude AI Downside Trade Skill Formula:
+          // Heavy Turnover + Price Breakdown Velocity + RVOL Surge + Distribution (100 - Hyperflow) + Negative Delta + Confluence
+          const turnoverWeight = turnover * 0.45;
+          const breakdownWeight = Math.abs(Math.min(0, pct)) * 85.0;
+          const rvolWeight = Math.max(0, rvol - 0.8) * 60.0;
+          const distributionWeight = (100.0 - hyperflow) * 3.5;
+          const deltaWeight = (delta < 0 ? 1 : -0.5) * Math.min(100, Math.abs(delta) / 10000.0) * 1.5;
+          const confluenceWeight = confluence * 30.0;
+
+          return turnoverWeight + breakdownWeight + rvolWeight + distributionWeight + deltaWeight + confluenceWeight;
+        }
       }
 
+      const allStocks = (DATA && DATA.all_stocks) ? DATA.all_stocks : [];
+
+      // Rank Upside Candidates by Claude AI Trade Skill Formula
+      let upsideTraded = allStocks.filter(s => s.pct_change >= 0);
+      if (upsideTraded.length === 0 && DATA.top_traded_value) {
+        upsideTraded = [...DATA.top_traded_value];
+      }
+      upsideTraded.forEach(s => {
+        s.claude_ai_score = calcClaudeAiTradeSkillScore(s, true);
+      });
+      upsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
+
+      // Rank Downside Candidates by Claude AI Trade Skill Formula
       let downsideTraded = allStocks.filter(s => s.pct_change < 0);
-      downsideTraded.sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0));
       if (downsideTraded.length === 0) {
         downsideTraded = [...allStocks].sort((a, b) => (a.pct_change || 0) - (b.pct_change || 0));
       }
+      downsideTraded.forEach(s => {
+        s.claude_ai_score = calcClaudeAiTradeSkillScore(s, false);
+      });
+      downsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
       renderTable('table-home-top-traded', upsideTraded.slice(0, 5), true);
       renderTable('table-home-top-traded-downside', downsideTraded.slice(0, 5), false);
@@ -4286,8 +4336,9 @@
       // New Momentum & Liquidity Tables
       renderTable('table-momentum-upside', DATA.best_momentum_upside, true);
       renderTable('table-momentum-downside', DATA.best_momentum_downside, false);
-      renderTable('table-top-traded', upsideTraded, true);
-      renderTable('table-top-traded-downside', downsideTraded, false);
+      // Market Liquidity Dedicated Tab: ONLY TOP 10 STOCKS AS PER CLAUDE AI TRADE SKILL FORMULA
+      renderTable('table-top-traded', upsideTraded.slice(0, 10), true);
+      renderTable('table-top-traded-downside', downsideTraded.slice(0, 10), false);
       renderTable('table-most-active', DATA.most_active_volume, true);
     }
 
