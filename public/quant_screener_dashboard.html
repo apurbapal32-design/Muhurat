@@ -1319,33 +1319,447 @@
         </div>
       </section>
 
-      <section id="tab-learn-started" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-5 rounded-xl space-y-3">
-          <h2 class="text-lg font-bold text-white">How to Get Started with Finwurl Enterprises &bull; Powered by FinURL</h2>
-          <p class="text-sm text-slate-300 leading-relaxed">
-            Finwurl Enterprises Private Limited (Powered by FinURL) provides comprehensive institutional intelligence of open interest (OI) accumulation, options writing floors/ceilings, and multi-factor quantitative engines.
+      <!-- ========================================== -->
+      <!-- TAB: LEARNING CENTER - HOW TO GET STARTED  -->
+      <!-- ========================================== -->
+      <section id="tab-learn-started" class="tab-pane hidden space-y-6 font-mono">
+        <!-- Hero Header -->
+        <div class="card p-5 border-l-4 border-cyan-500 bg-gradient-to-r from-[#101626] to-[#0c101c] rounded-xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-extrabold text-[10px] tracking-wider uppercase">MASTERCLASS 101</span>
+                <span class="text-xs text-slate-400 font-mono">FINWURL ENTERPRISES &bull; POWERED BY FINURL</span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-white mt-1">How to Get Started with Muhurat Quant Screener</h2>
+              <p class="text-xs text-slate-300 font-sans max-w-3xl mt-1 leading-relaxed">
+                A complete institutional operational blueprint for configuring live Fyers API v3 streaming, mastering the multi-pivot Central Pivot Range (CPR), filtering 218 NSE contracts via algorithmic candidate engines, and executing high-conviction trades with strict risk management.
+              </p>
+            </div>
+            <div class="text-right font-mono text-xs text-slate-400 bg-[#080d1a] p-3 rounded-lg border border-[#172033]">
+              <div>System Engine: <span class="text-cyan-400 font-bold">Muhurat Quant Elite Pro</span></div>
+              <div>Broker Feed: <span class="text-emerald-400 font-bold">Fyers API v3 (WebSocket)</span></div>
+              <div>Universe: <span class="text-amber-400 font-bold">218 NSE F&amp;O + 6 Indices</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <div class="flex items-center gap-3">
+            <span class="flex items-center justify-center w-7 h-7 rounded-full bg-cyan-500 text-black font-extrabold text-sm font-mono">1</span>
+            <h3 class="text-base font-bold text-white font-mono">Broker Connection &amp; Real-Time Data Setup (Fyers API v3)</h3>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            The Muhurat Quant Screener directly integrates with <strong>Fyers API v3</strong> via OAuth 2.0 to stream tick-by-tick real-time quotes, Order Flow Delta, and cumulative volumes with zero delay.
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 font-mono text-xs">
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <div class="text-amber-400 font-bold text-[11px] mb-1">A. Authentication</div>
+              <p class="text-[11px] text-slate-400 font-sans">Click <strong>Sign In</strong> in the top header &rarr; choose <strong>Fyers Quick Login</strong>. Your active broker session (Client ID: <code class="text-cyan-300">YA49011</code>) syncs instantly with valid credentials.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <div class="text-emerald-400 font-bold text-[11px] mb-1">B. WebSocket Data Stream</div>
+              <p class="text-[11px] text-slate-400 font-sans">Background daemon fetches live bid/ask quotes, open interest, and traded volume for all 218 NSE derivative contracts every second.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <div class="text-purple-400 font-bold text-[11px] mb-1">C. Live Status HUD</div>
+              <p class="text-[11px] text-slate-400 font-sans">Green pulsing indicator in the header confirms streaming latency under 50ms across all 6 Indian indices.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <div class="flex items-center gap-3">
+            <span class="flex items-center justify-center w-7 h-7 rounded-full bg-amber-500 text-black font-extrabold text-sm font-mono">2</span>
+            <h3 class="text-base font-bold text-white font-mono">Navigating the Muhurat Home Cockpit &amp; Index Radar</h3>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            When you land on <strong>Muhurat Home</strong> (Sidebar #1), you receive immediate macro orientation before looking at individual stocks:
+          </p>
+          <div class="space-y-2 text-xs font-mono">
+            <div class="p-2.5 rounded bg-[#090e1b] border-l-2 border-emerald-400 text-slate-300">
+              <strong class="text-emerald-400">1. Index Tickers:</strong> Monitor NIFTY 50, BANK NIFTY, FIN NIFTY, MIDCAP NIFTY, NEXT 50, and INDIA VIX. A VIX below 14 indicates low volatility/favorable trend days; VIX above 18 indicates wide chop.
+            </div>
+            <div class="p-2.5 rounded bg-[#090e1b] border-l-2 border-cyan-400 text-slate-300">
+              <strong class="text-cyan-400">2. NIFTY Option Chain &amp; CPR:</strong> Directly view Central Pivot Range levels (TC: 24,958, Pivot: 24,886, BC: 24,815). If Spot &gt; TC, the market maintains Bullish Continuation bias.
+            </div>
+            <div class="p-2.5 rounded bg-[#090e1b] border-l-2 border-amber-400 text-slate-300">
+              <strong class="text-amber-400">3. Strike Intelligence Matrix:</strong> Tracks Max Pain Strike (24,950), ATM Strike (25,050), Call Resistance Wall (25,200 CE), and Put Support Floor (24,800 PE) with real-time Put-Call Ratio (1.64).
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <div class="flex items-center gap-3">
+            <span class="flex items-center justify-center w-7 h-7 rounded-full bg-emerald-500 text-black font-extrabold text-sm font-mono">3</span>
+            <h3 class="text-base font-bold text-white font-mono">Choosing the Right Algorithmic Candidate Engine</h3>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            The screener runs 6 distinct institutional quantitative models to identify candidates depending on time-of-day and market regime:
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-amber-400 font-bold block mb-1">⚡ Muhurat Strong (ORB 15m)</span>
+              <p class="text-[11px] text-slate-400 font-sans">Best between <strong>9:30 AM &ndash; 10:15 AM</strong>. Captures stocks decisively breaking opening range high/low with 1.5x volume expansion.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-cyan-400 font-bold block mb-1">🌊 Muhurat Pulse (RVOL &amp; HyperFlow™)</span>
+              <p class="text-[11px] text-slate-400 font-sans">Best for <strong>Midday Trending (10:30 AM &ndash; 1:30 PM)</strong>. Pinpoints volume surges &ge; 2.0x baseline adhering closely to VWAP.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-purple-400 font-bold block mb-1">🐋 Muhurat Flow (Whale Sweeps)</span>
+              <p class="text-[11px] text-slate-400 font-sans">Detects institutional blocks (&gt; ₹5 Cr) and order book sweeps with Delta imbalance &ge; 70%.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-emerald-400 font-bold block mb-1">🎯 Muhurat Elite (3m Squeeze) &amp; Pro (6m Waves)</span>
+              <p class="text-[11px] text-slate-400 font-sans">Bollinger-Keltner compression releases on 3-minute and 6-minute bars with dynamic ATR trailing stops.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <div class="flex items-center gap-3">
+            <span class="flex items-center justify-center w-7 h-7 rounded-full bg-purple-500 text-white font-extrabold text-sm font-mono">4</span>
+            <h3 class="text-base font-bold text-white font-mono">Disciplined Position Sizing &amp; Execution Rules</h3>
+          </div>
+          <div class="space-y-2 text-xs font-mono">
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033] flex items-center justify-between">
+              <div><strong class="text-white">Account Risk Rule:</strong> Maximum 1.0% to 1.5% capital at risk per trade.</div>
+              <span class="text-emerald-400 font-bold">Strict Rule</span>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033] flex items-center justify-between">
+              <div><strong class="text-white">Minimum Risk:Reward:</strong> Minimum 1:2.0 R:R ratio on every candidate setup.</div>
+              <span class="text-cyan-400 font-bold">≥ 2.0x Reward</span>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033] flex items-center justify-between">
+              <div><strong class="text-white">Scaling Out:</strong> Book 50% profits at Target 1; trail stop-loss to Breakeven for remaining lots.</div>
+              <span class="text-amber-400 font-bold">Runner Logic</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- TAB: LEARNING CENTER - ADVANCED AI INDICATOR-->
+      <!-- ========================================== -->
+      <section id="tab-learn-ai" class="tab-pane hidden space-y-6 font-mono">
+        <div class="card p-5 border-l-4 border-purple-500 bg-gradient-to-r from-[#140f26] to-[#0c101c] rounded-xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-extrabold text-[10px] tracking-wider uppercase">MASTERCLASS 201</span>
+                <span class="text-xs text-slate-400 font-mono">QUANTITATIVE ALGORITHMS &bull; ORDER FLOW MATHEMATICS</span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-white mt-1">Advanced AI Indicators &amp; Mathematical Formulations</h2>
+              <p class="text-xs text-slate-300 font-sans max-w-3xl mt-1 leading-relaxed">
+                Step-by-step breakdown of the exact algorithmic formulas used by the Claude AI Day Trader Skill, including Relative Volume (RVOL), HyperFlow™ momentum vector scoring, Order Flow Delta, Central Pivot Range, and Put-Call Ratio dynamics.
+              </p>
+            </div>
+            <div class="text-right font-mono text-xs text-slate-400 bg-[#080d1a] p-3 rounded-lg border border-[#172033]">
+              <div>Engine: <span class="text-purple-400 font-bold">Claude 3.5 Sonnet Quant</span></div>
+              <div>Sampling Rate: <span class="text-cyan-400 font-bold">Tick-by-Tick Depth</span></div>
+              <div>Indicators: <span class="text-emerald-400 font-bold">5 Core Quant Pillars</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicator 1: RVOL -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-cyan-400 font-mono">1. Relative Volume (RVOL) &mdash; The Institutional Fingerprint</h3>
+            <span class="text-xs font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-800">Formula Math</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Raw volume numbers can be misleading. Relative Volume calculates current cumulative volume relative to the exact minute's 20-day historical average:
+          </p>
+          <div class="p-3 rounded-lg bg-[#060912] border border-[#172033] font-mono text-xs text-amber-300">
+            RVOL(t) = Cumulative Volume(t) / Average Cumulative Volume(t, 20 Days)
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs font-mono pt-1">
+            <div class="p-2.5 rounded bg-[#090e1b] border-l-2 border-slate-600">
+              <span class="text-slate-400 block font-bold">RVOL &lt; 1.0x</span>
+              <span class="text-[11px] text-slate-400 font-sans">Low volume retail chop. Breakouts frequently fail. Do NOT trade.</span>
+            </div>
+            <div class="p-2.5 rounded bg-[#090e1b] border-l-2 border-cyan-400">
+              <span class="text-cyan-400 block font-bold">RVOL 1.5x &ndash; 2.0x</span>
+              <span class="text-[11px] text-slate-300 font-sans">Active institutional interest. High-probability continuation setups.</span>
+            </div>
+            <div class="p-2.5 rounded bg-[#090e1b] border-l-2 border-emerald-400">
+              <span class="text-emerald-400 block font-bold">RVOL &ge; 2.5x</span>
+              <span class="text-[11px] text-emerald-300 font-sans">Institutional Whale Flow. Major sustained trend day with low slippage.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicator 2: HyperFlow -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-purple-400 font-mono">2. HyperFlow™ Momentum Matrix (Score 0 to 100)</h3>
+            <span class="text-xs font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-800">AI Scoring</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            HyperFlow™ combines Order Flow Delta velocity, distance from Volume Weighted Average Price (VWAP), and rate of Open Interest accumulation:
+          </p>
+          <div class="p-3 rounded-lg bg-[#060912] border border-[#172033] font-mono text-xs text-purple-300">
+            HyperFlow = 0.40 * Norm(Delta) + 0.35 * Norm(VWAP_Distance) + 0.25 * Norm(OI_Acceleration)
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            When HyperFlow &ge; 75, institutional buyers are aggressively paying up at the ask price. When HyperFlow &le; 25, institutional aggressive market sells dominate.
           </p>
         </div>
-      </section>
 
-      <section id="tab-learn-ai" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-5 rounded-xl space-y-3">
-          <h2 class="text-lg font-bold text-white">Advanced AI Trading Indicators</h2>
-          <p class="text-sm text-slate-300">Covers Relative Volume (RVOL), HyperFlow™, and Order Flow Delta math sourced from Claude AI day-trader-skill.</p>
+        <!-- Indicator 3: Order Flow Delta & Bid/Ask Ratio -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-emerald-400 font-mono">3. Order Flow Delta &amp; Total Bid / Ask Depth Ratio</h3>
+            <span class="text-xs font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-800">Market Microstructure</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Delta represents the net difference between aggressive buyers lifting the offer and aggressive sellers hitting the bid:
+          </p>
+          <div class="p-3 rounded-lg bg-[#060912] border border-[#172033] font-mono text-xs text-emerald-300">
+            Delta = Total Executed Volume at Ask &minus; Total Executed Volume at Bid<br>
+            Bid/Ask Ratio = Total Cumulative Bid Quantity (Level-2) / Total Cumulative Ask Quantity (Level-2)
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            A <strong>Bid/Ask Ratio &ge; 1.25x</strong> indicates massive demand absorption (buyers stacking bids). A ratio &le; 0.80x reveals an overhead supply wall preventing upward movement.
+          </p>
+        </div>
+
+        <!-- Indicator 4: Central Pivot Range -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-amber-400 font-mono">4. Central Pivot Range (CPR) Mechanics</h3>
+            <span class="text-xs font-mono text-slate-400 px-2 py-0.5 rounded bg-slate-800">Support &amp; Resistance</span>
+          </div>
+          <div class="p-3 rounded-lg bg-[#060912] border border-[#172033] font-mono text-xs text-amber-300 space-y-1">
+            <div>Pivot (P) = (Previous High + Low + Close) / 3</div>
+            <div>Bottom Central (BC) = (Previous High + Low) / 2</div>
+            <div>Top Central (TC) = (Pivot &minus; BC) + Pivot = 2 * Pivot &minus; BC</div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono pt-1">
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-cyan-400 font-bold block mb-1">Narrow CPR (Width &le; 0.25%)</span>
+              <p class="text-[11px] text-slate-300 font-sans">Represents market energy compression. 78% probability of an explosive <strong>Trending Day</strong>.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-rose-400 font-bold block mb-1">Wide CPR (Width &ge; 0.60%)</span>
+              <p class="text-[11px] text-slate-300 font-sans">Represents a wide support/resistance cushion. High probability of a <strong>Rangebound / Mean-Reverting Day</strong>.</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="tab-learn-strategy" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-5 rounded-xl space-y-3">
-          <h2 class="text-lg font-bold text-white">Stock Selection Strategy &amp; Put/Call Writing Logic</h2>
-          <p class="text-sm text-slate-300">Detailed guidelines on identifying Institutional Accumulation versus Distribution.</p>
+      <!-- ========================================== -->
+      <!-- TAB: LEARNING CENTER - STOCK SELECTION     -->
+      <!-- ========================================== -->
+      <section id="tab-learn-strategy" class="tab-pane hidden space-y-6 font-mono">
+        <div class="card p-5 border-l-4 border-emerald-500 bg-gradient-to-r from-[#0d1c1a] to-[#0c101c] rounded-xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-extrabold text-[10px] tracking-wider uppercase">MASTERCLASS 301</span>
+                <span class="text-xs text-slate-400 font-mono">INSTITUTIONAL EXECUTION &bull; 5-POINT CONFLUENCE</span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-white mt-1">Stock Selection Strategy &amp; Put/Call Writing Logic</h2>
+              <p class="text-xs text-slate-300 font-sans max-w-3xl mt-1 leading-relaxed">
+                Learn the step-by-step institutional filtering process to screen 218 NSE contracts down to the top 2-3 highest-probability setups each morning, verify derivative cycles, and leverage option writing support.
+              </p>
+            </div>
+            <div class="text-right font-mono text-xs text-slate-400 bg-[#080d1a] p-3 rounded-lg border border-[#172033]">
+              <div>Filter Funnel: <span class="text-emerald-400 font-bold">218 &rarr; 12 &rarr; 3 Focus</span></div>
+              <div>Cycle: <span class="text-cyan-400 font-bold">Long / Short Buildup</span></div>
+              <div>Min R:R: <span class="text-amber-400 font-bold">1:2.0 Minimum</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-Step Funnel -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            The 3-Step Top-Down Filtering Funnel
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 font-mono text-xs">
+            <div class="p-3.5 rounded-lg bg-[#080d1a] border border-[#172033] space-y-1">
+              <span class="text-emerald-400 font-bold block text-[11px]">STEP 1: Sector Rotation</span>
+              <p class="text-[11px] text-slate-300 font-sans">Navigate to <strong>Sector Rotation &amp; Rank</strong>. Pick stocks belonging only to the <strong>Top 3 Sectors</strong> leading the day's turnover and % gain.</p>
+            </div>
+            <div class="p-3.5 rounded-lg bg-[#080d1a] border border-[#172033] space-y-1">
+              <span class="text-cyan-400 font-bold block text-[11px]">STEP 2: Quantitative Engine Check</span>
+              <p class="text-[11px] text-slate-300 font-sans">Ensure the stock appears simultaneously in <strong>Muhurat Strong (ORB)</strong> and <strong>Muhurat Pulse (RVOL &ge; 1.8x)</strong>.</p>
+            </div>
+            <div class="p-3.5 rounded-lg bg-[#080d1a] border border-[#172033] space-y-1">
+              <span class="text-amber-400 font-bold block text-[11px]">STEP 3: Derivatives Buildup</span>
+              <p class="text-[11px] text-slate-300 font-sans">Confirm the stock displays <strong>Long Buildup</strong> (Price &uarr; + OI &uarr;) for buys or <strong>Short Buildup</strong> for sells.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- The 4 Buildup Cycles Table -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+            The 4 Derivative Buildup Cycles Explained
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs font-mono border-collapse">
+              <thead>
+                <tr class="text-[10px] text-slate-400 border-b border-[#1c2230] bg-[#080d1a]">
+                  <th class="p-2.5 text-left">CYCLE NAME</th>
+                  <th class="p-2.5 text-left">PRICE</th>
+                  <th class="p-2.5 text-left">OPEN INTEREST</th>
+                  <th class="p-2.5 text-left">INSTITUTIONAL ACTION</th>
+                  <th class="p-2.5 text-left">ACTIONABLE STRATEGY</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[#172033] text-[11px]">
+                <tr class="hover:bg-[#0f1524]">
+                  <td class="p-2.5 font-bold text-emerald-400">🟢 Long Buildup</td>
+                  <td class="p-2.5 text-emerald-400 font-bold">RISING (&uarr;)</td>
+                  <td class="p-2.5 text-emerald-400 font-bold">RISING (&uarr;)</td>
+                  <td class="p-2.5 text-slate-300 font-sans">Aggressive institutional buying with multi-day commitment.</td>
+                  <td class="p-2.5 text-emerald-300 font-bold">BUY Call / Long Equity</td>
+                </tr>
+                <tr class="hover:bg-[#0f1524]">
+                  <td class="p-2.5 font-bold text-rose-400">🔴 Short Buildup</td>
+                  <td class="p-2.5 text-rose-400 font-bold">FALLING (&darr;)</td>
+                  <td class="p-2.5 text-emerald-400 font-bold">RISING (&uarr;)</td>
+                  <td class="p-2.5 text-slate-300 font-sans">Aggressive short sellers entering fresh bear positions.</td>
+                  <td class="p-2.5 text-rose-300 font-bold">BUY Put / Short Equity</td>
+                </tr>
+                <tr class="hover:bg-[#0f1524]">
+                  <td class="p-2.5 font-bold text-cyan-400">⚡ Short Covering</td>
+                  <td class="p-2.5 text-emerald-400 font-bold">RISING (&uarr;)</td>
+                  <td class="p-2.5 text-rose-400 font-bold">FALLING (&darr;)</td>
+                  <td class="p-2.5 text-slate-300 font-sans">Trapped sellers panicking and buying back shares.</td>
+                  <td class="p-2.5 text-cyan-300 font-bold">Quick Momentum Scalp</td>
+                </tr>
+                <tr class="hover:bg-[#0f1524]">
+                  <td class="p-2.5 font-bold text-amber-400">⚠️ Long Unwind</td>
+                  <td class="p-2.5 text-rose-400 font-bold">FALLING (&darr;)</td>
+                  <td class="p-2.5 text-rose-400 font-bold">FALLING (&darr;)</td>
+                  <td class="p-2.5 text-slate-300 font-sans">Bulls booking profits or abandoning stagnant trades.</td>
+                  <td class="p-2.5 text-slate-400 font-sans">Exit Longs / Avoid Fresh Entry</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Put & Call Writing Walls -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            Put Writing (Support) vs. Call Writing (Resistance) Logic
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Institutional traders primarily write (sell) options rather than buy them. Look at the <strong>Put Writing</strong> and <strong>Call Writing</strong> columns in the screener:
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-emerald-400 font-bold block mb-1">🛡️ Put Writing (Support Floor)</span>
+              <p class="text-[11px] text-slate-300 font-sans">When a stock exhibits heavy put writing at a strike below current price, institutions are betting price will NOT fall below that strike. Place your Stop-Loss just beneath this strike.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-rose-400 font-bold block mb-1">🧱 Call Writing (Resistance Ceiling)</span>
+              <p class="text-[11px] text-slate-300 font-sans">Heavy call writing at a strike above current price acts as an institutional ceiling. Set your Target 1 just below this strike to book gains before sellers stall the move.</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="tab-learn-nifty" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-5 rounded-xl space-y-3">
-          <h2 class="text-lg font-bold text-white">Nifty CPR &amp; Options Flow Strategy</h2>
-          <p class="text-sm text-slate-300">Central Pivot Range combined with real-time Call/Put open interest walls.</p>
+      <!-- ========================================== -->
+      <!-- TAB: LEARNING CENTER - NIFTY STRATEGY      -->
+      <!-- ========================================== -->
+      <section id="tab-learn-nifty" class="tab-pane hidden space-y-6 font-mono">
+        <div class="card p-5 border-l-4 border-amber-500 bg-gradient-to-r from-[#1c150d] to-[#0c101c] rounded-xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold text-[10px] tracking-wider uppercase">MASTERCLASS 401</span>
+                <span class="text-xs text-slate-400 font-mono">INDEX DERIVATIVES &bull; INSTITUTIONAL CPR PLAYBOOK</span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-white mt-1">NIFTY 50 CPR &amp; Options Flow Strategy Playbook</h2>
+              <p class="text-xs text-slate-300 font-sans max-w-3xl mt-1 leading-relaxed">
+                Step-by-step masterclass on trading NIFTY 50 options utilizing Central Pivot Range (CPR) boundaries, Virgin CPR magnets, Call/Put Open Interest walls, and Thursday Expiry Day Max Pain pinning.
+              </p>
+            </div>
+            <div class="text-right font-mono text-xs text-slate-400 bg-[#080d1a] p-3 rounded-lg border border-[#172033]">
+              <div>Index: <span class="text-amber-400 font-bold">NIFTY 50 (NSE)</span></div>
+              <div>Lot Size: <span class="text-cyan-400 font-bold">25 / 75 Units</span></div>
+              <div>CPR Accuracy: <span class="text-emerald-400 font-bold">&gt; 82% Historical</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Setup Playbook -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            The 3 High-Probability Nifty CPR Setups
+          </h3>
+          <div class="space-y-3 font-mono text-xs">
+            <!-- Setup 1 -->
+            <div class="p-3.5 rounded-lg bg-[#080d1a] border-l-4 border-emerald-400 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-emerald-400 font-bold text-xs">SETUP A: Bullish CPR Retest (Ascending CPR Day)</span>
+                <span class="text-[10px] text-slate-400">Win Rate: ~78%</span>
+              </div>
+              <p class="text-[11px] text-slate-300 font-sans">
+                <strong>Conditions:</strong> Today's CPR is higher than yesterday's. NIFTY opens above Top Central (TC: <code class="text-cyan-300">24,958</code>), pulls back between 9:45 &ndash; 10:15 AM to touch TC, and prints a bullish rejection candle (hammer or green engulfing).<br>
+                <strong>Execution:</strong> BUY At-the-Money Call (e.g. 25,000 CE). Stop Loss placed 15 pts below BC (<code class="text-rose-400">24,800</code>). Target 1: R1 (<code class="text-emerald-400">25,124</code>); Target 2: R2 (<code class="text-emerald-400">25,290</code>).
+              </p>
+            </div>
+
+            <!-- Setup 2 -->
+            <div class="p-3.5 rounded-lg bg-[#080d1a] border-l-4 border-rose-400 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-rose-400 font-bold text-xs">SETUP B: Bearish CPR Rejection (Descending CPR Day)</span>
+                <span class="text-[10px] text-slate-400">Win Rate: ~76%</span>
+              </div>
+              <p class="text-[11px] text-slate-300 font-sans">
+                <strong>Conditions:</strong> Today's CPR is lower than yesterday's. NIFTY opens below Bottom Central (BC: <code class="text-rose-400">24,815</code>), bounces upward on low volume into Pivot or BC, and prints a red rejection candle.<br>
+                <strong>Execution:</strong> BUY At-the-Money Put (e.g. 24,900 PE). Stop Loss placed 15 pts above TC (<code class="text-rose-400">24,975</code>). Target 1: S1 (<code class="text-emerald-400">24,720</code>); Target 2: S2 (<code class="text-emerald-400">24,550</code>).
+              </p>
+            </div>
+
+            <!-- Setup 3 -->
+            <div class="p-3.5 rounded-lg bg-[#080d1a] border-l-4 border-purple-400 space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="text-purple-400 font-bold text-xs">SETUP C: Virgin CPR Magnetic Retest</span>
+                <span class="text-[10px] text-slate-400">Win Rate: ~84%</span>
+              </div>
+              <p class="text-[11px] text-slate-300 font-sans">
+                <strong>Conditions:</strong> If yesterday was an extreme trend day and price never touched the CPR, it becomes a <strong>Virgin CPR</strong>. In 84% of cases, the market experiences a violent magnetic snapback to test that untouched level within 3 days.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expiry Day Max Pain -->
+        <div class="card bg-[#0d121e] border border-[#1a2337] rounded-xl p-5 space-y-3 font-sans">
+          <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+            Expiry Day Max Pain Pinning Playbook
+          </h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            On Thursday weekly expiry days, institutional market makers maximize premium collection by driving the index toward the <strong>Max Pain Strike</strong> (e.g. <code>24,950</code>):
+          </p>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-amber-400 font-bold block mb-1">Morning Session (9:15 AM &ndash; 1:00 PM)</span>
+              <p class="text-[11px] text-slate-400 font-sans">Option sellers accumulate both sides of the straddle. IV decays rapidly. Avoid buying out-of-the-money options as theta decay is brutal.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-[#080d1a] border border-[#172033]">
+              <span class="text-emerald-400 font-bold block mb-1">Afternoon Pinning (1:30 PM &ndash; 3:15 PM)</span>
+              <p class="text-[11px] text-slate-400 font-sans">If Spot is within 50 pts of Max Pain, it will pin tightly. If Spot breaks past the Call Wall (25,200), initiate a Zero-Hero ATM Call trade for a 200% gamma blast.</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -2005,26 +2419,46 @@
       <!-- ========================================== -->
       <!-- TAB: WATCHLIST (ALL 218 STOCKS)            -->
       <!-- ========================================== -->
+      
+      <!-- ========================================== -->
+      <!-- TAB: WATCHLIST (ALL 218 STOCKS + STARRED)  -->
+      <!-- ========================================== -->
       <section id="tab-watchlist" class="tab-pane hidden space-y-4 font-mono">
-        <div class="card p-4 border-l-4 border-cyan-500 bg-[#121622] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="card p-4 border-l-4 border-cyan-500 bg-[#121622] flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
-            <h2 class="text-lg font-bold text-white">Watchlist &bull; All 218 NSE F&amp;O Stocks</h2>
-            <p class="text-xs text-slate-300 font-sans">Instant filterable search across all 218 NSE derivative instruments with 1-click execution.</p>
+            <div class="flex items-center gap-2">
+              <h2 class="text-lg font-bold text-white">Watchlist &bull; All 218 NSE F&amp;O Stocks &amp; Starred Radar</h2>
+              <span id="watchlist-count-badge" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold text-[10px]">ALL 218 STOCKS</span>
+            </div>
+            <p class="text-xs text-slate-300 font-sans mt-0.5">Real-time quotes, bid/ask depth ratios, derivative buildup cycles, and 1-click execution across the complete NSE F&amp;O universe.</p>
           </div>
-          <div class="flex items-center gap-3">
-            <input type="text" id="watchlist-search" placeholder="Search Symbol (e.g. RELIANCE)..." oninput="renderWatchlistTable()" class="px-3 py-1.5 rounded-lg bg-[#080b12] border border-[#1c2230] text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- View Mode Switcher -->
+            <div class="flex items-center bg-[#080d1a] border border-[#1c2230] rounded-lg p-0.5">
+              <button id="btn-wl-all" onclick="setWatchlistViewMode('all')" class="px-3 py-1 rounded text-xs font-bold bg-cyan-500 text-black transition">All 218 Stocks</button>
+              <button id="btn-wl-starred" onclick="setWatchlistViewMode('starred')" class="px-3 py-1 rounded text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1">
+                <span>⭐ My Starred</span>
+                <span id="starred-count-pill" class="text-[9px] px-1 bg-amber-500/20 text-amber-300 rounded font-mono">0</span>
+              </button>
+            </div>
+            <!-- Search Input -->
+            <div class="relative">
+              <input type="text" id="watchlist-search" placeholder="Search Symbol (e.g. RELIANCE)..." oninput="renderWatchlistTable()" class="px-3 py-1.5 rounded-lg bg-[#080b12] border border-[#1c2230] text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 w-48">
+            </div>
+            <!-- Sector Dropdown -->
             <select id="watchlist-sector-filter" onchange="renderWatchlistTable()" class="px-3 py-1.5 rounded-lg bg-[#080b12] border border-[#1c2230] text-xs text-white focus:outline-none focus:border-cyan-400">
-              <option value="ALL">All Sectors</option>
+              <option value="ALL">All 12 Sectors</option>
             </select>
           </div>
         </div>
 
-        <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl">
+        <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl shadow-xl">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-watchlist"></table>
           </div>
         </div>
       </section>
+
 
     </main>
   </div>
@@ -3605,16 +4039,44 @@
     // ============================================================
     // WATCHLIST TABLE
     // ============================================================
+    let watchlistViewMode = 'all';
+
+    function setWatchlistViewMode(mode) {
+      watchlistViewMode = mode;
+      const btnAll = document.getElementById('btn-wl-all');
+      const btnStarred = document.getElementById('btn-wl-starred');
+      const badge = document.getElementById('watchlist-count-badge');
+
+      if (btnAll && btnStarred) {
+        if (mode === 'all') {
+          btnAll.className = 'px-3 py-1 rounded text-xs font-bold bg-cyan-500 text-black transition';
+          btnStarred.className = 'px-3 py-1 rounded text-xs font-bold text-slate-400 hover:text-white transition flex items-center gap-1';
+          if (badge) badge.innerText = 'ALL 218 STOCKS';
+        } else {
+          btnStarred.className = 'px-3 py-1 rounded text-xs font-bold bg-amber-400 text-black transition flex items-center gap-1';
+          btnAll.className = 'px-3 py-1 rounded text-xs font-bold text-slate-400 hover:text-white transition';
+          if (badge) badge.innerText = 'STARRED RADAR (' + activeWatchlist.length + ')';
+        }
+      }
+      renderWatchlistTable();
+    }
+
     function renderWatchlistTable() {
       const table = document.getElementById('table-watchlist');
-      if (!table) return;
+      if (!table || !DATA || !DATA.all_stocks) return;
+
       const q = (document.getElementById('watchlist-search')?.value || '').trim().toUpperCase();
       const secFilter = document.getElementById('watchlist-sector-filter')?.value || 'ALL';
 
+      // Update starred count pill
+      const starredPill = document.getElementById('starred-count-pill');
+      if (starredPill) starredPill.innerText = activeWatchlist.length;
+
       let filtered = DATA.all_stocks.filter(s => {
-        const matchesQ = s.symbol.includes(q) || s.name.toUpperCase().includes(q);
+        const matchesQ = !q || s.symbol.includes(q) || (s.name && s.name.toUpperCase().includes(q));
         const matchesSec = secFilter === 'ALL' || s.sector === secFilter;
-        return matchesQ && matchesSec;
+        const matchesMode = (watchlistViewMode === 'all') || activeWatchlist.includes(s.symbol);
+        return matchesQ && matchesSec && matchesMode;
       });
 
       let html = `
@@ -3623,12 +4085,16 @@
             <th class="p-3">ADD</th>
             <th class="p-3">SYMBOL</th>
             <th class="p-3">SECTOR</th>
-            <th class="p-3">PRICE</th>
+            <th class="p-3">LISTED AT</th>
+            <th class="p-3">LIVE PRICE</th>
             <th class="p-3">% CHG</th>
+            <th class="p-3">TOTAL BID / ASK</th>
+            <th class="p-3">BID/ASK RATIO</th>
+            <th class="p-3">TURNOVER &amp; VOL</th>
             <th class="p-3">OPEN INTEREST</th>
             <th class="p-3">CYCLE (BUILDUP)</th>
-            <th class="p-3">PUT WRITING (SUPPORT)</th>
-            <th class="p-3">CALL WRITING (RESISTANCE)</th>
+            <th class="p-3">PUT WRITING</th>
+            <th class="p-3">CALL WRITING</th>
             <th class="p-3">PCR</th>
             <th class="p-3">IV / IVP</th>
             <th class="p-3">ACTIONS</th>
@@ -3636,9 +4102,22 @@
         </thead>
         <tbody>
       `;
-      filtered.forEach(s => {
-        html += buildEngineRow(s, s.pct_change >= 0);
-      });
+
+      if (filtered.length === 0) {
+        html += `
+          <tr>
+            <td colspan="16" class="p-8 text-center text-slate-500 font-mono">
+              <div class="text-sm font-bold text-slate-400 mb-1">No stocks match your active filter.</div>
+              <div class="text-xs">${watchlistViewMode === 'starred' ? 'You have not starred any stocks yet. Click the ⭐ icon on any stock row to add it!' : 'Try clearing your search query or selecting "All 12 Sectors".'}</div>
+            </td>
+          </tr>
+        `;
+      } else {
+        filtered.forEach(s => {
+          html += buildEngineRow(s, s.pct_change >= 0);
+        });
+      }
+
       html += '</tbody>';
       table.innerHTML = html;
     }
