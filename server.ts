@@ -1,3 +1,4 @@
+import fs from 'fs';
 import express from 'express';
 import http from 'http';
 import path from 'path';
@@ -697,6 +698,20 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    
+    // Serve Muhurat Quant Screener Dashboard directly on root /
+    app.get(['/', '/muhurat', '/dashboard', '/quant_screener_dashboard.html'], (req, res) => {
+      const dashboardFile = path.join(process.cwd(), 'quant_screener_dashboard.html');
+      if (fs.existsSync(dashboardFile)) {
+        return res.sendFile(dashboardFile);
+      }
+      const publicDashboard = path.join(process.cwd(), 'public', 'quant_screener_dashboard.html');
+      if (fs.existsSync(publicDashboard)) {
+        return res.sendFile(publicDashboard);
+      }
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
