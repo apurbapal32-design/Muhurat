@@ -929,30 +929,46 @@
         <!-- ============================================================ -->
         <!-- 4. DERIVATIVE PULSE RIBBON (4 PILLAR COMMAND CARDS) -->
         <!-- ============================================================ -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- ============================================================ -->
+        <!-- 4. HIGH LIQUIDITY • TOP TRADED UPSIDE & DOWNSIDE (COCKPIT) -->
+        <!-- ============================================================ -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
           
-          <!-- Card 1: Market Buildup Momentum Flow -->
-                      <!-- Table 1: High Liquidity Top Traded (Upside) -->
-            <div class="glass-panel p-4 rounded-xl border border-[#1e2a42] bg-[#0c111d] shadow-lg">
-              <div class="flex items-center justify-between pb-2 border-b border-[#172033] mb-2">
-                <span class="font-bold text-emerald-400 text-xs flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> HIGH LIQUIDITY &bull; TOP TRADED UPSIDE
-                </span>
-                <button onclick="switchTab('liquidity')" class="text-[10px] text-amber-400 hover:underline">View All &rarr;</button>
+          <!-- Table 1: High Liquidity Top Traded (Upside) -->
+          <div class="glass-panel p-4 md:p-5 rounded-2xl border border-emerald-500/30 bg-[#0c111d] shadow-2xl flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3 border-b border-[#1c273c] mb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+                <h3 class="font-bold text-emerald-400 text-sm tracking-wide">HIGH LIQUIDITY &bull; TOP TRADED UPSIDE</h3>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] border border-emerald-500/30 font-bold">TOP 10 &bull; CLAUDE AI FORMULA</span>
               </div>
-              <div class="overflow-x-auto"><table id="table-home-top-traded" class="w-full text-left border-collapse text-xs"></table></div>
+              <button onclick="switchTab('liquidity')" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] text-emerald-300 font-mono font-bold transition flex items-center gap-1 cursor-pointer" title="Open Full Liquidity Tab">
+                <span>View All (Full Tab)</span>
+                <span>&rarr;</span>
+              </button>
             </div>
+            <div class="overflow-x-auto rounded-xl border border-[#172033] bg-[#090d16]">
+              <table id="table-home-top-traded" class="w-full text-left border-collapse text-xs font-mono"></table>
+            </div>
+          </div>
 
-            <!-- Table 2: High Liquidity Top Traded (Downside) -->
-            <div class="glass-panel p-4 rounded-xl border border-[#1e2a42] bg-[#0c111d] shadow-lg">
-              <div class="flex items-center justify-between pb-2 border-b border-[#172033] mb-2">
-                <span class="font-bold text-rose-400 text-xs flex items-center gap-1.5">
-                  <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span> HIGH LIQUIDITY &bull; TOP TRADED DOWNSIDE (HEAVY SELLING)
-                </span>
-                <button onclick="switchTab('liquidity')" class="text-[10px] text-rose-400 hover:underline">View All &rarr;</button>
+          <!-- Table 2: High Liquidity Top Traded (Downside) -->
+          <div class="glass-panel p-4 md:p-5 rounded-2xl border border-rose-500/30 bg-[#0c111d] shadow-2xl flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-3 border-b border-[#1c273c] mb-3 flex-wrap gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping"></span>
+                <h3 class="font-bold text-rose-400 text-sm tracking-wide">HIGH LIQUIDITY &bull; TOP TRADED DOWNSIDE (HEAVY SELLING)</h3>
+                <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-[10px] border border-rose-500/30 font-bold">TOP 10 &bull; CLAUDE AI FORMULA</span>
               </div>
-              <div class="overflow-x-auto"><table id="table-home-top-traded-downside" class="w-full text-left border-collapse text-xs"></table></div>
+              <button onclick="switchTab('liquidity')" class="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-[11px] text-rose-300 font-mono font-bold transition flex items-center gap-1 cursor-pointer" title="Open Full Liquidity Tab">
+                <span>View All (Full Tab)</span>
+                <span>&rarr;</span>
+              </button>
             </div>
+            <div class="overflow-x-auto rounded-xl border border-[#172033] bg-[#090d16]">
+              <table id="table-home-top-traded-downside" class="w-full text-left border-collapse text-xs font-mono"></table>
+            </div>
+          </div>
         </div>
 
         <!-- ============================================================ -->
@@ -5832,8 +5848,8 @@
       });
       downsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-      renderTable('table-home-top-traded', upsideTraded.slice(0, 5), true);
-      renderTable('table-home-top-traded-downside', downsideTraded.slice(0, 5), false);
+      renderTable('table-home-top-traded', upsideTraded.slice(0, 10), true);
+      renderTable('table-home-top-traded-downside', downsideTraded.slice(0, 10), false);
 
       // Dedicated Engine Tabs
       renderTable('table-strong-bullish', DATA.strong_bullish, true);
