@@ -15,17 +15,20 @@
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <style>
     :root {
-      --bg-space: #05070c;
-      --bg-panel: #090d16;
-      --bg-card: #0d121f;
-      --bg-card-hover: #131a2b;
-      --border-subtle: #172033;
-      --border-glow: #24324d;
-      --neon-green: #00f59b;
-      --neon-red: #ff3366;
+      --bg-space: #070410;
+      --bg-panel: #0d081c;
+      --bg-card: rgba(18, 12, 34, 0.85);
+      --bg-card-hover: rgba(28, 18, 52, 0.95);
+      --border-subtle: rgba(138, 75, 255, 0.28);
+      --border-glow: rgba(255, 40, 101, 0.65);
+      --neon-green: #00ff9d;
+      --neon-red: #ff2865;
       --neon-cyan: #00e5ff;
-      --neon-amber: #ffb300;
-      --neon-purple: #9d4edd;
+      --neon-amber: #ffaa00;
+      --neon-purple: #b026ff;
+      --cyber-glow-magenta: 0 0 20px rgba(255, 40, 101, 0.4);
+      --cyber-glow-cyan: 0 0 20px rgba(0, 229, 255, 0.4);
+      --cyber-glow-purple: 0 0 20px rgba(176, 38, 255, 0.4);
     }
     html {
       width: 100%;
@@ -346,9 +349,196 @@
       0%, 100% { transform: scaleY(0.35); }
       50% { transform: scaleY(1.0); }
     }
+
+    /* ============================================================ */
+    /* FULL CYBER HUD UNIVERSAL THEME (APPLIED ACROSS FULL DASHBOARD)*/
+    /* ============================================================ */
+    body {
+      background: radial-gradient(ellipse at 50% 0%, #1b0e35 0%, #0d071e 40%, #05020c 100%) fixed !important;
+      background-color: #070410 !important;
+      color: #e2e8f0;
+      position: relative;
+    }
+
+    /* Ambient Cyber Glow Layers */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 50% 15%, rgba(138, 75, 255, 0.08) 0%, transparent 60%),
+                  radial-gradient(circle at 90% 70%, rgba(255, 40, 101, 0.07) 0%, transparent 45%),
+                  radial-gradient(circle at 10% 85%, rgba(0, 229, 255, 0.06) 0%, transparent 45%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Fixed Curved Holographic Viewport Framing Brackets (From Photo) */
+    .cyber-viewport-bracket-left, .cyber-viewport-bracket-right {
+      position: fixed;
+      top: 58px;
+      bottom: 50px;
+      width: 18px;
+      pointer-events: none;
+      z-index: 45;
+      opacity: 0.85;
+      transition: opacity 0.3s ease;
+    }
+    .cyber-viewport-bracket-left {
+      left: 3px;
+      border-left: 2.5px solid #ff2865;
+      border-top: 2.5px solid #ff2865;
+      border-bottom: 2.5px solid #ff2865;
+      border-top-left-radius: 16px;
+      border-bottom-left-radius: 16px;
+      filter: drop-shadow(0 0 6px #ff2865) drop-shadow(0 0 14px rgba(255, 40, 101, 0.6));
+      animation: cyber-bracket-glow 3.5s infinite ease-in-out;
+    }
+    .cyber-viewport-bracket-right {
+      right: 3px;
+      border-right: 2.5px solid #ff2865;
+      border-top: 2.5px solid #ff2865;
+      border-bottom: 2.5px solid #ff2865;
+      border-top-right-radius: 16px;
+      border-bottom-right-radius: 16px;
+      filter: drop-shadow(0 0 6px #ff2865) drop-shadow(0 0 14px rgba(255, 40, 101, 0.6));
+      animation: cyber-bracket-glow 3.5s infinite ease-in-out;
+    }
+    @media (max-width: 768px) {
+      .cyber-viewport-bracket-left, .cyber-viewport-bracket-right {
+        display: none;
+      }
+    }
+
+    /* Universal Cyber Glass Cards & Panels Across Entire Dashboard */
+    .card, .glass-panel, .glass-card, [class*="bg-[#090d16]"], [class*="bg-[#0a0f1d]"], [class*="bg-[#0b101c]"], [class*="bg-[#0d121f]"], [class*="bg-[#0c101d]"], [class*="bg-[#121927]"] {
+      background: rgba(18, 12, 34, 0.82) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-color: rgba(138, 75, 255, 0.28) !important;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.65), inset 0 0 16px rgba(120, 50, 255, 0.08) !important;
+    }
+    .card:hover, .glass-card:hover {
+      border-color: rgba(0, 240, 255, 0.55) !important;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.75), 0 0 22px rgba(0, 229, 255, 0.22), inset 0 0 18px rgba(0, 229, 255, 0.12) !important;
+    }
+
+    /* Holographic Borders Across All Elements */
+    [class*="border-[#172033]"], [class*="border-[#1c273c]"], [class*="border-[#23314f]"] {
+      border-color: rgba(138, 75, 255, 0.3) !important;
+    }
+
+    /* Header Cyber Styling */
+    header {
+      background: rgba(13, 8, 26, 0.94) !important;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(138, 75, 255, 0.35) !important;
+      box-shadow: 0 4px 25px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 40, 101, 0.35) !important;
+    }
+
+    /* Sidebar Drawer Cyber Styling */
+    #sidebar-drawer {
+      background: rgba(11, 7, 24, 0.97) !important;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid rgba(138, 75, 255, 0.35) !important;
+      box-shadow: 10px 0 35px rgba(0, 0, 0, 0.85), inset -1px 0 20px rgba(120, 50, 255, 0.15) !important;
+    }
+
+    /* Sidebar Navigation Links */
+    .sidebar-link {
+      color: #cbd5e1 !important;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      border-left: 2px solid transparent !important;
+    }
+    .sidebar-link:hover {
+      background: rgba(35, 18, 65, 0.6) !important;
+      color: #ffffff !important;
+      border-left: 2px solid #ff2865 !important;
+      box-shadow: 0 0 18px rgba(255, 40, 101, 0.3) !important;
+    }
+    .sidebar-link.active {
+      background: linear-gradient(90deg, rgba(255, 40, 101, 0.24) 0%, rgba(138, 75, 255, 0.18) 50%, rgba(13, 8, 28, 0.5) 100%) !important;
+      color: #00e5ff !important;
+      font-weight: 700;
+      border-left: 3px solid #ff2865 !important;
+      box-shadow: 0 0 20px rgba(255, 40, 101, 0.4), inset 0 0 12px rgba(0, 229, 255, 0.15) !important;
+    }
+
+    /* Cyber Tables Styling Across All 26 Tables */
+    table thead, thead {
+      background: linear-gradient(90deg, rgba(28, 17, 54, 0.96), rgba(18, 11, 38, 0.96)) !important;
+      border-bottom: 1px solid rgba(138, 75, 255, 0.35) !important;
+    }
+    table thead th, thead th {
+      color: #00e5ff !important;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-size: 10.5px;
+      padding-top: 0.65rem !important;
+      padding-bottom: 0.65rem !important;
+      border-bottom: 1px solid rgba(138, 75, 255, 0.35) !important;
+    }
+    table tbody tr, tbody tr {
+      border-bottom: 1px solid rgba(138, 75, 255, 0.12) !important;
+      transition: all 0.15s ease-in-out;
+    }
+    table tbody tr:hover, tbody tr:hover {
+      background: rgba(45, 22, 85, 0.35) !important;
+      box-shadow: inset 3px 0 0 #ff2865, inset 0 0 18px rgba(255, 40, 101, 0.12) !important;
+    }
+
+    /* Mobile Bottom Navigation Bar */
+    #mobile-bottom-nav, nav[class*="fixed bottom-0"] {
+      background: rgba(12, 7, 26, 0.95) !important;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(138, 75, 255, 0.35) !important;
+      box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.85), 0 -1px 0 rgba(255, 40, 101, 0.3) !important;
+    }
+
+    /* Modal Windows (Order Modal, Signal Studio, Sentinel, News) */
+    .modal-content, [id$="-modal"] .card, [id$="-modal"] > div > div {
+      background: rgba(15, 9, 30, 0.98) !important;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 40, 101, 0.45) !important;
+      box-shadow: 0 0 50px rgba(255, 40, 101, 0.3), 0 25px 60px rgba(0, 0, 0, 0.9) !important;
+    }
+
+    /* Inputs, Select Dropdowns, Search Bars */
+    input, select, textarea {
+      background-color: rgba(12, 7, 24, 0.85) !important;
+      border-color: rgba(138, 75, 255, 0.32) !important;
+      color: #e2e8f0 !important;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: #00e5ff !important;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.45) !important;
+      outline: none !important;
+    }
+
+    /* Cyber Scrollbars */
+    ::-webkit-scrollbar-track {
+      background: #090514 !important;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(138, 75, 255, 0.4) !important;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff2865 !important;
+      box-shadow: 0 0 10px #ff2865;
+    }
+
 </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-black">
+  <!-- Futuristic Cyber Viewport Holographic Brackets (From Photo) -->
+  <div class="cyber-viewport-bracket-left"></div>
+  <div class="cyber-viewport-bracket-right"></div>
+
 
   <!-- ========================================== -->
   <!-- TOP NAVIGATION: TREDYE PULSE BRANDING -->
@@ -411,6 +601,13 @@
     <div class="flex items-center gap-1.5 md:gap-2.5 shrink-0">
       <!-- Autonomous Claude AI Sentinel Status Pill -->
       <!-- Futuristic Cyberpunk AI War Room HUD Button -->
+      <!-- Cyber HUD Theme Active Indicator -->
+      <div class="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-gradient-to-r from-rose-500/15 via-purple-500/15 to-cyan-500/15 border border-rose-500/40 text-rose-300 font-mono text-[10px] font-bold shadow-[0_0_15px_rgba(255,40,101,0.25)] select-none">
+        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-300 via-purple-200 to-cyan-300">CYBER HUD THEME ACTIVE</span>
+        <span class="text-cyan-400 font-bold ml-0.5">⚡ v4.0</span>
+      </div>
+
       <button onclick="switchTab('cyber-war-room')" id="btn-cyber-war-room-hdr" class="relative group px-2.5 md:px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600/30 via-purple-600/30 to-cyan-500/30 hover:from-rose-500 hover:to-cyan-400 text-white font-mono font-bold text-[10.5px] md:text-[11px] border border-rose-500/50 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(255,45,85,0.4)] flex items-center gap-1.5 cursor-pointer animate-pulse" title="Launch Cyberpunk Quantum AI War Room HUD">
         <span class="text-sm">🤖</span>
         <span class="hidden sm:inline font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-rose-300 via-purple-200 to-cyan-300">CYBER HUD</span>
