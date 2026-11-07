@@ -532,6 +532,52 @@
       box-shadow: 0 0 10px #ff2865;
     }
 
+
+    /* ============================================================ */
+    /* BULLETPROOF LIVE ALERTS & NOTIFICATIONS DRAWER               */
+    /* ============================================================ */
+    #drawer-notifications {
+      position: fixed !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      right: 0 !important;
+      z-index: 99999 !important;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease !important;
+      will-change: transform, opacity;
+      max-width: 100vw;
+    }
+    #drawer-notifications.notif-drawer-closed {
+      transform: translate3d(100%, 0, 0) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+    #drawer-notifications.notif-drawer-open {
+      transform: translate3d(0, 0, 0) !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      box-shadow: -10px 0 50px rgba(0, 0, 0, 0.9), 0 0 35px rgba(255, 40, 101, 0.3) !important;
+    }
+
+    #notif-drawer-backdrop {
+      position: fixed !important;
+      inset: 0 !important;
+      background: rgba(6, 3, 14, 0.75) !important;
+      backdrop-filter: blur(5px) !important;
+      -webkit-backdrop-filter: blur(5px) !important;
+      z-index: 99990 !important;
+      transition: opacity 0.25s ease !important;
+    }
+    #notif-drawer-backdrop.backdrop-closed {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      display: none !important;
+    }
+    #notif-drawer-backdrop.backdrop-open {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      display: block !important;
+    }
+
 </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-cyan-500 selection:text-black">
@@ -608,11 +654,7 @@
         <span class="text-cyan-400 font-bold ml-0.5">⚡ v4.0</span>
       </div>
 
-      <button onclick="switchTab('cyber-war-room')" id="btn-cyber-war-room-hdr" class="relative group px-2.5 md:px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600/30 via-purple-600/30 to-cyan-500/30 hover:from-rose-500 hover:to-cyan-400 text-white font-mono font-bold text-[10.5px] md:text-[11px] border border-rose-500/50 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(255,45,85,0.4)] flex items-center gap-1.5 cursor-pointer animate-pulse" title="Launch Cyberpunk Quantum AI War Room HUD">
-        <span class="text-sm">🤖</span>
-        <span class="hidden sm:inline font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-rose-300 via-purple-200 to-cyan-300">CYBER HUD</span>
-        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
-      </button>
+      
 
       <button onclick="openSentinelModal()" id="claude-sentinel-pill" class="px-2 md:px-2.5 py-1.5 rounded-xl bg-[#0d1624] hover:bg-[#132238] border border-emerald-500/40 hover:border-emerald-400/60 shadow-lg shadow-emerald-500/10 flex items-center gap-1.5 transition-all cursor-pointer group" title="Claude AI Autonomous Self-Healing Sentinel: Active (Zero Permission Mode)">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
@@ -721,21 +763,6 @@
           </div>
           <svg class="w-3.5 h-3.5 text-amber-400 group-hover:translate-y-0.5 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
         </a>
-
-        <!-- Section: Futuristic Cyber AI War Room HUD (As Per Photo) -->
-        <div class="space-y-1 mb-2">
-          <div class="text-[10px] font-bold text-rose-400 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
-            <span>Cyber AI War Room</span>
-            <span class="text-[9px] text-cyan-300 font-mono font-bold animate-pulse">WAR HUD</span>
-          </div>
-          <div id="nav-cyber-war-room" class="sidebar-link border-l-2 border-rose-500 bg-rose-500/10 hover:bg-rose-500/20 cursor-pointer" onclick="switchTab('cyber-war-room')" title="Futuristic Cyberpunk AI War Room HUD">
-            <span class="flex items-center gap-1.5">
-              <span class="text-rose-400 text-sm">🤖</span>
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-300 via-purple-300 to-cyan-300 font-extrabold text-[11px]">Cyber AI War Room</span>
-            </span>
-            <span class="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-rose-500/25 to-cyan-500/25 text-cyan-200 border border-cyan-400/40 rounded font-mono font-bold animate-pulse">HUD Mode</span>
-          </div>
-        </div>
 
         <!-- Home: Muhurat Overview -->
                 <!-- Muhurat Home -->
@@ -9678,11 +9705,46 @@ function renderJournal() {
     };
 
 
-    function toggleNotificationDrawer() {
+    function toggleNotificationDrawer(forceState) {
       const drawer = document.getElementById('drawer-notifications');
+      const backdrop = document.getElementById('notif-drawer-backdrop');
       if (!drawer) return;
-      drawer.classList.toggle('translate-x-full');
-      ClaudeNotificationEngine.updateNotificationUI();
+
+      const isOpen = drawer.classList.contains('notif-drawer-open');
+      const shouldOpen = (forceState !== undefined) ? forceState : !isOpen;
+
+      if (shouldOpen) {
+        drawer.classList.remove('notif-drawer-closed', 'translate-x-full');
+        drawer.classList.add('notif-drawer-open');
+        if (backdrop) {
+          backdrop.classList.remove('backdrop-closed');
+          backdrop.classList.add('backdrop-open');
+        }
+        try {
+          if (window.ClaudeNotificationEngine && typeof ClaudeNotificationEngine.updateNotificationUI === 'function') {
+            ClaudeNotificationEngine.updateNotificationUI();
+          }
+        } catch(e) {
+          console.warn('Notification UI update error:', e);
+        }
+        if (typeof CyberAudioEngine !== 'undefined' && CyberAudioEngine && typeof CyberAudioEngine.playBeep === 'function') {
+          CyberAudioEngine.playBeep(1050, 'sine', 0.08);
+        }
+      } else {
+        drawer.classList.remove('notif-drawer-open');
+        drawer.classList.add('notif-drawer-closed');
+        if (backdrop) {
+          backdrop.classList.remove('backdrop-open');
+          backdrop.classList.add('backdrop-closed');
+        }
+        if (typeof CyberAudioEngine !== 'undefined' && CyberAudioEngine && typeof CyberAudioEngine.playBeep === 'function') {
+          CyberAudioEngine.playBeep(750, 'sine', 0.06);
+        }
+      }
+    }
+
+    function closeNotificationDrawer() {
+      toggleNotificationDrawer(false);
     }
 
     function toggleAudioNotifications() {
@@ -10160,7 +10222,8 @@ function renderJournal() {
   <!-- ============================================================ -->
   <!-- REAL-TIME WEB & APP NOTIFICATION CENTER DRAWER -->
   <!-- ============================================================ -->
-  <div id="drawer-notifications" class="fixed inset-y-0 right-0 w-full sm:w-96 bg-[#090d16]/98 backdrop-blur-xl border-l border-[#1a253a] z-50 transform translate-x-full transition-transform duration-300 shadow-2xl flex flex-col">
+  <div id="notif-drawer-backdrop" class="backdrop-closed" onclick="closeNotificationDrawer()"></div>
+  <div id="drawer-notifications" class="fixed inset-y-0 right-0 w-full sm:w-96 bg-[#0e0920]/98 backdrop-blur-2xl border-l border-purple-500/30 z-[99999] notif-drawer-closed shadow-2xl flex flex-col">
     <!-- Drawer Header -->
     <div class="p-4 border-b border-[#1a253a] flex items-center justify-between bg-[#0c121e]">
       <div class="flex items-center gap-2">
@@ -10170,7 +10233,7 @@ function renderJournal() {
           <p class="text-[10px] text-slate-400 font-mono">On-Time Stock Listed &bull; Positive &bull; Negative News</p>
         </div>
       </div>
-      <button onclick="toggleNotificationDrawer()" class="w-8 h-8 rounded-lg bg-[#141d2e] hover:bg-rose-500/20 text-slate-400 hover:text-white flex items-center justify-center font-bold text-lg cursor-pointer">&times;</button>
+      <button onclick="closeNotificationDrawer()" class="w-8 h-8 rounded-lg bg-[#141d2e] hover:bg-rose-500/20 text-slate-400 hover:text-white flex items-center justify-center font-bold text-lg cursor-pointer" title="Close Alerts">&times;</button>
     </div>
 
     <!-- Notification Controls Ribbon -->
