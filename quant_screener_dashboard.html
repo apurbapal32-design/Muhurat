@@ -579,9 +579,9 @@
                     <h1 class="text-xl md:text-2xl font-black text-white tracking-wide">
                       MUHURAT TRADING COCKPIT
                     </h1>
-                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shadow-sm">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                      AUSPICIOUS SESSION ACTIVE
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shadow-sm" id="cockpit-hero-market-badge">
+                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping" id="cockpit-hero-market-dot"></span>
+                      <span id="cockpit-hero-market-text">AUSPICIOUS SESSION ACTIVE</span>
                     </span>
                   </div>
                   <div class="text-xs text-slate-400 font-mono flex items-center gap-2 mt-0.5">
@@ -604,10 +604,26 @@
                 <span class="text-slate-400 font-bold">NSE F&amp;O:</span>
                 <span class="text-emerald-400 font-black">STREAMING LIVE</span>
               </div>
-              <div class="bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-[#1d273a] shadow-inner flex items-center gap-2">
-                <span class="text-amber-400">🕒</span>
-                <span class="text-slate-400 font-bold">Clock:</span>
-                <span class="text-amber-300 font-black" id="cockpit-ist-time">LIVE IST</span>
+              <!-- Clock & Market Status (Open / Close) -->
+              <div class="bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-[#1d273a] shadow-inner flex flex-col justify-center gap-1.5 min-w-[215px]" title="Indian Standard Time (IST) & Market Status">
+                <!-- Clock Tab (IST Time) -->
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-amber-400">🕒</span>
+                    <span class="text-slate-400 font-bold">Clock:</span>
+                  </div>
+                  <span class="text-amber-300 font-black tracking-wide" id="cockpit-ist-time">LIVE IST</span>
+                </div>
+                <!-- Below Clock Tab: Live Market Status (Open / Close) -->
+                <div class="flex items-center justify-between gap-2 pt-1 border-t border-[#1c273c]">
+                  <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                    <span>Market Status:</span>
+                  </span>
+                  <span id="cockpit-market-status-badge" class="inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-rose-500/20 text-rose-300 border-rose-500/50">
+                    <span id="cockpit-market-status-dot" class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                    <span id="cockpit-market-status-text">CLOSED</span>
+                  </span>
+                </div>
               </div>
               <div class="bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-[#1d273a] shadow-inner flex items-center gap-2">
                 <span class="text-cyan-400">⚡</span>
@@ -6793,12 +6809,86 @@
 
 
     
+    // ============================================================
+    // INDIAN STOCK MARKET STATUS ENGINE (NSE / BSE IST)
+    // Evaluates Open / Closed status strictly per live Asia/Kolkata clock
+    // ============================================================
+    function getIndianMarketStatus(now) {
+      // Parse exact IST components
+      const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      const istDate = new Date(istStr);
+      
+      const day = istDate.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+      const hours = istDate.getHours();
+      const minutes = istDate.getMinutes();
+      const totalMinutes = hours * 60 + minutes;
+
+      const isWeekday = (day >= 1 && day <= 5);
+      const isRegularOpen = isWeekday && (totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30));
+      const isPreOpen = isWeekday && (totalMinutes >= (9 * 60) && totalMinutes < (9 * 60 + 15));
+
+      if (isRegularOpen) {
+        return {
+          status: 'OPEN',
+          text: 'OPEN (09:15-15:30)',
+          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10',
+          dotClass: 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping',
+          heroText: 'MARKET OPEN • LIVE SESSION',
+          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shadow-sm',
+          heroDotClass: 'w-2 h-2 rounded-full bg-emerald-400 animate-ping'
+        };
+      } else if (isPreOpen) {
+        return {
+          status: 'PRE-OPEN',
+          text: 'PRE-OPEN (09:00-09:15)',
+          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-amber-500/10',
+          dotClass: 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse',
+          heroText: 'PRE-OPEN SESSION ACTIVE',
+          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center gap-1 shadow-sm',
+          heroDotClass: 'w-2 h-2 rounded-full bg-amber-400 animate-pulse'
+        };
+      } else {
+        const subReason = isWeekday ? 'CLOSED (Opens 09:15 IST)' : 'CLOSED (Weekend)';
+        return {
+          status: 'CLOSED',
+          text: subReason,
+          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-rose-500/10',
+          dotClass: 'w-1.5 h-1.5 rounded-full bg-rose-400',
+          heroText: isWeekday ? 'MARKET CLOSED • OPENS 09:15 IST' : 'MARKET CLOSED • WEEKEND',
+          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1 shadow-sm',
+          heroDotClass: 'w-2 h-2 rounded-full bg-rose-400'
+        };
+      }
+    }
+
     function updateCockpitTime() {
+      const now = new Date();
       const elem = document.getElementById('cockpit-ist-time');
       if (elem) {
-        const now = new Date();
         const options = { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
         elem.innerText = now.toLocaleTimeString('en-GB', options) + ' IST';
+      }
+
+      // Update Market Status below Clock Tab
+      const badge = document.getElementById('cockpit-market-status-badge');
+      const dot = document.getElementById('cockpit-market-status-dot');
+      const textSpan = document.getElementById('cockpit-market-status-text');
+      
+      const mkt = getIndianMarketStatus(now);
+      if (badge && dot && textSpan) {
+        badge.className = mkt.badgeClass;
+        dot.className = mkt.dotClass;
+        textSpan.innerText = mkt.text;
+      }
+
+      // Synchronize Hero Banner Badge if present
+      const heroBadge = document.getElementById('cockpit-hero-market-badge');
+      const heroDot = document.getElementById('cockpit-hero-market-dot');
+      const heroText = document.getElementById('cockpit-hero-market-text');
+      if (heroBadge && heroDot && heroText) {
+        heroBadge.className = mkt.heroBadgeClass;
+        heroDot.className = mkt.heroDotClass;
+        heroText.innerText = mkt.heroText;
       }
     }
     setInterval(updateCockpitTime, 1000);
