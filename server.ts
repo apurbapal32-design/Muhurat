@@ -700,8 +700,11 @@ async function startServer() {
     const distPath = path.join(process.cwd(), 'dist');
     
     // Explicitly serve Android APK download
-    app.get(['/Muhurat_Quant_Screener.apk', '/muhurat.apk', '/Muhurat.apk', '/app-debug.apk', '/download-apk'], (req, res) => {
+    app.get(['/Muhurat_Trading_Screener.apk', '/Muhurat%20_Trading_Screener.apk', '/Muhurat _Trading_Screener.apk', '/Muhurat-Trading-Screener.apk', '/Muhurat_Quant_Screener.apk', '/muhurat.apk', '/Muhurat.apk', '/app-debug.apk', '/download-apk'], (req, res) => {
       const candidates = [
+        path.join(process.cwd(), 'public', 'Muhurat_Trading_Screener.apk'),
+        path.join(process.cwd(), 'dist', 'Muhurat_Trading_Screener.apk'),
+        path.join(process.cwd(), 'Muhurat_Trading_Screener.apk'),
         path.join(process.cwd(), 'public', 'Muhurat_Quant_Screener.apk'),
         path.join(process.cwd(), 'dist', 'Muhurat_Quant_Screener.apk'),
         path.join(process.cwd(), 'Muhurat_Quant_Screener.apk')
@@ -709,7 +712,7 @@ async function startServer() {
       for (const p of candidates) {
         if (fs.existsSync(p)) {
           res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-          res.setHeader('Content-Disposition', 'attachment; filename="Muhurat_Quant_Screener.apk"');
+          res.setHeader('Content-Disposition', 'attachment; filename="Muhurat_Trading_Screener.apk"');
           return res.sendFile(p);
         }
       }
