@@ -93,27 +93,27 @@ export class ScannerService {
 
   private brokerConfig: BrokerConfig = {
     selectedBroker: 'fyers',
-    apiKey: 'RMR62XB492-100',
-    apiSecret: '0WF68SFOJD',
-    accessToken: '',
-    fyersAppId: 'RMR62XB492-100',
-    fyersAccessToken: '',
+    apiKey: process.env.FYERS_APP_ID || 'RMR62XB492-100',
+    apiSecret: process.env.FYERS_SECRET_KEY || '0WF68SFOJD',
+    accessToken: process.env.FYERS_ACCESS_TOKEN || '',
+    fyersAppId: process.env.FYERS_APP_ID || 'RMR62XB492-100',
+    fyersAccessToken: process.env.FYERS_ACCESS_TOKEN || '',
     status: 'connected',
     lastPingTime: new Date().toISOString(),
   };
 
   private marketOverview: MarketOverview = {
-    nifty50: { price: 24090.85, change: -243.75, changePercent: -1.00 },
-    bankNifty: { price: 57509.95, change: -4.25, changePercent: -0.01 },
-    finnifty: { price: 26280.65, change: -106.10, changePercent: -0.40 },
-    midcpnifty: { price: 14948.85, change: 0.80, changePercent: 0.01 },
-    sensex: { price: 76933.59, change: -722.51, changePercent: -0.93 },
-    niftyIT: { price: 30221.15, change: -550.65, changePercent: -1.79 },
+    nifty50: { price: 25030.35, change: 493.20, changePercent: 2.01 },
+    bankNifty: { price: 52380.00, change: 945.10, changePercent: 1.84 },
+    finnifty: { price: 24150.00, change: 385.00, changePercent: 1.62 },
+    midcpnifty: { price: 13120.00, change: 288.00, changePercent: 2.25 },
+    sensex: { price: 81765.20, change: 1477.20, changePercent: 1.84 },
+    niftyIT: { price: 38240.15, change: 550.65, changePercent: 1.45 },
     indiaVix: {
-      price: 11.07,
-      change: -0.01,
-      changePercent: -0.11,
-      regime: 'LOW_VOLATILITY',
+      price: 17.47,
+      change: -2.41,
+      changePercent: -12.13,
+      regime: 'NORMAL_VOLATILITY',
     },
     scannedCount: 0,
     buyCount: 0,
@@ -2292,14 +2292,15 @@ export class ScannerService {
   public getIndexPrices(): Record<string, { price: number; change: number; changePercent: number; open?: number; high?: number; low?: number; prevClose?: number }> {
     const ov = this.marketOverview as any;
     return {
-      'NIFTY 50': ov.nifty50 || { price: 24090.85, change: -243.75, changePercent: -1.00 },
-      NIFTY: ov.nifty50 || { price: 24090.85, change: -243.75, changePercent: -1.00 },
-      BANKNIFTY: ov.bankNifty || { price: 57509.95, change: -4.25, changePercent: -0.01 },
-      FINNIFTY: ov.finnifty || { price: 26280.65, change: -106.10, changePercent: -0.40 },
-      MIDCPNIFTY: ov.midcpnifty || { price: 14948.85, change: 0.80, changePercent: 0.01 },
-      SENSEX: ov.sensex || { price: 76933.59, change: -722.51, changePercent: -0.93 },
-      NIFTYIT: ov.niftyIT || { price: 30221.15, change: -550.65, changePercent: -1.79 },
-      INDIAVIX: ov.indiaVix || { price: 11.07, change: -0.01, changePercent: -0.11 },
+      'NIFTY 50': ov.nifty50 || { price: 25030.35, change: 493.20, changePercent: 2.01 },
+      NIFTY: ov.nifty50 || { price: 25030.35, change: 493.20, changePercent: 2.01 },
+      BANKNIFTY: ov.bankNifty || { price: 52380.00, change: 945.10, changePercent: 1.84 },
+      FINNIFTY: ov.finnifty || { price: 24150.00, change: 385.00, changePercent: 1.62 },
+      MIDCPNIFTY: ov.midcpnifty || { price: 13120.00, change: 288.00, changePercent: 2.25 },
+      SENSEX: ov.sensex || { price: 81765.20, change: 1477.20, changePercent: 1.84 },
+      NIFTYIT: ov.niftyIT || { price: 38240.15, change: 550.65, changePercent: 1.45 },
+      INDIAVIX: ov.indiaVix || { price: 17.47, change: -2.41, changePercent: -12.13 },
+      NIFTYNXT50: { price: 71850.00, change: 1375.00, changePercent: 1.95 },
     };
   }
 }

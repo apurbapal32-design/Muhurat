@@ -61,6 +61,21 @@ export class FyersWebSocketServerManager {
     console.log('[Fyers WS Server] WebSocket Server initialized on /ws/fyers');
 
     this.wss.on('connection', (ws: WebSocket, req) => {
+      try {
+        const urlObj = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+        const queryAppId = urlObj.searchParams.get('appId');
+        const queryToken = urlObj.searchParams.get('accessToken');
+        if (queryToken && queryToken.length > 10) {
+          scannerService.updateBrokerConfig({
+            selectedBroker: 'fyers',
+            fyersAppId: queryAppId || 'RMR62XB492-100',
+            fyersAccessToken: queryToken,
+            status: 'connected',
+          });
+          this.connectUpstreamFyers();
+        }
+      } catch (e) {}
+
       const clientSession: ClientSession = {
         ws,
         ip: req.socket.remoteAddress,
@@ -373,10 +388,10 @@ export class FyersWebSocketServerManager {
 
   public connectUpstreamFyers() {
     const broker = scannerService.getBrokerConfig();
-    const appId = broker.fyersAppId || broker.apiKey;
-    const accessToken = broker.fyersAccessToken || broker.accessToken;
+    const appId = broker.fyersAppId || broker.apiKey || process.env.FYERS_APP_ID || 'RMR62XB492-100';
+    const accessToken = broker.fyersAccessToken || broker.accessToken || process.env.FYERS_ACCESS_TOKEN || '';
 
-    if (!appId || !accessToken || broker.selectedBroker !== 'fyers') {
+    if (!appId || !accessToken || accessToken.trim().length < 10) {
       this.upstreamConnected = false;
       return;
     }

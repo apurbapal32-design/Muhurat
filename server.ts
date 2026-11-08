@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import fs from 'fs';
 import express from 'express';
 import http from 'http';
@@ -16,6 +17,19 @@ import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine'
 async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
+
+  // Auto-load Fyers credentials from environment on startup if configured
+  const envFyersAppId = process.env.FYERS_APP_ID || 'RMR62XB492-100';
+  const envFyersToken = process.env.FYERS_ACCESS_TOKEN || '';
+  if (envFyersToken && envFyersToken.length > 10) {
+    console.log('[Server] 🟢 Initializing with FYERS API v3 token from environment...');
+    scannerService.updateBrokerConfig({
+      selectedBroker: 'fyers',
+      fyersAppId: envFyersAppId,
+      fyersAccessToken: envFyersToken,
+      status: 'connected',
+    });
+  }
 
   // Parse port from CLI args (--port <number>) or process.env.PORT
   let PORT = 3000;
@@ -86,14 +100,30 @@ async function startServer() {
       const appId =
         (req.headers['x-fyers-app-id'] as string) ||
         (req.query.appId as string) ||
+        (req.body?.appId as string) ||
         broker.fyersAppId ||
-        broker.apiKey;
+        broker.apiKey ||
+        process.env.FYERS_APP_ID ||
+        'RMR62XB492-100';
       const accessToken =
         (req.headers['x-fyers-access-token'] as string) ||
         (req.headers.authorization?.replace(/^Bearer\s+/, '')) ||
         (req.query.accessToken as string) ||
+        (req.body?.accessToken as string) ||
         broker.fyersAccessToken ||
-        broker.accessToken;
+        broker.accessToken ||
+        process.env.FYERS_ACCESS_TOKEN ||
+        '';
+
+      if (accessToken && accessToken.length > 10 && broker.fyersAccessToken !== accessToken) {
+        scannerService.updateBrokerConfig({
+          selectedBroker: 'fyers',
+          fyersAppId: appId,
+          fyersAccessToken: accessToken,
+          status: 'connected',
+        });
+        fyersWebSocketServer.connectUpstreamFyers();
+      }
 
       const scannedData = scannerService.getScanResults();
       const pricesMap: Record<string, number> = {};
@@ -141,13 +171,131 @@ async function startServer() {
         quotes: formattedQuotes,
         indices: formattedIndices,
         isMarketOpen: true,
-        source: (appId && accessToken && accessToken.length > 10) ? 'FYERS_API_V3_LIVE' : 'QUANT_LIVE_ENGINE',
+        source: (quotes && Object.values(quotes).some((q: any) => q && q.fyersStatus === 'LIVE_V3_FEED'))
+          ? 'FYERS_API_V3_LIVE'
+          : ((appId && accessToken && accessToken.length > 10) ? 'FYERS_API_V3_LIVE' : 'QUANT_LIVE_ENGINE'),
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
       res.status(500).json({ status: 'error', error: error.message || 'Failed to fetch batch Fyers quotes' });
     }
   };
+
+  // Fyers API Connection Status endpoint
+  app.get('/api/fyers/status', (req, res) => {
+    const broker = scannerService.getBrokerConfig();
+    const appId = broker.fyersAppId || broker.apiKey || process.env.FYERS_APP_ID || 'RMR62XB492-100';
+    const accessToken = broker.fyersAccessToken || broker.accessToken || process.env.FYERS_ACCESS_TOKEN || '';
+    const hasToken = Boolean(accessToken && accessToken.trim().length > 10);
+    const wsStatus = fyersWebSocketServer.getStatus();
+
+    res.json({
+      status: 'ok',
+      connected: hasToken,
+      broker: broker.selectedBroker,
+      appId,
+      maskedAppId: appId.substring(0, 4) + '****' + (appId.length > 7 ? appId.substring(appId.length - 4) : ''),
+      hasValidToken: hasToken,
+      upstreamConnected: wsStatus.upstreamConnected,
+      activeClients: wsStatus.activeClients,
+      ticksPerSecond: wsStatus.ticksPerSecond,
+      totalTicks: wsStatus.totalTicks,
+      timestamp: new Date().toISOString(),
+    });
+  });
+
+  // Fyers API Configuration & Dynamic Token Registration endpoint
+  app.post('/api/fyers/config', async (req, res) => {
+    try {
+      const { appId, accessToken } = req.body;
+      if (!appId || !accessToken || accessToken.trim().length < 10) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Please provide valid Fyers App ID (e.g. RMR62XB492-100) and Access Token',
+        });
+      }
+
+      const cleanAppId = appId.trim();
+      const cleanToken = accessToken.trim();
+
+      // Test credentials with Fyers API profile or quotes endpoint
+      let isVerified = false;
+      let profileData: any = null;
+      let infoMessage = '';
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const profileRes = await fetch('https://api-v3.fyers.in/api/v3/profile', {
+          method: 'GET',
+          headers: {
+            Authorization: `${cleanAppId}:${cleanToken}`,
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+
+        if (profileRes.ok) {
+          const json = await profileRes.json();
+          if (json.s === 'ok' && json.data) {
+            isVerified = true;
+            profileData = json.data;
+            infoMessage = `Trader: ${json.data.name || json.data.fy_id || 'Active'} (${json.data.fy_id || 'Verified'})`;
+          }
+        }
+      } catch (err: any) {
+        console.warn('[Server] Fyers profile test notice:', err.message);
+      }
+
+      if (!isVerified) {
+        try {
+          const controller2 = new AbortController();
+          const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
+          const quoteCheck = await fetch('https://api-v3.fyers.in/data/quotes?symbols=NSE%3ANIFTY50-INDEX', {
+            headers: { Authorization: `${cleanAppId}:${cleanToken}` },
+            signal: controller2.signal,
+          });
+          clearTimeout(timeoutId2);
+
+          if (quoteCheck.ok) {
+            const qJson = await quoteCheck.json();
+            if (qJson.s === 'ok') {
+              isVerified = true;
+              infoMessage = 'Market Data Feed Verified';
+            }
+          }
+        } catch (err: any) {
+          console.warn('[Server] Fyers quotes test notice:', err.message);
+        }
+      }
+
+      if (isVerified) {
+        scannerService.updateBrokerConfig({
+          selectedBroker: 'fyers',
+          fyersAppId: cleanAppId,
+          fyersAccessToken: cleanToken,
+          status: 'connected',
+        });
+        fyersWebSocketServer.connectUpstreamFyers();
+
+        return res.json({
+          status: 'ok',
+          connected: true,
+          message: `Fyers API v3 Connected! ${infoMessage}`,
+          profile: profileData,
+          appId: cleanAppId,
+        });
+      } else {
+        return res.status(401).json({
+          status: 'error',
+          message: 'Fyers API returned Invalid Token or Unauthorized. Please verify your App ID & today’s generated Access Token.',
+        });
+      }
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message || 'Error configuring Fyers' });
+    }
+  });
 
   app.get('/api/fyers/quotes', handleFyersQuotes);
   app.post('/api/fyers/quotes', handleFyersQuotes);

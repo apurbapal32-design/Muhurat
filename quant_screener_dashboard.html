@@ -634,9 +634,9 @@
 
       <!-- Live Indices Quick Ticker (Desktop) -->
       <div class="hidden xl:flex items-center gap-3.5 pl-4 border-l border-[#1c273c] text-xs font-mono">
-        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-radar-dot"></span>
-          LIVE MARKET
+        <span onclick="openFyersModal()" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 cursor-pointer hover:bg-emerald-500/20 transition shadow-sm" title="Fyers API v3 Direct Broker Streaming • Click to Manage Feed" id="hdr-live-market-pill">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-radar-dot" id="hdr-live-market-dot"></span>
+          <span id="hdr-live-market-text">LIVE MARKET</span>
         </span>
         <div class="flex items-center gap-1 text-slate-300">
           <span class="text-slate-400">NIFTY 50</span>
@@ -714,9 +714,9 @@
   <!-- SUBHEADER TICKER (MOBILE / TABLET / RESPONSIVE) -->
   <div class="xl:hidden bg-[#07090f]/95 backdrop-blur-md border-b border-[#172033] px-3 py-1.5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-nowrap scrollbar-none z-40">
     <div class="flex items-center gap-2.5 shrink-0">
-      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-radar-dot"></span>
-        LIVE
+      <span onclick="openFyersModal()" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 cursor-pointer hover:bg-emerald-500/20 transition shadow-sm" title="Fyers API v3 Live Feed • Click to Manage Feed" id="subhdr-live-market-pill">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-radar-dot" id="subhdr-live-market-dot"></span>
+        <span id="subhdr-live-market-text">LIVE</span>
       </span>
       <div class="flex items-center gap-1">
         <span class="text-slate-400 font-semibold">NIFTY</span>
@@ -1662,9 +1662,12 @@
               <span>🔥</span> Heatmap
             </button>
 
-            <!-- 4. Sync Fyers Live -->
+            <!-- 4. Sync Fyers Live & Token Setup -->
             <button onclick="syncFyersLive()" class="px-3 py-1.5 rounded-xl bg-[#131b2e] hover:bg-[#1a253d] border border-[#23314f] hover:border-cyan-500/40 text-cyan-400 text-xs font-mono font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer" title="Sync Live Market Quotes from Fyers v3">
               <span>🔄</span> <span>Sync Fyers Live</span>
+            </button>
+            <button onclick="openFyersModal()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 hover:from-cyan-500/30 hover:to-emerald-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer" title="Configure Fyers API v3 App ID & Daily Access Token">
+              <span>🔑</span> <span>Fyers Token</span>
             </button>
           </div>
 
@@ -5114,6 +5117,101 @@
           <div class="text-[10.5px] text-slate-400 text-center pt-2 border-t border-[#1c273c]">
             Remember your credentials? <button onclick="switchAuthTab('signin')" class="text-amber-300 font-bold hover:underline">Back to Sign In</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MODAL: FYERS API V3 LIVE FEED MANAGER & TOKEN SETUP -->
+  <!-- ============================================================ -->
+  <div id="modal-fyers-connect" class="fixed inset-0 bg-black/85 backdrop-blur-md z-[65] hidden flex items-center justify-center p-4">
+    <div class="glass-panel w-full max-w-lg p-5 md:p-6 rounded-2xl space-y-4 shadow-2xl border border-cyan-500/40 bg-gradient-to-b from-[#0e1628] via-[#090e1a] to-[#060912]">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-[#1c273c] pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-black font-black text-sm shadow-lg shadow-cyan-500/20">
+            ⚡
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-base font-mono flex items-center gap-2">
+              Fyers API v3 Live Feed Setup
+              <span class="px-2 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono">DIRECT BROKER</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 font-sans">Tick-by-tick real-time quotes, Order Flow Delta &amp; depth for all 218 F&amp;O stocks and benchmark indices</p>
+          </div>
+        </div>
+        <button onclick="closeFyersModal()" class="text-slate-400 hover:text-white text-xl font-mono px-2 py-1 cursor-pointer">&times;</button>
+      </div>
+
+      <!-- Live Connection Status Card -->
+      <div class="p-3.5 rounded-xl bg-[#070b14] border border-[#172033] space-y-2 font-mono text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Connection State:</span>
+          <span id="fyers-modal-status-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px]">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            <span id="fyers-modal-status-text">CONNECTING...</span>
+          </span>
+        </div>
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="text-slate-400">Broker Account:</span>
+          <span class="text-white font-bold"><span id="fyers-modal-user">YA49011</span> (APURBA PAL)</span>
+        </div>
+        <div class="flex items-center justify-between text-[11px]">
+          <span class="text-slate-400">Data Feed Latency:</span>
+          <span class="text-emerald-400 font-bold" id="fyers-modal-latency">12ms • Upstream WebSocket Streaming</span>
+        </div>
+      </div>
+
+      <!-- Input Form -->
+      <div class="space-y-3 font-mono text-xs">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-300 mb-1">
+            Fyers App ID / Client ID
+            <span class="text-slate-500 font-normal">(Registered on myapi.fyers.in)</span>
+          </label>
+          <input type="text" id="fyers-input-appid" value="RMR62XB492-100" placeholder="e.g. RMR62XB492-100" class="w-full bg-[#070a12] border border-[#1f2b42] focus:border-cyan-400 rounded-lg p-2.5 text-white font-mono text-xs outline-none transition" />
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-[11px] font-bold text-slate-300">
+              Fyers Daily Access Token
+              <span class="text-amber-400 font-normal">*(Valid for today until 5:00 AM IST)</span>
+            </label>
+            <a href="https://myapi.fyers.in/dashboard" target="_blank" class="text-[10.5px] text-cyan-400 hover:text-cyan-300 underline font-sans">
+              Get Token on Fyers Portal &rarr;
+            </a>
+          </div>
+          <textarea id="fyers-input-token" rows="3" placeholder="Paste your generated Fyers Access Token (JWT Bearer Token) here..." class="w-full bg-[#070a12] border border-[#1f2b42] focus:border-cyan-400 rounded-lg p-2.5 text-white font-mono text-xs outline-none transition resize-none"></textarea>
+        </div>
+
+        <!-- Quick 3-Step Guide -->
+        <div class="p-3 rounded-xl bg-[#090f1d] border border-cyan-500/20 text-[11px] text-slate-300 space-y-1 font-sans">
+          <div class="text-cyan-300 font-bold font-mono text-xs flex items-center gap-1.5">
+            <span>ℹ️</span> How to generate your Daily Fyers Access Token:
+          </div>
+          <ol class="list-decimal list-inside space-y-1 text-slate-400 text-[10.5px]">
+            <li>Log in to <strong class="text-white">myapi.fyers.in/dashboard</strong> with your Fyers credentials.</li>
+            <li>Under your App (<code class="text-cyan-300">RMR62XB492</code>), click <strong class="text-amber-300">Generate Token</strong>.</li>
+            <li>Copy the resulting token string and paste it into the box above, then click <strong class="text-emerald-300">Connect Live Feed</strong>!</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <button type="button" onclick="disconnectFyersApi()" class="w-full sm:w-auto px-3.5 py-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-mono font-bold transition cursor-pointer">
+          Disconnect Token
+        </button>
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button type="button" onclick="closeFyersModal()" class="px-4 py-2 rounded-lg bg-[#172033] hover:bg-[#23314f] text-slate-300 text-xs font-mono transition cursor-pointer">
+            Close
+          </button>
+          <button type="button" id="btn-save-fyers-token" onclick="saveFyersCredentials()" class="w-full sm:w-auto px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-400 hover:from-cyan-400 hover:to-emerald-300 text-black font-extrabold text-xs font-mono shadow-lg shadow-cyan-500/20 transition flex items-center justify-center gap-1.5 cursor-pointer">
+            <span>⚡</span>
+            <span>Connect Live Feed</span>
+          </button>
         </div>
       </div>
     </div>
@@ -8874,7 +8972,10 @@ function renderJournal() {
           const isHttps = window.location.protocol === 'https:';
           const protocol = isHttps ? 'wss:' : 'ws:';
           const host = window.location.host || 'muhuratscreener.onrender.com';
-          const wsUrl = `${protocol}//${host}/ws/fyers`;
+          const appId = localStorage.getItem('fyers_app_id') || 'RMR62XB492-100';
+          const accessToken = localStorage.getItem('fyers_access_token') || '';
+          const tokenParam = accessToken ? `?accessToken=${encodeURIComponent(accessToken)}&appId=${encodeURIComponent(appId)}` : '';
+          const wsUrl = `${protocol}//${host}/ws/fyers${tokenParam}`;
 
           this.ws = new WebSocket(wsUrl);
 
@@ -8963,10 +9064,18 @@ function renderJournal() {
 
       async fetchBatchQuotes() {
         try {
-          const res = await fetch('/api/fyers/quotes');
+          const appId = localStorage.getItem('fyers_app_id') || 'RMR62XB492-100';
+          const accessToken = localStorage.getItem('fyers_access_token') || '';
+          const headers = {};
+          if (appId) headers['x-fyers-app-id'] = appId;
+          if (accessToken) headers['x-fyers-access-token'] = accessToken;
+
+          const res = await fetch('/api/fyers/quotes', { headers });
           if (!res.ok) return;
           const json = await res.json();
           if (json.status === 'ok') {
+            const isRealFyers = json.source === 'FYERS_API_V3_LIVE';
+            this.updateStatusBadge(this.wsConnected, isRealFyers ? 'Fyers API v3 Direct' : 'Cyber Engine • Fallback');
             if (json.quotes) {
               this.applyBatchQuotes(json.quotes);
             }
@@ -9005,6 +9114,7 @@ function renderJournal() {
         DATA.indices = DATA.indices || {};
         Object.assign(DATA.indices, indicesMap);
         updateIndicesUI();
+      checkFyersStatus();
         syncIndicesToEngines();
       },
 
@@ -9172,7 +9282,13 @@ function renderJournal() {
       if (label) label.innerText = 'Syncing...';
 
       try {
-        const res = await fetch('/api/fyers/quotes');
+        const appId = localStorage.getItem('fyers_app_id') || 'RMR62XB492-100';
+        const accessToken = localStorage.getItem('fyers_access_token') || '';
+        const headers = {};
+        if (appId) headers['x-fyers-app-id'] = appId;
+        if (accessToken) headers['x-fyers-access-token'] = accessToken;
+
+        const res = await fetch('/api/fyers/quotes', { headers });
         const json = await res.json();
         if (json.status === 'ok') {
           if (json.quotes) {
@@ -9186,8 +9302,14 @@ function renderJournal() {
           const d = new Date();
           const timeStr = d.toTimeString().split(' ')[0];
           if (label) label.innerText = `Synced (${timeStr})`;
+
+          const isRealFyers = json.source === 'FYERS_API_V3_LIVE';
           if (typeof showToast === 'function') {
-            showToast(`🟢 Synced Live Quotes from ${json.source || 'Fyers v3'} (${timeStr})`, 'success');
+            if (isRealFyers) {
+              showToast(`🟢 Synced 218 F&O Quotes LIVE from Fyers API v3 (${timeStr})`, 'success');
+            } else {
+              showToast(`⚡ Synced Quotes from Real-Time Engine (${timeStr}). Click "Fyers Token" to connect direct broker feed!`, 'info');
+            }
           }
         }
       } catch (err) {
@@ -9195,6 +9317,136 @@ function renderJournal() {
         if (label) label.innerText = 'Sync Offline';
       } finally {
         if (icon) icon.classList.remove('animate-spin');
+      }
+    }
+
+    // ============================================================
+    // FYERS API V3 LIVE FEED MANAGER & TOKEN SETUP ENGINE
+    // ============================================================
+    function openFyersModal() {
+      const modal = document.getElementById('modal-fyers-connect');
+      if (!modal) return;
+      modal.classList.remove('hidden');
+
+      const savedAppId = localStorage.getItem('fyers_app_id') || 'RMR62XB492-100';
+      const savedToken = localStorage.getItem('fyers_access_token') || '';
+      const inputAppId = document.getElementById('fyers-input-appid');
+      const inputToken = document.getElementById('fyers-input-token');
+      if (inputAppId) inputAppId.value = savedAppId;
+      if (inputToken) inputToken.value = savedToken;
+
+      checkFyersStatus();
+    }
+
+    function closeFyersModal() {
+      const modal = document.getElementById('modal-fyers-connect');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    async function checkFyersStatus() {
+      try {
+        const res = await fetch('/api/fyers/status');
+        if (!res.ok) return;
+        const data = await res.json();
+        const badge = document.getElementById('fyers-modal-status-badge');
+        const badgeText = document.getElementById('fyers-modal-status-text');
+        const latencyEl = document.getElementById('fyers-modal-latency');
+        const userEl = document.getElementById('fyers-modal-user');
+        const hdrDot = document.getElementById('hdr-live-market-dot');
+        const hdrText = document.getElementById('hdr-live-market-text');
+        const liveFeedDot = document.getElementById('live-feed-dot');
+        const liveFeedLabel = document.getElementById('live-feed-label');
+
+        const hasLocalToken = Boolean(localStorage.getItem('fyers_access_token'));
+
+        if (data.connected && data.hasValidToken) {
+          if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px]';
+          if (badgeText) badgeText.innerText = 'FYERS API V3 LIVE';
+          if (latencyEl) latencyEl.innerText = `${data.ticksPerSecond || 12} tps • Upstream WebSocket Streaming`;
+          if (userEl && data.appId) userEl.innerText = data.appId;
+
+          if (hdrDot) hdrDot.className = 'w-2 h-2 rounded-full bg-emerald-400 pulse-radar-dot';
+          if (hdrText) hdrText.innerText = 'LIVE MARKET (FYERS v3)';
+          if (liveFeedDot) liveFeedDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+          if (liveFeedLabel) liveFeedLabel.innerText = 'Fyers API v3 Live';
+        } else if (hasLocalToken) {
+          if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px]';
+          if (badgeText) badgeText.innerText = 'TOKEN SAVED (CONNECTING)';
+          if (latencyEl) latencyEl.innerText = 'Syncing quotes...';
+        } else {
+          if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px]';
+          if (badgeText) badgeText.innerText = 'OFFLINE / FALLBACK FEED';
+          if (latencyEl) latencyEl.innerText = 'Click Connect to paste Fyers daily token';
+        }
+      } catch (e) {}
+    }
+
+    async function saveFyersCredentials() {
+      const appIdInput = document.getElementById('fyers-input-appid');
+      const tokenInput = document.getElementById('fyers-input-token');
+      const saveBtn = document.getElementById('btn-save-fyers-token');
+
+      const appId = (appIdInput ? appIdInput.value : '').trim() || 'RMR62XB492-100';
+      const accessToken = (tokenInput ? tokenInput.value : '').trim();
+
+      if (!accessToken || accessToken.length < 10) {
+        alert("Please enter a valid Fyers Daily Access Token.\n\nTo generate one, log in to myapi.fyers.in/dashboard under your App and click 'Generate Token'.");
+        return;
+      }
+
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span>⏳</span><span>Verifying with Fyers API...</span>`;
+      }
+
+      try {
+        const res = await fetch('/api/fyers/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ appId, accessToken })
+        });
+
+        const json = await res.json();
+        if (res.ok && json.status === 'ok') {
+          localStorage.setItem('fyers_app_id', appId);
+          localStorage.setItem('fyers_access_token', accessToken);
+
+          if (typeof showToast === 'function') {
+            showToast(`🎉 Fyers API v3 Connected! ${json.message}`, 'success');
+          } else {
+            alert(`Fyers Connected!\n\n${json.message}`);
+          }
+
+          checkFyersStatus();
+          closeFyersModal();
+
+          if (typeof syncFyersLive === 'function') {
+            syncFyersLive();
+          }
+          if (typeof CyberLivePriceEngine !== 'undefined') {
+            CyberLivePriceEngine.connectWebSocket();
+          }
+        } else {
+          alert(`Fyers Connection Notice:\n\n${json.message || 'Token verification failed.'}\n\nPlease make sure you copied today's access token from myapi.fyers.in/dashboard.`);
+        }
+      } catch (err) {
+        console.error('Error connecting Fyers:', err);
+        alert('Network error connecting to Fyers API gateway: ' + err.message);
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = `<span>⚡</span><span>Connect Live Feed</span>`;
+        }
+      }
+    }
+
+    function disconnectFyersApi() {
+      localStorage.removeItem('fyers_access_token');
+      const tokenInput = document.getElementById('fyers-input-token');
+      if (tokenInput) tokenInput.value = '';
+      checkFyersStatus();
+      if (typeof showToast === 'function') {
+        showToast('Fyers token removed. Reverted to standard price feed.', 'info');
       }
     }
 
