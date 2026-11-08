@@ -224,8 +224,8 @@ export async function fetchFyersQuotes(
               atp: Number((item.v.atp || item.v.cmd?.atp || ((lp + prevClose) / 2)).toFixed(2)),
               ltt: item.v.tt ? new Date(item.v.tt * 1000).toLocaleTimeString('en-IN') : new Date().toLocaleTimeString('en-IN'),
               fyersStatus: 'LIVE_V3_FEED',
-              isMarketOpen: true,
-              marketSession: 'FYERS_API_V3_LIVE',
+              isMarketOpen: isLiveMarket,
+              marketSession: isLiveMarket ? 'FYERS_API_V3_LIVE' : 'CLOSED_SETTLEMENT',
               lastRefreshed: new Date().toISOString(),
             };
 
@@ -325,8 +325,8 @@ export async function fetchFyersQuotes(
         atp: Number(((lp + prevClose) / 2).toFixed(2)),
         ltt: new Date().toLocaleTimeString('en-IN'),
         fyersStatus: 'RESILIENT_FEED',
-        isMarketOpen: true,
-        marketSession: 'ACTIVE_SESSION',
+        isMarketOpen: isLiveMarket,
+        marketSession: isLiveMarket ? 'ACTIVE_SESSION' : 'CLOSED_SETTLEMENT',
         lastRefreshed: new Date().toISOString(),
       };
     }
@@ -390,8 +390,8 @@ export async function fetchIndexLiveQuotes(
         atp: lp,
         ltt: new Date().toLocaleTimeString('en-IN'),
         fyersStatus: 'RESILIENT_FEED',
-        isMarketOpen: true,
-        marketSession: 'ACTIVE_SESSION',
+        isMarketOpen: isLiveMarket,
+        marketSession: isLiveMarket ? 'ACTIVE_SESSION' : 'CLOSED_SETTLEMENT',
         lastRefreshed: new Date().toISOString(),
       };
     }

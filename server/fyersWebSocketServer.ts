@@ -216,36 +216,36 @@ export class FyersWebSocketServerManager {
         const underlyingPrice =
           (parsed.indexSymbol ? this.lastTickPrices.get(getFyersSpotSymbol(parsed.indexSymbol)) : null) ||
           (parsed.indexSymbol === 'BANKNIFTY'
-            ? 57509.95
+            ? 52380.00
             : parsed.indexSymbol === 'FINNIFTY'
-            ? 26280.65
+            ? 24150.00
             : parsed.indexSymbol === 'MIDCPNIFTY'
-            ? 14948.85
+            ? 13120.00
             : parsed.indexSymbol === 'SENSEX'
-            ? 76933.59
-            : 24090.85);
+            ? 81765.20
+            : 25030.35);
 
         basePrice = calculateTheoreticalOptionPrice(underlyingPrice, parsed.strike, parsed.optionType);
         prevClose = Number((basePrice * 0.96).toFixed(2));
       } else if (parsed.isSpot) {
         if (parsed.indexSymbol === 'NIFTY 50' || upperSym.includes('NIFTY50')) {
-          basePrice = 24090.85;
-          prevClose = 24334.60;
+          basePrice = 25030.35;
+          prevClose = 24537.15;
         } else if (parsed.indexSymbol === 'BANKNIFTY' || upperSym.includes('BANK')) {
-          basePrice = 57509.95;
-          prevClose = 57514.20;
+          basePrice = 52380.00;
+          prevClose = 51434.90;
         } else if (parsed.indexSymbol === 'FINNIFTY') {
-          basePrice = 26280.65;
-          prevClose = 26386.75;
+          basePrice = 24150.00;
+          prevClose = 23765.00;
         } else if (parsed.indexSymbol === 'MIDCPNIFTY' || upperSym.includes('MID')) {
-          basePrice = 14948.85;
-          prevClose = 14948.05;
+          basePrice = 13120.00;
+          prevClose = 12832.00;
         } else if (parsed.indexSymbol === 'SENSEX' || upperSym.includes('SENSEX')) {
-          basePrice = 76933.59;
-          prevClose = 77656.10;
+          basePrice = 81765.20;
+          prevClose = 80288.00;
         } else {
-          basePrice = 24090.85;
-          prevClose = 24334.60;
+          basePrice = 25030.35;
+          prevClose = 24537.15;
         }
       } else {
         const cleanStock = upperSym.replace(/^NSE:/, '').replace(/^BSE:/, '').replace(/-EQ$/, '').trim();

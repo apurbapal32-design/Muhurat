@@ -13,6 +13,7 @@ import { fetchFyersQuotes, fetchIndexLiveQuotes, getFyersSymbol } from './server
 import { fyersWebSocketServer } from './server/fyersWebSocketServer';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
+import { calculateMarketStatus } from './src/data/marketSchedule';
 
 async function startServer() {
   const app = express();
@@ -166,11 +167,14 @@ async function startServer() {
         'NSE:INDIAVIX-INDEX': indexQuotes['INDIAVIX'] || { lp: 17.47, ch: -2.41, chp: -12.13, prev_close_price: 19.88 },
       };
 
+      const marketStatusInfo = calculateMarketStatus();
       res.json({
         status: 'ok',
         quotes: formattedQuotes,
         indices: formattedIndices,
-        isMarketOpen: true,
+        isMarketOpen: marketStatusInfo.isOpen,
+        marketStatus: marketStatusInfo.statusLabel,
+        marketSession: marketStatusInfo.session,
         source: (quotes && Object.values(quotes).some((q: any) => q && q.fyersStatus === 'LIVE_V3_FEED'))
           ? 'FYERS_API_V3_LIVE'
           : ((appId && accessToken && accessToken.length > 10) ? 'FYERS_API_V3_LIVE' : 'QUANT_LIVE_ENGINE'),
@@ -189,9 +193,13 @@ async function startServer() {
     const hasToken = Boolean(accessToken && accessToken.trim().length > 10);
     const wsStatus = fyersWebSocketServer.getStatus();
 
+    const currentMarket = calculateMarketStatus();
     res.json({
       status: 'ok',
       connected: hasToken,
+      isMarketOpen: currentMarket.isOpen,
+      marketStatus: currentMarket.statusLabel,
+      marketSession: currentMarket.session,
       broker: broker.selectedBroker,
       appId,
       maskedAppId: appId.substring(0, 4) + '****' + (appId.length > 7 ? appId.substring(appId.length - 4) : ''),

@@ -126,6 +126,10 @@ export class ScannerService {
   constructor() {
     this.initializeCandleData();
     this.seedInitialSampleData();
+    const initStatus = calculateMarketStatus();
+    this.marketOverview.marketStatus = initStatus.isOpen
+      ? 'OPEN (LIVE NSE/BSE)'
+      : `MARKET CLOSED (${initStatus.statusLabel})`;
     this.runScanCycle();
     // Start 3-second live price tick stream
     this.startAutoScan(3);

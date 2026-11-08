@@ -225,11 +225,49 @@ export function calculateMarketStatus(
     statusBadgeColor = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
     timeMessage = `Market closed today for ${todayHoliday.name}`;
   } else if (todayHoliday && todayHoliday.type === 'SPECIAL_SESSION') {
-    session = 'REGULAR';
-    isOpen = true;
-    statusLabel = `Special Muhurat Session (${todayHoliday.name})`;
-    statusBadgeColor = 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-    timeMessage = todayHoliday.description || 'Special trading session active';
+    const currentMins = ist.minutesFromMidnight;
+    const muhuratPreOpenStart = 18 * 60; // 18:00 IST
+    const muhuratPreOpenEnd = 18 * 60 + 15; // 18:15 IST
+    const muhuratOpen = 18 * 60 + 15; // 18:15 IST
+    const muhuratClose = 19 * 60 + 15; // 19:15 IST
+    const muhuratPostClose = 19 * 60 + 30; // 19:30 IST
+
+    if (currentMins >= muhuratOpen && currentMins <= muhuratClose) {
+      session = 'REGULAR';
+      isOpen = true;
+      statusLabel = `Special Muhurat Session LIVE (18:15-19:15 IST)`;
+      statusBadgeColor = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+      const minsLeft = muhuratClose - currentMins;
+      timeMessage = `Diwali Muhurat Trading Session LIVE! Closes in ${minsLeft}m at 07:15 PM IST`;
+    } else if (currentMins >= muhuratPreOpenStart && currentMins < muhuratPreOpenEnd) {
+      session = 'PRE_OPEN';
+      isOpen = false;
+      statusLabel = 'Muhurat Pre-Open (18:00-18:15 IST)';
+      statusBadgeColor = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+      const minsLeft = muhuratPreOpenEnd - currentMins;
+      timeMessage = `Diwali Muhurat Pre-Open order matching active. Live trading opens in ${minsLeft}m at 06:15 PM IST`;
+    } else if (currentMins < muhuratPreOpenStart) {
+      session = isWeekend ? 'CLOSED_WEEKEND' : 'CLOSED_AFTER_HOURS';
+      isOpen = false;
+      statusLabel = 'Market Closed (Muhurat at 18:15 IST)';
+      statusBadgeColor = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+      const minsLeft = muhuratOpen - currentMins;
+      const hrsLeft = Math.floor(minsLeft / 60);
+      const remMins = minsLeft % 60;
+      timeMessage = `Diwali Muhurat Trading starts today at 06:15 PM IST (${hrsLeft}h ${remMins}m remaining)`;
+    } else if (currentMins <= muhuratPostClose) {
+      session = 'POST_MARKET';
+      isOpen = false;
+      statusLabel = 'Muhurat Post-Closing';
+      statusBadgeColor = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+      timeMessage = 'Diwali Muhurat Trading closing session active until 07:30 PM IST';
+    } else {
+      session = 'CLOSED_AFTER_HOURS';
+      isOpen = false;
+      statusLabel = 'Market Closed (Muhurat Ended)';
+      statusBadgeColor = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
+      timeMessage = 'Diwali Muhurat Trading session has concluded for today.';
+    }
   } else if (isWeekend) {
     session = 'CLOSED_WEEKEND';
     isOpen = false;
@@ -291,7 +329,7 @@ export function calculateMarketStatus(
     currentDate: `${ist.dateStr} (${ist.weekday})`,
     todayHoliday,
     nextHoliday,
-    nextSessionTime: `${regOpen12} - ${regClose12} IST`,
+    nextSessionTime: (todayHoliday && todayHoliday.type === 'SPECIAL_SESSION') ? '06:15 PM - 07:15 PM IST' : `${regOpen12} - ${regClose12} IST`,
     hoursConfig: activeHours,
   };
 }

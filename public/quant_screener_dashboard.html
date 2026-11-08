@@ -634,9 +634,9 @@
 
       <!-- Live Indices Quick Ticker (Desktop) -->
       <div class="hidden xl:flex items-center gap-3.5 pl-4 border-l border-[#1c273c] text-xs font-mono">
-        <span onclick="openFyersModal()" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 cursor-pointer hover:bg-emerald-500/20 transition shadow-sm" title="Fyers API v3 Direct Broker Streaming • Click to Manage Feed" id="hdr-live-market-pill">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-radar-dot" id="hdr-live-market-dot"></span>
-          <span id="hdr-live-market-text">LIVE MARKET</span>
+        <span onclick="openFyersModal()" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 cursor-pointer hover:bg-rose-500/20 transition shadow-sm" title="Market Status & Fyers Feed • Click to Manage Feed" id="hdr-live-market-pill">
+          <span class="w-2 h-2 rounded-full bg-rose-400" id="hdr-live-market-dot"></span>
+          <span id="hdr-live-market-text">MARKET CLOSED</span>
         </span>
         <div class="flex items-center gap-1 text-slate-300">
           <span class="text-slate-400">NIFTY 50</span>
@@ -714,9 +714,9 @@
   <!-- SUBHEADER TICKER (MOBILE / TABLET / RESPONSIVE) -->
   <div class="xl:hidden bg-[#07090f]/95 backdrop-blur-md border-b border-[#172033] px-3 py-1.5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-nowrap scrollbar-none z-40">
     <div class="flex items-center gap-2.5 shrink-0">
-      <span onclick="openFyersModal()" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 cursor-pointer hover:bg-emerald-500/20 transition shadow-sm" title="Fyers API v3 Live Feed • Click to Manage Feed" id="subhdr-live-market-pill">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-radar-dot" id="subhdr-live-market-dot"></span>
-        <span id="subhdr-live-market-text">LIVE</span>
+      <span onclick="openFyersModal()" class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 cursor-pointer hover:bg-rose-500/20 transition shadow-sm" title="Market Status & Fyers Feed • Click to Manage Feed" id="subhdr-live-market-pill">
+        <span class="w-1.5 h-1.5 rounded-full bg-rose-400" id="subhdr-live-market-dot"></span>
+        <span id="subhdr-live-market-text">CLOSED</span>
       </span>
       <div class="flex items-center gap-1">
         <span class="text-slate-400 font-semibold">NIFTY</span>
@@ -1386,9 +1386,9 @@
                     <h1 class="text-xl md:text-2xl font-black text-white tracking-wide">
                       MUHURAT TRADING COCKPIT
                     </h1>
-                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shadow-sm" id="cockpit-hero-market-badge">
-                      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping" id="cockpit-hero-market-dot"></span>
-                      <span id="cockpit-hero-market-text">AUSPICIOUS SESSION ACTIVE</span>
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm cursor-pointer" id="cockpit-hero-market-badge" onclick="toggleForceLiveMarket()" title="Market Exchange Status • Click to Toggle Simulation Mode">
+                      <span class="w-2 h-2 rounded-full bg-rose-400" id="cockpit-hero-market-dot"></span>
+                      <span id="cockpit-hero-market-text">MARKET CLOSED • EOD SETTLEMENT</span>
                     </span>
                   </div>
                   <div class="text-xs text-slate-400 font-mono flex items-center gap-2 mt-0.5">
@@ -9182,9 +9182,9 @@ function renderJournal() {
       executeMicroTick() {
         const now = new Date();
         const mkt = getIndianMarketStatus(now);
-        const forceLiveSetting = typeof localStorage !== 'undefined' ? localStorage.getItem('force_live_market') : null;
-        // Default to active live streaming (or simulated live ticks outside market hours) so screener prices are NEVER frozen
-        const shouldTick = forceLiveSetting !== 'false';
+        // Strictly honor market hours: tick only when exchange is OPEN or PRE-OPEN, or user explicitly enabled test simulation
+        const isForceLive = (typeof localStorage !== 'undefined' && localStorage.getItem('force_live_market') === 'true') || window.FORCE_LIVE_MARKET === true;
+        const shouldTick = mkt.status === 'OPEN' || mkt.status === 'PRE-OPEN' || isForceLive;
         if (!shouldTick) return;
 
         // 1. Tick Benchmark Indices
@@ -9359,16 +9359,29 @@ function renderJournal() {
 
         const hasLocalToken = Boolean(localStorage.getItem('fyers_access_token'));
 
+        const mkt = getIndianMarketStatus(new Date());
         if (data.connected && data.hasValidToken) {
           if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px]';
-          if (badgeText) badgeText.innerText = 'FYERS API V3 LIVE';
-          if (latencyEl) latencyEl.innerText = `${data.ticksPerSecond || 12} tps • Upstream WebSocket Streaming`;
+          if (badgeText) badgeText.innerText = mkt.status === 'OPEN' ? 'FYERS API V3 LIVE' : 'FYERS API V3 CONNECTED';
+          if (latencyEl) latencyEl.innerText = mkt.status === 'OPEN' ? `${data.ticksPerSecond || 12} tps • Upstream WebSocket Streaming` : 'Authenticated & Ready • Market Closed';
           if (userEl && data.appId) userEl.innerText = data.appId;
 
-          if (hdrDot) hdrDot.className = 'w-2 h-2 rounded-full bg-emerald-400 pulse-radar-dot';
-          if (hdrText) hdrText.innerText = 'LIVE MARKET (FYERS v3)';
-          if (liveFeedDot) liveFeedDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
-          if (liveFeedLabel) liveFeedLabel.innerText = 'Fyers API v3 Live';
+          if (mkt.status === 'OPEN') {
+            if (hdrDot) hdrDot.className = 'w-2 h-2 rounded-full bg-emerald-400 pulse-radar-dot';
+            if (hdrText) hdrText.innerText = 'LIVE MARKET (FYERS v3)';
+            if (liveFeedDot) liveFeedDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+            if (liveFeedLabel) liveFeedLabel.innerText = 'Fyers API v3 Live';
+          } else if (mkt.status === 'PRE-OPEN') {
+            if (hdrDot) hdrDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+            if (hdrText) hdrText.innerText = 'PRE-OPEN (FYERS v3)';
+            if (liveFeedDot) liveFeedDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+            if (liveFeedLabel) liveFeedLabel.innerText = 'Pre-Open Orders';
+          } else {
+            if (hdrDot) hdrDot.className = 'w-2 h-2 rounded-full bg-rose-400';
+            if (hdrText) hdrText.innerText = 'MARKET CLOSED';
+            if (liveFeedDot) liveFeedDot.className = 'w-2 h-2 rounded-full bg-rose-400';
+            if (liveFeedLabel) liveFeedLabel.innerText = 'Market Closed (Fyers Ready)';
+          }
         } else if (hasLocalToken) {
           if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px]';
           if (badgeText) badgeText.innerText = 'TOKEN SAVED (CONNECTING)';
@@ -10680,23 +10693,31 @@ function renderJournal() {
       const minutes = istDate.getMinutes();
       const totalMinutes = hours * 60 + minutes;
 
-      // Recognize Special Muhurat Sessions (e.g. Diwali Laxmi Pujan Sunday) or Forced Live Feed
-      const isMuhuratSpecial = (istDate.getFullYear() === 2026 && istDate.getMonth() === 10 && istDate.getDate() === 8);
+      // Special Diwali Muhurat Trading Evening Window: strictly 18:15 to 19:15 IST (Pre-open 18:00 to 18:15 IST)
+      const isMuhuratDay = (istDate.getFullYear() === 2026 && istDate.getMonth() === 10 && istDate.getDate() === 8);
+      const isMuhuratOpen = isMuhuratDay && (totalMinutes >= (18 * 60 + 15) && totalMinutes <= (19 * 60 + 15));
+      const isMuhuratPreOpen = isMuhuratDay && (totalMinutes >= (18 * 60) && totalMinutes < (18 * 60 + 15));
+
+      // User explicit test simulation override (only if user explicitly activated it)
       const isForceLive = (typeof localStorage !== 'undefined' && localStorage.getItem('force_live_market') === 'true') || window.FORCE_LIVE_MARKET === true;
 
       const isWeekday = (day >= 1 && day <= 5);
-      const isRegularOpen = (isWeekday && (totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30))) || isMuhuratSpecial || isForceLive;
-      const isPreOpen = isWeekday && (totalMinutes >= (9 * 60) && totalMinutes < (9 * 60 + 15)) && !isForceLive && !isMuhuratSpecial;
+      const isRegularOpen = isWeekday && (totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30));
+      const isPreOpen = isWeekday && (totalMinutes >= (9 * 60) && totalMinutes < (9 * 60 + 15));
+      const isPostMarket = isWeekday && (totalMinutes >= (15 * 60 + 30) && totalMinutes < (16 * 60));
 
-      if (isRegularOpen) {
+      const isOpen = isRegularOpen || isMuhuratOpen || isForceLive;
+      const isPre = (isPreOpen || isMuhuratPreOpen) && !isForceLive;
+
+      if (isOpen) {
         let label = 'OPEN (09:15-15:30)';
         let hero = 'MARKET OPEN • LIVE SESSION';
-        if (isMuhuratSpecial) {
+        if (isMuhuratOpen) {
           label = 'OPEN (Diwali Muhurat)';
           hero = 'MUHURAT TRADING SPECIAL SESSION LIVE';
         } else if (isForceLive) {
-          label = 'OPEN (Live Feed Active)';
-          hero = 'LIVE MARKET STREAMING • ACTIVE';
+          label = 'TEST SIMULATION (Off-Market)';
+          hero = 'LIVE SIMULATION FEED • TEST MODE';
         }
         return {
           status: 'OPEN',
@@ -10705,28 +10726,68 @@ function renderJournal() {
           dotClass: 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping',
           heroText: hero,
           heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shadow-sm cursor-pointer',
-          heroDotClass: 'w-2 h-2 rounded-full bg-emerald-400 animate-ping'
+          heroDotClass: 'w-2 h-2 rounded-full bg-emerald-400 animate-ping',
+          hdrText: 'LIVE MARKET',
+          hdrDotClass: 'w-2 h-2 rounded-full bg-emerald-400 pulse-radar-dot',
+          hdrClass: 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 cursor-pointer hover:bg-emerald-500/20 transition shadow-sm',
+          subhdrText: 'LIVE',
+          subhdrDotClass: 'w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-radar-dot',
+          subhdrClass: 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 cursor-pointer hover:bg-emerald-500/20 transition shadow-sm'
         };
-      } else if (isPreOpen) {
+      } else if (isPre) {
+        const preLabel = isMuhuratPreOpen ? 'PRE-OPEN (Muhurat Session)' : 'PRE-OPEN (09:00-09:15)';
         return {
           status: 'PRE-OPEN',
-          text: 'PRE-OPEN (09:00-09:15)',
-          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-amber-500/10',
+          text: preLabel,
+          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-amber-500/10 cursor-pointer',
           dotClass: 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse',
-          heroText: 'PRE-OPEN SESSION ACTIVE',
-          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center gap-1 shadow-sm',
-          heroDotClass: 'w-2 h-2 rounded-full bg-amber-400 animate-pulse'
+          heroText: isMuhuratPreOpen ? 'DIWALI MUHURAT PRE-OPEN ACTIVE' : 'PRE-OPEN SESSION ACTIVE',
+          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-400 border border-amber-500/40 flex items-center gap-1 shadow-sm cursor-pointer',
+          heroDotClass: 'w-2 h-2 rounded-full bg-amber-400 animate-pulse',
+          hdrText: 'PRE-OPEN (09:00)',
+          hdrDotClass: 'w-2 h-2 rounded-full bg-amber-400 animate-pulse',
+          hdrClass: 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25 cursor-pointer hover:bg-amber-500/20 transition shadow-sm',
+          subhdrText: 'PRE-OPEN',
+          subhdrDotClass: 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse',
+          subhdrClass: 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25 cursor-pointer hover:bg-amber-500/20 transition shadow-sm'
         };
       } else {
-        const subReason = isWeekday ? 'CLOSED (Opens 09:15 IST)' : 'CLOSED (Weekend)';
+        let subReason = 'CLOSED (Opens Mon 09:15 IST)';
+        let heroMsg = 'MARKET CLOSED • EOD SETTLEMENT';
+
+        if (isMuhuratDay) {
+          if (totalMinutes < (18 * 60)) {
+            subReason = 'CLOSED (Muhurat at 18:15 IST)';
+            heroMsg = 'MARKET CLOSED • MUHURAT OPENS 18:15 IST';
+          } else {
+            subReason = 'CLOSED (Muhurat Session Ended)';
+            heroMsg = 'MARKET CLOSED • EOD CLOSE SETTLEMENT';
+          }
+        } else if (isPostMarket) {
+          subReason = 'CLOSED (Post-Market Close)';
+          heroMsg = 'MARKET CLOSED • POST-CLOSING SETTLEMENT';
+        } else if (isWeekday) {
+          subReason = totalMinutes < (9 * 60) ? 'CLOSED (Opens 09:15 IST)' : 'CLOSED (EOD Settlement)';
+          heroMsg = totalMinutes < (9 * 60) ? 'MARKET CLOSED • OPENS 09:15 IST' : 'MARKET CLOSED • EOD SETTLEMENT';
+        } else {
+          subReason = 'CLOSED (Weekend)';
+          heroMsg = 'MARKET CLOSED • WEEKEND SETTLEMENT';
+        }
+
         return {
           status: 'CLOSED',
           text: subReason,
-          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-rose-500/10',
+          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-rose-500/10 cursor-pointer',
           dotClass: 'w-1.5 h-1.5 rounded-full bg-rose-400',
-          heroText: isWeekday ? 'MARKET CLOSED • OPENS 09:15 IST' : 'MARKET CLOSED • WEEKEND',
-          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1 shadow-sm',
-          heroDotClass: 'w-2 h-2 rounded-full bg-rose-400'
+          heroText: heroMsg,
+          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm cursor-pointer',
+          heroDotClass: 'w-2 h-2 rounded-full bg-rose-400',
+          hdrText: 'MARKET CLOSED',
+          hdrDotClass: 'w-2 h-2 rounded-full bg-rose-400',
+          hdrClass: 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 cursor-pointer hover:bg-rose-500/20 transition shadow-sm',
+          subhdrText: 'CLOSED',
+          subhdrDotClass: 'w-1.5 h-1.5 rounded-full bg-rose-400',
+          subhdrClass: 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 cursor-pointer hover:bg-rose-500/20 transition shadow-sm'
         };
       }
     }
@@ -10739,19 +10800,19 @@ function renderJournal() {
         elem.innerText = now.toLocaleTimeString('en-GB', options) + ' IST';
       }
 
-      // Update Market Status below Clock Tab
+      const mkt = getIndianMarketStatus(now);
+
+      // 1. Cockpit Status Badge (below clock)
       const badge = document.getElementById('cockpit-market-status-badge');
       const dot = document.getElementById('cockpit-market-status-dot');
       const textSpan = document.getElementById('cockpit-market-status-text');
-      
-      const mkt = getIndianMarketStatus(now);
       if (badge && dot && textSpan) {
         badge.className = mkt.badgeClass;
         dot.className = mkt.dotClass;
         textSpan.innerText = mkt.text;
       }
 
-      // Synchronize Hero Banner Badge if present
+      // 2. Hero Banner Badge & Dot
       const heroBadge = document.getElementById('cockpit-hero-market-badge');
       const heroDot = document.getElementById('cockpit-hero-market-dot');
       const heroText = document.getElementById('cockpit-hero-market-text');
@@ -10759,6 +10820,48 @@ function renderJournal() {
         heroBadge.className = mkt.heroBadgeClass;
         heroDot.className = mkt.heroDotClass;
         heroText.innerText = mkt.heroText;
+      }
+
+      // 3. Desktop Top Navbar Quick Ticker Pill
+      const hdrPill = document.getElementById('hdr-live-market-pill');
+      const hdrDot = document.getElementById('hdr-live-market-dot');
+      const hdrText = document.getElementById('hdr-live-market-text');
+      if (hdrPill && hdrDot && hdrText) {
+        hdrPill.className = mkt.hdrClass;
+        hdrDot.className = mkt.hdrDotClass;
+        hdrText.innerText = mkt.hdrText;
+      }
+
+      // 4. Subheader (Mobile / Tablet) Ticker Pill
+      const subhdrPill = document.getElementById('subhdr-live-market-pill');
+      const subhdrDot = document.getElementById('subhdr-live-market-dot');
+      const subhdrText = document.getElementById('subhdr-live-market-text');
+      if (subhdrPill && subhdrDot && subhdrText) {
+        subhdrPill.className = mkt.subhdrClass;
+        subhdrDot.className = mkt.subhdrDotClass;
+        subhdrText.innerText = mkt.subhdrText;
+      }
+
+      // 5. Cockpit Stream Action Button
+      const streamBtn = document.getElementById('btn-live-stream-toggle');
+      const streamDot = document.getElementById('live-feed-dot');
+      const streamLabel = document.getElementById('live-feed-label');
+      const streamTps = document.getElementById('live-feed-tps');
+      if (streamBtn && streamDot && streamLabel) {
+        if (mkt.status === 'OPEN') {
+          streamBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono shadow-sm hover:bg-emerald-500/25 transition cursor-pointer';
+          streamDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+          streamLabel.innerText = 'Fyers Live Stream';
+        } else if (mkt.status === 'PRE-OPEN') {
+          streamBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 font-mono shadow-sm hover:bg-amber-500/25 transition cursor-pointer';
+          streamDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+          streamLabel.innerText = 'Pre-Open Orders';
+        } else {
+          streamBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800/80 text-slate-300 border border-slate-700/80 font-mono shadow-sm hover:bg-slate-700/80 transition cursor-pointer';
+          streamDot.className = 'w-2 h-2 rounded-full bg-rose-400';
+          streamLabel.innerText = 'Market Closed (EOD Close)';
+          if (streamTps) streamTps.innerText = 'Settled';
+        }
       }
     }
     setInterval(updateCockpitTime, 1000);
