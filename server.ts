@@ -407,6 +407,43 @@ async function startServer() {
     }
   });
 
+  // 12:00 AM Midnight Auto-Purge Trigger Endpoint
+  app.post('/api/scan/reset-midnight', (req, res) => {
+    try {
+      scannerService.resetMidnightPurge();
+      res.json({
+        status: 'success',
+        message: '12:00 AM Midnight Purge executed. All scanner results emptied for next trading day.',
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to execute midnight purge' });
+    }
+  });
+
+  // Scanner Session Status Endpoint
+  app.get('/api/scan/session-status', (req, res) => {
+    try {
+      const now = new Date();
+      const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      const istDate = new Date(istStr);
+      const hours = istDate.getHours();
+      const minutes = istDate.getMinutes();
+      const isMidnightPeriod = hours >= 0 && hours < 9;
+      res.json({
+        status: 'ok',
+        isMidnightPeriod,
+        hours,
+        minutes,
+        istTime: istStr,
+        stocksCount: scannerService.getScanResults().stocks.length,
+        nextTradingSession: '09:00 AM IST (Pre-Open) / 09:15 AM IST (Regular Market)',
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to get session status' });
+    }
+  });
+
   // Trigger manual 1-min rescan
   app.post('/api/scan/trigger', async (req, res) => {
     try {

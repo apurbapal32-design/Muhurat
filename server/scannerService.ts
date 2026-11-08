@@ -1094,6 +1094,40 @@ export class ScannerService {
     setInterval(() => {
       this.runScanCycle().catch(() => {});
     }, 30000);
+
+    // 12:00 AM Midnight Auto-Purge & Next Trading Day 09:00 AM Auto-Rescan Loop (IST)
+    setInterval(() => {
+      const now = new Date();
+      const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      const istDate = new Date(istStr);
+      const hours = istDate.getHours();
+      const minutes = istDate.getMinutes();
+
+      // At 12:00 AM midnight (hour 0, minute 0), auto-empty all scanners
+      if (hours === 0 && minutes === 0 && this.stockScanResults.length > 0) {
+        this.resetMidnightPurge();
+      }
+
+      // At 09:00 AM (Pre-Open) or 09:15 AM (Regular Open), auto-run fresh scan cycle for the new trading day
+      if (((hours === 9 && minutes === 0) || (hours === 9 && minutes === 15)) && this.stockScanResults.length === 0) {
+        console.log('[ScannerService] 🌅 NEXT TRADING DAY SESSION (09:00/09:15 AM IST)! Generating fresh stock scans...');
+        this.runScanCycle().catch(() => {});
+      }
+    }, 30000);
+  }
+
+  /**
+   * Resets and empties all scanner results at 12:00 AM midnight for the next trading day
+   */
+  public resetMidnightPurge(): void {
+    this.stockScanResults = [];
+    this.marketOverview.scannedCount = 0;
+    this.marketOverview.buyCount = 0;
+    this.marketOverview.sellCount = 0;
+    this.marketOverview.highRvolCount = 0;
+    this.marketOverview.marketStatus = 'CLEARED_AWAITING_NEW_DAY';
+    this.marketOverview.lastScanTime = new Date().toISOString();
+    console.log('[ScannerService] 🕛 12:00 AM IST MIDNIGHT PURGE TRIGGERED! All scanner stocks emptied for next trading day.');
   }
 
   /**
