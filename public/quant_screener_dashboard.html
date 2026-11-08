@@ -1386,10 +1386,13 @@
                     <h1 class="text-xl md:text-2xl font-black text-white tracking-wide">
                       MUHURAT TRADING COCKPIT
                     </h1>
-                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm cursor-pointer" id="cockpit-hero-market-badge" onclick="toggleForceLiveMarket()" title="Market Exchange Status • Click to Toggle Simulation Mode">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm cursor-pointer hover:bg-rose-500/30 transition" id="cockpit-hero-market-badge" onclick="toggleForceLiveMarket()" title="Click to Toggle Real-time Live Price Streaming Mode">
                       <span class="w-2 h-2 rounded-full bg-rose-400" id="cockpit-hero-market-dot"></span>
                       <span id="cockpit-hero-market-text">MARKET CLOSED • EOD SETTLEMENT</span>
                     </span>
+                    <button onclick="toggleForceLiveMarket()" class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25 transition cursor-pointer flex items-center gap-1" title="Instantly stream live prices across all indices & stocks">
+                      <span>⚡</span><span>Toggle Live Stream</span>
+                    </button>
                   </div>
                   <div class="text-xs text-slate-400 font-mono flex items-center gap-2 mt-0.5">
                     <span class="text-amber-400 font-bold">Finwurl Enterprises Private Limited</span>
@@ -10673,12 +10676,13 @@ function renderJournal() {
       updateCockpitTime();
       if (next) {
         CyberLivePriceEngine.startLiveTick();
+        CyberLivePriceEngine.executeMicroTick();
         if (typeof showToast === 'function') {
-          showToast('🟢 Force Market Open Activated! Prices are now streaming LIVE in real-time.', 'success');
+          showToast('🟢 Real-Time Live Price Streaming ACTIVE! Live micro-ticks, flashing prices, and order-flow are running.', 'success');
         }
       } else {
         if (typeof showToast === 'function') {
-          showToast('⚪ Standard Exchange Hours schedule restored.', 'info');
+          showToast('⚪ Standard Exchange Hours schedule restored (EOD Settlement).', 'info');
         }
       }
     }
@@ -10847,20 +10851,25 @@ function renderJournal() {
       const streamDot = document.getElementById('live-feed-dot');
       const streamLabel = document.getElementById('live-feed-label');
       const streamTps = document.getElementById('live-feed-tps');
+      const isForceLiveSetting = (typeof localStorage !== 'undefined' && localStorage.getItem('force_live_market') === 'true') || window.FORCE_LIVE_MARKET === true;
+
       if (streamBtn && streamDot && streamLabel) {
         if (mkt.status === 'OPEN') {
           streamBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono shadow-sm hover:bg-emerald-500/25 transition cursor-pointer';
           streamDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
-          streamLabel.innerText = 'Fyers Live Stream';
+          streamLabel.innerText = isForceLiveSetting ? '⚡ Live Feed (Simulation Active)' : 'Fyers Live Stream';
+          streamBtn.title = 'Real-time live prices are streaming! Click to pause or return to EOD settlement.';
         } else if (mkt.status === 'PRE-OPEN') {
           streamBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 font-mono shadow-sm hover:bg-amber-500/25 transition cursor-pointer';
           streamDot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
           streamLabel.innerText = 'Pre-Open Orders';
+          streamBtn.title = 'Pre-open order matching window. Click to toggle live stream.';
         } else {
-          streamBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800/80 text-slate-300 border border-slate-700/80 font-mono shadow-sm hover:bg-slate-700/80 transition cursor-pointer';
+          streamBtn.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 font-mono shadow-sm hover:bg-rose-500/20 transition cursor-pointer';
           streamDot.className = 'w-2 h-2 rounded-full bg-rose-400';
-          streamLabel.innerText = 'Market Closed (EOD Close)';
-          if (streamTps) streamTps.innerText = 'Settled';
+          streamLabel.innerText = '⚡ Start Live Stream (Market Closed)';
+          streamBtn.title = 'Stock exchange is closed right now. Click here to turn ON real-time live price streaming simulation!';
+          if (streamTps) streamTps.innerText = 'Click to Stream';
         }
       }
     }

@@ -31,25 +31,31 @@ export class FyersWebSocketServerManager {
   private ticksPerSecond: number = 0;
 
   constructor() {
-    // Initial Benchmark Spot Base & Prev Close Prices
-    this.lastTickPrices.set('NSE:NIFTY50-INDEX', 24090.85);
-    this.prevClosePrices.set('NSE:NIFTY50-INDEX', 24334.60);
+    // Initial Benchmark Spot Base & Prev Close Prices (Realistic Current Benchmark)
+    this.lastTickPrices.set('NSE:NIFTY50-INDEX', 25030.35);
+    this.prevClosePrices.set('NSE:NIFTY50-INDEX', 24537.15);
 
-    this.lastTickPrices.set('NSE:NIFTYBANK-INDEX', 57509.95);
-    this.prevClosePrices.set('NSE:NIFTYBANK-INDEX', 57514.20);
+    this.lastTickPrices.set('NSE:NIFTYBANK-INDEX', 52380.00);
+    this.prevClosePrices.set('NSE:NIFTYBANK-INDEX', 51434.90);
 
-    this.lastTickPrices.set('NSE:FINNIFTY-INDEX', 26280.65);
-    this.prevClosePrices.set('NSE:FINNIFTY-INDEX', 26386.75);
+    this.lastTickPrices.set('NSE:FINNIFTY-INDEX', 24150.00);
+    this.prevClosePrices.set('NSE:FINNIFTY-INDEX', 23765.00);
 
-    this.lastTickPrices.set('NSE:MIDCPNIFTY-INDEX', 14948.85);
-    this.prevClosePrices.set('NSE:MIDCPNIFTY-INDEX', 14948.05);
-    this.lastTickPrices.set('NSE:NIFTYMIDSELECT-INDEX', 14948.85);
-    this.prevClosePrices.set('NSE:NIFTYMIDSELECT-INDEX', 14948.05);
+    this.lastTickPrices.set('NSE:MIDCPNIFTY-INDEX', 13120.00);
+    this.prevClosePrices.set('NSE:MIDCPNIFTY-INDEX', 12832.00);
+    this.lastTickPrices.set('NSE:NIFTYMIDSELECT-INDEX', 13120.00);
+    this.prevClosePrices.set('NSE:NIFTYMIDSELECT-INDEX', 12832.00);
 
-    this.lastTickPrices.set('BSE:SENSEX-INDEX', 76933.59);
-    this.prevClosePrices.set('BSE:SENSEX30-INDEX', 77656.10);
-    this.lastTickPrices.set('BSE:SENSEX30-INDEX', 76933.59);
-    this.prevClosePrices.set('BSE:SENSEX-INDEX', 77656.10);
+    this.lastTickPrices.set('NSE:NIFTYNXT50-INDEX', 71850.00);
+    this.prevClosePrices.set('NSE:NIFTYNXT50-INDEX', 70475.00);
+
+    this.lastTickPrices.set('BSE:SENSEX-INDEX', 81765.20);
+    this.prevClosePrices.set('BSE:SENSEX-INDEX', 80288.00);
+    this.lastTickPrices.set('BSE:SENSEX30-INDEX', 81765.20);
+    this.prevClosePrices.set('BSE:SENSEX30-INDEX', 80288.00);
+
+    this.lastTickPrices.set('NSE:INDIAVIX-INDEX', 17.47);
+    this.prevClosePrices.set('NSE:INDIAVIX-INDEX', 19.88);
   }
 
   public init(server: HttpServer) {
