@@ -10383,11 +10383,41 @@ function renderJournal() {
       
       // Indices master benchmark levels
       indicesData: [
-        { symbol: 'NIFTY 50', name: 'NIFTY 50 Benchmark Index', type: 'INDEX', price: 25030.35, pct_change: 2.01, high: 25150.00, low: 24890.00, listed_at: '09:22:15', strategy: 'TRAP', trapType: 'Bullish Liquidity Sweep & Reclaim', accuracy: '95.2%' },
-        { symbol: 'BANKNIFTY', name: 'NIFTY Bank Sector Index', type: 'INDEX', price: 59086.00, pct_change: 2.27, high: 59350.00, low: 58650.00, listed_at: '09:35:40', strategy: 'BREAKOUT', trapType: 'Breakout & Retest Confirmation', accuracy: '92.4%' },
-        { symbol: 'FINNIFTY', name: 'NIFTY Financial Services Index', type: 'INDEX', price: 27283.95, pct_change: 2.57, high: 27400.00, low: 26950.00, listed_at: '09:41:18', strategy: 'TRAP', trapType: 'Gamma Wall Absorption Trap', accuracy: '94.6%' },
-        { symbol: 'MIDCPNIFTY', name: 'NIFTY Midcap Select Index', type: 'INDEX', price: 13240.50, pct_change: 0.29, high: 13320.00, low: 13180.00, listed_at: '10:05:52', strategy: 'REVERSAL', trapType: 'Key Resistance Reversal', accuracy: '89.8%' },
-        { symbol: 'SENSEX', name: 'BSE SENSEX 30 Benchmark', type: 'INDEX', price: 81765.20, pct_change: 1.84, high: 82100.00, low: 81250.00, listed_at: '09:25:30', strategy: 'TRAP', trapType: 'Bullish Liquidity Sweep & Reclaim', accuracy: '94.9%' }
+        { 
+          symbol: 'NIFTY 50', name: 'NIFTY 50 Benchmark Index', type: 'INDEX', price: 25030.35, pct_change: 2.01, high: 25150.00, low: 24890.00, listed_at: '09:22:15', strategy: 'TRAP', trapType: 'Bullish Liquidity Sweep & Reclaim', accuracy: '95.2%',
+          total_bid_str: '48.5 L', total_ask_str: '32.1 L', bid_ask_ratio: 1.51, order_book_bias: 'Heavy Buyer Accumulation',
+          turnover_str: '₹ 38,450 Cr', volume_str: '18.4 Cr', rvol: 1.45, oi: '1.42 Cr', oi_chg_pct: 8.4,
+          buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '25000 PE', put_writing_contracts: '+1.85 L',
+          call_writing_strike: '25200 CE', call_writing_contracts: '+1.42 L', pcr: 1.24, pcr_tag: 'Bullish (>1.0)', iv: 13.8, ivp: 38
+        },
+        { 
+          symbol: 'BANKNIFTY', name: 'NIFTY Bank Sector Index', type: 'INDEX', price: 59086.00, pct_change: 2.27, high: 59350.00, low: 58650.00, listed_at: '09:35:40', strategy: 'BREAKOUT', trapType: 'Breakout & Retest Confirmation', accuracy: '92.4%',
+          total_bid_str: '26.8 L', total_ask_str: '18.4 L', bid_ask_ratio: 1.46, order_book_bias: 'Strong Call Writing Squeeze',
+          turnover_str: '₹ 28,120 Cr', volume_str: '9.2 Cr', rvol: 1.52, oi: '84.5 L', oi_chg_pct: 9.1,
+          buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '59000 PE', put_writing_contracts: '+95,400',
+          call_writing_strike: '59500 CE', call_writing_contracts: '+78,200', pcr: 1.18, pcr_tag: 'Bullish (>1.0)', iv: 16.4, ivp: 45
+        },
+        { 
+          symbol: 'FINNIFTY', name: 'NIFTY Financial Services Index', type: 'INDEX', price: 27283.95, pct_change: 2.57, high: 27400.00, low: 26950.00, listed_at: '09:41:18', strategy: 'TRAP', trapType: 'Gamma Wall Absorption Trap', accuracy: '94.6%',
+          total_bid_str: '14.2 L', total_ask_str: '9.8 L', bid_ask_ratio: 1.45, order_book_bias: 'Gamma Squeeze Triggered',
+          turnover_str: '₹ 12,850 Cr', volume_str: '5.4 Cr', rvol: 1.60, oi: '42.1 L', oi_chg_pct: 11.2,
+          buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '27200 PE', put_writing_contracts: '+64,800',
+          call_writing_strike: '27500 CE', call_writing_contracts: '+49,100', pcr: 1.22, pcr_tag: 'Bullish (>1.0)', iv: 15.2, ivp: 42
+        },
+        { 
+          symbol: 'MIDCPNIFTY', name: 'NIFTY Midcap Select Index', type: 'INDEX', price: 13240.50, pct_change: 0.29, high: 13320.00, low: 13180.00, listed_at: '10:05:52', strategy: 'REVERSAL', trapType: 'Key Resistance Reversal', accuracy: '89.8%',
+          total_bid_str: '8.5 L', total_ask_str: '9.1 L', bid_ask_ratio: 0.93, order_book_bias: 'Call Writing Absorption',
+          turnover_str: '₹ 6,420 Cr', volume_str: '3.8 Cr', rvol: 0.95, oi: '28.6 L', oi_chg_pct: -2.1,
+          buildup: 'Short Buildup', buildup_type: 'BEARISH', put_writing_strike: '13200 PE', put_writing_contracts: '+32,100',
+          call_writing_strike: '13300 CE', call_writing_contracts: '+48,500', pcr: 0.88, pcr_tag: 'Bearish (<1.0)', iv: 17.1, ivp: 58
+        },
+        { 
+          symbol: 'SENSEX', name: 'BSE SENSEX 30 Benchmark', type: 'INDEX', price: 81765.20, pct_change: 1.84, high: 82100.00, low: 81250.00, listed_at: '09:25:30', strategy: 'TRAP', trapType: 'Bullish Liquidity Sweep & Reclaim', accuracy: '94.9%',
+          total_bid_str: '18.4 L', total_ask_str: '12.6 L', bid_ask_ratio: 1.46, order_book_bias: 'Institutional Accumulation',
+          turnover_str: '₹ 22,400 Cr', volume_str: '7.1 Cr', rvol: 1.38, oi: '62.4 L', oi_chg_pct: 7.5,
+          buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '81500 PE', put_writing_contracts: '+58,900',
+          call_writing_strike: '82000 CE', call_writing_contracts: '+46,200', pcr: 1.21, pcr_tag: 'Bullish (>1.0)', iv: 14.1, ivp: 39
+        }
       ],
 
       init() {
@@ -10435,6 +10465,7 @@ function renderJournal() {
             accuracy = '95.6%';
           }
           return {
+            ...s,
             symbol: s.symbol,
             name: s.name || s.symbol,
             type: 'F&O',
@@ -10693,18 +10724,28 @@ function renderJournal() {
 
         let html = `
           <thead>
-            <tr class="text-[10px] font-bold text-cyan-300 border-b border-purple-500/30 bg-[#160c2e]">
-              <th class="p-2.5">SYMBOL &bull; TYPE</th>
-              <th class="p-2.5">LIVE PRICE</th>
-              <th class="p-2.5 text-center">SUPPORT FLOORS (S1 / S2 / S3)</th>
-              <th class="p-2.5 text-center">RESISTANCE WALLS (R1 / R2 / R3)</th>
-              <th class="p-2.5">AI STRATEGY SETUP</th>
-              <th class="p-2.5">LISTED AT</th>
-              <th class="p-2.5">ENTRY PRICE</th>
-              <th class="p-2.5">TARGETS (T1 &bull; T2)</th>
-              <th class="p-2.5">STOP LOSS</th>
-              <th class="p-2.5">R : R</th>
-              <th class="p-2.5 text-center">ACTIONS</th>
+            <tr class="text-[9.5px] font-bold text-cyan-300 border-b border-purple-500/30 bg-[#160c2e] uppercase whitespace-nowrap">
+              <th class="p-2 text-left">SYMBOL &bull; TYPE</th>
+              <th class="p-2 text-right">LIVE PRICE</th>
+              <th class="p-2 text-center">% CHG</th>
+              <th class="p-2 text-center">TOTAL BID / ASK</th>
+              <th class="p-2 text-center">BID/ASK RATIO</th>
+              <th class="p-2 text-left">TURNOVER &amp; VOL</th>
+              <th class="p-2 text-center">OPEN INTEREST</th>
+              <th class="p-2 text-center">CYCLE (BUILDUP)</th>
+              <th class="p-2 text-center text-emerald-300">PUT WRITING</th>
+              <th class="p-2 text-center text-rose-300">CALL WRITING</th>
+              <th class="p-2 text-center">PCR</th>
+              <th class="p-2 text-center">IV / IVP</th>
+              <th class="p-2 text-center text-emerald-400">SUPPORT FLOORS (S1 / S2 / S3)</th>
+              <th class="p-2 text-center text-rose-400">RESISTANCE WALLS (R1 / R2 / R3)</th>
+              <th class="p-2 text-left">AI STRATEGY SETUP</th>
+              <th class="p-2 text-center">LISTED AT</th>
+              <th class="p-2 text-right">ENTRY PRICE</th>
+              <th class="p-2 text-center">TARGETS (T1 &bull; T2)</th>
+              <th class="p-2 text-right">STOP LOSS</th>
+              <th class="p-2 text-center">R : R</th>
+              <th class="p-2 text-center">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
@@ -10714,7 +10755,7 @@ function renderJournal() {
           const isBull = itm.pct_change >= 0;
           const opt = this.generateOptionChain(itm.symbol, itm.price, itm.strategy, isBull);
           const sign = isBull ? '+' : '';
-          const chgClass = isBull ? 'text-emerald-400' : 'text-rose-400';
+          const chgClass = isBull ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30' : 'text-rose-400 bg-rose-500/15 border-rose-500/30';
           const entryPrice = isBull ? Math.round((itm.price * 1.002) * 100) / 100 : Math.round((itm.price * 0.998) * 100) / 100;
           const stopLoss = isBull ? Math.round((itm.s1 * 0.997) * 100) / 100 : Math.round((itm.r1 * 1.003) * 100) / 100;
           const target1 = isBull ? itm.r1 : itm.s1;
@@ -10722,6 +10763,20 @@ function renderJournal() {
           const risk = Math.abs(entryPrice - stopLoss);
           const reward = Math.abs(target2 - entryPrice);
           const rr = (risk > 0) ? `1 : ${(reward / risk).toFixed(1)}` : '1 : 2.8';
+
+          const ratio = itm.bid_ask_ratio ? Number(itm.bid_ask_ratio) : (isBull ? 1.45 : 0.82);
+          const pcr = itm.pcr ? Number(itm.pcr) : (isBull ? 1.18 : 0.78);
+          const oiChg = (itm.oi_chg_pct !== undefined && itm.oi_chg_pct !== null) ? itm.oi_chg_pct : (isBull ? 6.4 : -3.2);
+
+          let buildupBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold">🟢 Long Buildup</span>`;
+          const bLower = (itm.buildup || '').toLowerCase();
+          if (bLower.includes('short buildup') || (!isBull && oiChg > 0)) {
+            buildupBadge = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-bold">🔴 Short Buildup</span>`;
+          } else if (bLower.includes('short covering') || (isBull && oiChg < 0)) {
+            buildupBadge = `<span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-bold">⚡ Short Covering</span>`;
+          } else if (bLower.includes('long unwinding') || (!isBull && oiChg < 0)) {
+            buildupBadge = `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold">⚠️ Long Unwind</span>`;
+          }
 
           let stratTag = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-black">🎯 TRAP (#1)</span>`;
           if (itm.strategy === 'BREAKOUT') {
@@ -10731,40 +10786,123 @@ function renderJournal() {
           }
 
           html += `
-            <tr class="border-b border-purple-500/15 hover:bg-[#1c0f38]/60 transition font-mono cursor-pointer" onclick="ClaudeSrHunterEngine.selectTarget('${itm.symbol}')">
-              <td class="p-2.5">
-                <div class="font-black text-white hover:text-cyan-300">${itm.symbol}</div>
+            <tr class="border-b border-purple-500/15 hover:bg-[#1c0f38]/60 transition font-mono cursor-pointer whitespace-nowrap" onclick="ClaudeSrHunterEngine.selectTarget('${itm.symbol}')">
+              <!-- 1. SYMBOL & TYPE -->
+              <td class="p-2">
+                <div class="font-black text-white hover:text-cyan-300 text-xs">${itm.symbol}</div>
                 <div class="text-[9px] text-slate-400 truncate max-w-[120px]">${itm.type === 'INDEX' ? '<span class=\"text-cyan-300 font-bold\">BENCHMARK INDEX</span>' : itm.sector}</div>
               </td>
-              <td class="p-2.5">
-                <div class="font-extrabold text-white">₹${itm.price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
-                <div class="text-[10px] font-bold ${chgClass}">${sign}${itm.pct_change}%</div>
+
+              <!-- 2. LIVE PRICE -->
+              <td class="p-2 text-right">
+                <div class="font-extrabold text-white text-xs">₹${itm.price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
               </td>
-              <td class="p-2.5 text-center">
+
+              <!-- 3. % CHG -->
+              <td class="p-2 text-center">
+                <span class="px-2 py-0.5 rounded ${chgClass} border font-bold text-[10.5px]">
+                  ${sign}${itm.pct_change}%
+                </span>
+              </td>
+
+              <!-- 4. TOTAL BID / ASK -->
+              <td class="p-2 text-center">
+                <div class="text-[10px] font-mono leading-tight">
+                  <span class="text-emerald-400 font-bold">B: ${itm.total_bid_str || '2.4 L'}</span>
+                  <br>
+                  <span class="text-rose-400 font-bold">A: ${itm.total_ask_str || '1.6 L'}</span>
+                </div>
+              </td>
+
+              <!-- 5. BID/ASK RATIO -->
+              <td class="p-2 text-center">
+                <div class="text-[11px] font-black ${ratio >= 1.0 ? 'text-emerald-300' : 'text-rose-300'}">${ratio.toFixed(2)}x</div>
+                <div class="text-[8.5px] text-slate-400 truncate max-w-[85px]">${itm.order_book_bias || (ratio >= 1.0 ? 'Buyer Dominance' : 'Seller Pressure')}</div>
+              </td>
+
+              <!-- 6. TURNOVER & VOL -->
+              <td class="p-2 text-left">
+                <div class="text-[10.5px] font-bold text-white">${itm.turnover_str || '₹ 45 Cr'}</div>
+                <div class="text-[9px] text-slate-400">Vol: <strong class="text-slate-300">${itm.volume_str || '2.1 L'}</strong> &bull; <strong class="text-cyan-300">${itm.rvol ? itm.rvol + 'x' : '1.2x'}</strong></div>
+              </td>
+
+              <!-- 7. OPEN INTEREST -->
+              <td class="p-2 text-center">
+                <div class="text-[10.5px] font-bold text-purple-200">${itm.oi || '15.4 L'}</div>
+                <div class="text-[9px] ${oiChg >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${oiChg >= 0 ? '+' : ''}${oiChg}% OI</div>
+              </td>
+
+              <!-- 8. CYCLE (BUILDUP) -->
+              <td class="p-2 text-center">
+                ${buildupBadge}
+              </td>
+
+              <!-- 9. PUT WRITING -->
+              <td class="p-2 text-center">
+                <div class="text-[10.5px] font-bold text-emerald-300">${itm.put_writing_strike || (opt.sellPut.strike + ' PE')}</div>
+                <div class="text-[9px] text-emerald-400 font-mono">${itm.put_writing_contracts || '+65,200'}</div>
+              </td>
+
+              <!-- 10. CALL WRITING -->
+              <td class="p-2 text-center">
+                <div class="text-[10.5px] font-bold text-rose-300">${itm.call_writing_strike || (opt.sellCall.strike + ' CE')}</div>
+                <div class="text-[9px] text-rose-400 font-mono">${itm.call_writing_contracts || '+52,100'}</div>
+              </td>
+
+              <!-- 11. PCR -->
+              <td class="p-2 text-center">
+                <div class="text-[11px] font-black ${pcr >= 1.0 ? 'text-emerald-400' : 'text-rose-400'}">${pcr.toFixed(2)}</div>
+                <div class="text-[8.5px] text-slate-400">${itm.pcr_tag || (pcr >= 1.0 ? 'Bullish' : 'Bearish')}</div>
+              </td>
+
+              <!-- 12. IV / IVP -->
+              <td class="p-2 text-center">
+                <div class="text-[10.5px] font-bold text-cyan-300">${itm.iv || '15.2'}%</div>
+                <div class="text-[9px] text-slate-400">${itm.ivp || '45'} IVP</div>
+              </td>
+
+              <!-- 13. SUPPORT FLOORS (S1 / S2 / S3) -->
+              <td class="p-2 text-center">
                 <div class="text-[10.5px] font-bold text-emerald-400">S1: ₹${itm.s1.toLocaleString('en-IN')}</div>
                 <div class="text-[9px] text-slate-400">S2: ₹${itm.s2.toLocaleString('en-IN')} &bull; S3: ₹${itm.s3.toLocaleString('en-IN')}</div>
               </td>
-              <td class="p-2.5 text-center">
+
+              <!-- 14. RESISTANCE WALLS (R1 / R2 / R3) -->
+              <td class="p-2 text-center">
                 <div class="text-[10.5px] font-bold text-rose-400">R1: ₹${itm.r1.toLocaleString('en-IN')}</div>
                 <div class="text-[9px] text-slate-400">R2: ₹${itm.r2.toLocaleString('en-IN')} &bull; R3: ₹${itm.r3.toLocaleString('en-IN')}</div>
               </td>
-              <td class="p-2.5">
+
+              <!-- 15. AI STRATEGY SETUP -->
+              <td class="p-2">
                 <div>${stratTag}</div>
                 <div class="text-[9px] text-slate-400 mt-0.5 truncate max-w-[130px]">${itm.trapType}</div>
-                <div class="text-[9.5px] mt-1 space-y-0.5 font-mono pt-1 border-t border-purple-500/20">
-                  <div class="flex items-center justify-between"><span class="text-emerald-400 font-bold">🟢 BUY CE:</span><span class="text-white font-extrabold">${opt.bestCall.strike} CE @ ₹${opt.bestCall.entry}</span></div>
-                  <div class="flex items-center justify-between"><span class="text-rose-400 font-bold">🔴 BUY PE:</span><span class="text-white font-extrabold">${opt.bestPut.strike} PE @ ₹${opt.bestPut.entry}</span></div>
+                <div class="text-[9px] mt-1 space-y-0.5 font-mono pt-1 border-t border-purple-500/20">
+                  <div class="flex items-center justify-between gap-1"><span class="text-emerald-400 font-bold">🟢 BUY CE:</span><span class="text-white font-extrabold">${opt.bestCall.strike} CE @ ₹${opt.bestCall.entry}</span></div>
+                  <div class="flex items-center justify-between gap-1"><span class="text-rose-400 font-bold">🔴 BUY PE:</span><span class="text-white font-extrabold">${opt.bestPut.strike} PE @ ₹${opt.bestPut.entry}</span></div>
                 </div>
               </td>
-              <td class="p-2.5 text-slate-300 font-mono text-[10.5px]">${itm.listed_at} IST</td>
-              <td class="p-2.5 font-black text-emerald-400 text-[11px]">₹${entryPrice.toLocaleString('en-IN')}</td>
-              <td class="p-2.5">
+
+              <!-- 16. LISTED AT -->
+              <td class="p-2 text-slate-300 font-mono text-[10.5px] text-center">${itm.listed_at} IST</td>
+
+              <!-- 17. ENTRY PRICE -->
+              <td class="p-2 text-right font-black text-emerald-400 text-[11px]">₹${entryPrice.toLocaleString('en-IN')}</td>
+
+              <!-- 18. TARGETS (T1 • T2) -->
+              <td class="p-2 text-center">
                 <div class="text-[10.5px] font-bold text-cyan-300">T1: ₹${target1.toLocaleString('en-IN')}</div>
                 <div class="text-[9.5px] text-slate-400">T2: ₹${target2.toLocaleString('en-IN')}</div>
               </td>
-              <td class="p-2.5 font-black text-rose-400 text-[11px]">₹${stopLoss.toLocaleString('en-IN')}</td>
-              <td class="p-2.5 font-bold text-amber-300 text-[10.5px]">${rr}</td>
-              <td class="p-2.5 text-center" onclick="event.stopPropagation()">
+
+              <!-- 19. STOP LOSS -->
+              <td class="p-2 text-right font-black text-rose-400 text-[11px]">₹${stopLoss.toLocaleString('en-IN')}</td>
+
+              <!-- 20. R : R -->
+              <td class="p-2 text-center font-bold text-amber-300 text-[10.5px]">${rr}</td>
+
+              <!-- 21. ACTIONS -->
+              <td class="p-2 text-center" onclick="event.stopPropagation()">
                 <div class="flex items-center justify-center gap-1">
                   <button onclick="ClaudeSrHunterEngine.openOptionChainModal('${itm.symbol}')" class="px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black font-black text-[10px] border border-cyan-500/40 transition cursor-pointer" title="View Call & Put Option Chain & AI Picks">
                     📊 OPTION CHAIN
