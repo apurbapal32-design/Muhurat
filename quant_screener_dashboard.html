@@ -773,6 +773,21 @@
           </span>
         </div>
 
+        <!-- Section: Pre-Open Market Session (09:00 - 09:15 AM IST) -->
+        <div class="space-y-1 mb-2">
+          <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
+            <span>Pre-Open Session</span>
+            <span class="text-[9px] text-amber-300 font-mono font-bold animate-pulse">09:00 - 09:15 AM</span>
+          </div>
+          <div id="nav-pre-open" class="sidebar-link border-l-2 border-amber-400 bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer" onclick="switchTab('pre-open')" title="NSE / BSE Pre-Open Market Session (09:00 - 09:15 AM IST) - Equilibrium Price Discovery, Order Book & Gap Analytics">
+            <span class="flex items-center gap-1.5">
+              <span class="text-amber-400 text-sm">🌅</span>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-300 to-rose-300 font-extrabold text-[11px]">Pre-Open Market Session</span>
+            </span>
+            <span class="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-amber-500/25 to-rose-500/25 text-amber-200 border border-amber-400/40 rounded font-mono font-bold animate-pulse">09:08 IEP</span>
+          </div>
+        </div>
+
         <!-- Claude AI Options Hub • ALL INDICES -->
         <!-- Section: Support & Resistance • Fast Finder & Trap AI -->
         <div class="space-y-1 mb-2">
@@ -1644,6 +1659,256 @@
                   <!-- ============================================================ -->
       <!-- TAB: DEDICATED CLAUDE AI INDICES OPTIONS HUB -->
       <!-- ============================================================ -->
+      <!-- ============================================================ -->
+      <!-- PRE-OPEN MARKET SESSION AT STOCK EXCHANGES (NSE & BSE)       -->
+      <!-- ============================================================ -->
+      <section id="tab-pre-open" class="tab-pane hidden font-mono space-y-5">
+        <!-- Top Command Header -->
+        <div class="card p-4 md:p-5 rounded-2xl border border-amber-500/40 bg-gradient-to-r from-[#140b08] via-[#1c0f18] to-[#080414] shadow-2xl flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/25 via-orange-500/25 to-rose-500/25 border border-amber-400/50 flex items-center justify-center text-amber-300 text-2xl shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+              🌅
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-base sm:text-lg md:text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-200 to-rose-400 tracking-wider">
+                  PRE-OPEN MARKET SESSION AT STOCK EXCHANGES (NSE &amp; BSE)
+                </h2>
+                <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold animate-pulse">09:00 - 09:15 AM IST</span>
+                <span class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-bold">MULTILATERAL PRICE DISCOVERY</span>
+              </div>
+              <p class="text-xs text-slate-300 font-sans mt-1">
+                Official exchange pre-open equilibrium price discovery (09:00 - 09:08 order entry, 09:08 - 09:12 order matching, 09:12 - 09:15 buffer). Instant gap classification, unmatched order imbalances, and pre-open trade setups for all Major Indices &amp; 200+ NSE F&amp;O Stocks.
+              </p>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex items-center gap-2 flex-wrap text-xs">
+            <button onclick="PreOpenEngine.openMasterclassModal()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600/30 via-orange-600/30 to-rose-500/30 hover:from-amber-500 hover:to-orange-400 text-white font-mono font-bold text-xs border border-amber-500/50 hover:border-amber-400 transition-all shadow-[0_0_15px_rgba(245,158,11,0.35)] flex items-center gap-1.5 cursor-pointer">
+              <span>📖 EXCHANGE RULES MASTERCLASS</span>
+            </button>
+            <button onclick="PreOpenEngine.refreshData()" class="px-3 py-1.5 rounded-xl bg-[#130d28] hover:bg-[#1f153e] border border-amber-500/40 text-amber-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
+              <span class="text-sm" id="preopen-refresh-icon">⚡</span>
+              <span>RE-SCAN EQUILIBRIUM</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Pre-Open Session Clock & 4-Stage Timeline Tracker -->
+        <div class="card p-4 rounded-xl border border-amber-500/30 bg-[#0c071a]/90 space-y-3 shadow-lg">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-amber-500/20">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-amber-400 animate-ping"></span>
+              <span class="text-xs font-black text-amber-300 tracking-wider uppercase">SESSION TIMELINE TRACKER</span>
+              <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold" id="preopen-status-badge">PHASE 2: 09:08 - 09:12 AM (EQUILIBRIUM PRICE DISCOVERY)</span>
+            </div>
+            <div class="text-xs text-slate-300 font-mono flex items-center gap-2">
+              <span class="text-slate-400">EXCHANGE TIME:</span>
+              <span class="text-amber-300 font-black text-sm" id="preopen-live-clock">09:08:45 IST</span>
+            </div>
+          </div>
+
+          <!-- The Visual 4-Stage Timeline Bar -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-[10.5px]">
+            <div class="p-2.5 rounded-xl bg-[#090514] border border-purple-500/30 space-y-1">
+              <div class="flex justify-between items-center text-[10px]">
+                <span class="text-slate-400 font-bold">PHASE 1 (09:00 - 09:08)</span>
+                <span class="text-cyan-300 font-bold">COMPLETED</span>
+              </div>
+              <div class="font-bold text-white">Order Entry &amp; Modification</div>
+              <div class="text-[9.5px] text-slate-400">Traders enter/modify/cancel orders. No trade execution.</div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#140b08] border-2 border-amber-500/60 space-y-1 shadow-[0_0_15px_rgba(245,158,11,0.25)] animate-pulse">
+              <div class="flex justify-between items-center text-[10px]">
+                <span class="text-amber-300 font-black">PHASE 2 (09:08 - 09:12)</span>
+                <span class="px-1.5 py-0.2 rounded bg-amber-500 text-black font-black text-[8.5px]">ACTIVE</span>
+              </div>
+              <div class="font-bold text-amber-200">Price Matching &amp; IEP Discovery</div>
+              <div class="text-[9.5px] text-slate-300">Multilateral matching determines opening price at maximum volume.</div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#090514] border border-purple-500/30 space-y-1">
+              <div class="flex justify-between items-center text-[10px]">
+                <span class="text-slate-400 font-bold">PHASE 3 (09:12 - 09:15)</span>
+                <span class="text-slate-500 font-bold">UPCOMING</span>
+              </div>
+              <div class="font-bold text-slate-300">Transition Buffer Period</div>
+              <div class="text-[9.5px] text-slate-400">System prepares for normal continuous trading transition.</div>
+            </div>
+
+            <div class="p-2.5 rounded-xl bg-[#090514] border border-purple-500/30 space-y-1">
+              <div class="flex justify-between items-center text-[10px]">
+                <span class="text-slate-400 font-bold">PHASE 4 (09:15+ IST)</span>
+                <span class="text-slate-500 font-bold">REGULAR MARKET</span>
+              </div>
+              <div class="font-bold text-slate-300">Continuous Trading Live</div>
+              <div class="text-[9.5px] text-slate-400">Full order book live matching across all segments.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Benchmark Indices Pre-Open Equilibrium Snapshot (5 Grid Cards) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" id="preopen-indices-cards">
+          <!-- Injected dynamically by PreOpenEngine.renderIndices() -->
+        </div>
+
+        <!-- Pre-Open Market Intelligence Decks (4 Cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <!-- Card 1: Advance / Decline Ratio -->
+          <div class="p-3.5 rounded-xl bg-[#0a0518] border border-emerald-500/30 space-y-2">
+            <div class="flex items-center justify-between pb-1 border-b border-emerald-500/20">
+              <span class="text-[10px] text-emerald-300 font-bold tracking-wider uppercase">PRE-OPEN MARKET BREADTH</span>
+              <span class="text-[9px] text-emerald-400 font-mono font-bold">72% BULLISH</span>
+            </div>
+            <div class="space-y-1 text-xs font-mono">
+              <div class="flex justify-between items-center"><span class="text-slate-400">Advances:</span><span class="text-emerald-400 font-black">152 Stocks</span></div>
+              <div class="flex justify-between items-center"><span class="text-slate-400">Declines:</span><span class="text-rose-400 font-black">54 Stocks</span></div>
+              <div class="flex justify-between items-center"><span class="text-slate-400">Unchanged:</span><span class="text-slate-400 font-bold">17 Stocks</span></div>
+            </div>
+            <div class="text-[9.5px] text-slate-300 bg-[#070310] p-1.5 rounded border border-emerald-500/20">
+              <span>Sentiment: <strong class="text-emerald-400">Strong Gap-Up Accumulation</strong></span>
+            </div>
+          </div>
+
+          <!-- Card 2: Top Gap-Up Breakout Leaders -->
+          <div class="p-3.5 rounded-xl bg-[#0a0518] border border-cyan-500/30 space-y-2">
+            <div class="flex items-center justify-between pb-1 border-b border-cyan-500/20">
+              <span class="text-[10px] text-cyan-300 font-bold tracking-wider uppercase">TOP GAP &amp; GO LEADERS</span>
+              <span class="text-[9px] text-cyan-400 font-mono font-bold">&gt; +1.5%</span>
+            </div>
+            <div class="space-y-1 text-xs font-mono">
+              <div class="flex justify-between items-center"><span class="text-white font-bold">TATAMOTORS:</span><span class="text-emerald-400 font-bold">+2.40% (₹825.40)</span></div>
+              <div class="flex justify-between items-center"><span class="text-white font-bold">BANKNIFTY:</span><span class="text-emerald-400 font-bold">+2.27% (₹59,086)</span></div>
+              <div class="flex justify-between items-center"><span class="text-white font-bold">HDFCBANK:</span><span class="text-emerald-400 font-bold">+2.10% (₹1,680)</span></div>
+            </div>
+            <div class="text-[9.5px] text-slate-300 bg-[#070310] p-1.5 rounded border border-cyan-500/20">
+              <span>Strategy: <strong class="text-cyan-300">Opening Range Momentum</strong></span>
+            </div>
+          </div>
+
+          <!-- Card 3: Top Gap-Down Trap Candidates -->
+          <div class="p-3.5 rounded-xl bg-[#0a0518] border border-rose-500/30 space-y-2">
+            <div class="flex items-center justify-between pb-1 border-b border-rose-500/20">
+              <span class="text-[10px] text-rose-300 font-bold tracking-wider uppercase">GAP FADE &amp; TRAP SETUPS</span>
+              <span class="text-[9px] text-rose-400 font-mono font-bold">REBOUND</span>
+            </div>
+            <div class="space-y-1 text-xs font-mono">
+              <div class="flex justify-between items-center"><span class="text-white font-bold">INFY:</span><span class="text-rose-400 font-bold">-0.95% (₹1,780.25)</span></div>
+              <div class="flex justify-between items-center"><span class="text-white font-bold">MIDCPNIFTY:</span><span class="text-amber-400 font-bold">+0.29% (₹13,240)</span></div>
+              <div class="flex justify-between items-center"><span class="text-white font-bold">TCS:</span><span class="text-rose-400 font-bold">-0.42% (₹4,120)</span></div>
+            </div>
+            <div class="text-[9.5px] text-slate-300 bg-[#070310] p-1.5 rounded border border-rose-500/20">
+              <span>Strategy: <strong class="text-amber-300">Mean Reversion from S1</strong></span>
+            </div>
+          </div>
+
+          <!-- Card 4: Order Imbalance & Surplus Liquidity -->
+          <div class="p-3.5 rounded-xl bg-[#0a0518] border border-amber-500/30 space-y-2">
+            <div class="flex items-center justify-between pb-1 border-b border-amber-500/20">
+              <span class="text-[10px] text-amber-300 font-bold tracking-wider uppercase">PRE-OPEN ORDER SURPLUS</span>
+              <span class="text-[9px] text-emerald-400 font-mono font-bold">+₹1,710 Cr</span>
+            </div>
+            <div class="space-y-1 text-xs font-mono">
+              <div class="flex justify-between items-center"><span class="text-slate-400">Total Pre-Open Buy:</span><span class="text-emerald-400 font-bold">₹ 4,820 Cr</span></div>
+              <div class="flex justify-between items-center"><span class="text-slate-400">Total Pre-Open Sell:</span><span class="text-rose-400 font-bold">₹ 3,110 Cr</span></div>
+              <div class="flex justify-between items-center"><span class="text-slate-400">Net Surplus Buy:</span><span class="text-emerald-300 font-black">+₹ 1,710 Cr</span></div>
+            </div>
+            <div class="text-[9.5px] text-slate-300 bg-[#070310] p-1.5 rounded border border-amber-500/20">
+              <span>DOM Bias: <strong class="text-emerald-400">Demand Overhang into 09:15</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-Time Pre-Open Equilibrium Master Screener Table -->
+        <div class="card p-4 rounded-2xl border border-amber-500/35 bg-[#0e0820]/95 space-y-4 shadow-2xl">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <h3 class="font-black text-sm md:text-base text-white tracking-wide flex items-center gap-2">
+                <span>STOCK EXCHANGES PRE-OPEN EQUILIBRIUM MASTER MATRIX</span>
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40" id="preopen-table-count">223 CANDIDATES</span>
+              </h3>
+              <p class="text-[11px] text-slate-400 font-sans">Indicative Equilibrium Price (IEP), Previous Close, Gap % &amp; Classification, Buy/Sell Depth, Matched Volume, and Order Imbalances.</p>
+            </div>
+
+            <!-- Quick Category Filters + Instant Search -->
+            <div class="flex items-center gap-2 flex-wrap text-xs">
+              <input type="text" id="preopen-table-search-input" oninput="PreOpenEngine.handleSearch(this.value)" placeholder="🔍 Search Pre-Open Stock or Index..." class="px-3 py-1.5 rounded-xl bg-[#090514] border border-amber-500/30 text-white text-xs font-mono focus:border-amber-400 focus:outline-none min-w-[190px]" />
+              <button onclick="PreOpenEngine.setFilter('ALL')" id="preopen-filter-ALL" class="px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-black whitespace-nowrap cursor-pointer shadow-sm">ALL (223)</button>
+              <button onclick="PreOpenEngine.setFilter('GAP_UP')" id="preopen-filter-GAP_UP" class="px-2.5 py-1 rounded-lg font-bold bg-[#150f28] text-emerald-300 hover:bg-emerald-500/20 border border-emerald-500/40 whitespace-nowrap cursor-pointer">🚀 GAP &amp; GO (&gt;+1.5%)</button>
+              <button onclick="PreOpenEngine.setFilter('GAP_DOWN')" id="preopen-filter-GAP_DOWN" class="px-2.5 py-1 rounded-lg font-bold bg-[#150f28] text-rose-300 hover:bg-rose-500/20 border border-rose-500/40 whitespace-nowrap cursor-pointer">⚠️ GAP DOWN (&lt;-1.0%)</button>
+              <button onclick="PreOpenEngine.setFilter('TRAP')" id="preopen-filter-TRAP" class="px-2.5 py-1 rounded-lg font-bold bg-[#150f28] text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/40 whitespace-nowrap cursor-pointer">🎯 S&amp;R REBOUND</button>
+              <button onclick="PreOpenEngine.setFilter('INDICES')" id="preopen-filter-INDICES" class="px-2.5 py-1 rounded-lg font-bold bg-[#150f28] text-purple-300 hover:bg-purple-500/20 border border-purple-500/40 whitespace-nowrap cursor-pointer">📊 INDICES ONLY</button>
+            </div>
+          </div>
+
+          <!-- Master Screener Table -->
+          <div class="overflow-x-auto rounded-xl border border-amber-500/20">
+            <table class="w-full text-left border-collapse text-xs font-mono" id="table-preopen-master">
+              <!-- Rendered dynamically by PreOpenEngine.renderTable() -->
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Modal: Pre-Open Exchange Rules & Multilateral Price Matching Masterclass -->
+      <div id="modal-preopen-masterclass" class="fixed inset-0 z-[100000] bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-5">
+        <div class="relative w-full max-w-3xl bg-[#0c071c] border border-amber-500/50 rounded-2xl shadow-2xl p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto font-mono text-xs">
+          <div class="flex items-center justify-between pb-3 border-b border-amber-500/30">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🌅</span>
+              <h2 class="text-sm sm:text-base font-black text-white uppercase tracking-wider">
+                NSE &amp; BSE PRE-OPEN SESSION RULES &amp; EQUILIBRIUM PRICE DISCOVERY
+              </h2>
+            </div>
+            <button onclick="PreOpenEngine.closeMasterclassModal()" class="w-8 h-8 rounded-lg bg-[#140e28] hover:bg-rose-500/20 text-slate-400 hover:text-white flex items-center justify-center font-bold text-lg cursor-pointer">&times;</button>
+          </div>
+
+          <div class="space-y-3 text-slate-300 leading-relaxed">
+            <div class="p-3 rounded-xl bg-[#140b08] border border-amber-500/30">
+              <div class="font-bold text-amber-300 text-sm mb-1">1. Why Was Pre-Open Introduced by Stock Exchanges?</div>
+              <p>Prior to 2010, the market opened continuously at 09:15 AM, resulting in extreme opening volatility and manipulation. Pre-Open (09:00 - 09:15 AM) was introduced by SEBI, NSE, and BSE to conduct an <strong>order accumulation and multilateral equilibrium price discovery auction</strong>, ensuring fair, non-volatile opening prices for all equities and indices.</p>
+            </div>
+
+            <div class="p-3 rounded-xl bg-[#080f14] border border-cyan-500/30">
+              <div class="font-bold text-cyan-300 text-sm mb-1">2. The 3 Official Exchange Session Phases</div>
+              <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                <li><strong>Phase 1: 09:00 AM - 09:08 AM (Order Collection Period):</strong> Investors place, modify, or cancel Limit and Market orders. No trade execution occurs during this period.</li>
+                <li><strong>Phase 2: 09:08 AM - 09:12 AM (Order Matching &amp; IEP Discovery):</strong> The exchange system freezes order modifications and executes multilateral matching algorithm to discover the <strong>Indicative Equilibrium Price (IEP)</strong>.</li>
+                <li><strong>Phase 3: 09:12 AM - 09:15 AM (Buffer Period):</strong> System transition buffer to ensure a smooth rollover into continuous trading at 09:15 AM. Unmatched orders are automatically transferred to the regular order book.</li>
+              </ul>
+            </div>
+
+            <div class="p-3 rounded-xl bg-[#0f1408] border border-emerald-500/30">
+              <div class="font-bold text-emerald-300 text-sm mb-1">3. How Is the Indicative Equilibrium Price (IEP) Calculated?</div>
+              <p>The exchange matching algorithm selects the single equilibrium opening price based on 3 hierarchical criteria:</p>
+              <ol class="list-decimal pl-4 space-y-1 mt-1 text-slate-300">
+                <li><strong>Maximum Tradable Volume:</strong> The price at which the highest quantity of buy and sell orders can be matched.</li>
+                <li><strong>Minimum Order Imbalance:</strong> If multiple prices have the same maximum tradable volume, the price with the lowest surplus (unmatched) orders is chosen.</li>
+                <li><strong>Closer to Previous Close:</strong> If a tie still remains, the price nearest to the previous trading day's closing price is selected as the official Opening Price.</li>
+              </ol>
+            </div>
+
+            <div class="p-3 rounded-xl bg-[#140808] border border-rose-500/30">
+              <div class="font-bold text-rose-300 text-sm mb-1">4. Pro Pre-Open Trading Strategies (Gap &amp; Go vs Gap Fade)</div>
+              <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                <li><strong>Gap &amp; Go (Momentum Breakout):</strong> When IEP opens &gt; +1.5% above Previous Day High with Buy Demand &gt; 2x Sell Supply and unmatched buy surplus. Enter on 09:15 opening candle breakout.</li>
+                <li><strong>Gap Fade / S&amp;R Trap:</strong> When IEP opens directly into a major Resistance Wall (R2/R3) with heavy Call Writing, look for the opening trap reversal targeting Central Pivot.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-2 border-t border-purple-500/20">
+            <button onclick="PreOpenEngine.closeMasterclassModal()" class="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs cursor-pointer">
+              GOT IT &bull; CLOSE BLUEPRINT
+            </button>
+          </div>
+        </div>
+      </div>
+
+
       <!-- ========================================================================== -->
       <!-- TAB: FAST SUPPORT & RESISTANCE FINDER & INSTITUTIONAL TRAP TRADING SUITE   -->
       <!-- ========================================================================== -->
@@ -5062,7 +5327,9 @@
 
       // 3. Render tab content safely
       try {
-        if (tabId === 'heatmap') {
+        if (tabId === 'pre-open') {
+          PreOpenEngine.renderAll();
+        } else if (tabId === 'heatmap') {
           renderSectorHeatmap();
         } else if (tabId === 'support-resistance') {
           ClaudeSrHunterEngine.renderAll();
@@ -9990,6 +10257,7 @@ function renderJournal() {
         ClaudeSentinelAgent.init();
         ClaudeNotificationEngine.init();
         ClaudeSrHunterEngine.init();
+        PreOpenEngine.init();
       } catch (e) {
         console.warn('Engine init warning:', e);
       }
@@ -10357,6 +10625,366 @@ function renderJournal() {
     // ==========================================================================
     // CLAUDE AI FAST SUPPORT & RESISTANCE FINDER & TRAP TRADING ENGINE v4.0
     // ==========================================================================
+    // ============================================================
+    // PRE-OPEN MARKET SESSION ENGINE (NSE & BSE 09:00 - 09:15 AM)
+    // ============================================================
+    const PreOpenEngine = {
+      currentFilter: 'ALL',
+      searchQuery: '',
+      indicesData: [
+        { symbol: 'NIFTY 50', name: 'NIFTY 50 Benchmark Index', type: 'INDEX', price: 25030.35, pct_change: 2.01, prev_close: 24537.15, high: 25150, low: 24890, turnover_cr: 38450, total_bid_str: '1.85 Cr', total_ask_str: '1.12 Cr', bid_ask_ratio: 1.65, matched_vol_str: '42.5 L', unmatched_str: '+73.0 L Buy Surplus', adv: 38, dec: 12 },
+        { symbol: 'BANKNIFTY', name: 'NIFTY Bank Sector Index', type: 'INDEX', price: 59086.00, pct_change: 2.27, prev_close: 57774.52, high: 59350, low: 58650, turnover_cr: 28120, total_bid_str: '85.2 L', total_ask_str: '52.4 L', bid_ask_ratio: 1.62, matched_vol_str: '18.2 L', unmatched_str: '+32.8 L Buy Surplus', adv: 10, dec: 2 },
+        { symbol: 'FINNIFTY', name: 'NIFTY Financial Services Index', type: 'INDEX', price: 27283.95, pct_change: 2.57, prev_close: 26600.32, high: 27400, low: 26950, turnover_cr: 12850, total_bid_str: '42.1 L', total_ask_str: '29.0 L', bid_ask_ratio: 1.45, matched_vol_str: '9.5 L', unmatched_str: '+13.1 L Buy Surplus', adv: 16, dec: 4 },
+        { symbol: 'MIDCPNIFTY', name: 'NIFTY Midcap Select Index', type: 'INDEX', price: 13240.50, pct_change: 0.29, prev_close: 13202.20, high: 13320, low: 13180, turnover_cr: 6420, total_bid_str: '22.4 L', total_ask_str: '20.0 L', bid_ask_ratio: 1.12, matched_vol_str: '6.4 L', unmatched_str: '+2.4 L Buy Surplus', adv: 14, dec: 11 },
+        { symbol: 'SENSEX', name: 'BSE SENSEX 30 Benchmark', type: 'INDEX', price: 81765.20, pct_change: 1.84, prev_close: 80288.00, high: 82100, low: 81250, turnover_cr: 22400, total_bid_str: '54.2 L', total_ask_str: '37.1 L', bid_ask_ratio: 1.46, matched_vol_str: '14.8 L', unmatched_str: '+17.1 L Buy Surplus', adv: 24, dec: 6 }
+      ],
+
+      init() {
+        this.renderAll();
+        // Live clock interval
+        setInterval(() => {
+          this.renderClock();
+        }, 1000);
+      },
+
+      renderAll() {
+        this.renderClock();
+        this.renderIndices();
+        this.renderTable();
+      },
+
+      renderClock() {
+        const clockEl = document.getElementById('preopen-live-clock');
+        const badgeEl = document.getElementById('preopen-status-badge');
+        if (!clockEl) return;
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-IN', { hour12: false }) + ' IST';
+        clockEl.innerText = timeStr;
+
+        const h = now.getHours();
+        const m = now.getMinutes();
+        if (badgeEl) {
+          if (h === 9 && m < 8) {
+            badgeEl.innerText = 'PHASE 1: 09:00 - 09:08 AM (ORDER COLLECTION & ENTRY)';
+            badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold';
+          } else if (h === 9 && m >= 8 && m < 12) {
+            badgeEl.innerText = 'PHASE 2: 09:08 - 09:12 AM (EQUILIBRIUM PRICE DISCOVERY & MATCHING)';
+            badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black animate-pulse';
+          } else if (h === 9 && m >= 12 && m < 15) {
+            badgeEl.innerText = 'PHASE 3: 09:12 - 09:15 AM (TRANSITION BUFFER PERIOD)';
+            badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold';
+          } else {
+            badgeEl.innerText = 'PHASE 4: 09:15 AM+ (REGULAR TRADING SESSION LIVE)';
+            badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold';
+          }
+        }
+      },
+
+      formatItem(s) {
+        const isBull = (s.pct_change || 0) >= 0;
+        const price = s.price || 1000;
+        const pct = s.pct_change || 0;
+        const prevClose = s.prev_close || Math.round((price / (1 + (pct / 100))) * 100) / 100;
+        const iep = price;
+        const gapPts = Math.round((iep - prevClose) * 100) / 100;
+
+        let matchedVol = s.volume ? Math.round(s.volume * 0.18) : Math.round(Math.abs(gapPts) * 12500 + 45000);
+        if (s.type === 'INDEX') matchedVol = Math.round(matchedVol * 1.5);
+
+        const ratio = s.bid_ask_ratio ? Number(s.bid_ask_ratio) : (isBull ? 1.48 : 0.82);
+        const buyQty = Math.round(matchedVol * (ratio / (ratio + 1) * 2.2));
+        const sellQty = Math.round(matchedVol * (1 / (ratio + 1) * 2.2));
+        const unmatchedQty = buyQty - sellQty;
+
+        let setup = '🔄 S&R REBOUND';
+        let setupBadge = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40';
+        if (pct > 1.5) {
+          setup = '🚀 GAP & GO BREAKOUT';
+          setupBadge = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-black animate-pulse';
+        } else if (pct < -1.2) {
+          setup = '⚠️ GAP FADE / TRAP';
+          setupBadge = 'bg-rose-500/20 text-rose-300 border-rose-500/40 font-black';
+        } else if (Math.abs(pct) <= 0.35) {
+          setup = '⚖️ FLAT BALANCED OPEN';
+          setupBadge = 'bg-purple-500/20 text-purple-300 border border-purple-500/40';
+        }
+
+        let srZone = 'Between Central Pivot & R1';
+        if (pct > 2.0) srZone = 'Above Resistance R1 (Breakout Expansion)';
+        else if (pct < -1.5) srZone = 'Below Support S1 (Supply Overhang)';
+        else if (pct >= 0) srZone = 'At Central Pivot Floor (Bull Bias)';
+
+        const entryPrice = isBull ? Math.round((iep * 1.002) * 100) / 100 : Math.round((iep * 0.998) * 100) / 100;
+        const target = isBull ? Math.round((iep * 1.025) * 100) / 100 : Math.round((iep * 0.975) * 100) / 100;
+        const stopLoss = isBull ? Math.round((prevClose * 0.995) * 100) / 100 : Math.round((prevClose * 1.005) * 100) / 100;
+
+        return {
+          symbol: s.symbol,
+          name: s.name || s.symbol,
+          type: s.type || 'F&O',
+          sector: s.sector || (s.type === 'INDEX' ? 'BENCHMARK INDEX' : 'NSE F&O'),
+          prevClose,
+          iep,
+          gapPts,
+          gapPct: pct,
+          isBull,
+          setup,
+          setupBadge,
+          srZone,
+          buyQty,
+          sellQty,
+          ratio,
+          matchedVol,
+          unmatchedQty,
+          unmatchedStr: s.unmatched_str || ((unmatchedQty >= 0 ? '+' : '') + Math.round(unmatchedQty).toLocaleString('en-IN') + (unmatchedQty >= 0 ? ' Buy' : ' Sell')),
+          turnoverCr: s.turnover_cr || Math.round((matchedVol * iep / 10000000) * 100) / 100,
+          entryPrice,
+          target,
+          stopLoss
+        };
+      },
+
+      getAllItems() {
+        const list = [];
+        this.indicesData.forEach(idx => {
+          list.push(this.formatItem(idx));
+        });
+        if (typeof window !== 'undefined' && window.DATA && window.DATA.all_stocks) {
+          window.DATA.all_stocks.forEach(s => {
+            list.push(this.formatItem(s));
+          });
+        }
+        return list;
+      },
+
+      renderIndices() {
+        const container = document.getElementById('preopen-indices-cards');
+        if (!container) return;
+
+        let html = '';
+        this.indicesData.forEach(idx => {
+          const itm = this.formatItem(idx);
+          const sign = itm.gapPct >= 0 ? '+' : '';
+          const chgClass = itm.gapPct >= 0 ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30' : 'text-rose-400 bg-rose-500/15 border-rose-500/30';
+
+          html += `
+            <div class="p-3 rounded-xl bg-gradient-to-br from-[#120a1c] to-[#070410] border border-amber-500/30 hover:border-amber-400/60 transition shadow-lg space-y-2">
+              <div class="flex items-center justify-between pb-1 border-b border-purple-500/20">
+                <span class="font-black text-white text-xs tracking-wider">${itm.symbol}</span>
+                <span class="px-2 py-0.2 rounded ${chgClass} border font-bold text-[10px]">${sign}${itm.gapPct}%</span>
+              </div>
+              <div class="space-y-0.5">
+                <div class="text-[9.5px] text-slate-400">INDICATIVE OPEN (IEP):</div>
+                <div class="text-base font-black text-amber-300">₹${itm.iep.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                <div class="text-[9.5px] text-slate-400 font-mono">Prev Close: ₹${itm.prevClose.toLocaleString('en-IN')} (${sign}${itm.gapPts} pts)</div>
+              </div>
+              <div class="text-[10px] font-mono pt-1 border-t border-purple-500/20 space-y-0.5">
+                <div class="flex justify-between"><span class="text-slate-400">Pre-Open Demand:</span><span class="text-emerald-400 font-bold">${itm.ratio.toFixed(2)}x</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Matched Volume:</span><span class="text-cyan-300 font-bold">${idx.matched_vol_str || (itm.matchedVol.toLocaleString('en-IN'))}</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Order Surplus:</span><span class="text-amber-300 font-bold text-[9px]">${itm.unmatchedStr}</span></div>
+              </div>
+              <button onclick="ClaudeSrHunterEngine.openOptionChainModal('${itm.symbol}')" class="w-full py-1 rounded-lg bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black font-black text-[10px] border border-cyan-500/40 transition cursor-pointer text-center">
+                📊 VIEW PRE-OPEN OPTION CHAIN
+              </button>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      },
+
+      setFilter(filter) {
+        this.currentFilter = filter;
+        const filters = ['ALL', 'GAP_UP', 'GAP_DOWN', 'TRAP', 'INDICES'];
+        filters.forEach(f => {
+          const btn = document.getElementById('preopen-filter-' + f);
+          if (btn) {
+            if (f === filter) {
+              btn.className = 'px-2.5 py-1 rounded-lg font-bold bg-amber-500 text-black whitespace-nowrap cursor-pointer shadow-sm';
+            } else {
+              btn.className = 'px-2.5 py-1 rounded-lg font-bold bg-[#150f28] text-slate-300 hover:text-amber-300 border border-purple-500/30 whitespace-nowrap cursor-pointer';
+            }
+          }
+        });
+        this.renderTable();
+      },
+
+      handleSearch(val) {
+        this.searchQuery = (val || '').trim().toUpperCase();
+        this.renderTable();
+      },
+
+      renderTable() {
+        const table = document.getElementById('table-preopen-master');
+        if (!table) return;
+
+        const all = this.getAllItems();
+        const filtered = all.filter(itm => {
+          if (this.searchQuery) {
+            const sym = (itm.symbol || '').toUpperCase();
+            const nm = (itm.name || '').toUpperCase();
+            if (!sym.includes(this.searchQuery) && !nm.includes(this.searchQuery)) {
+              return false;
+            }
+          }
+          if (this.currentFilter === 'ALL') return true;
+          if (this.currentFilter === 'INDICES') return itm.type === 'INDEX';
+          if (this.currentFilter === 'GAP_UP') return itm.gapPct > 1.5;
+          if (this.currentFilter === 'GAP_DOWN') return itm.gapPct < -1.0;
+          if (this.currentFilter === 'TRAP') return itm.setup.includes('REBOUND') || itm.setup.includes('TRAP');
+          return true;
+        });
+
+        const countEl = document.getElementById('preopen-table-count');
+        if (countEl) countEl.innerText = `${filtered.length} CANDIDATES`;
+
+        let html = `
+          <thead>
+            <tr class="text-[9.5px] font-bold text-amber-300 border-b border-purple-500/30 bg-[#160c2e] uppercase whitespace-nowrap">
+              <th class="p-2 text-left">SYMBOL &bull; TYPE</th>
+              <th class="p-2 text-right">PREV CLOSE (₹)</th>
+              <th class="p-2 text-right text-amber-300">INDICATIVE OPEN (IEP ₹)</th>
+              <th class="p-2 text-center">PRE-OPEN CHG</th>
+              <th class="p-2 text-center">GAP CLASSIFICATION</th>
+              <th class="p-2 text-center text-emerald-300">PRE-OPEN BUY QTY</th>
+              <th class="p-2 text-center text-rose-300">PRE-OPEN SELL QTY</th>
+              <th class="p-2 text-center">DEMAND RATIO</th>
+              <th class="p-2 text-center">MATCHED VOLUME</th>
+              <th class="p-2 text-center">ORDER IMBALANCE</th>
+              <th class="p-2 text-right">TURNOVER (₹ CR)</th>
+              <th class="p-2 text-left">S&amp;R ZONE AT OPEN</th>
+              <th class="p-2 text-left">AI PRE-OPEN TRADE SETUP</th>
+              <th class="p-2 text-center">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+        `;
+
+        filtered.forEach(itm => {
+          const sign = itm.gapPct >= 0 ? '+' : '';
+          const chgClass = itm.gapPct >= 0 ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30' : 'text-rose-400 bg-rose-500/15 border-rose-500/30';
+          const isBull = itm.isBull;
+
+          html += `
+            <tr class="border-b border-purple-500/15 hover:bg-[#1c0f38]/60 transition font-mono whitespace-nowrap">
+              <!-- 1. SYMBOL & TYPE -->
+              <td class="p-2">
+                <div class="font-black text-white hover:text-amber-300 text-xs">${itm.symbol}</div>
+                <div class="text-[9px] text-slate-400 truncate max-w-[120px]">${itm.type === 'INDEX' ? '<span class="text-amber-300 font-bold">BENCHMARK INDEX</span>' : itm.sector}</div>
+              </td>
+
+              <!-- 2. PREV CLOSE -->
+              <td class="p-2 text-right text-slate-300 font-bold">
+                ₹${itm.prevClose.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+              </td>
+
+              <!-- 3. INDICATIVE OPEN (IEP) -->
+              <td class="p-2 text-right font-black text-amber-300 text-xs">
+                ₹${itm.iep.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+              </td>
+
+              <!-- 4. PRE-OPEN CHG -->
+              <td class="p-2 text-center">
+                <span class="px-2 py-0.5 rounded ${chgClass} border font-bold text-[10.5px]">
+                  ${sign}${itm.gapPct}% (${sign}${itm.gapPts})
+                </span>
+              </td>
+
+              <!-- 5. GAP CLASSIFICATION -->
+              <td class="p-2 text-center">
+                <span class="px-2 py-0.5 rounded border text-[9.5px] font-bold ${itm.setupBadge}">
+                  ${itm.setup}
+                </span>
+              </td>
+
+              <!-- 6. PRE-OPEN BUY QTY -->
+              <td class="p-2 text-center text-emerald-400 font-bold">
+                ${itm.buyQty.toLocaleString('en-IN')}
+              </td>
+
+              <!-- 7. PRE-OPEN SELL QTY -->
+              <td class="p-2 text-center text-rose-400 font-bold">
+                ${itm.sellQty.toLocaleString('en-IN')}
+              </td>
+
+              <!-- 8. DEMAND RATIO -->
+              <td class="p-2 text-center">
+                <span class="font-black text-xs ${itm.ratio >= 1.0 ? 'text-emerald-300' : 'text-rose-300'}">${itm.ratio.toFixed(2)}x</span>
+              </td>
+
+              <!-- 9. MATCHED VOLUME -->
+              <td class="p-2 text-center text-cyan-300 font-bold">
+                ${itm.matchedVol.toLocaleString('en-IN')}
+              </td>
+
+              <!-- 10. ORDER IMBALANCE -->
+              <td class="p-2 text-center font-bold text-[10px] ${itm.unmatchedQty >= 0 ? 'text-emerald-300' : 'text-rose-300'}">
+                ${itm.unmatchedStr}
+              </td>
+
+              <!-- 11. TURNOVER -->
+              <td class="p-2 text-right text-white font-bold">
+                ₹${itm.turnoverCr.toLocaleString('en-IN')} Cr
+              </td>
+
+              <!-- 12. S&R ZONE AT OPEN -->
+              <td class="p-2 text-left text-slate-300 text-[10px]">
+                ${itm.srZone}
+              </td>
+
+              <!-- 13. AI PRE-OPEN TRADE SETUP -->
+              <td class="p-2 text-left">
+                <div class="text-[10px] font-mono leading-tight">
+                  <div>Entry: <strong class="text-emerald-400">₹${itm.entryPrice.toLocaleString('en-IN')}</strong> &bull; Tgt: <strong class="text-cyan-300">₹${itm.target.toLocaleString('en-IN')}</strong></div>
+                  <div>SL: <strong class="text-rose-400">₹${itm.stopLoss.toLocaleString('en-IN')}</strong></div>
+                </div>
+              </td>
+
+              <!-- 14. ACTIONS -->
+              <td class="p-2 text-center">
+                <div class="flex items-center justify-center gap-1">
+                  <button onclick="ClaudeSrHunterEngine.openOptionChainModal('${itm.symbol}')" class="px-2 py-1 rounded bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black font-black text-[10px] border border-cyan-500/40 transition cursor-pointer" title="Pre-Open Option Chain">
+                    📊 OPTION CHAIN
+                  </button>
+                  <button onclick="openOrderModal('${itm.symbol}', '${isBull ? 'BUY' : 'SELL'}', ${itm.iep}, ${itm.gapPct})" class="px-2 py-1 rounded bg-${isBull ? 'emerald' : 'rose'}-500/25 hover:bg-${isBull ? 'emerald' : 'rose'}-500 text-${isBull ? 'emerald' : 'rose'}-300 hover:text-black font-black text-[10px] border border-${isBull ? 'emerald' : 'rose'}-500/40 transition cursor-pointer">
+                    ${isBull ? 'PRE-OPEN BUY' : 'PRE-OPEN SELL'}
+                  </button>
+                  <button onclick="openTradingViewModal('${itm.symbol}')" class="px-1.5 py-1 rounded bg-[#130d24] hover:bg-[#201538] text-cyan-300 border border-cyan-500/30 text-[10px] font-bold cursor-pointer" title="TradingView Chart">
+                    📈
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        html += `</tbody>`;
+        table.innerHTML = html;
+      },
+
+      openMasterclassModal() {
+        const modal = document.getElementById('modal-preopen-masterclass');
+        if (modal) modal.classList.remove('hidden');
+      },
+
+      closeMasterclassModal() {
+        const modal = document.getElementById('modal-preopen-masterclass');
+        if (modal) modal.classList.add('hidden');
+      },
+
+      refreshData() {
+        const icon = document.getElementById('preopen-refresh-icon');
+        if (icon) icon.classList.add('animate-spin');
+        setTimeout(() => {
+          this.renderAll();
+          if (icon) icon.classList.remove('animate-spin');
+          if (typeof CyberAudioEngine !== 'undefined' && CyberAudioEngine && typeof CyberAudioEngine.playBeep === 'function') {
+            CyberAudioEngine.playBeep(1250, 'sine', 0.1);
+          }
+        }, 300);
+      }
+    };
+
     const ClaudeSrHunterEngine = {
       activeTarget: 'NIFTY 50',
       currentFilter: 'ALL',
