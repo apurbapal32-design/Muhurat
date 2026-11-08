@@ -1671,6 +1671,9 @@
 
           <!-- Quick Action Utilities -->
           <div class="flex items-center gap-2 flex-wrap text-xs">
+            <button onclick="ClaudeSrHunterEngine.toggleCalculatorGauge()" id="sr-gauge-toggle-btn" class="px-3 py-1.5 rounded-xl bg-[#130d28] hover:bg-[#1f153e] border border-cyan-500/30 text-slate-400 hover:text-cyan-300 font-bold text-xs transition flex items-center gap-1.5 cursor-pointer">
+              <span>👁️</span><span id="sr-gauge-toggle-label">SHOW CALCULATOR &amp; GAUGE</span>
+            </button>
             <button onclick="ClaudeSrHunterEngine.openBlueprintModal('TRAP')" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-rose-600/30 via-purple-600/30 to-cyan-500/30 hover:from-rose-500 hover:to-cyan-400 text-white font-mono font-bold text-xs border border-rose-500/50 hover:border-cyan-400 transition-all shadow-[0_0_15px_rgba(255,40,101,0.35)] flex items-center gap-1.5 cursor-pointer">
               <span>📖 STRATEGY MASTERCLASS</span>
             </button>
@@ -1739,8 +1742,8 @@
           </div>
         </div>
 
-        <!-- Interactive Fast S&R Level Finder & Visual Holographic Gauge -->
-        <div class="card p-4 rounded-2xl border border-purple-500/35 bg-[#0e0820]/95 space-y-4">
+        <!-- Interactive Fast S&R Level Finder & Visual Holographic Gauge (Hidden by User Request) -->
+        <div id="sr-calculator-gauge-card" class="card hidden p-4 rounded-2xl border border-purple-500/35 bg-[#0e0820]/95 space-y-4">
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-purple-500/20">
             <div class="flex items-center gap-2">
               <span class="text-cyan-400 font-bold text-xs uppercase tracking-wider">⚡ INSTANT S&amp;R CALCULATOR &amp; GAUGE:</span>
@@ -1774,8 +1777,8 @@
           </div>
         </div>
 
-        <!-- Dynamic Real-Time Option Chain & AI Call / Put Recommendation Container -->
-        <div id="sr-option-chain-container" class="card p-4 rounded-2xl border border-cyan-500/35 bg-[#0e0820]/95 space-y-4 shadow-2xl">
+        <!-- Dynamic Real-Time Option Chain & AI Call / Put Recommendation Container (Hidden by User Request) -->
+        <div id="sr-option-chain-container" class="card hidden p-4 rounded-2xl border border-cyan-500/35 bg-[#0e0820]/95 space-y-4 shadow-2xl">
           <!-- Injected by ClaudeSrHunterEngine.renderOptionChain() -->
         </div>
 
@@ -1790,8 +1793,9 @@
               <p class="text-[11px] text-slate-400 font-sans">Real-time Support &amp; Resistance levels, Strategy Classifications, Entry, Targets, and Stop Loss.</p>
             </div>
 
-            <!-- Quick Category Filters -->
-            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
+            <!-- Quick Category Filters + Instant Search -->
+            <div class="flex items-center gap-2 flex-wrap text-xs">
+              <input type="text" id="sr-table-search-input" oninput="ClaudeSrHunterEngine.handleTableSearch(this.value)" placeholder="🔍 Search Stock or Index..." class="px-3 py-1.5 rounded-xl bg-[#090514] border border-cyan-500/30 text-white text-xs font-mono focus:border-cyan-400 focus:outline-none min-w-[170px]" />
               <button onclick="ClaudeSrHunterEngine.setTableFilter('ALL')" id="sr-filter-ALL" class="px-2.5 py-1 rounded-lg font-bold bg-cyan-500 text-black whitespace-nowrap cursor-pointer shadow-sm">ALL (223)</button>
               <button onclick="ClaudeSrHunterEngine.setTableFilter('TRAP')" id="sr-filter-TRAP" class="px-2.5 py-1 rounded-lg font-bold bg-[#150f28] text-rose-300 hover:bg-rose-500/20 border border-rose-500/40 whitespace-nowrap cursor-pointer">🎯 TRAP TRADING (#1)</button>
               <button onclick="ClaudeSrHunterEngine.setTableFilter('BREAKOUT')" id="sr-filter-BREAKOUT" class="px-2.5 py-1 rounded-lg font-bold bg-[#150f28] text-cyan-300 hover:bg-cyan-500/20 border border-cyan-500/40 whitespace-nowrap cursor-pointer">⚡ BREAKOUT RETEST</button>
@@ -10356,7 +10360,26 @@ function renderJournal() {
     const ClaudeSrHunterEngine = {
       activeTarget: 'NIFTY 50',
       currentFilter: 'ALL',
+      tableSearchQuery: '',
       guideExpanded: true,
+
+      toggleCalculatorGauge() {
+        const card = document.getElementById('sr-calculator-gauge-card');
+        const label = document.getElementById('sr-gauge-toggle-label');
+        if (!card) return;
+        if (card.classList.contains('hidden')) {
+          card.classList.remove('hidden');
+          if (label) label.innerText = 'HIDE CALCULATOR & GAUGE';
+        } else {
+          card.classList.add('hidden');
+          if (label) label.innerText = 'SHOW CALCULATOR & GAUGE';
+        }
+      },
+
+      handleTableSearch(val) {
+        this.tableSearchQuery = (val || '').trim().toUpperCase();
+        this.renderTable();
+      },
       
       // Indices master benchmark levels
       indicesData: [
@@ -10653,6 +10676,13 @@ function renderJournal() {
 
         const all = this.getAllItems();
         const filtered = all.filter(itm => {
+          if (this.tableSearchQuery) {
+            const sym = (itm.symbol || '').toUpperCase();
+            const nm = (itm.name || '').toUpperCase();
+            if (!sym.includes(this.tableSearchQuery) && !nm.includes(this.tableSearchQuery)) {
+              return false;
+            }
+          }
           if (this.currentFilter === 'ALL') return true;
           if (this.currentFilter === 'INDICES') return itm.type === 'INDEX';
           return itm.strategy === this.currentFilter;
