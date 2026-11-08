@@ -127,12 +127,13 @@ async function startServer() {
       });
 
       const formattedIndices: Record<string, any> = {
-        'NSE:NIFTY50-INDEX': indexQuotes['NIFTY 50'] || { lp: 25030.35, ch: 493.75, chp: 2.01, prev_close_price: 24536.6 },
-        'NSE:NIFTYBANK-INDEX': indexQuotes['BANKNIFTY'] || { lp: 59086.00, ch: 1312.35, chp: 2.27, prev_close_price: 57773.65 },
-        'NSE:FINNIFTY-INDEX': indexQuotes['FINNIFTY'] || { lp: 27283.95, ch: 683.50, chp: 2.57, prev_close_price: 26600.45 },
-        'NSE:MIDCPNIFTY-INDEX': indexQuotes['MIDCPNIFTY'] || { lp: 14008.80, ch: 40.70, chp: 0.29, prev_close_price: 13968.1 },
+        'NSE:NIFTY50-INDEX': indexQuotes['NIFTY 50'] || { lp: 25030.35, ch: 493.20, chp: 2.01, pcr: 1.64, prev_close_price: 24537.15 },
+        'NSE:NIFTYBANK-INDEX': indexQuotes['BANKNIFTY'] || { lp: 52380.00, ch: 945.10, chp: 1.84, pcr: 1.08, prev_close_price: 51434.90 },
+        'NSE:FINNIFTY-INDEX': indexQuotes['FINNIFTY'] || { lp: 24150.00, ch: 385.00, chp: 1.62, pcr: 1.34, prev_close_price: 23765.00 },
+        'NSE:MIDCPNIFTY-INDEX': indexQuotes['MIDCPNIFTY'] || { lp: 13120.00, ch: 288.00, chp: 2.25, pcr: 1.15, prev_close_price: 12832.00 },
+        'NSE:NIFTYNXT50-INDEX': indexQuotes['NIFTYNXT50'] || { lp: 71850.00, ch: 1375.00, chp: 1.95, pcr: 1.10, prev_close_price: 70475.00 },
         'BSE:SENSEX-INDEX': indexQuotes['SENSEX'] || { lp: 81765.20, ch: 1477.20, chp: 1.84, prev_close_price: 80288.0 },
-        'NSE:INDIAVIX-INDEX': { lp: 13.8, ch: -0.4, chp: -2.8, prev_close_price: 14.2 },
+        'NSE:INDIAVIX-INDEX': indexQuotes['INDIAVIX'] || { lp: 17.47, ch: -2.41, chp: -12.13, prev_close_price: 19.88 },
       };
 
       res.json({
