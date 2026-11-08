@@ -646,14 +646,19 @@
         <span class="text-slate-700">&bull;</span>
         <div class="flex items-center gap-1 text-slate-300">
           <span class="text-slate-400">BANKNIFTY</span>
-          <span class="font-bold text-white" id="hdr-bank-val">59,086.00</span>
-          <span class="text-emerald-400 font-bold" id="hdr-bank-chg">+1,312.35 (+2.27%)</span>
+          <span class="font-bold text-white transition-colors duration-200" id="hdr-bank-val">52,380.00</span>
+          <span class="text-emerald-400 font-bold" id="hdr-bank-chg">+945.10 (+1.84%)</span>
         </div>
         <span class="text-slate-700">&bull;</span>
         <div class="flex items-center gap-1 text-slate-300">
           <span class="text-slate-400">VIX</span>
-          <span class="font-bold text-amber-400" id="hdr-vix-val">17.47</span>
-          <span class="text-amber-400 font-bold" id="hdr-vix-chg">+12.13%</span>
+          <span class="font-bold text-amber-400 transition-colors duration-200" id="hdr-vix-val">17.47</span>
+          <span class="text-rose-400 font-bold" id="hdr-vix-chg">-12.13%</span>
+        </div>
+        <span class="text-slate-700">&bull;</span>
+        <div class="flex items-center gap-1 text-slate-300">
+          <span class="text-slate-400">PCR</span>
+          <span class="text-emerald-400 font-bold transition-colors duration-200" id="hdr-pcr-val">1.64 (Bullish)</span>
         </div>
       </div>
     </div>
@@ -706,20 +711,47 @@
     </div>
   </header>
 
-  <!-- SUBHEADER TICKER (MOBILE / TABLET) -->
-  <div class="xl:hidden bg-[#07090f] border-b border-[#172033] px-3 py-1 flex items-center justify-between text-[10px] font-mono text-slate-300 overflow-x-auto">
-    <div class="flex items-center gap-3 shrink-0">
-      <span class="text-slate-400">NIFTY</span>
-      <span class="font-bold text-white">25,030.35 (+2.01%)</span>
+  <!-- SUBHEADER TICKER (MOBILE / TABLET / RESPONSIVE) -->
+  <div class="xl:hidden bg-[#07090f]/95 backdrop-blur-md border-b border-[#172033] px-3 py-1.5 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-slate-300 overflow-x-auto whitespace-nowrap scrollbar-none z-40">
+    <div class="flex items-center gap-2.5 shrink-0">
+      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-radar-dot"></span>
+        LIVE
+      </span>
+      <div class="flex items-center gap-1">
+        <span class="text-slate-400 font-semibold">NIFTY</span>
+        <span class="font-bold text-white transition-colors duration-200" id="subhdr-nifty-val">25,030.35</span>
+        <span class="text-emerald-400 font-bold" id="subhdr-nifty-chg">(+2.01%)</span>
+      </div>
       <span class="text-slate-600">&bull;</span>
-      <span class="text-slate-400">BANKNIFTY</span>
-      <span class="font-bold text-white">59,086.00 (+2.27%)</span>
+      <div class="flex items-center gap-1">
+        <span class="text-slate-400 font-semibold">BANKNIFTY</span>
+        <span class="font-bold text-white transition-colors duration-200" id="subhdr-bank-val">52,380.00</span>
+        <span class="text-emerald-400 font-bold" id="subhdr-bank-chg">(+1.84%)</span>
+      </div>
       <span class="text-slate-600">&bull;</span>
-      <span class="text-slate-400">VIX</span>
-      <span class="text-amber-400 font-bold">17.47 (+12.13%)</span>
+      <div class="flex items-center gap-1">
+        <span class="text-slate-400 font-semibold">FINNIFTY</span>
+        <span class="font-bold text-white transition-colors duration-200" id="subhdr-fin-val">24,150.00</span>
+        <span class="text-emerald-400 font-bold" id="subhdr-fin-chg">(+1.62%)</span>
+      </div>
       <span class="text-slate-600">&bull;</span>
-      <span class="text-slate-400">PCR</span>
-      <span class="text-emerald-400 font-bold">1.12 (Bullish)</span>
+      <div class="flex items-center gap-1">
+        <span class="text-slate-400 font-semibold">MIDCP</span>
+        <span class="font-bold text-white transition-colors duration-200" id="subhdr-mid-val">13,120.00</span>
+        <span class="text-emerald-400 font-bold" id="subhdr-mid-chg">(+2.25%)</span>
+      </div>
+      <span class="text-slate-600">&bull;</span>
+      <div class="flex items-center gap-1">
+        <span class="text-slate-400 font-semibold">VIX</span>
+        <span class="text-amber-400 font-bold transition-colors duration-200" id="subhdr-vix-val">17.47</span>
+        <span class="text-rose-400 font-bold" id="subhdr-vix-chg">(-12.13%)</span>
+      </div>
+      <span class="text-slate-600">&bull;</span>
+      <div class="flex items-center gap-1">
+        <span class="text-slate-400 font-semibold">PCR</span>
+        <span class="text-emerald-400 font-bold transition-colors duration-200" id="subhdr-pcr-val">1.64 (Bullish)</span>
+      </div>
     </div>
   </div>
 
@@ -1827,7 +1859,7 @@
             </div>
             <div class="space-y-1 text-xs font-mono">
               <div class="flex justify-between items-center"><span class="text-white font-bold">TATAMOTORS:</span><span class="text-emerald-400 font-bold">+2.40% (₹825.40)</span></div>
-              <div class="flex justify-between items-center"><span class="text-white font-bold">BANKNIFTY:</span><span class="text-emerald-400 font-bold">+2.27% (₹59,086)</span></div>
+              <div class="flex justify-between items-center"><span class="text-white font-bold">BANKNIFTY:</span><span class="text-emerald-400 font-bold">+1.84% (₹52,380)</span></div>
               <div class="flex justify-between items-center"><span class="text-white font-bold">HDFCBANK:</span><span class="text-emerald-400 font-bold">+2.10% (₹1,680)</span></div>
             </div>
             <div class="text-[9.5px] text-slate-300 bg-[#070310] p-1.5 rounded border border-cyan-500/20">
@@ -4066,8 +4098,8 @@
             <div class="flex items-center gap-2 flex-wrap font-mono text-xs">
               <div class="bg-[#0e1422] px-3 py-1.5 rounded-xl border border-[#1e2a42] flex items-center gap-2">
                 <span class="text-slate-400 font-bold">NIFTY Spot:</span>
-                <span class="text-emerald-400 font-black text-sm">₹25,030.35</span>
-                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold">+2.01%</span>
+                <span class="text-emerald-400 font-black text-sm" id="oc-nifty-spot">₹25,030.35</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold" id="oc-nifty-chg">+2.01%</span>
               </div>
               <div class="bg-[#0e1422] px-3 py-1.5 rounded-xl border border-[#1e2a42] flex items-center gap-2">
                 <span class="text-amber-400">📅</span>
@@ -9040,7 +9072,9 @@ function renderJournal() {
       executeMicroTick() {
         const now = new Date();
         const mkt = getIndianMarketStatus(now);
-        const shouldTick = mkt.status === 'OPEN' || mkt.status === 'PRE-OPEN' || window.FORCE_LIVE_MARKET === true || (typeof localStorage !== 'undefined' && localStorage.getItem('force_live_market') === 'true');
+        const forceLiveSetting = typeof localStorage !== 'undefined' ? localStorage.getItem('force_live_market') : null;
+        // Default to active live streaming (or simulated live ticks outside market hours) so screener prices are NEVER frozen
+        const shouldTick = forceLiveSetting !== 'false';
         if (!shouldTick) return;
 
         // 1. Tick Benchmark Indices
@@ -9251,38 +9285,121 @@ function renderJournal() {
       updateCockpitCard('next50', next50, 1.10);
       updateCockpitCard('vix', vix, null, true);
 
-      // 2. Update Top Summary Header Values
-      if (n50 && n50.lp !== undefined) {
-        const sign = n50.chp >= 0 ? '+' : '';
-        const chgSign = n50.ch >= 0 ? '+' : '';
-        const color = n50.chp >= 0 ? 'text-emerald-400' : 'text-rose-400';
-        const txt = `${chgSign}${n50.ch} (${sign}${n50.chp}%)`;
-        const valStr = Number(n50.lp).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        const hdrVal = document.getElementById('hdr-nifty-val');
-        if (hdrVal) hdrVal.innerText = valStr;
-        const hdrChg = document.getElementById('hdr-nifty-chg');
-        if (hdrChg) { hdrChg.innerText = txt; hdrChg.className = color + ' font-bold'; }
-      }
+      // Flash animation helper for live tickers
+      const flashTicker = (el, isUp) => {
+        if (!el) return;
+        el.classList.remove('price-flash-up', 'price-flash-down');
+        void el.offsetWidth;
+        el.classList.add(isUp ? 'price-flash-up' : 'price-flash-down');
+      };
 
-      if (nBank && nBank.lp !== undefined) {
-        const sign = nBank.chp >= 0 ? '+' : '';
-        const chgSign = nBank.ch >= 0 ? '+' : '';
-        const color = nBank.chp >= 0 ? 'text-emerald-400' : 'text-rose-400';
-        const valStr = Number(nBank.lp).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        const hdrBankVal = document.getElementById('hdr-bank-val');
-        if (hdrBankVal) hdrBankVal.innerText = valStr;
-        const hdrBankChg = document.getElementById('hdr-bank-chg');
-        if (hdrBankChg) {
-          hdrBankChg.innerText = `${chgSign}${nBank.ch} (${sign}${nBank.chp}%)`;
-          hdrBankChg.className = color + ' font-bold';
+      // Helper for updating index tickers (both desktop and mobile/tablet subheader)
+      const updateTickerPair = (prefix, idxData, defaultPrice, defaultChg, defaultCh) => {
+        if (!idxData) return;
+        const lp = idxData.lp !== undefined ? Number(idxData.lp) : defaultPrice;
+        const ch = idxData.ch !== undefined ? Number(idxData.ch) : defaultCh;
+        const chp = idxData.chp !== undefined ? Number(idxData.chp) : defaultChg;
+        const isUp = chp >= 0;
+        const sign = isUp ? '+' : '';
+        const color = isUp ? 'text-emerald-400' : 'text-rose-400';
+        const valStr = lp.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const chgFull = `${sign}${ch.toFixed(2)} (${sign}${chp.toFixed(2)}%)`;
+        const chgPctOnly = `(${sign}${chp.toFixed(2)}%)`;
+
+        // Desktop elements
+        const hdrVal = document.getElementById(`hdr-${prefix}-val`);
+        if (hdrVal) {
+          if (hdrVal.innerText !== valStr) flashTicker(hdrVal, isUp);
+          hdrVal.innerText = valStr;
+        }
+        const hdrChg = document.getElementById(`hdr-${prefix}-chg`);
+        if (hdrChg) {
+          hdrChg.innerText = chgFull;
+          hdrChg.className = `${color} font-bold`;
+        }
+
+        // Subheader (mobile / tablet / responsive) elements
+        const subVal = document.getElementById(`subhdr-${prefix}-val`);
+        if (subVal) {
+          if (subVal.innerText !== valStr) flashTicker(subVal, isUp);
+          subVal.innerText = valStr;
+        }
+        const subChg = document.getElementById(`subhdr-${prefix}-chg`);
+        if (subChg) {
+          subChg.innerText = chgPctOnly;
+          subChg.className = `${color} font-bold`;
+        }
+      };
+
+      // 2. Update Tickers for Nifty 50, Bank Nifty, Fin Nifty, Midcap
+      updateTickerPair('nifty', n50, 25030.35, 2.01, 493.20);
+      updateTickerPair('bank', nBank, 52380.00, 1.84, 945.10);
+      updateTickerPair('fin', fin, 24150.00, 1.62, 385.00);
+      updateTickerPair('mid', mid, 13120.00, 2.25, 288.00);
+
+      // 3. Update VIX Tickers (Desktop & Subheader)
+      if (vix) {
+        const lp = vix.lp !== undefined ? Number(vix.lp) : 17.47;
+        const chp = vix.chp !== undefined ? Number(vix.chp) : -12.13;
+        const isUp = chp >= 0;
+        const sign = isUp ? '+' : '';
+        const vixStr = lp.toFixed(2);
+        const vixChgStr = `${sign}${chp.toFixed(2)}%`;
+        const vixColor = isUp ? 'text-amber-400' : 'text-emerald-400';
+
+        const hdrVixVal = document.getElementById('hdr-vix-val');
+        if (hdrVixVal) {
+          if (hdrVixVal.innerText !== vixStr) flashTicker(hdrVixVal, !isUp);
+          hdrVixVal.innerText = vixStr;
+        }
+        const hdrVixChg = document.getElementById('hdr-vix-chg');
+        if (hdrVixChg) {
+          hdrVixChg.innerText = vixChgStr;
+          hdrVixChg.className = `${vixColor} font-bold`;
+        }
+
+        const subVixVal = document.getElementById('subhdr-vix-val');
+        if (subVixVal) {
+          if (subVixVal.innerText !== vixStr) flashTicker(subVixVal, !isUp);
+          subVixVal.innerText = vixStr;
+        }
+        const subVixChg = document.getElementById('subhdr-vix-chg');
+        if (subVixChg) {
+          subVixChg.innerText = `(${vixChgStr})`;
+          subVixChg.className = `${vixColor} font-bold`;
         }
       }
 
-      if (vix && vix.lp !== undefined) {
-        const sumVixVal = document.getElementById('hdr-vix-val');
-        if (sumVixVal) sumVixVal.innerText = Number(vix.lp).toFixed(2);
-        const sumVixChg = document.getElementById('hdr-vix-chg');
-        if (sumVixChg) sumVixChg.innerText = (vix.chp >= 0 ? '+' : '') + vix.chp + '%';
+      // 4. Update PCR in Tickers (Desktop & Subheader)
+      const pcrVal = (n50 && n50.pcr !== undefined) ? n50.pcr : 1.64;
+      const pcrNum = Number(pcrVal);
+      const pcrTag = pcrNum >= 1.0 ? 'Bullish' : 'Bearish';
+      const pcrColor = pcrNum >= 1.0 ? 'text-emerald-400' : 'text-rose-400';
+      const pcrText = `${typeof pcrVal === 'number' ? pcrVal.toFixed(2) : pcrVal} (${pcrTag})`;
+
+      const hdrPcr = document.getElementById('hdr-pcr-val');
+      if (hdrPcr) {
+        hdrPcr.innerText = pcrText;
+        hdrPcr.className = `${pcrColor} font-bold`;
+      }
+      const subPcr = document.getElementById('subhdr-pcr-val');
+      if (subPcr) {
+        subPcr.innerText = pcrText;
+        subPcr.className = `${pcrColor} font-bold`;
+      }
+
+      // 5. Update Option Chain Nifty Spot
+      const ocSpot = document.getElementById('oc-nifty-spot');
+      const ocChg = document.getElementById('oc-nifty-chg');
+      if (ocSpot && n50 && n50.lp) {
+        ocSpot.innerText = '₹' + Number(n50.lp).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+      }
+      if (ocChg && n50 && n50.chp !== undefined) {
+        const sign = n50.chp >= 0 ? '+' : '';
+        ocChg.innerText = `${sign}${Number(n50.chp).toFixed(2)}%`;
+        ocChg.className = n50.chp >= 0
+          ? 'text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold'
+          : 'text-[10px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-bold';
       }
     }
 
