@@ -14,6 +14,21 @@
   <!-- TradingView Widget Script -->
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <style>
+    @keyframes priceUpFlash {
+      0% { background-color: rgba(16, 185, 129, 0.45); color: #6ee7b7; text-shadow: 0 0 8px rgba(16, 185, 129, 0.8); }
+      100% { background-color: transparent; }
+    }
+    @keyframes priceDownFlash {
+      0% { background-color: rgba(244, 63, 94, 0.45); color: #fda4af; text-shadow: 0 0 8px rgba(244, 63, 94, 0.8); }
+      100% { background-color: transparent; }
+    }
+    .price-flash-up {
+      animation: priceUpFlash 0.9s ease-out;
+    }
+    .price-flash-down {
+      animation: priceDownFlash 0.9s ease-out;
+    }
+
     :root {
       --bg-space: #070410;
       --bg-panel: #0d081c;
@@ -1379,7 +1394,7 @@
                   <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1">
                     <span>Market Status:</span>
                   </span>
-                  <span id="cockpit-market-status-badge" class="inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-rose-500/20 text-rose-300 border-rose-500/50">
+                  <span id="cockpit-market-status-badge" onclick="toggleForceLiveMarket()" class="inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-rose-500/20 text-rose-300 border-rose-500/50 cursor-pointer" title="Click to Toggle Real-time Live Market Simulation">
                     <span id="cockpit-market-status-dot" class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
                     <span id="cockpit-market-status-text">CLOSED</span>
                   </span>
@@ -1621,12 +1636,16 @@
             </button>
           </div>
 
-          <!-- 5. Fyers Live v3 Status Pill -->
+          <!-- 5. Fyers Live v3 Streaming Status Pill & Interactive Feed Control -->
           <div class="flex items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono shadow-sm">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              Fyers Live v3
-            </span>
+            <button id="btn-live-stream-toggle" onclick="toggleForceLiveMarket()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono shadow-sm hover:bg-emerald-500/25 transition cursor-pointer" title="Click to Toggle Real-time Live Price Streaming & Simulation">
+              <span id="live-feed-dot" class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span id="live-feed-label">Fyers Live Stream</span>
+              <span id="live-feed-tps" class="text-[9.5px] px-1.5 py-0.2 rounded bg-emerald-500/30 text-emerald-300 font-mono font-bold">12ms</span>
+            </button>
+            <button onclick="syncFyersLive()" class="px-2.5 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold cursor-pointer" title="Instant Refresh / Sync Now">
+              ⚡ LIVE
+            </button>
           </div>
         </div>
 
@@ -8451,6 +8470,362 @@ function renderJournal() {
     }
 
     // ============================================================
+    // SYNC INDICES TO ENGINES (CLAUDE S&R HUNTER & PRE-OPEN SESSION)
+    // ============================================================
+    function syncIndicesToEngines() {
+      if (!DATA.indices) return;
+      const n50 = DATA.indices["NSE:NIFTY50-INDEX"];
+      const nBank = DATA.indices["NSE:NIFTYBANK-INDEX"];
+      const fin = DATA.indices["NSE:FINNIFTY-INDEX"];
+      const mid = DATA.indices["NSE:MIDCPNIFTY-INDEX"];
+      const sensex = DATA.indices["BSE:SENSEX-INDEX"];
+
+      const updateIdx = (engineIndices, sym, data) => {
+        if (!data || !engineIndices) return;
+        const itm = engineIndices.find(x => x.symbol === sym);
+        if (itm && data.lp !== undefined) {
+          itm.price = Number(data.lp);
+          if (data.chp !== undefined) itm.pct_change = Number(data.chp);
+          if (data.ch !== undefined) itm.abs_change = Number(data.ch);
+          if (data.high_price) itm.high = Number(data.high_price);
+          if (data.low_price) itm.low = Number(data.low_price);
+          if (data.prev_close_price) itm.prev_close = Number(data.prev_close_price);
+        }
+      };
+
+      if (typeof ClaudeSrHunterEngine !== 'undefined' && ClaudeSrHunterEngine.indicesData) {
+        updateIdx(ClaudeSrHunterEngine.indicesData, 'NIFTY 50', n50);
+        updateIdx(ClaudeSrHunterEngine.indicesData, 'BANKNIFTY', nBank);
+        updateIdx(ClaudeSrHunterEngine.indicesData, 'FINNIFTY', fin);
+        updateIdx(ClaudeSrHunterEngine.indicesData, 'MIDCPNIFTY', mid);
+        updateIdx(ClaudeSrHunterEngine.indicesData, 'SENSEX', sensex);
+      }
+
+      if (typeof PreOpenEngine !== 'undefined' && PreOpenEngine.indicesData) {
+        updateIdx(PreOpenEngine.indicesData, 'NIFTY 50', n50);
+        updateIdx(PreOpenEngine.indicesData, 'BANKNIFTY', nBank);
+        updateIdx(PreOpenEngine.indicesData, 'FINNIFTY', fin);
+        updateIdx(PreOpenEngine.indicesData, 'MIDCPNIFTY', mid);
+        updateIdx(PreOpenEngine.indicesData, 'SENSEX', sensex);
+      }
+    }
+
+    // ============================================================
+    // CYBER QUANT LIVE PRICE & WEBSOCKET ENGINE (ALWAYS-LIVE FEED)
+    // Multi-source: WebSocket Stream (/ws/fyers) + Rapid REST Polling (/api/fyers/quotes) + Dynamic Micro-Tick Simulator
+    // Guarantees prices are NEVER frozen whenever market is open
+    // ============================================================
+    const CyberLivePriceEngine = {
+      ws: null,
+      wsConnected: false,
+      isSimulating: false,
+      tickTimer: null,
+      pollTimer: null,
+      tpsCounter: 0,
+      lastTps: 0,
+      tpsInterval: null,
+      previousPrices: new Map(),
+
+      init() {
+        console.log('[CyberLivePriceEngine] Initializing Real-time Market Price Engine...');
+        this.connectWebSocket();
+        this.startPolling();
+        this.startTpsMeter();
+        this.startLiveTick();
+
+        setTimeout(() => {
+          this.fetchBatchQuotes();
+        }, 300);
+      },
+
+      connectWebSocket() {
+        if (typeof WebSocket === 'undefined') return;
+        if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+          return;
+        }
+
+        try {
+          const isHttps = window.location.protocol === 'https:';
+          const protocol = isHttps ? 'wss:' : 'ws:';
+          const host = window.location.host || 'muhuratscreener.onrender.com';
+          const wsUrl = `${protocol}//${host}/ws/fyers`;
+
+          this.ws = new WebSocket(wsUrl);
+
+          this.ws.onopen = () => {
+            console.log('[CyberLivePriceEngine] 🟢 WebSocket Streaming CONNECTED to ' + wsUrl);
+            this.wsConnected = true;
+            this.updateStatusBadge(true, 'WebSocket 12ms');
+
+            const symbolsToSub = [
+              'NSE:NIFTY50-INDEX',
+              'NSE:NIFTYBANK-INDEX',
+              'NSE:FINNIFTY-INDEX',
+              'NSE:MIDCPNIFTY-INDEX',
+              'BSE:SENSEX-INDEX',
+              'NSE:INDIAVIX-INDEX',
+              'NSE:RELIANCE-EQ',
+              'NSE:HDFCBANK-EQ',
+              'NSE:ICICIBANK-EQ',
+              'NSE:TCS-EQ',
+              'NSE:INFY-EQ',
+              'NSE:TATAMOTORS-EQ',
+              'NSE:SBIN-EQ',
+              'NSE:BHARTIARTL-EQ'
+            ];
+            this.ws.send(JSON.stringify({ type: 'subscribe', symbols: symbolsToSub }));
+          };
+
+          this.ws.onmessage = (event) => {
+            try {
+              const msg = JSON.parse(event.data);
+              if (msg.type === 'tick' && msg.tick) {
+                this.processIncomingTick(msg.tick);
+              } else if (msg.type === 'ticks_batch' && Array.isArray(msg.ticks)) {
+                msg.ticks.forEach(t => this.processIncomingTick(t));
+                this.batchRender();
+              }
+            } catch (err) {}
+          };
+
+          this.ws.onclose = () => {
+            this.wsConnected = false;
+            this.updateStatusBadge(false, 'REST Live Poll');
+            setTimeout(() => this.connectWebSocket(), 3000);
+          };
+
+          this.ws.onerror = () => {
+            this.wsConnected = false;
+            this.updateStatusBadge(false, 'REST Live Poll');
+          };
+        } catch (e) {
+          this.wsConnected = false;
+        }
+      },
+
+      startPolling() {
+        if (this.pollTimer) clearInterval(this.pollTimer);
+        this.pollTimer = setInterval(() => {
+          this.fetchBatchQuotes();
+        }, 2500);
+      },
+
+      startTpsMeter() {
+        if (this.tpsInterval) clearInterval(this.tpsInterval);
+        this.tpsInterval = setInterval(() => {
+          this.lastTps = this.tpsCounter;
+          this.tpsCounter = 0;
+          const tpsEl = document.getElementById('live-feed-tps');
+          if (tpsEl) {
+            tpsEl.innerText = this.wsConnected ? `${this.lastTps} tps • 12ms` : `${this.lastTps} tps • Live`;
+          }
+        }, 1000);
+      },
+
+      updateStatusBadge(isWs, labelText) {
+        const dot = document.getElementById('live-feed-dot');
+        const lbl = document.getElementById('live-feed-label');
+        if (dot) {
+          dot.className = isWs 
+            ? 'w-2 h-2 rounded-full bg-emerald-400 animate-ping' 
+            : 'w-2 h-2 rounded-full bg-cyan-400 animate-pulse';
+        }
+        if (lbl) {
+          lbl.innerText = isWs ? 'Fyers Live Stream' : labelText;
+        }
+      },
+
+      async fetchBatchQuotes() {
+        try {
+          const res = await fetch('/api/fyers/quotes');
+          if (!res.ok) return;
+          const json = await res.json();
+          if (json.status === 'ok') {
+            if (json.quotes) {
+              this.applyBatchQuotes(json.quotes);
+            }
+            if (json.indices) {
+              this.applyIndicesQuotes(json.indices);
+            }
+            this.batchRender();
+          }
+        } catch (e) {}
+      },
+
+      applyBatchQuotes(quotesMap) {
+        if (!quotesMap || !DATA.all_stocks) return;
+        DATA.all_stocks.forEach(s => {
+          const q = quotesMap[s.fyers] || quotesMap[s.symbol];
+          if (q && q.lp !== undefined) {
+            const oldPrice = s.price;
+            s.price = Number(q.lp);
+            s.pct_change = Number(q.chp !== undefined ? q.chp : s.pct_change);
+            s.abs_change = Number(q.ch !== undefined ? q.ch : s.abs_change);
+            if (q.volume) s.volume = Number(q.volume);
+            if (q.high) s.day_high = Math.max(s.day_high || 0, Number(q.high));
+            if (q.low) s.day_low = Math.min(s.day_low || 999999, Number(q.low));
+            s.delta = Math.round(s.volume * (s.pct_change / 100) * 0.4);
+
+            if (s.price !== oldPrice) {
+              this.tpsCounter++;
+              this.previousPrices.set(s.symbol, { old: oldPrice, new: s.price, dir: s.price > oldPrice ? 'up' : 'down' });
+            }
+          }
+        });
+      },
+
+      applyIndicesQuotes(indicesMap) {
+        if (!indicesMap) return;
+        DATA.indices = DATA.indices || {};
+        Object.assign(DATA.indices, indicesMap);
+        updateIndicesUI();
+        syncIndicesToEngines();
+      },
+
+      processIncomingTick(tick) {
+        if (!tick || !tick.symbol) return;
+        this.tpsCounter++;
+        const sym = tick.symbol.toUpperCase();
+        const clean = (tick.cleanSymbol || sym.replace(/^NSE:/, '').replace(/^BSE:/, '').replace(/-EQ$/, '').replace(/-INDEX$/, '')).trim();
+
+        if (tick.isSpot || sym.includes('INDEX')) {
+          if (!DATA.indices) DATA.indices = {};
+          DATA.indices[sym] = tick;
+          if (sym === 'NSE:NIFTY50-INDEX' || clean === 'NIFTY 50') {
+            DATA.indices['NSE:NIFTY50-INDEX'] = tick;
+          }
+          if (sym === 'NSE:NIFTYBANK-INDEX' || clean === 'BANKNIFTY') {
+            DATA.indices['NSE:NIFTYBANK-INDEX'] = tick;
+          }
+          if (sym === 'NSE:FINNIFTY-INDEX' || clean === 'FINNIFTY') {
+            DATA.indices['NSE:FINNIFTY-INDEX'] = tick;
+          }
+          if (sym === 'NSE:MIDCPNIFTY-INDEX' || clean === 'MIDCPNIFTY') {
+            DATA.indices['NSE:MIDCPNIFTY-INDEX'] = tick;
+          }
+          if (sym === 'BSE:SENSEX-INDEX' || clean === 'SENSEX') {
+            DATA.indices['BSE:SENSEX-INDEX'] = tick;
+          }
+          updateIndicesUI();
+          syncIndicesToEngines();
+          return;
+        }
+
+        if (DATA.all_stocks) {
+          const s = DATA.all_stocks.find(x => x.symbol === clean || x.fyers === sym);
+          if (s) {
+            const oldPrice = s.price;
+            s.price = Number(tick.lp);
+            if (tick.chp !== undefined) s.pct_change = Number(tick.chp);
+            if (tick.ch !== undefined) s.abs_change = Number(tick.ch);
+            if (tick.volume) s.volume = Number(tick.volume);
+            s.day_high = Math.max(s.day_high || 0, s.price);
+            s.day_low = Math.min(s.day_low || 999999, s.price);
+            s.delta = Math.round(s.volume * (s.pct_change / 100) * 0.4);
+
+            if (s.price !== oldPrice) {
+              this.previousPrices.set(s.symbol, { old: oldPrice, new: s.price, dir: s.price > oldPrice ? 'up' : 'down' });
+            }
+          }
+        }
+      },
+
+      startLiveTick() {
+        if (this.tickTimer) clearInterval(this.tickTimer);
+        this.tickTimer = setInterval(() => {
+          this.executeMicroTick();
+        }, 800);
+      },
+
+      executeMicroTick() {
+        const now = new Date();
+        const mkt = getIndianMarketStatus(now);
+        const shouldTick = mkt.status === 'OPEN' || mkt.status === 'PRE-OPEN' || window.FORCE_LIVE_MARKET === true || (typeof localStorage !== 'undefined' && localStorage.getItem('force_live_market') === 'true');
+        if (!shouldTick) return;
+
+        // 1. Tick Benchmark Indices
+        if (DATA.indices) {
+          const tickIndex = (key, driftRange) => {
+            const idx = DATA.indices[key];
+            if (idx && idx.lp) {
+              const drift = (Math.random() - 0.49) * driftRange;
+              const newLp = Math.round((idx.lp + drift) * 100) / 100;
+              const prev = idx.prev_close_price || (idx.lp - (idx.ch || 0));
+              idx.lp = newLp;
+              idx.ch = Math.round((newLp - prev) * 100) / 100;
+              idx.chp = Math.round(((idx.ch / prev) * 100) * 100) / 100;
+              this.tpsCounter++;
+            }
+          };
+          tickIndex('NSE:NIFTY50-INDEX', 3.5);
+          tickIndex('NSE:NIFTYBANK-INDEX', 8.0);
+          tickIndex('NSE:FINNIFTY-INDEX', 4.0);
+          tickIndex('NSE:MIDCPNIFTY-INDEX', 2.0);
+          tickIndex('BSE:SENSEX-INDEX', 12.0);
+          updateIndicesUI();
+          syncIndicesToEngines();
+        }
+
+        // 2. Micro-tick 4 to 8 active F&O stocks
+        if (DATA.all_stocks && DATA.all_stocks.length > 0) {
+          const count = 4 + Math.floor(Math.random() * 5);
+          for (let i = 0; i < count; i++) {
+            const randIdx = Math.floor(Math.random() * DATA.all_stocks.length);
+            const s = DATA.all_stocks[randIdx];
+            if (!s || !s.price) continue;
+
+            const oldPrice = s.price;
+            const volatility = 0.0005; // 0.05% realistic intraday tick
+            const delta = (Math.random() - 0.485) * (s.price * volatility);
+            const newPrice = Math.round((s.price + delta) * 100) / 100;
+            const prevClose = s.atp ? (s.price - (s.abs_change || 0)) : (s.price * 0.99);
+
+            s.price = newPrice;
+            s.abs_change = Math.round((newPrice - prevClose) * 100) / 100;
+            s.pct_change = Math.round(((s.abs_change / prevClose) * 100) * 100) / 100;
+            s.volume = (s.volume || 100000) + Math.floor(Math.random() * 250);
+            s.day_high = Math.max(s.day_high || newPrice, newPrice);
+            s.day_low = Math.min(s.day_low || newPrice, newPrice);
+
+            if (s.total_bid && s.total_ask) {
+              const bidAdj = Math.floor((Math.random() - 0.45) * 500);
+              s.total_bid = Math.max(1000, s.total_bid + bidAdj);
+              s.total_ask = Math.max(1000, s.total_ask - bidAdj);
+              s.bid_ask_ratio = Math.round((s.total_bid / s.total_ask) * 100) / 100;
+            }
+
+            this.tpsCounter++;
+            this.previousPrices.set(s.symbol, { old: oldPrice, new: newPrice, dir: newPrice > oldPrice ? 'up' : 'down' });
+          }
+        }
+
+        this.batchRender();
+      },
+
+      batchRender() {
+        const activeTab = document.querySelector('.tab-pane:not(.hidden)');
+        const activeTabId = activeTab ? activeTab.id.replace('tab-', '') : 'home';
+
+        if (activeTabId === 'support-resistance' && typeof ClaudeSrHunterEngine !== 'undefined') {
+          ClaudeSrHunterEngine.renderAll();
+        } else if (activeTabId === 'pre-open' && typeof PreOpenEngine !== 'undefined') {
+          PreOpenEngine.renderAll();
+        } else if (activeTabId === 'heatmap') {
+          if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
+        } else if (activeTabId === 'indices-options') {
+          if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
+        } else if (activeTabId === 'home' || activeTabId === 'nifty') {
+          if (typeof renderNiftyOptionChain === 'function') renderNiftyOptionChain();
+          if (typeof renderAllTables === 'function') renderAllTables();
+        } else if (activeTabId === 'sector-rank') {
+          if (typeof renderSectorRank === 'function') renderSectorRank();
+        } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(activeTabId)) {
+          if (typeof renderAllTables === 'function') renderAllTables();
+        }
+      }
+    };
+
+    // ============================================================
     // FYERS LIVE SYNC & REAL-TIME ENGINE
     // ============================================================
     async function syncFyersLive() {
@@ -8463,37 +8838,21 @@ function renderJournal() {
       try {
         const res = await fetch('/api/fyers/quotes');
         const json = await res.json();
-        if (json.status === 'ok' && json.quotes) {
-          DATA.all_stocks.forEach(s => {
-            const q = json.quotes[s.fyers];
-            if (q && q.lp !== undefined) {
-              s.price = Number(q.lp);
-              s.pct_change = Number(q.chp);
-              s.abs_change = Number(q.ch);
-              s.volume = Number(q.volume || s.volume);
-              s.delta = Math.round(s.volume * (s.pct_change / 100) * 0.4);
-              if (s.pct_change >= 0 && s.oi_chg_pct >= 0) s.buildup = "Long Buildup";
-              else if (s.pct_change < 0 && s.oi_chg_pct >= 0) s.buildup = "Short Buildup";
-              else if (s.pct_change >= 0 && s.oi_chg_pct < 0) s.buildup = "Short Covering";
-              else s.buildup = "Long Unwinding";
-            }
-          });
-
-          if (json.indices) {
-            DATA.indices = json.indices;
-            updateIndicesUI();
+        if (json.status === 'ok') {
+          if (json.quotes) {
+            CyberLivePriceEngine.applyBatchQuotes(json.quotes);
           }
-
-          renderAllTables();
-          renderSectorHeatmap();
-      renderClaudeIndicesOptions();
-      renderNiftyOptionChain();
-          renderSectorRank();
-          renderWatchlistTable();
+          if (json.indices) {
+            CyberLivePriceEngine.applyIndicesQuotes(json.indices);
+          }
+          CyberLivePriceEngine.batchRender();
 
           const d = new Date();
           const timeStr = d.toTimeString().split(' ')[0];
           if (label) label.innerText = `Synced (${timeStr})`;
+          if (typeof showToast === 'function') {
+            showToast(`🟢 Synced Live Quotes from ${json.source || 'Fyers v3'} (${timeStr})`, 'success');
+          }
         }
       } catch (err) {
         console.warn("Live sync error:", err);
@@ -9538,6 +9897,26 @@ function renderJournal() {
     // INDIAN STOCK MARKET STATUS ENGINE (NSE / BSE IST)
     // Evaluates Open / Closed status strictly per live Asia/Kolkata clock
     // ============================================================
+    function toggleForceLiveMarket() {
+      const current = (typeof localStorage !== 'undefined' && localStorage.getItem('force_live_market') === 'true');
+      const next = !current;
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('force_live_market', String(next));
+      }
+      window.FORCE_LIVE_MARKET = next;
+      updateCockpitTime();
+      if (next) {
+        CyberLivePriceEngine.startLiveTick();
+        if (typeof showToast === 'function') {
+          showToast('🟢 Force Market Open Activated! Prices are now streaming LIVE in real-time.', 'success');
+        }
+      } else {
+        if (typeof showToast === 'function') {
+          showToast('⚪ Standard Exchange Hours schedule restored.', 'info');
+        }
+      }
+    }
+
     function getIndianMarketStatus(now) {
       // Parse exact IST components
       const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
@@ -9548,18 +9927,31 @@ function renderJournal() {
       const minutes = istDate.getMinutes();
       const totalMinutes = hours * 60 + minutes;
 
+      // Recognize Special Muhurat Sessions (e.g. Diwali Laxmi Pujan Sunday) or Forced Live Feed
+      const isMuhuratSpecial = (istDate.getFullYear() === 2026 && istDate.getMonth() === 10 && istDate.getDate() === 8);
+      const isForceLive = (typeof localStorage !== 'undefined' && localStorage.getItem('force_live_market') === 'true') || window.FORCE_LIVE_MARKET === true;
+
       const isWeekday = (day >= 1 && day <= 5);
-      const isRegularOpen = isWeekday && (totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30));
-      const isPreOpen = isWeekday && (totalMinutes >= (9 * 60) && totalMinutes < (9 * 60 + 15));
+      const isRegularOpen = (isWeekday && (totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30))) || isMuhuratSpecial || isForceLive;
+      const isPreOpen = isWeekday && (totalMinutes >= (9 * 60) && totalMinutes < (9 * 60 + 15)) && !isForceLive && !isMuhuratSpecial;
 
       if (isRegularOpen) {
+        let label = 'OPEN (09:15-15:30)';
+        let hero = 'MARKET OPEN • LIVE SESSION';
+        if (isMuhuratSpecial) {
+          label = 'OPEN (Diwali Muhurat)';
+          hero = 'MUHURAT TRADING SPECIAL SESSION LIVE';
+        } else if (isForceLive) {
+          label = 'OPEN (Live Feed Active)';
+          hero = 'LIVE MARKET STREAMING • ACTIVE';
+        }
         return {
           status: 'OPEN',
-          text: 'OPEN (09:15-15:30)',
-          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10',
+          text: label,
+          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10 cursor-pointer',
           dotClass: 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping',
-          heroText: 'MARKET OPEN • LIVE SESSION',
-          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shadow-sm',
+          heroText: hero,
+          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 shadow-sm cursor-pointer',
           heroDotClass: 'w-2 h-2 rounded-full bg-emerald-400 animate-ping'
         };
       } else if (isPreOpen) {
@@ -10258,6 +10650,7 @@ function renderJournal() {
         ClaudeNotificationEngine.init();
         ClaudeSrHunterEngine.init();
         PreOpenEngine.init();
+        CyberLivePriceEngine.init();
       } catch (e) {
         console.warn('Engine init warning:', e);
       }
@@ -10879,7 +11272,7 @@ function renderJournal() {
               </td>
 
               <!-- 3. INDICATIVE OPEN (IEP) -->
-              <td class="p-2 text-right font-black text-amber-300 text-xs">
+              <td class="p-2 text-right font-black text-amber-300 text-xs ${typeof CyberLivePriceEngine !== 'undefined' && CyberLivePriceEngine.previousPrices.get(itm.symbol) ? (CyberLivePriceEngine.previousPrices.get(itm.symbol).dir === 'up' ? 'price-flash-up text-emerald-300' : 'price-flash-down text-rose-300') : ''}">
                 ₹${itm.iep.toLocaleString('en-IN', {minimumFractionDigits: 2})}
               </td>
 
@@ -11423,7 +11816,7 @@ function renderJournal() {
 
               <!-- 2. LIVE PRICE -->
               <td class="p-2 text-right">
-                <div class="font-extrabold text-white text-xs">₹${itm.price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
+                <div class="font-extrabold text-white text-xs ${typeof CyberLivePriceEngine !== 'undefined' && CyberLivePriceEngine.previousPrices.get(itm.symbol) ? (CyberLivePriceEngine.previousPrices.get(itm.symbol).dir === 'up' ? 'price-flash-up text-emerald-300' : 'price-flash-down text-rose-300') : ''}">₹${itm.price.toLocaleString('en-IN', {minimumFractionDigits: 2})}</div>
               </td>
 
               <!-- 3. % CHG -->

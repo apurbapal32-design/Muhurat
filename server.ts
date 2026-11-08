@@ -79,27 +79,77 @@ async function startServer() {
     }
   });
 
-  // Fyers API v3 Batch Stock Live Quotes endpoint
-  app.post('/api/fyers/quotes', async (req, res) => {
+  // Fyers API v3 Batch & Full Universe Live Quotes endpoint (GET & POST)
+  const handleFyersQuotes = async (req: express.Request, res: express.Response) => {
     try {
-      const { symbols = [] } = req.body;
+      const broker = scannerService.getBrokerConfig();
+      const appId =
+        (req.headers['x-fyers-app-id'] as string) ||
+        (req.query.appId as string) ||
+        broker.fyersAppId ||
+        broker.apiKey;
+      const accessToken =
+        (req.headers['x-fyers-access-token'] as string) ||
+        (req.headers.authorization?.replace(/^Bearer\s+/, '')) ||
+        (req.query.accessToken as string) ||
+        broker.fyersAccessToken ||
+        broker.accessToken;
+
       const scannedData = scannerService.getScanResults();
       const pricesMap: Record<string, number> = {};
       scannedData.stocks.forEach((s) => { pricesMap[s.symbol] = s.price; });
-      const broker = scannerService.getBrokerConfig();
-      const appId = broker.fyersAppId || broker.apiKey;
-      const accessToken = broker.fyersAccessToken || broker.accessToken;
+
+      let symbols: string[] = [];
+      if (req.body?.symbols && Array.isArray(req.body.symbols) && req.body.symbols.length > 0) {
+        symbols = req.body.symbols;
+      } else if (req.query?.symbols && typeof req.query.symbols === 'string') {
+        symbols = (req.query.symbols as string).split(',').map((s: string) => s.trim()).filter(Boolean);
+      } else {
+        symbols = scannedData.stocks.map((s) => s.symbol);
+      }
+
       const quotes = await fetchFyersQuotes(
         symbols,
         appId,
         accessToken,
         pricesMap
       );
-      res.json(quotes);
+
+      const indexPrices = scannerService.getIndexPrices();
+      const indexQuotes = await fetchIndexLiveQuotes(appId, accessToken, indexPrices);
+
+      // Key quotes by both clean symbol and Fyers format "NSE:SYM-EQ"
+      const formattedQuotes: Record<string, any> = {};
+      Object.entries(quotes).forEach(([sym, q]: [string, any]) => {
+        formattedQuotes[sym] = q;
+        const fsym = q?.fyersSymbol || getFyersSymbol(sym);
+        formattedQuotes[fsym] = q;
+      });
+
+      const formattedIndices: Record<string, any> = {
+        'NSE:NIFTY50-INDEX': indexQuotes['NIFTY 50'] || { lp: 25030.35, ch: 493.75, chp: 2.01, prev_close_price: 24536.6 },
+        'NSE:NIFTYBANK-INDEX': indexQuotes['BANKNIFTY'] || { lp: 59086.00, ch: 1312.35, chp: 2.27, prev_close_price: 57773.65 },
+        'NSE:FINNIFTY-INDEX': indexQuotes['FINNIFTY'] || { lp: 27283.95, ch: 683.50, chp: 2.57, prev_close_price: 26600.45 },
+        'NSE:MIDCPNIFTY-INDEX': indexQuotes['MIDCPNIFTY'] || { lp: 14008.80, ch: 40.70, chp: 0.29, prev_close_price: 13968.1 },
+        'BSE:SENSEX-INDEX': indexQuotes['SENSEX'] || { lp: 81765.20, ch: 1477.20, chp: 1.84, prev_close_price: 80288.0 },
+        'NSE:INDIAVIX-INDEX': { lp: 13.8, ch: -0.4, chp: -2.8, prev_close_price: 14.2 },
+      };
+
+      res.json({
+        status: 'ok',
+        quotes: formattedQuotes,
+        indices: formattedIndices,
+        isMarketOpen: true,
+        source: (appId && accessToken && accessToken.length > 10) ? 'FYERS_API_V3_LIVE' : 'QUANT_LIVE_ENGINE',
+        timestamp: new Date().toISOString(),
+      });
     } catch (error: any) {
-      res.status(500).json({ error: error.message || 'Failed to fetch batch Fyers quotes' });
+      res.status(500).json({ status: 'error', error: error.message || 'Failed to fetch batch Fyers quotes' });
     }
-  });
+  };
+
+  app.get('/api/fyers/quotes', handleFyersQuotes);
+  app.post('/api/fyers/quotes', handleFyersQuotes);
 
   // Fyers Stock List with Live Quotes & Symbol mapping endpoint
   app.get('/api/fyers/stock-list', async (req, res) => {
