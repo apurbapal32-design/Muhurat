@@ -32,6 +32,7 @@ const SESSION_STATE_FILE = path.join(os.tmpdir(), 'muhurat_scanner_session_state
 
 export interface DailySessionState {
   lastPurgeDateIST: string | null;
+  lastPreOpenScanDateIST: string | null;
   lastScanDateIST: string | null;
   isMidnightCleared: boolean;
   manualOverrideDateIST: string | null;
@@ -65,6 +66,7 @@ export class ScannerService {
 
   private sessionState: DailySessionState = {
     lastPurgeDateIST: null,
+    lastPreOpenScanDateIST: null,
     lastScanDateIST: null,
     isMidnightCleared: false,
     manualOverrideDateIST: null,
@@ -138,9 +140,15 @@ export class ScannerService {
     const ist = getISTDateParts(new Date());
     const initStatus = calculateMarketStatus();
 
+    // Stay 100% midnight-flushed automatically between 00:00:00 and 08:59:59 IST.
+    // Once 09:00 AM Pre-Open or 09:15 AM Market Open arrives on a trading day, auto-scan immediately.
+    const isPreOpenOrOpenNow = initStatus.session === 'PRE_OPEN' || initStatus.isOpen;
     const shouldFlushOnBoot =
-      (ist.minutesFromMidnight < 9 * 60 + 15 && this.sessionState.manualOverrideDateIST !== ist.dateStr) ||
-      (this.sessionState.isMidnightCleared && this.sessionState.lastPurgeDateIST === ist.dateStr && this.sessionState.manualOverrideDateIST !== ist.dateStr);
+      !isPreOpenOrOpenNow &&
+      ((ist.minutesFromMidnight < 9 * 60 && this.sessionState.manualOverrideDateIST !== ist.dateStr) ||
+        (this.sessionState.isMidnightCleared &&
+          this.sessionState.lastPurgeDateIST === ist.dateStr &&
+          this.sessionState.manualOverrideDateIST !== ist.dateStr));
 
     if (shouldFlushOnBoot) {
       this.resetMidnightPurge(ist.dateStr, false);
@@ -148,12 +156,20 @@ export class ScannerService {
     } else {
       if (!this.sessionState.lastPurgeDateIST) {
         this.sessionState.lastPurgeDateIST = ist.dateStr;
-        this.saveSessionState();
       }
+      if (initStatus.session === 'PRE_OPEN') {
+        this.sessionState.isMidnightCleared = false;
+        this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
+      } else if (initStatus.isOpen) {
+        this.sessionState.isMidnightCleared = false;
+        this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
+        this.sessionState.lastScanDateIST = ist.dateStr;
+      }
+      this.saveSessionState();
       this.marketOverview.marketStatus = initStatus.isOpen
         ? 'OPEN (LIVE NSE/BSE)'
         : `MARKET CLOSED (${initStatus.statusLabel})`;
-      this.runScanCycle(false).catch(() => {});
+      this.runScanCycle(isPreOpenOrOpenNow).catch(() => {});
     }
 
     // Start 3-second tick updates + 1-second Midnight/Market-Open schedule watcher
@@ -167,6 +183,7 @@ export class ScannerService {
         if (raw && typeof raw === 'object') {
           this.sessionState = {
             lastPurgeDateIST: raw.lastPurgeDateIST || null,
+            lastPreOpenScanDateIST: raw.lastPreOpenScanDateIST || null,
             lastScanDateIST: raw.lastScanDateIST || null,
             isMidnightCleared: Boolean(raw.isMidnightCleared),
             manualOverrideDateIST: raw.manualOverrideDateIST || null,
@@ -1015,25 +1032,52 @@ export class ScannerService {
   private async evaluateMidnightAndScanSchedule() {
     const ist = getISTDateParts(new Date());
 
-    // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH:
-    // Triggers as soon as IST date rolls over (e.g. 00:00:00 IST)
+    // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH (00:00:00 IST):
+    // Automatically empties all scanner results & logs as soon as IST calendar date rolls over
     if (ist.dateStr !== this.sessionState.lastPurgeDateIST) {
       this.resetMidnightPurge(ist.dateStr, true);
       return;
     }
 
-    // 2. NEXT DAY AFTER MARKET OPEN AUTO-SCAN:
-    // Once market actually opens on a trading day (09:15 AM IST or Muhurat session),
-    // automatically flush stale override if needed and discover brand-new today candidates!
     const statusInfo = calculateMarketStatus();
+
+    // 2. STAGE-1 PRE-OPEN AUTO-SCAN (09:00:00 AM IST) — ZERO MANUAL ACTION REQUIRED:
+    // Automatically discovers fresh pre-open equilibrium & gap candidates when 09:00 AM Pre-Open starts
+    if (
+      statusInfo.session === 'PRE_OPEN' &&
+      (this.sessionState.isMidnightCleared || this.sessionState.lastPreOpenScanDateIST !== ist.dateStr)
+    ) {
+      console.log(
+        `[ScannerService] 🌅 PRE-OPEN 09:00 IST AUTO-SCAN (${ist.dateStr} ${ist.timeStr} IST)! Discovering fresh Pre-Open candidates...`
+      );
+      this.sessionState.isMidnightCleared = false;
+      this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
+      this.sessionState.scannedAt = new Date().toISOString();
+      this.saveSessionState();
+
+      await this.runScanCycle(true);
+
+      marketWebSocketServer.broadcastSystemEvent({
+        type: 'new_day_scan_complete',
+        phase: 'PRE_OPEN',
+        isMidnightCleared: false,
+        dateIST: ist.dateStr,
+        stocksCount: this.stockScanResults.length,
+      });
+      return;
+    }
+
+    // 3. STAGE-2 REGULAR MARKET OPEN AUTO-SCAN (09:15:00 AM IST / Special Muhurat Session) — ZERO MANUAL ACTION REQUIRED:
+    // Automatically runs fresh live market discovery scan & repopulates all scanners when market opens
     if (
       statusInfo.isOpen &&
       (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr)
     ) {
       console.log(
-        `[ScannerService] 🚀 MARKET OPEN DETECTED (${ist.dateStr} ${ist.timeStr} IST)! Starting fresh next-day stock discovery scan...`
+        `[ScannerService] 🚀 MARKET OPEN 09:15 IST AUTO-SCAN (${ist.dateStr} ${ist.timeStr} IST)! Populating fresh live stocks across all scanners...`
       );
       this.sessionState.isMidnightCleared = false;
+      this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
       this.sessionState.lastScanDateIST = ist.dateStr;
       this.sessionState.scannedAt = new Date().toISOString();
       this.saveSessionState();
@@ -1042,6 +1086,7 @@ export class ScannerService {
 
       marketWebSocketServer.broadcastSystemEvent({
         type: 'new_day_scan_complete',
+        phase: 'REGULAR',
         isMidnightCleared: false,
         dateIST: ist.dateStr,
         stocksCount: this.stockScanResults.length,
@@ -1061,6 +1106,8 @@ export class ScannerService {
     this.sessionState = {
       ...this.sessionState,
       lastPurgeDateIST: dateStr,
+      lastPreOpenScanDateIST: null,
+      lastScanDateIST: null,
       isMidnightCleared: true,
       manualOverrideDateIST: null,
       purgedAt: new Date().toISOString(),
@@ -1110,6 +1157,7 @@ export class ScannerService {
     return {
       isMidnightCleared: this.sessionState.isMidnightCleared,
       lastPurgeDateIST: this.sessionState.lastPurgeDateIST,
+      lastPreOpenScanDateIST: this.sessionState.lastPreOpenScanDateIST,
       lastScanDateIST: this.sessionState.lastScanDateIST,
       manualOverrideDateIST: this.sessionState.manualOverrideDateIST,
       purgedAt: this.sessionState.purgedAt,

@@ -1685,12 +1685,12 @@
               ⚡ REFRESH LIVE
             </button>
 
-            <!-- 12:00 AM Midnight Auto-Purge & Next Trading Day Session Pill -->
-            <button id="midnight-session-pill" onclick="MidnightSessionManager.toggleTestMode()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm cursor-pointer hover:bg-cyan-500/30 transition" title="12:00 AM Midnight Auto-Purge & Next Trading Day Session Controller. Click to Test Purge!">
-              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span>Session Live &bull; Scans Active</span>
-              <span class="text-[9.5px] px-1 py-0.2 bg-cyan-500/30 rounded text-cyan-200">12 AM Reset</span>
-            </button>
+            <!-- 12:00 AM Midnight Auto-Purge & 09:00/09:15 AM Auto-Scan Telemetry Pill (100% Automatic) -->
+            <div id="midnight-session-pill" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm select-none" title="100% Automatic Daily Cycle: Scanners auto-empty at 12:00 AM IST & auto-scan at 09:00 AM Pre-Open / 09:15 AM Market Open">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
+              <span>Auto 12 AM Flush &bull; 09:00/09:15 Scan</span>
+              <span class="text-[9.5px] px-1 py-0.2 bg-cyan-500/30 rounded text-cyan-200">AUTO</span>
+            </div>
           </div>
         </div>
 
@@ -1709,9 +1709,9 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="MidnightSessionManager.overrideAndScanNow()" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-black font-black text-xs cursor-pointer shadow-md">
-              ⚡ SCAN NEW STOCKS NOW
-            </button>
+            <span class="midnight-auto-countdown inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">
+              <span>🤖</span><span>AUTO-SCAN AT 09:00 / 09:15 AM IST</span>
+            </span>
           </div>
         </div>
 
@@ -7459,9 +7459,9 @@
                     The next trading day will automatically scan and populate fresh candidate stocks at <strong>09:00 AM (Pre-Open)</strong> &amp; <strong>09:15 AM (Live Market)</strong>.
                   </p>
                   <div class="flex items-center gap-2 pt-1">
-                    <button onclick="MidnightSessionManager.overrideAndScanNow()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-black font-black text-xs cursor-pointer shadow-lg">
-                      ⚡ RUN MANUAL SCAN NOW &bull; LOAD NEW STOCKS
-                    </button>
+                    <span class="midnight-auto-countdown px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">
+                      🤖 100% AUTOMATIC • AUTO-LISTING AT 09:00 AM / 09:15 AM IST
+                    </span>
                   </div>
                 </div>
               </td>
@@ -8743,31 +8743,34 @@ function renderJournal() {
         const ist = getISTDatePartsNow();
         const storedPurge = localStorage.getItem('midnight_scanner_purged');
         const storedPurgeDate = localStorage.getItem('midnight_purge_date_ist');
+        const storedPreOpenDate = localStorage.getItem('midnight_preopen_scan_date_ist');
         const storedScanDate = localStorage.getItem('midnight_scan_date_ist');
 
-        // Fresh visitor opening during/after regular hours: seed today's purge date without falsely resetting server scanners
-        if (!storedPurgeDate && ist.totalMinutes >= (9 * 60 + 15)) {
+        // Fresh visitor opening at/after 09:00 AM IST: seed purge date cleanly without falsely resetting server scanners
+        if (!storedPurgeDate && ist.totalMinutes >= (9 * 60)) {
           localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
           return;
         }
 
-        // Any time date rolls over into a new IST day before regular market opens (00:00 - 09:15 IST)
-        if (storedPurgeDate !== ist.dateStr && ist.totalMinutes < (9 * 60 + 15)) {
+        // Between 00:00:00 and 08:59:59 IST: automatically stay 100% midnight-cleared awaiting 09:00 / 09:15 IST
+        if (storedPurgeDate !== ist.dateStr && ist.totalMinutes < (9 * 60)) {
           this.isPurged = true;
           this.manualOverride = false;
           localStorage.setItem('midnight_scanner_purged', 'true');
           localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
+          localStorage.removeItem('midnight_preopen_scan_date_ist');
+          localStorage.removeItem('midnight_scan_date_ist');
           this.emptyAllScannersInMemory();
           return;
         }
 
-        if (storedPurge === 'true' && storedPurgeDate === ist.dateStr && storedScanDate !== ist.dateStr) {
+        if (storedPurge === 'true' && storedPurgeDate === ist.dateStr && storedScanDate !== ist.dateStr && storedPreOpenDate !== ist.dateStr) {
           this.isPurged = true;
           this.manualOverride = false;
           this.emptyAllScannersInMemory();
-        } else if (storedScanDate === ist.dateStr && storedPurge === 'false') {
+        } else if ((storedScanDate === ist.dateStr || storedPreOpenDate === ist.dateStr) && storedPurge === 'false') {
           this.isPurged = false;
-          this.manualOverride = true;
+          this.manualOverride = false;
         }
       },
 
@@ -8782,10 +8785,11 @@ function renderJournal() {
             localStorage.setItem('midnight_purge_date_ist', sess.currentDateIST || getISTDatePartsNow().dateStr);
             this.emptyAllScannersInMemory();
             this.refreshAllRenderedViews();
-          } else if (sess.isMidnightCleared === false && (sess.stocksCount > 0 || sess.lastScanDateIST === getISTDatePartsNow().dateStr)) {
+          } else if (sess.isMidnightCleared === false && (sess.stocksCount > 0 || sess.lastScanDateIST === getISTDatePartsNow().dateStr || sess.lastPreOpenScanDateIST === getISTDatePartsNow().dateStr)) {
             this.isPurged = false;
             localStorage.setItem('midnight_scanner_purged', 'false');
-            localStorage.setItem('midnight_scan_date_ist', sess.lastScanDateIST || sess.currentDateIST || getISTDatePartsNow().dateStr);
+            if (sess.lastPreOpenScanDateIST) localStorage.setItem('midnight_preopen_scan_date_ist', sess.lastPreOpenScanDateIST);
+            if (sess.lastScanDateIST) localStorage.setItem('midnight_scan_date_ist', sess.lastScanDateIST);
             this.pullFreshBackendScan(false);
           }
         } catch (e) {}
@@ -8794,11 +8798,12 @@ function renderJournal() {
       checkMidnightAndOpenTransitions() {
         const ist = getISTDatePartsNow();
         const storedPurgeDate = localStorage.getItem('midnight_purge_date_ist');
+        const storedPreOpenDate = localStorage.getItem('midnight_preopen_scan_date_ist');
         const storedScanDate = localStorage.getItem('midnight_scan_date_ist');
 
-        // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH:
-        // Fires only when IST date actually rolls over (previous date != today) or between 00:00-09:14 IST unpurged
-        if (!storedPurgeDate && ist.totalMinutes >= (9 * 60 + 15)) {
+        // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH (00:00:00 IST):
+        // Automatically purges ALL scanner tables when IST calendar date rolls over
+        if (!storedPurgeDate && ist.totalMinutes >= (9 * 60)) {
           localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
         } else if (storedPurgeDate !== ist.dateStr) {
           console.log('[MidnightSessionManager] 🕛 New IST Day Detected (' + ist.dateStr + '). Executing 12:00 AM Auto-Flush!');
@@ -8806,11 +8811,19 @@ function renderJournal() {
           return;
         }
 
-        // 2. NEXT DAY MARKET OPEN AUTO-SCAN (real exchange open, ignoring test simulation override):
         const mkt = getIndianMarketStatus(new Date(), true);
+
+        // 2. NEXT TRADING DAY PRE-OPEN AUTO-SCAN (09:00 AM IST) — ZERO MANUAL ACTION REQUIRED:
+        if (mkt.status === 'PRE-OPEN' && (this.isPurged || storedPreOpenDate !== ist.dateStr) && !this.isScanningNow) {
+          console.log('[MidnightSessionManager] 🌅 09:00 AM IST Pre-Open Detected (' + ist.dateStr + '). Auto-populating scanners...');
+          this.generateNewTradingDayStocks(true, 'PRE_OPEN');
+          return;
+        }
+
+        // 3. NEXT TRADING DAY MARKET-OPEN AUTO-SCAN (09:15 AM IST) — ZERO MANUAL ACTION REQUIRED:
         if (mkt.status === 'OPEN' && (this.isPurged || storedScanDate !== ist.dateStr) && !this.isScanningNow) {
-          console.log('[MidnightSessionManager] 🚀 Market Open on Trading Day (' + ist.dateStr + '). Running fresh auto-scan!');
-          this.generateNewTradingDayStocks(true);
+          console.log('[MidnightSessionManager] 🚀 09:15 AM IST Market Open Detected (' + ist.dateStr + '). Auto-discovering live stocks...');
+          this.generateNewTradingDayStocks(true, 'REGULAR');
           return;
         }
 
@@ -8823,6 +8836,7 @@ function renderJournal() {
         this.manualOverride = false;
         localStorage.setItem('midnight_scanner_purged', 'true');
         localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
+        localStorage.removeItem('midnight_preopen_scan_date_ist');
         localStorage.removeItem('midnight_scan_date_ist');
 
         this.emptyAllScannersInMemory();
@@ -9018,28 +9032,41 @@ function renderJournal() {
         }
       },
 
-      async generateNewTradingDayStocks(isAutoMarketOpen = false) {
+      async generateNewTradingDayStocks(isAutoMarketOpen = true, phase = 'REGULAR') {
         if (this.isScanningNow) return;
         this.isScanningNow = true;
         const ist = getISTDatePartsNow();
 
         try {
           this.isPurged = false;
-          this.manualOverride = !isAutoMarketOpen;
+          this.manualOverride = false;
           localStorage.setItem('midnight_scanner_purged', 'false');
-          localStorage.setItem('midnight_scan_date_ist', ist.dateStr);
+          localStorage.setItem('midnight_preopen_scan_date_ist', ist.dateStr);
+          if (phase !== 'PRE_OPEN') {
+            localStorage.setItem('midnight_scan_date_ist', ist.dateStr);
+          }
           if (!localStorage.getItem('midnight_purge_date_ist')) {
             localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
           }
 
-          // Trigger backend live full-universe scan using Upstox API / Autonomous Engine
-          const res = await fetch('/api/scan/trigger', { method: 'POST' });
+          // Fetch already auto-populated backend scan first (zero manual action needed); trigger only if needed
           let freshPool = null;
+          let res = await fetch('/api/scan/results');
           if (res.ok) {
-            const json = await res.json();
-            if (Array.isArray(json.stocks) && json.stocks.length > 0) {
+            const existing = await res.json();
+            if (Array.isArray(existing.stocks) && existing.stocks.length > 0 && existing.sessionState && !existing.sessionState.isMidnightCleared) {
               const baseMap = new Map((this.universeCache || DATA.all_stocks || []).map(x => [x.symbol, x]));
-              freshPool = json.stocks.map(b => this.mapBackendStockToRow(b, baseMap.get(b.symbol)));
+              freshPool = existing.stocks.map(b => this.mapBackendStockToRow(b, baseMap.get(b.symbol)));
+            }
+          }
+          if (!freshPool || freshPool.length === 0) {
+            res = await fetch('/api/scan/trigger', { method: 'POST' });
+            if (res.ok) {
+              const json = await res.json();
+              if (Array.isArray(json.stocks) && json.stocks.length > 0) {
+                const baseMap = new Map((this.universeCache || DATA.all_stocks || []).map(x => [x.symbol, x]));
+                freshPool = json.stocks.map(b => this.mapBackendStockToRow(b, baseMap.get(b.symbol)));
+              }
             }
           }
 
@@ -9059,7 +9086,10 @@ function renderJournal() {
             CyberAudioEngine.playBeep(1200, 'sine', 0.2);
           }
           if (typeof showToast === 'function') {
-            showToast('🌅 NEW DAY SCAN COMPLETE! Fresh top momentum & breakout stocks listed across all scanners.', 'success');
+            const msg = phase === 'PRE_OPEN'
+              ? '🌅 09:00 AM PRE-OPEN AUTO-SCAN COMPLETE! Fresh Pre-Open stocks listed automatically.'
+              : '🚀 09:15 AM MARKET OPEN AUTO-SCAN COMPLETE! Fresh momentum & breakout stocks listed across all scanners.';
+            showToast(msg, 'success');
           }
         } catch (e) {
           console.warn('[MidnightSessionManager] Fresh scan error:', e);
@@ -9076,44 +9106,51 @@ function renderJournal() {
         this.renderSessionPill();
       },
 
-      overrideAndScanNow() {
-        this.generateNewTradingDayStocks(false);
+      getNextAutoScanCountdown() {
+        const ist = getISTDatePartsNow();
+        const curSec = ist.hours * 3600 + ist.minutes * 60 + ist.seconds;
+        const preSec = 9 * 3600;
+        const openSec = 9 * 3600 + 15 * 60;
+        const midnightSec = 24 * 3600;
+        let diff = curSec < preSec ? (preSec - curSec) : (curSec < openSec ? (openSec - curSec) : (midnightSec - curSec));
+        const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+        const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+        const s = String(diff % 60).padStart(2, '0');
+        const label = curSec < preSec ? 'Pre-Open 09:00' : (curSec < openSec ? 'Live Open 09:15' : '12 AM Flush');
+        return { h, m, s, text: `${label} in ${h}:${m}:${s}` };
       },
 
       renderSessionPill() {
         const pill = document.getElementById('midnight-session-pill');
         const banner = document.getElementById('midnight-purge-notice-banner');
+        const cd = this.getNextAutoScanCountdown();
+
+        document.querySelectorAll('.midnight-auto-countdown').forEach(el => {
+          el.innerText = `🤖 AUTO-SCHEDULED • ${cd.text} IST`;
+        });
 
         if (this.isMidnightCleared()) {
           if (pill) {
-            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono shadow-sm cursor-pointer hover:bg-amber-500/30 transition';
-            pill.title = '12:00 AM Midnight Auto-Flush Active: All scanners emptied. Auto-scans on Market Open (09:15 IST). Click to scan manually now!';
+            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono shadow-sm select-none';
+            pill.title = '12:00 AM Midnight Auto-Purge Active: Scanners auto-empty at 00:00 IST and auto-populate at 09:00 AM / 09:15 AM IST (No manual button required).';
             pill.innerHTML = `
-              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
-              <span>12 AM Flushed &bull; Standby</span>
-              <span class="text-[9.5px] px-1 py-0.2 bg-amber-500/30 rounded text-amber-200">Auto 09:15 AM</span>
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+              <span>12 AM Emptied &bull; Auto Standby</span>
+              <span class="text-[9.5px] px-1.5 py-0.2 bg-amber-500/30 rounded text-amber-200">${cd.h}:${cd.m}:${cd.s}</span>
             `;
           }
           if (banner) banner.classList.remove('hidden');
         } else {
           if (pill) {
-            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm cursor-pointer hover:bg-cyan-500/30 transition';
-            pill.title = 'Fresh Scanners Active. Click to Test 12:00 AM Midnight Auto-Flush!';
+            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm select-none';
+            pill.title = 'Fully Automated Cycle: Scanners auto-empty at 12:00 AM IST and auto-scan at 09:00 AM Pre-Open & 09:15 AM Market Open.';
             pill.innerHTML = `
-              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span>Scans Active &bull; 12 AM Auto-Flush</span>
-              <span class="text-[9.5px] px-1 py-0.2 bg-cyan-500/30 rounded text-cyan-200">Test Purge</span>
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
+              <span>Auto-Listed &bull; 12 AM Flush</span>
+              <span class="text-[9.5px] px-1.5 py-0.2 bg-cyan-500/30 rounded text-cyan-200">${cd.h}:${cd.m}:${cd.s}</span>
             `;
           }
           if (banner) banner.classList.add('hidden');
-        }
-      },
-
-      toggleTestMode() {
-        if (this.isMidnightCleared()) {
-          this.overrideAndScanNow();
-        } else {
-          this.executeMidnightPurge(true);
         }
       }
     };
@@ -10083,7 +10120,7 @@ ${json.message || 'Unauthorized token.'}`);
             <div class="text-2xl">🕛</div>
             <div class="text-amber-300 font-black tracking-wide">12:00 AM MIDNIGHT FLUSH &bull; AI SIGNALS STANDBY</div>
             <p class="text-slate-400 max-w-lg mx-auto">Previous day AI signal cards cleared. Fresh institutional AI signals auto-populate once market opens at 09:15 AM IST.</p>
-            <button onclick="MidnightSessionManager.overrideAndScanNow()" class="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs cursor-pointer">⚡ Scan New Signals Now</button>
+            <span class="midnight-auto-countdown inline-block px-4 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">🤖 AUTO-POPULATES AT 09:00 AM / 09:15 AM IST</span>
           </div>`;
         return;
       }
@@ -12237,11 +12274,11 @@ ${json.message || 'Unauthorized token.'}`);
       currentFilter: 'ALL',
       searchQuery: '',
       indicesData: [
-        { symbol: 'NIFTY 50', name: 'NIFTY 50 Benchmark Index', type: 'INDEX', price: 25030.35, pct_change: 2.01, prev_close: 24537.15, high: 25150, low: 24890, turnover_cr: 38450, total_bid_str: '1.85 Cr', total_ask_str: '1.12 Cr', bid_ask_ratio: 1.65, matched_vol_str: '42.5 L', unmatched_str: '+73.0 L Buy Surplus', adv: 38, dec: 12 },
-        { symbol: 'BANKNIFTY', name: 'NIFTY Bank Sector Index', type: 'INDEX', price: 52380.00, pct_change: 1.84, prev_close: 51434.90, high: 52580, low: 51820, turnover_cr: 28120, total_bid_str: '85.2 L', total_ask_str: '52.4 L', bid_ask_ratio: 1.62, matched_vol_str: '18.2 L', unmatched_str: '+32.8 L Buy Surplus', adv: 10, dec: 2 },
-        { symbol: 'FINNIFTY', name: 'NIFTY Financial Services Index', type: 'INDEX', price: 24150.00, pct_change: 1.62, prev_close: 23765.00, high: 24280, low: 23900, turnover_cr: 12850, total_bid_str: '42.1 L', total_ask_str: '29.0 L', bid_ask_ratio: 1.45, matched_vol_str: '9.5 L', unmatched_str: '+13.1 L Buy Surplus', adv: 16, dec: 4 },
-        { symbol: 'MIDCPNIFTY', name: 'NIFTY Midcap Select Index', type: 'INDEX', price: 13120.00, pct_change: 2.25, prev_close: 12832.00, high: 13200, low: 12950, turnover_cr: 6420, total_bid_str: '22.4 L', total_ask_str: '20.0 L', bid_ask_ratio: 1.12, matched_vol_str: '6.4 L', unmatched_str: '+2.4 L Buy Surplus', adv: 14, dec: 11 },
-        { symbol: 'SENSEX', name: 'BSE SENSEX 30 Benchmark', type: 'INDEX', price: 81765.20, pct_change: 1.84, prev_close: 80288.00, high: 82100, low: 81250, turnover_cr: 22400, total_bid_str: '54.2 L', total_ask_str: '37.1 L', bid_ask_ratio: 1.46, matched_vol_str: '14.8 L', unmatched_str: '+17.1 L Buy Surplus', adv: 24, dec: 6 }
+        { symbol: 'NIFTY 50', name: 'NIFTY 50 Benchmark Index', type: 'INDEX', price: 25044.65, pct_change: 0.23, prev_close: 24986.40, high: 25084.05, low: 24838.75, turnover_cr: 38450, total_bid_str: '1.85 Cr', total_ask_str: '1.12 Cr', bid_ask_ratio: 1.65, matched_vol_str: '42.5 L', unmatched_str: '+73.0 L Buy Surplus', adv: 38, dec: 12 },
+        { symbol: 'BANKNIFTY', name: 'NIFTY Bank Sector Index', type: 'INDEX', price: 59741.25, pct_change: 1.51, prev_close: 58850.65, high: 59741.25, low: 58877.85, turnover_cr: 28120, total_bid_str: '85.2 L', total_ask_str: '52.4 L', bid_ask_ratio: 1.62, matched_vol_str: '18.2 L', unmatched_str: '+32.8 L Buy Surplus', adv: 10, dec: 2 },
+        { symbol: 'FINNIFTY', name: 'NIFTY Financial Services Index', type: 'INDEX', price: 27384.90, pct_change: 0.75, prev_close: 27180.65, high: 27420.00, low: 27110.00, turnover_cr: 12850, total_bid_str: '42.1 L', total_ask_str: '29.0 L', bid_ask_ratio: 1.45, matched_vol_str: '9.5 L', unmatched_str: '+13.1 L Buy Surplus', adv: 16, dec: 4 },
+        { symbol: 'MIDCPNIFTY', name: 'NIFTY Midcap Select Index', type: 'INDEX', price: 14055.45, pct_change: 0.21, prev_close: 14026.00, high: 14090.00, low: 13960.00, turnover_cr: 6420, total_bid_str: '22.4 L', total_ask_str: '20.0 L', bid_ask_ratio: 1.12, matched_vol_str: '6.4 L', unmatched_str: '+2.4 L Buy Surplus', adv: 14, dec: 11 },
+        { symbol: 'SENSEX', name: 'BSE SENSEX 30 Benchmark', type: 'INDEX', price: 81106.65, pct_change: 0.13, prev_close: 80999.40, high: 81250.00, low: 80650.00, turnover_cr: 22400, total_bid_str: '54.2 L', total_ask_str: '37.1 L', bid_ask_ratio: 1.46, matched_vol_str: '14.8 L', unmatched_str: '+17.1 L Buy Surplus', adv: 24, dec: 6 }
       ],
 
       init() {
@@ -12263,24 +12300,26 @@ ${json.message || 'Unauthorized token.'}`);
         const badgeEl = document.getElementById('preopen-status-badge');
         if (!clockEl) return;
         const now = new Date();
-        const timeStr = now.toLocaleTimeString('en-IN', { hour12: false }) + ' IST';
-        clockEl.innerText = timeStr;
+        const ist = getISTDatePartsNow(now);
+        clockEl.innerText = `${String(ist.hours).padStart(2, '0')}:${String(ist.minutes).padStart(2, '0')}:${String(ist.seconds).padStart(2, '0')} IST`;
 
-        const h = now.getHours();
-        const m = now.getMinutes();
+        const mkt = getIndianMarketStatus(now, true);
         if (badgeEl) {
-          if (h === 9 && m < 8) {
-            badgeEl.innerText = 'PHASE 1: 09:00 - 09:08 AM (ORDER COLLECTION & ENTRY)';
+          if (mkt.status === 'PRE-OPEN' && ist.hours === 9 && ist.minutes < 8) {
+            badgeEl.innerText = 'PHASE 1: 09:00 - 09:08 AM IST (ORDER COLLECTION & ENTRY)';
             badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold';
-          } else if (h === 9 && m >= 8 && m < 12) {
-            badgeEl.innerText = 'PHASE 2: 09:08 - 09:12 AM (EQUILIBRIUM PRICE DISCOVERY & MATCHING)';
+          } else if (mkt.status === 'PRE-OPEN' && ist.hours === 9 && ist.minutes >= 8 && ist.minutes < 12) {
+            badgeEl.innerText = 'PHASE 2: 09:08 - 09:12 AM IST (EQUILIBRIUM PRICE DISCOVERY & MATCHING)';
             badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black animate-pulse';
-          } else if (h === 9 && m >= 12 && m < 15) {
-            badgeEl.innerText = 'PHASE 3: 09:12 - 09:15 AM (TRANSITION BUFFER PERIOD)';
+          } else if (mkt.status === 'PRE-OPEN') {
+            badgeEl.innerText = 'PHASE 3: 09:12 - 09:15 AM IST (TRANSITION BUFFER PERIOD)';
             badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 font-bold';
-          } else {
-            badgeEl.innerText = 'PHASE 4: 09:15 AM+ (REGULAR TRADING SESSION LIVE)';
+          } else if (mkt.status === 'OPEN') {
+            badgeEl.innerText = 'PHASE 4: 09:15 AM+ IST (REGULAR TRADING SESSION LIVE)';
             badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold';
+          } else {
+            badgeEl.innerText = `${mkt.heroText || 'MARKET CLOSED'} • AUTO-PREOPEN AT 09:00 AM IST`;
+            badgeEl.className = 'text-[10px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold';
           }
         }
       },
@@ -12481,9 +12520,9 @@ ${json.message || 'Unauthorized token.'}`);
                     Phase 1 Order Collection for the new trading day begins at <strong>09:00 AM IST</strong>.
                   </p>
                   <div class="flex items-center gap-2 pt-1">
-                    <button onclick="MidnightSessionManager.overrideAndScanNow()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-black font-black text-xs cursor-pointer shadow-lg">
-                      ⚡ RUN MANUAL SCAN NOW &bull; LOAD PRE-OPEN DATA
-                    </button>
+                    <span class="midnight-auto-countdown px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">
+                      🤖 100% AUTOMATIC • PRE-OPEN AUTO-SCAN AT 09:00 AM IST
+                    </span>
                   </div>
                 </div>
               </td>
@@ -13030,9 +13069,9 @@ ${json.message || 'Unauthorized token.'}`);
                     The next trading day scan automatically discovers fresh candidate stocks after market opens at <strong>09:15 AM IST</strong>.
                   </p>
                   <div class="flex items-center gap-2 pt-1">
-                    <button onclick="MidnightSessionManager.overrideAndScanNow()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-black text-xs cursor-pointer shadow-lg">
-                      ⚡ RUN MANUAL SCAN NOW &bull; LOAD FRESH STOCKS
-                    </button>
+                    <span class="midnight-auto-countdown px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 font-black text-xs">
+                      🤖 100% AUTOMATIC • AUTO-POPULATES AT 09:00 / 09:15 AM IST
+                    </span>
                   </div>
                 </div>
               </td>
