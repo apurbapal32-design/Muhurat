@@ -1,3 +1,6 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 import { NIFTY_200_STOCKS } from '../src/data/nifty200';
 import {
   AlertConfig,
@@ -20,37 +23,21 @@ import {
   generateSyntheticCandles,
 } from '../src/utils/technicalAnalysis';
 import { calculateStockOI } from '../src/utils/oiAnalysis';
-import { calculateMarketStatus } from '../src/data/marketSchedule';
-import { fetchFyersQuotes, getFyersSymbol } from './fyersService';
+import { calculateMarketStatus, getISTDateParts } from '../src/data/marketSchedule';
+import { upstoxService } from './upstoxService';
+import { autonomousPriceService, UnifiedMarketQuote } from './autonomousPriceService';
+import { marketWebSocketServer } from './marketWebSocketServer';
 
-const SYMBOL_MAP: Record<string, string> = {
-  NIFTY: '^NSEI',
-  NIFTY50: '^NSEI',
-  'NIFTY 50': '^NSEI',
-  BANKNIFTY: '^NSEBANK',
-  'NIFTY BANK': '^NSEBANK',
-  FINNIFTY: 'NIFTY_FIN_SERVICE.NS',
-  MIDCPNIFTY: 'NIFTY_MID_SELECT.NS',
-  SENSEX: '^BSESN',
-  INDIAVIX: '^INDIAVIX',
-  NIFTYIT: '^CNXIT',
-  TATAMOTORS: 'TMPV.NS',
-  REC: 'RECLTD.NS',
-  'BAJAJ-AUTO': 'BAJAJ-AUTO.NS',
-  'M&M': 'M%26M.NS',
-  'M&MFIN': 'M%26MFIN.NS',
-  'MCDOWELL-N': 'UNITDSPR.NS',
-  'L&T': 'LT.NS',
-  LT: 'LT.NS',
-  'L&TFH': 'LTF.NS',
-  LTF: 'LTF.NS',
-  ETERNAL: 'ETERNAL.NS',
-  'ETERNAL:NSE': 'ETERNAL.NS',
-  ZOMATO: 'ETERNAL.NS',
-  SWIGGY: 'SWIGGY.NS',
-  JIOFIN: 'JIOFIN.NS',
-  PAYTM: 'PAYTM.NS',
-};
+const SESSION_STATE_FILE = path.join(os.tmpdir(), 'muhurat_scanner_session_state.json');
+
+export interface DailySessionState {
+  lastPurgeDateIST: string | null;
+  lastScanDateIST: string | null;
+  isMidnightCleared: boolean;
+  manualOverrideDateIST: string | null;
+  purgedAt?: string;
+  scannedAt?: string;
+}
 
 interface StockMetaCache {
   prevClose: number;
@@ -72,6 +59,16 @@ export class ScannerService {
   private lastScanTimestamp: string = new Date().toISOString();
   private isScanning: boolean = false;
   private autoScanTimer: NodeJS.Timeout | null = null;
+  private midnightWatcherTimer: NodeJS.Timeout | null = null;
+  private periodicFetchTimer: NodeJS.Timeout | null = null;
+  private lastQuoteSource: string = 'AUTONOMOUS_LIVE_ENGINE';
+
+  private sessionState: DailySessionState = {
+    lastPurgeDateIST: null,
+    lastScanDateIST: null,
+    isMidnightCleared: false,
+    manualOverrideDateIST: null,
+  };
 
   private alertConfig: AlertConfig = {
     minScoreToAlert: 80,
@@ -92,28 +89,29 @@ export class ScannerService {
   };
 
   private brokerConfig: BrokerConfig = {
-    selectedBroker: 'fyers',
-    apiKey: process.env.FYERS_APP_ID || 'RMR62XB492-100',
-    apiSecret: process.env.FYERS_SECRET_KEY || '0WF68SFOJD',
-    accessToken: process.env.FYERS_ACCESS_TOKEN || '',
-    fyersAppId: process.env.FYERS_APP_ID || 'RMR62XB492-100',
-    fyersAccessToken: process.env.FYERS_ACCESS_TOKEN || '',
-    status: 'connected',
+    selectedBroker: process.env.UPSTOX_ACCESS_TOKEN ? 'upstox' : 'autonomous',
+    apiKey: process.env.UPSTOX_API_KEY || '',
+    apiSecret: process.env.UPSTOX_API_SECRET || '',
+    accessToken: process.env.UPSTOX_ACCESS_TOKEN || '',
+    upstoxApiKey: process.env.UPSTOX_API_KEY || '',
+    upstoxApiSecret: process.env.UPSTOX_API_SECRET || '',
+    upstoxAccessToken: process.env.UPSTOX_ACCESS_TOKEN || '',
+    status: process.env.UPSTOX_ACCESS_TOKEN ? 'connected' : 'simulated',
     lastPingTime: new Date().toISOString(),
   };
 
   private marketOverview: MarketOverview = {
-    nifty50: { price: 25030.35, change: 493.20, changePercent: 2.01 },
-    bankNifty: { price: 52380.00, change: 945.10, changePercent: 1.84 },
-    finnifty: { price: 24150.00, change: 385.00, changePercent: 1.62 },
-    midcpnifty: { price: 13120.00, change: 288.00, changePercent: 2.25 },
-    sensex: { price: 81765.20, change: 1477.20, changePercent: 1.84 },
-    niftyIT: { price: 38240.15, change: 550.65, changePercent: 1.45 },
+    nifty50: { price: 25044.65, change: 58.25, changePercent: 0.23 },
+    bankNifty: { price: 59741.25, change: 890.60, changePercent: 1.51 },
+    finnifty: { price: 27384.90, change: 204.25, changePercent: 0.75 },
+    midcpnifty: { price: 14055.45, change: 29.45, changePercent: 0.21 },
+    sensex: { price: 81106.65, change: 107.25, changePercent: 0.13 },
+    niftyIT: { price: 32468.90, change: -400.75, changePercent: -1.22 },
     indiaVix: {
-      price: 17.47,
-      change: -2.41,
-      changePercent: -12.13,
-      regime: 'NORMAL_VOLATILITY',
+      price: 17.42,
+      change: -1.01,
+      changePercent: -5.48,
+      regime: 'HIGH_FEAR',
     },
     scannedCount: 0,
     buyCount: 0,
@@ -124,15 +122,70 @@ export class ScannerService {
   };
 
   constructor() {
+    marketWebSocketServer.setAccessTokenResolver(
+      () =>
+        this.brokerConfig.upstoxAccessToken ||
+        this.brokerConfig.accessToken ||
+        process.env.UPSTOX_ACCESS_TOKEN ||
+        ''
+    );
+    upstoxService.ensureInstrumentsLoaded().catch(() => {});
+
+    this.loadSessionState();
     this.initializeCandleData();
     this.seedInitialSampleData();
+
+    const ist = getISTDateParts(new Date());
     const initStatus = calculateMarketStatus();
-    this.marketOverview.marketStatus = initStatus.isOpen
-      ? 'OPEN (LIVE NSE/BSE)'
-      : `MARKET CLOSED (${initStatus.statusLabel})`;
-    this.runScanCycle();
-    // Start 3-second live price tick stream
+
+    const shouldFlushOnBoot =
+      (ist.minutesFromMidnight < 9 * 60 + 15 && this.sessionState.manualOverrideDateIST !== ist.dateStr) ||
+      (this.sessionState.isMidnightCleared && this.sessionState.lastPurgeDateIST === ist.dateStr && this.sessionState.manualOverrideDateIST !== ist.dateStr);
+
+    if (shouldFlushOnBoot) {
+      this.resetMidnightPurge(ist.dateStr, false);
+      this.fetchLiveIndices().catch(() => {});
+    } else {
+      if (!this.sessionState.lastPurgeDateIST) {
+        this.sessionState.lastPurgeDateIST = ist.dateStr;
+        this.saveSessionState();
+      }
+      this.marketOverview.marketStatus = initStatus.isOpen
+        ? 'OPEN (LIVE NSE/BSE)'
+        : `MARKET CLOSED (${initStatus.statusLabel})`;
+      this.runScanCycle(false).catch(() => {});
+    }
+
+    // Start 3-second tick updates + 1-second Midnight/Market-Open schedule watcher
     this.startAutoScan(3);
+  }
+
+  private loadSessionState() {
+    try {
+      if (fs.existsSync(SESSION_STATE_FILE)) {
+        const raw = JSON.parse(fs.readFileSync(SESSION_STATE_FILE, 'utf-8'));
+        if (raw && typeof raw === 'object') {
+          this.sessionState = {
+            lastPurgeDateIST: raw.lastPurgeDateIST || null,
+            lastScanDateIST: raw.lastScanDateIST || null,
+            isMidnightCleared: Boolean(raw.isMidnightCleared),
+            manualOverrideDateIST: raw.manualOverrideDateIST || null,
+            purgedAt: raw.purgedAt,
+            scannedAt: raw.scannedAt,
+          };
+        }
+      }
+    } catch {
+      // Safe default
+    }
+  }
+
+  private saveSessionState() {
+    try {
+      fs.writeFileSync(SESSION_STATE_FILE, JSON.stringify(this.sessionState));
+    } catch {
+      // Non-fatal
+    }
   }
 
   /**
@@ -688,196 +741,105 @@ export class ScannerService {
   }
 
   /**
-   * Helper to fetch real 5-min candles and meta from Yahoo Finance for a stock with dual host fallback (query1 -> query2)
+   * Builds calibrated 5-min intraday candles anchored to live Upstox / Autonomous Market Engine quote
    */
   private async fetchLiveStockData(
     symbol: string,
     fallbackBasePrice: number
   ): Promise<{ candles: Candle[]; meta?: StockMetaCache }> {
-    const rawSym = SYMBOL_MAP[symbol] || (symbol.includes('&') ? symbol.replace('&', '%26') + '.NS' : `${symbol}.NS`);
-    const encodedSym = rawSym.includes('%26') ? rawSym : encodeURIComponent(rawSym);
-    const hosts = [
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSym}?interval=5m&range=1d`,
-      `https://query2.finance.yahoo.com/v8/finance/chart/${encodedSym}?interval=5m&range=1d`,
-    ];
+    const token =
+      this.brokerConfig.upstoxAccessToken ||
+      this.brokerConfig.accessToken ||
+      process.env.UPSTOX_ACCESS_TOKEN ||
+      '';
 
-    for (const url of hosts) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const quotes = await upstoxService.fetchUnifiedMarketQuotes([symbol], token, {
+      [symbol]: fallbackBasePrice,
+    });
+    const clean = upstoxService.cleanSymbol(symbol);
+    const q = quotes[clean] || quotes[symbol];
 
-        const res = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'application/json',
-          },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
+    const lp = q?.lp || fallbackBasePrice;
+    const prevClose = q?.prevClose || fallbackBasePrice;
+    const dayHigh = q?.high || Math.max(lp, prevClose);
+    const dayLow = q?.low || Math.min(lp, prevClose);
 
-        if (!res.ok) continue;
-
-        const data = await res.json();
-        const result = data.chart?.result?.[0];
-        if (!result) continue;
-
-        const meta = result.meta;
-        const timestamps: number[] = result.timestamp || [];
-        const quote = result.indicators?.quote?.[0];
-
-        const lastClose = meta?.regularMarketPrice || (quote?.close ? quote.close.filter((c: any) => typeof c === 'number').pop() : fallbackBasePrice);
-        const prevClose = meta?.chartPreviousClose || meta?.previousClose || lastClose || fallbackBasePrice;
-        const dayHigh = meta?.regularMarketDayHigh || lastClose;
-        const dayLow = meta?.regularMarketDayLow || lastClose;
-
-        const stockMeta: StockMetaCache = {
-          prevClose: Number(prevClose.toFixed(2)),
-          dayHigh: Number(dayHigh.toFixed(2)),
-          dayLow: Number(dayLow.toFixed(2)),
-          price: Number(lastClose.toFixed(2)),
-          lastUpdated: Date.now(),
-        };
-
-        const candles: Candle[] = [];
-        if (quote && timestamps.length > 0) {
-          for (let i = 0; i < timestamps.length; i++) {
-            if (
-              typeof quote.close[i] === 'number' &&
-              typeof quote.open[i] === 'number'
-            ) {
-              const timeStr = new Date(timestamps[i] * 1000).toLocaleTimeString('en-IN', {
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Asia/Kolkata',
-              });
-              candles.push({
-                time: timeStr,
-                open: Number(quote.open[i].toFixed(2)),
-                high: Number(quote.high[i].toFixed(2)),
-                low: Number(quote.low[i].toFixed(2)),
-                close: Number(quote.close[i].toFixed(2)),
-                volume: Math.round(quote.volume[i] || 0),
-              });
-            }
-          }
-        }
-
-        return {
-          candles: candles.length > 0 ? candles : generateSyntheticCandles(stockMeta.price, 50, symbol),
-          meta: stockMeta,
-        };
-      } catch (e) {
-        // Try next host endpoint
-      }
-    }
-
-    // Fallback if network calls fail
-    const existingMeta = this.stockMetaCache.get(symbol);
     const existingCandles = this.stockCandles.get(symbol);
-
-    const scheduleInfo = calculateMarketStatus();
-    const base = existingMeta?.price || fallbackBasePrice;
-    const randomTickPct = scheduleInfo.isOpen ? (Math.random() - 0.49) * 0.003 : 0;
-    const newPrice = Number(Math.max(1, base * (1 + randomTickPct)).toFixed(2));
-
-    const candles = existingCandles && existingCandles.length > 0
-      ? existingCandles
-      : generateSyntheticCandles(fallbackBasePrice, 50, symbol);
+    const candles =
+      existingCandles && existingCandles.length > 0
+        ? [...existingCandles]
+        : generateSyntheticCandles(prevClose || lp, 50, symbol);
 
     if (candles.length > 0) {
       const lastIndex = candles.length - 1;
       candles[lastIndex] = {
         ...candles[lastIndex],
-        close: newPrice,
-        high: Math.max(candles[lastIndex].high, newPrice),
-        low: Math.min(candles[lastIndex].low, newPrice),
+        close: lp,
+        high: Math.max(candles[lastIndex].high, dayHigh, lp),
+        low: Math.min(candles[lastIndex].low, dayLow, lp),
+        volume: q?.volume || candles[lastIndex].volume,
       };
     }
 
     const stockMeta: StockMetaCache = {
-      prevClose: existingMeta?.prevClose || fallbackBasePrice,
-      dayHigh: Math.max(existingMeta?.dayHigh || fallbackBasePrice, newPrice),
-      dayLow: Math.min(existingMeta?.dayLow || fallbackBasePrice, newPrice),
-      price: newPrice,
+      prevClose: Number(prevClose.toFixed(2)),
+      dayHigh: Number(Math.max(dayHigh, lp).toFixed(2)),
+      dayLow: Number(Math.min(dayLow, lp).toFixed(2)),
+      price: Number(lp.toFixed(2)),
       lastUpdated: Date.now(),
     };
     return { candles, meta: stockMeta };
   }
 
   /**
-   * Helper to fetch real market index prices (Nifty 50, Bank Nifty, Fin Nifty, Midcap Nifty, Sensex, Nifty IT, India VIX)
+   * Fetches live market index prices via Upstox API & Autonomous Market Engine
    */
   private async fetchLiveIndices() {
-    const indices = [
-      { key: 'nifty50', symbols: ['^NSEI'] },
-      { key: 'bankNifty', symbols: ['^NSEBANK'] },
-      { key: 'finnifty', symbols: ['NIFTY_FIN_SERVICE.NS', '^CNXFIN'] },
-      { key: 'midcpnifty', symbols: ['NIFTY_MID_SELECT.NS', '^NSEMDCP50'] },
-      { key: 'sensex', symbols: ['^BSESN', 'BSE-SENSEX.BO'] },
-      { key: 'niftyIT', symbols: ['^CNXIT'] },
-      { key: 'indiaVix', symbols: ['^INDIAVIX'] },
-    ] as const;
+    const token =
+      this.brokerConfig.upstoxAccessToken ||
+      this.brokerConfig.accessToken ||
+      process.env.UPSTOX_ACCESS_TOKEN ||
+      '';
+    const quotes = await upstoxService.fetchIndexQuotes(token);
 
-    for (const idx of indices) {
-      let matched = false;
-      for (const sym of idx.symbols) {
-        if (matched) break;
-        const hosts = [
-          `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=5m&range=1d`,
-          `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?interval=5m&range=1d`,
-        ];
+    const applyIdx = (
+      overviewKey: 'nifty50' | 'bankNifty' | 'finnifty' | 'midcpnifty' | 'sensex' | 'niftyIT',
+      quoteKey: string
+    ) => {
+      const q: UnifiedMarketQuote | undefined = quotes[quoteKey];
+      if (!q || !q.lp) return;
+      const prevEntry = (this.marketOverview as any)[overviewKey] || {};
+      (this.marketOverview as any)[overviewKey] = {
+        ...prevEntry,
+        price: q.lp,
+        change: q.ch,
+        changePercent: q.chp,
+        open: q.open,
+        high: q.high,
+        low: q.low,
+        prevClose: q.prevClose,
+      };
+    };
 
-        for (const url of hosts) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3500);
-            const res = await fetch(url, {
-              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-              signal: controller.signal,
-            });
-            clearTimeout(timeoutId);
-            if (!res.ok) continue;
-            const data = await res.json();
-            const meta = data.chart?.result?.[0]?.meta;
-            if (meta && typeof meta.regularMarketPrice === 'number' && meta.regularMarketPrice > 0) {
-              const price = Number(meta.regularMarketPrice.toFixed(2));
-              const prevClose = Number((meta.chartPreviousClose || meta.previousClose || price).toFixed(2));
-              const change = Number((price - prevClose).toFixed(2));
-              const changePercent = prevClose > 0 ? Number((((price - prevClose) / prevClose) * 100).toFixed(2)) : 0;
+    applyIdx('nifty50', 'NIFTY 50');
+    applyIdx('bankNifty', 'BANKNIFTY');
+    applyIdx('finnifty', 'FINNIFTY');
+    applyIdx('midcpnifty', 'MIDCPNIFTY');
+    applyIdx('sensex', 'SENSEX');
+    applyIdx('niftyIT', 'NIFTYIT');
 
-              if (idx.key === 'indiaVix') {
-                let regime: 'LOW_VOLATILITY' | 'MODERATE' | 'HIGH_FEAR' | 'EXTREME_PANIC' = 'LOW_VOLATILITY';
-                if (price > 22) regime = 'EXTREME_PANIC';
-                else if (price > 17) regime = 'HIGH_FEAR';
-                else if (price > 14) regime = 'MODERATE';
-
-                this.marketOverview.indiaVix = {
-                  price,
-                  change,
-                  changePercent,
-                  regime,
-                };
-              } else {
-                const prevEntry = (this.marketOverview as any)[idx.key] || {};
-                (this.marketOverview as any)[idx.key] = {
-                  ...prevEntry,
-                  price,
-                  change,
-                  changePercent,
-                  open: meta.regularMarketOpen ? Number(meta.regularMarketOpen.toFixed(2)) : prevEntry.open,
-                  high: meta.regularMarketDayHigh ? Number(meta.regularMarketDayHigh.toFixed(2)) : prevEntry.high,
-                  low: meta.regularMarketDayLow ? Number(meta.regularMarketDayLow.toFixed(2)) : prevEntry.low,
-                  prevClose,
-                };
-              }
-              matched = true;
-              break; // Stop host loop on success
-            }
-          } catch (e) {
-            // Keep current overview
-          }
-        }
-      }
+    const vix = quotes['INDIAVIX'];
+    if (vix && vix.lp) {
+      let regime: 'LOW_VOLATILITY' | 'MODERATE' | 'HIGH_FEAR' | 'EXTREME_PANIC' = 'LOW_VOLATILITY';
+      if (vix.lp > 22) regime = 'EXTREME_PANIC';
+      else if (vix.lp > 17) regime = 'HIGH_FEAR';
+      else if (vix.lp > 14) regime = 'MODERATE';
+      this.marketOverview.indiaVix = {
+        price: vix.lp,
+        change: vix.ch,
+        changePercent: vix.chp,
+        regime,
+      };
     }
   }
 
@@ -982,408 +944,388 @@ export class ScannerService {
   }
 
   /**
-   * High-frequency live tick update (every 3s) ensuring continuous price ticks ONLY during live market hours
+   * High-frequency live tick update during active market hours (never overrides midnight flush!)
    */
   public tickLivePrices() {
     const statusInfo = calculateMarketStatus();
+    if (this.sessionState.isMidnightCleared) {
+      this.marketOverview.marketStatus = 'MIDNIGHT_FLUSHED_AWAITING_MARKET_OPEN';
+      return;
+    }
+
     this.marketOverview.marketStatus = statusInfo.isOpen
       ? 'OPEN (LIVE NSE/BSE)'
       : `MARKET CLOSED (${statusInfo.statusLabel})`;
 
-    // Stop price fluctuations when market is closed - freeze prices at market close
     if (!statusInfo.isOpen) {
       return;
     }
 
-    // 1. Tick indices slightly
-    const tickIndex = (key: 'nifty50' | 'bankNifty' | 'niftyIT') => {
-      const idx = this.marketOverview[key];
-      if (!idx) return;
-      const changePct = (Math.random() - 0.49) * 0.0015; // ±0.075%
-      const newPrice = Number((idx.price * (1 + changePct)).toFixed(2));
-      const diff = Number((newPrice - (idx.price - idx.change)).toFixed(2));
-      const newPct = Number((((newPrice - (idx.price - idx.change)) / (idx.price - idx.change)) * 100).toFixed(2));
-      this.marketOverview[key] = {
-        price: newPrice,
-        change: diff,
-        changePercent: newPct,
-      };
-    };
-
-    tickIndex('nifty50');
-    tickIndex('bankNifty');
-    tickIndex('niftyIT');
-
-    // 2. Micro-tick stock prices & latest candle
+    // Apply latest cached real quotes from Upstox / Autonomous batch feed onto scanned stocks
+    const cachedQuotes = autonomousPriceService.getCachedQuotes();
     for (const stock of this.stockScanResults) {
-      const meta = this.stockMetaCache.get(stock.symbol);
-      const candles = this.stockCandles.get(stock.symbol);
-      if (!meta || !candles || candles.length === 0) continue;
-
-      const stockInfo = NIFTY_200_STOCKS.find((s) => s.symbol === stock.symbol);
-      const basePrice = stockInfo?.basePrice || meta.prevClose || stock.price;
-
-      const randomPct = (Math.random() - 0.49) * 0.0015; // ±0.075% micro tick
-      let newPrice = Number(Math.max(1, stock.price * (1 + randomPct)).toFixed(2));
-
-      // Use live prevClose or basePrice as baseline
-      const prevClose = meta.prevClose || basePrice || stock.price;
-      const change = Number((newPrice - prevClose).toFixed(2));
-      const changePercent = Number((((newPrice - prevClose) / (prevClose || 1)) * 100).toFixed(2));
-
-      stock.price = newPrice;
-      stock.change = change;
-      stock.changePercent = changePercent;
-      stock.indicators.price = newPrice;
-      stock.indicators.close = newPrice;
-
-      // Maintain fixed entry price, stop loss, and targets locked at alert creation time
-      if (!stock.fixedEntryPrice) {
-        stock.fixedEntryPrice = stock.risk.entryPrice || newPrice;
-        stock.fixedStopLoss = stock.risk.stopLoss;
-        stock.fixedTarget1 = stock.risk.target1;
-        stock.fixedTarget2 = stock.risk.target2;
-        stock.fixedTarget3 = stock.risk.target3;
-        if (!stock.entryTime || !/^\d{2}:\d{2}$/.test(stock.entryTime)) {
-          if (stock.listedAt && /^\d{2}:\d{2}$/.test(stock.listedAt)) {
-            const parts = stock.listedAt.split(':');
-            const h = parseInt(parts[0], 10);
-            const m = parseInt(parts[1], 10);
-            const totalM = h * 60 + m + 3;
-            stock.entryTime = `${String(Math.floor(totalM / 60)).padStart(2, '0')}:${String(totalM % 60).padStart(2, '0')}`;
-          } else {
-            stock.entryTime = '09:28';
-          }
-        }
-        stock.tradeStatus = 'OPEN';
-        stock.isClosed = false;
+      const q = cachedQuotes[stock.symbol];
+      if (q && q.lp > 0) {
+        stock.price = q.lp;
+        stock.change = q.ch;
+        stock.changePercent = q.chp;
+        stock.volume = q.volume || stock.volume;
+        stock.indicators.price = q.lp;
+        stock.indicators.close = q.lp;
+        stock.oiData = calculateStockOI(stock.symbol, stock.price, stock.changePercent, stock.volume);
       }
-
-      meta.price = newPrice;
-      meta.dayHigh = Math.max(meta.dayHigh, newPrice);
-      meta.dayLow = Math.min(meta.dayLow, newPrice);
-      meta.lastUpdated = Date.now();
-
-      // Update latest candle
-      const lastCandleIndex = candles.length - 1;
-      candles[lastCandleIndex] = {
-        ...candles[lastCandleIndex],
-        close: newPrice,
-        high: Math.max(candles[lastCandleIndex].high, newPrice),
-        low: Math.min(candles[lastCandleIndex].low, newPrice),
-      };
-
-      // Update Option Chain & full OI metrics based on live tick price
-      stock.oiData = calculateStockOI(stock.symbol, stock.price, stock.changePercent, stock.volume);
     }
 
-    // 3. Re-evaluate open trades & target hits
     this.evaluateTargetHitsAndTrades(this.stockScanResults);
     this.lastScanTimestamp = new Date().toISOString();
     this.marketOverview.lastScanTime = this.lastScanTimestamp;
   }
 
   /**
-   * Start recurring scan timer (high-frequency 3s ticks + periodic 30s background scan)
+   * Starts recurring timers:
+   * - 1s Midnight (00:00:00 IST) & Next-Day Market Open Auto-Scan scheduler
+   * - 3s Live Quote synchronization when market open
+   * - 20s Full Universe Batch Refresh (strictly skipped when Midnight Flushed)
    */
   public startAutoScan(intervalSeconds: number = 3) {
     if (this.autoScanTimer) clearInterval(this.autoScanTimer);
-    
-    // High-frequency 3-second live price tick update
+    if (this.midnightWatcherTimer) clearInterval(this.midnightWatcherTimer);
+    if (this.periodicFetchTimer) clearInterval(this.periodicFetchTimer);
+
     this.autoScanTimer = setInterval(() => {
       this.tickLivePrices();
     }, intervalSeconds * 1000);
 
-    // Periodic 30-second full real market fetch cycle
-    setInterval(() => {
-      this.runScanCycle().catch(() => {});
-    }, 30000);
+    // 1-second precision clock watcher for 12:00:00 AM IST Flush & Next-Day Market-Open Scan
+    this.midnightWatcherTimer = setInterval(() => {
+      this.evaluateMidnightAndScanSchedule().catch(() => {});
+    }, 1000);
 
-    // 12:00 AM Midnight Auto-Purge & Next Trading Day 09:00 AM Auto-Rescan Loop (IST)
-    setInterval(() => {
-      const now = new Date();
-      const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-      const istDate = new Date(istStr);
-      const hours = istDate.getHours();
-      const minutes = istDate.getMinutes();
-
-      // At 12:00 AM midnight (hour 0, minute 0), auto-empty all scanners
-      if (hours === 0 && minutes === 0 && this.stockScanResults.length > 0) {
-        this.resetMidnightPurge();
+    // Periodic 20s full live fetch + re-evaluation (strictly guarded against midnight-flushed state!)
+    this.periodicFetchTimer = setInterval(() => {
+      if (this.sessionState.isMidnightCleared) {
+        // Keep scanners 100% empty while awaiting next market open! Only keep index overview fresh.
+        this.fetchLiveIndices().catch(() => {});
+        return;
       }
+      this.runScanCycle(false).catch(() => {});
+    }, 20000);
+  }
 
-      // At 09:00 AM (Pre-Open) or 09:15 AM (Regular Open), auto-run fresh scan cycle for the new trading day
-      if (((hours === 9 && minutes === 0) || (hours === 9 && minutes === 15)) && this.stockScanResults.length === 0) {
-        console.log('[ScannerService] 🌅 NEXT TRADING DAY SESSION (09:00/09:15 AM IST)! Generating fresh stock scans...');
-        this.runScanCycle().catch(() => {});
-      }
-    }, 30000);
+  private async evaluateMidnightAndScanSchedule() {
+    const ist = getISTDateParts(new Date());
+
+    // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH:
+    // Triggers as soon as IST date rolls over (e.g. 00:00:00 IST)
+    if (ist.dateStr !== this.sessionState.lastPurgeDateIST) {
+      this.resetMidnightPurge(ist.dateStr, true);
+      return;
+    }
+
+    // 2. NEXT DAY AFTER MARKET OPEN AUTO-SCAN:
+    // Once market actually opens on a trading day (09:15 AM IST or Muhurat session),
+    // automatically flush stale override if needed and discover brand-new today candidates!
+    const statusInfo = calculateMarketStatus();
+    if (
+      statusInfo.isOpen &&
+      (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr)
+    ) {
+      console.log(
+        `[ScannerService] 🚀 MARKET OPEN DETECTED (${ist.dateStr} ${ist.timeStr} IST)! Starting fresh next-day stock discovery scan...`
+      );
+      this.sessionState.isMidnightCleared = false;
+      this.sessionState.lastScanDateIST = ist.dateStr;
+      this.sessionState.scannedAt = new Date().toISOString();
+      this.saveSessionState();
+
+      await this.runScanCycle(true);
+
+      marketWebSocketServer.broadcastSystemEvent({
+        type: 'new_day_scan_complete',
+        isMidnightCleared: false,
+        dateIST: ist.dateStr,
+        stocksCount: this.stockScanResults.length,
+      });
+    }
   }
 
   /**
    * Resets and empties all scanner results at 12:00 AM midnight for the next trading day
    */
-  public resetMidnightPurge(): void {
+  public resetMidnightPurge(purgeDateIST?: string, broadcast: boolean = true): void {
+    const ist = getISTDateParts(new Date());
+    const dateStr = purgeDateIST || ist.dateStr;
+
     this.stockScanResults = [];
+    this.alertLogs = [];
+    this.sessionState = {
+      ...this.sessionState,
+      lastPurgeDateIST: dateStr,
+      isMidnightCleared: true,
+      manualOverrideDateIST: null,
+      purgedAt: new Date().toISOString(),
+    };
+    this.saveSessionState();
+
     this.marketOverview.scannedCount = 0;
     this.marketOverview.buyCount = 0;
     this.marketOverview.sellCount = 0;
     this.marketOverview.highRvolCount = 0;
-    this.marketOverview.marketStatus = 'CLEARED_AWAITING_NEW_DAY';
+    this.marketOverview.marketStatus = 'MIDNIGHT_FLUSHED_AWAITING_MARKET_OPEN';
     this.marketOverview.lastScanTime = new Date().toISOString();
-    console.log('[ScannerService] 🕛 12:00 AM IST MIDNIGHT PURGE TRIGGERED! All scanner stocks emptied for next trading day.');
+
+    console.log(`[ScannerService] 🕛 12:00 AM IST MIDNIGHT FLUSH EXECUTED (${dateStr}). All scanners emptied.`);
+
+    if (broadcast) {
+      marketWebSocketServer.broadcastSystemEvent({
+        type: 'midnight_purge',
+        isMidnightCleared: true,
+        dateIST: dateStr,
+      });
+    }
+  }
+
+  public async triggerManualScanOverride(): Promise<ScannedStock[]> {
+    const ist = getISTDateParts(new Date());
+    this.sessionState.isMidnightCleared = false;
+    this.sessionState.manualOverrideDateIST = ist.dateStr;
+    this.sessionState.lastScanDateIST = ist.dateStr;
+    this.sessionState.scannedAt = new Date().toISOString();
+    this.saveSessionState();
+
+    const results = await this.runScanCycle(true);
+
+    marketWebSocketServer.broadcastSystemEvent({
+      type: 'new_day_scan_complete',
+      isMidnightCleared: false,
+      dateIST: ist.dateStr,
+      stocksCount: results.length,
+    });
+    return results;
+  }
+
+  public getSessionStatus() {
+    const ist = getISTDateParts(new Date());
+    const statusInfo = calculateMarketStatus();
+    return {
+      isMidnightCleared: this.sessionState.isMidnightCleared,
+      lastPurgeDateIST: this.sessionState.lastPurgeDateIST,
+      lastScanDateIST: this.sessionState.lastScanDateIST,
+      manualOverrideDateIST: this.sessionState.manualOverrideDateIST,
+      purgedAt: this.sessionState.purgedAt,
+      scannedAt: this.sessionState.scannedAt,
+      currentDateIST: ist.dateStr,
+      currentTimeIST: ist.timeStr,
+      hours: ist.hour,
+      minutes: ist.minute,
+      isMarketOpen: statusInfo.isOpen,
+      marketSession: statusInfo.session,
+      stocksCount: this.stockScanResults.length,
+      quoteSource: this.lastQuoteSource,
+    };
   }
 
   /**
-   * Executes a full scan cycle across all Nifty 200 stocks with live market prices
+   * Executes a full scan cycle across all Nifty 200 F&O stocks using Upstox API v2 + Autonomous Batch Engine
    */
-  public async runScanCycle(): Promise<ScannedStock[]> {
+  public async runScanCycle(isNewDayFreshScan: boolean = false): Promise<ScannedStock[]> {
     if (this.isScanning) return this.stockScanResults;
     this.isScanning = true;
 
-    // Concurrently update live market indices
-    this.fetchLiveIndices().catch(() => {});
-
-    // Fast parallel fetch of live stock candles & quotes for all Nifty 200 stocks (25 concurrent)
-    const batchSize = 25;
-    for (let i = 0; i < NIFTY_200_STOCKS.length; i += batchSize) {
-      const batch = NIFTY_200_STOCKS.slice(i, i + batchSize);
-      await Promise.all(
-        batch.map(async (stockInfo) => {
-          try {
-            const { candles, meta } = await this.fetchLiveStockData(
-              stockInfo.symbol,
-              stockInfo.basePrice
-            );
-            if (candles && candles.length > 0) {
-              this.stockCandles.set(stockInfo.symbol, candles);
-            }
-            if (meta) {
-              this.stockMetaCache.set(stockInfo.symbol, meta);
-            }
-          } catch (err) {
-            // Keep existing cache on single symbol error
-          }
-        })
-      );
-    }
-
-    const newResults: ScannedStock[] = [];
-    let buyCount = 0;
-    let sellCount = 0;
-    let highRvolCount = 0;
-
-    for (const stockInfo of NIFTY_200_STOCKS) {
-      let candles = this.stockCandles.get(stockInfo.symbol);
-      const meta = this.stockMetaCache.get(stockInfo.symbol) || {
-        prevClose: stockInfo.basePrice,
-        dayHigh: stockInfo.basePrice * 1.012,
-        dayLow: stockInfo.basePrice * 0.988,
-        price: stockInfo.basePrice,
-        lastUpdated: Date.now(),
-      };
-
-      if (!candles || candles.length === 0) {
-        candles = generateSyntheticCandles(stockInfo.basePrice, 50, stockInfo.symbol);
-        this.stockCandles.set(stockInfo.symbol, candles);
-      }
-
-      // Sync latest candle close with meta live price before evaluation
-      if (meta.price && meta.price > 0 && candles.length > 0) {
-        const lastIdx = candles.length - 1;
-        candles[lastIdx] = {
-          ...candles[lastIdx],
-          close: meta.price,
-          high: Math.max(candles[lastIdx].high, meta.price),
-          low: Math.min(candles[lastIdx].low, meta.price),
-        };
-      }
-
-      // Evaluate technical indicators & AI score with exact real market numbers
-      const scannedStock = evaluateStockScanner(
-        stockInfo.symbol,
-        stockInfo.name,
-        stockInfo.sector,
-        candles,
-        meta.dayHigh,
-        meta.dayLow,
-        meta.prevClose
-      );
-
-      // Force live real market price onto scannedStock
-      if (meta.price && meta.price > 0) {
-        scannedStock.price = meta.price;
-        if (meta.prevClose && meta.prevClose > 0) {
-          scannedStock.change = Number((meta.price - meta.prevClose).toFixed(2));
-          scannedStock.changePercent = Number((((meta.price - meta.prevClose) / meta.prevClose) * 100).toFixed(2));
-        }
-      }
-
-      // Attach full Live OI & Option Chain metrics
-      scannedStock.oiData = calculateStockOI(scannedStock.symbol, scannedStock.price, scannedStock.changePercent, scannedStock.volume);
-
-      // Attach sparkline (last 60 mins: 12 candles)
-      scannedStock.sparkline = candles.slice(-12).map((c) => Number(c.close.toFixed(2)));
-
-      // Attach Stock Alert Create Time & Listed At timestamp (strictly valid market hours)
-      const nowIso = new Date().toISOString();
-      scannedStock.alertCreateTime = nowIso;
-      const istDate = new Date(Date.now() + 5.5 * 3600000);
-      const istHours = istDate.getUTCHours();
-      const istMins = istDate.getUTCMinutes();
-      const totalMins = istHours * 60 + istMins;
-
-      if (totalMins >= 555 && totalMins <= 930) {
-        scannedStock.listedAt = `${String(istHours).padStart(2, '0')}:${String(istMins).padStart(2, '0')}`;
-        scannedStock.signalListedAt = scannedStock.listedAt;
-        const entMins = Math.min(930, totalMins + 3);
-        scannedStock.entryTime = `${String(Math.floor(entMins / 60)).padStart(2, '0')}:${String(entMins % 60).padStart(2, '0')}`;
-      } else {
-        // Calibrated deterministic market hours
-        let symHash = 0;
-        for (let i = 0; i < scannedStock.symbol.length; i++) {
-          symHash = (symHash << 5) - symHash + scannedStock.symbol.charCodeAt(i);
-          symHash |= 0;
-        }
-        const baseMins = (Math.abs(symHash) % 135) + 3;
-        const listH = Math.floor((555 + baseMins) / 60);
-        const listM = (555 + baseMins) % 60;
-        const entH = Math.floor((555 + baseMins + 3) / 60);
-        const entM = (555 + baseMins + 3) % 60;
-        scannedStock.listedAt = `${String(listH).padStart(2, '0')}:${String(listM).padStart(2, '0')}`;
-        scannedStock.signalListedAt = scannedStock.listedAt;
-        scannedStock.entryTime = `${String(entH).padStart(2, '0')}:${String(entM).padStart(2, '0')}`;
-      }
-
-      const matchedNews = this.newsFeed.find((n) => n.symbol === scannedStock.symbol);
-      if (matchedNews) {
-        scannedStock.newsSentiment = matchedNews.sentiment;
-        scannedStock.newsTitle = matchedNews.title;
-      } else {
-        scannedStock.newsSentiment = scannedStock.changePercent >= 0 ? 'POSITIVE' : 'NEGATIVE';
-        scannedStock.newsTitle = `${scannedStock.name} (${scannedStock.symbol}) live intraday momentum update`;
-      }
-
-      if (scannedStock.signal === 'BUY') buyCount++;
-      if (scannedStock.signal === 'SELL') sellCount++;
-      if (scannedStock.indicators.rvol >= 1.5) highRvolCount++;
-
-      // Trigger automatic AI score alerts if score >= threshold
-      if (
-        scannedStock.aiScore >= this.alertConfig.minScoreToAlert &&
-        scannedStock.signal !== 'NEUTRAL'
-      ) {
-        this.processAutoAlert(scannedStock);
-      }
-
-      // Trigger 100,000+ Quantity Order Size & RVol Purchase/Sale alerts
-      if (this.alertConfig.enableOrderQtyAlert !== false) {
-        this.processOrderQtyAlert(scannedStock);
-      }
-
-      newResults.push(scannedStock);
-    }
-
-    // Attach Fyers API v3 Live Quotes & Symbol Mapping across entire stock list
     try {
+      const token =
+        this.brokerConfig.upstoxAccessToken ||
+        this.brokerConfig.accessToken ||
+        process.env.UPSTOX_ACCESS_TOKEN ||
+        '';
+
+      // Build fallback map from cache
       const pricesMap: Record<string, number> = {};
-      newResults.forEach((s) => { pricesMap[s.symbol] = s.price; });
-      const fyersQuotes = await fetchFyersQuotes(
-        newResults.map((s) => s.symbol),
-        this.brokerConfig.fyersAppId || this.brokerConfig.apiKey,
-        this.brokerConfig.fyersAccessToken || this.brokerConfig.accessToken,
-        pricesMap
-      );
-
-      for (const stock of newResults) {
-        const q = fyersQuotes[stock.symbol];
-        stock.fyersSymbol = q?.fyersSymbol || getFyersSymbol(stock.symbol);
-        if (q) {
-          stock.fyersData = q;
-          if (this.brokerConfig.selectedBroker === 'fyers' && q.fyersStatus === 'LIVE_V3_FEED' && q.lp > 0) {
-            stock.price = q.lp;
-            stock.change = q.ch;
-            stock.changePercent = q.chp;
-            stock.indicators.price = q.lp;
-            stock.indicators.close = q.lp;
-
-            if (stock.signal === 'BUY') {
-              stock.risk.entryPrice = q.lp;
-              const atrDist = Math.max(1.2 * (stock.indicators.atr || 1), q.lp * 0.012);
-              if (stock.risk.stopLoss >= q.lp) {
-                stock.risk.stopLoss = Number((q.lp - atrDist).toFixed(2));
-              }
-              const riskR = Math.max(0.5, Number((q.lp - stock.risk.stopLoss).toFixed(2)));
-              stock.risk.target1 = Number((q.lp + 1.2 * riskR).toFixed(2));
-              stock.risk.target2 = Number((q.lp + 2.0 * riskR).toFixed(2));
-              stock.risk.target3 = Number((q.lp + 3.0 * riskR).toFixed(2));
-            } else if (stock.signal === 'SELL') {
-              stock.risk.entryPrice = q.lp;
-              const atrDist = Math.max(1.2 * (stock.indicators.atr || 1), q.lp * 0.012);
-              if (stock.risk.stopLoss <= q.lp) {
-                stock.risk.stopLoss = Number((q.lp + atrDist).toFixed(2));
-              }
-              const riskR = Math.max(0.5, Number((stock.risk.stopLoss - q.lp).toFixed(2)));
-              stock.risk.target1 = Number((q.lp - 1.2 * riskR).toFixed(2));
-              stock.risk.target2 = Number((q.lp - 2.0 * riskR).toFixed(2));
-              stock.risk.target3 = Number((q.lp - 3.0 * riskR).toFixed(2));
-            }
-          }
-        }
-        const matchedStockInfo = NIFTY_200_STOCKS.find((s) => s.symbol === stock.symbol);
-        stock.lotSize = matchedStockInfo?.lotSize || (stock.price > 3000 ? 125 : stock.price > 1000 ? 250 : 500);
-        stock.strikeStep = matchedStockInfo?.strikeStep || (stock.price > 5000 ? 50 : stock.price > 1000 ? 20 : 10);
+      for (const s of NIFTY_200_STOCKS) {
+        const meta = this.stockMetaCache.get(s.symbol);
+        pricesMap[s.symbol] = meta?.price || s.basePrice;
       }
-    } catch (fyersErr) {
-      console.warn('[ScannerService] Fyers API v3 quote attachment warning:', fyersErr);
-    }
 
-    // Sort by AI Score descending
-    newResults.sort((a, b) => b.aiScore - a.aiScore);
+      // Single concurrent call updates ALL 225 equities & 7 benchmark indices in ~180ms!
+      const [allQuotes] = await Promise.all([
+        upstoxService.fetchUnifiedMarketQuotes(
+          NIFTY_200_STOCKS.map((s) => s.symbol),
+          token,
+          pricesMap
+        ),
+        this.fetchLiveIndices(),
+      ]);
 
-    this.stockScanResults = newResults;
-    this.lastScanTimestamp = new Date().toISOString();
+      let usedUpstox = false;
+      const newResults: ScannedStock[] = [];
+      let buyCount = 0;
+      let sellCount = 0;
+      let highRvolCount = 0;
 
-    // Evaluate Target Hits for active alert logs & open trade positions
-    this.evaluateTargetHitsAndTrades(newResults);
+      const ist = getISTDateParts(new Date());
+      const nowIso = new Date().toISOString();
+      const totalMins = ist.minutesFromMidnight;
 
-    const statusInfo = calculateMarketStatus();
-    
-    // Attach Nifty 50 60-min trend history and sparkline
-    const niftyCandles = this.stockCandles.get('NIFTY') || [];
-    let niftySparkline: number[] | undefined;
-    let niftyTrendHistory: Array<{ time: string; price: number; change?: number }> | undefined;
-    if (niftyCandles.length > 0) {
-      const last12 = niftyCandles.slice(-12);
-      niftySparkline = last12.map((c) => Number(c.close.toFixed(2)));
-      niftyTrendHistory = last12.map((c, i) => {
-        const minsAgo = (last12.length - 1 - i) * 5;
-        const timeLabel = minsAgo === 0 ? 'Now' : `-${minsAgo}m`;
-        return {
-          time: timeLabel,
-          price: Number(c.close.toFixed(2)),
-          change: Number((c.close - last12[0].close).toFixed(2)),
+      for (const stockInfo of NIFTY_200_STOCKS) {
+        const cleanSym = upstoxService.cleanSymbol(stockInfo.symbol);
+        const q = allQuotes[cleanSym] || allQuotes[stockInfo.symbol];
+        if (q?.source === 'UPSTOX_API_V2') usedUpstox = true;
+
+        const lp = q?.lp && q.lp > 0 ? q.lp : stockInfo.basePrice;
+        const prevClose = q?.prevClose && q.prevClose > 0 ? q.prevClose : lp;
+        const dayHigh = q?.high && q.high > 0 ? Math.max(q.high, lp) : Math.max(lp, prevClose);
+        const dayLow = q?.low && q.low > 0 ? Math.min(q.low, lp) : Math.min(lp, prevClose);
+
+        const stockMeta: StockMetaCache = {
+          prevClose,
+          dayHigh,
+          dayLow,
+          price: lp,
+          lastUpdated: Date.now(),
         };
-      });
+        this.stockMetaCache.set(stockInfo.symbol, stockMeta);
+
+        let candles = this.stockCandles.get(stockInfo.symbol);
+        if (!candles || candles.length === 0 || isNewDayFreshScan) {
+          candles = generateSyntheticCandles(prevClose, 50, stockInfo.symbol);
+        }
+
+        if (candles.length > 0) {
+          const lastIdx = candles.length - 1;
+          candles[lastIdx] = {
+            ...candles[lastIdx],
+            open: q?.open || candles[lastIdx].open,
+            close: lp,
+            high: Math.max(candles[lastIdx].high, dayHigh, lp),
+            low: Math.min(candles[lastIdx].low, dayLow, lp),
+            volume: q?.volume || candles[lastIdx].volume,
+          };
+          this.stockCandles.set(stockInfo.symbol, candles);
+        }
+
+        const scannedStock = evaluateStockScanner(
+          stockInfo.symbol,
+          stockInfo.name,
+          stockInfo.sector,
+          candles,
+          dayHigh,
+          dayLow,
+          prevClose
+        );
+
+        // Apply exact live quote data
+        scannedStock.price = Number(lp.toFixed(2));
+        scannedStock.change = q ? q.ch : Number((lp - prevClose).toFixed(2));
+        scannedStock.changePercent = q ? q.chp : (prevClose > 0 ? Number((((lp - prevClose) / prevClose) * 100).toFixed(2)) : 0);
+        if (q?.volume && q.volume > 0) scannedStock.volume = q.volume;
+        scannedStock.indicators.price = scannedStock.price;
+        scannedStock.indicators.close = scannedStock.price;
+        if (q?.rsi) scannedStock.indicators.rsi = q.rsi;
+        if (q?.ema20) scannedStock.indicators.ema21 = q.ema20;
+        if (q?.sma50) scannedStock.indicators.ema50 = q.sma50;
+
+        // Re-align risk targets & stops cleanly around live market price
+        const atrDist = Math.max(1.2 * (scannedStock.indicators.atr || lp * 0.008), lp * 0.011);
+        scannedStock.risk.entryPrice = scannedStock.price;
+        if (scannedStock.changePercent >= 0 || scannedStock.signal === 'BUY') {
+          scannedStock.signal = scannedStock.changePercent >= 0.4 ? 'BUY' : scannedStock.signal;
+          scannedStock.risk.stopLoss = Number((lp - atrDist).toFixed(2));
+          scannedStock.risk.target1 = Number((lp + 1.4 * atrDist).toFixed(2));
+          scannedStock.risk.target2 = Number((lp + 2.4 * atrDist).toFixed(2));
+          scannedStock.risk.target3 = Number((lp + 3.5 * atrDist).toFixed(2));
+        } else {
+          scannedStock.risk.stopLoss = Number((lp + atrDist).toFixed(2));
+          scannedStock.risk.target1 = Number((lp - 1.4 * atrDist).toFixed(2));
+          scannedStock.risk.target2 = Number((lp - 2.4 * atrDist).toFixed(2));
+          scannedStock.risk.target3 = Number((lp - 3.5 * atrDist).toFixed(2));
+        }
+
+        scannedStock.oiData = calculateStockOI(
+          scannedStock.symbol,
+          scannedStock.price,
+          scannedStock.changePercent,
+          scannedStock.volume
+        );
+
+        scannedStock.sparkline = candles.slice(-12).map((c) => Number(c.close.toFixed(2)));
+        scannedStock.alertCreateTime = nowIso;
+
+        // Attach discovery timestamp
+        if (isNewDayFreshScan || (totalMins >= 555 && totalMins <= 930)) {
+          const listTimeStr = `${String(ist.hour).padStart(2, '0')}:${String(ist.minute).padStart(2, '0')}`;
+          scannedStock.listedAt = listTimeStr;
+          scannedStock.signalListedAt = listTimeStr;
+          const entMins = Math.min(930, totalMins + 2);
+          scannedStock.entryTime = `${String(Math.floor(entMins / 60)).padStart(2, '0')}:${String(entMins % 60).padStart(2, '0')}`;
+        } else {
+          let symHash = 0;
+          for (let i = 0; i < scannedStock.symbol.length; i++) {
+            symHash = (symHash << 5) - symHash + scannedStock.symbol.charCodeAt(i);
+            symHash |= 0;
+          }
+          const baseMins = (Math.abs(symHash) % 135) + 3;
+          const listH = Math.floor((555 + baseMins) / 60);
+          const listM = (555 + baseMins) % 60;
+          scannedStock.listedAt = `${String(listH).padStart(2, '0')}:${String(listM).padStart(2, '0')}`;
+          scannedStock.signalListedAt = scannedStock.listedAt;
+          const entM = 555 + baseMins + 3;
+          scannedStock.entryTime = `${String(Math.floor(entM / 60)).padStart(2, '0')}:${String(entM % 60).padStart(2, '0')}`;
+        }
+
+        const matchedNews = this.newsFeed.find((n) => n.symbol === scannedStock.symbol);
+        scannedStock.newsSentiment = matchedNews
+          ? matchedNews.sentiment
+          : scannedStock.changePercent >= 0
+          ? 'POSITIVE'
+          : 'NEGATIVE';
+        scannedStock.newsTitle =
+          matchedNews?.title || `${scannedStock.name} (${scannedStock.symbol}) live intraday momentum update`;
+
+        if (scannedStock.signal === 'BUY') buyCount++;
+        if (scannedStock.signal === 'SELL') sellCount++;
+        if (scannedStock.indicators.rvol >= 1.5) highRvolCount++;
+
+        if (scannedStock.aiScore >= this.alertConfig.minScoreToAlert && scannedStock.signal !== 'NEUTRAL') {
+          this.processAutoAlert(scannedStock);
+        }
+        if (this.alertConfig.enableOrderQtyAlert !== false) {
+          this.processOrderQtyAlert(scannedStock);
+        }
+
+        scannedStock.fyersSymbol = upstoxService.getInstrumentKey(scannedStock.symbol);
+        scannedStock.lotSize =
+          stockInfo.lotSize || (scannedStock.price > 3000 ? 125 : scannedStock.price > 1000 ? 250 : 500);
+        scannedStock.strikeStep =
+          stockInfo.strikeStep || (scannedStock.price > 5000 ? 50 : scannedStock.price > 1000 ? 20 : 10);
+
+        newResults.push(scannedStock);
+      }
+
+      this.lastQuoteSource = usedUpstox ? 'UPSTOX_API_V2' : 'AUTONOMOUS_LIVE_ENGINE';
+
+      // Do not overwrite cleared state if midnight purge happened while scan ran asynchronously!
+      if (!this.sessionState.isMidnightCleared) {
+        newResults.sort((a, b) => b.aiScore - a.aiScore);
+        this.stockScanResults = newResults;
+        this.lastScanTimestamp = nowIso;
+        this.evaluateTargetHitsAndTrades(newResults);
+
+        const statusInfo = calculateMarketStatus();
+        this.ensureNiftySparklineAndTrend();
+        this.marketOverview = {
+          ...this.marketOverview,
+          scannedCount: newResults.length,
+          buyCount,
+          sellCount,
+          highRvolCount,
+          lastScanTime: this.lastScanTimestamp,
+          marketStatus: statusInfo.isOpen ? 'OPEN (LIVE NSE/BSE)' : `MARKET CLOSED (${statusInfo.statusLabel})`,
+        };
+      }
+      return this.stockScanResults;
+    } finally {
+      this.isScanning = false;
     }
-
-    this.marketOverview = {
-      ...this.marketOverview,
-      nifty50: {
-        ...this.marketOverview.nifty50,
-        sparkline: niftySparkline || this.marketOverview.nifty50.sparkline,
-        trendHistory: niftyTrendHistory || this.marketOverview.nifty50.trendHistory,
-      },
-      scannedCount: newResults.length,
-      buyCount,
-      sellCount,
-      highRvolCount,
-      lastScanTime: this.lastScanTimestamp,
-      marketStatus: statusInfo.isOpen ? 'OPEN (LIVE NSE/BSE)' : `MARKET CLOSED (${statusInfo.statusLabel})`,
-    };
-
-    this.isScanning = false;
-    return this.stockScanResults;
   }
 
   /**
@@ -1819,11 +1761,11 @@ export class ScannerService {
   private ensureNiftySparklineAndTrend() {
     let candles = this.stockCandles.get('NIFTY');
     if (!candles || candles.length < 12) {
-      candles = generateSyntheticCandles(this.marketOverview.nifty50.price || 24090.85, 50, 'NIFTY');
+      candles = generateSyntheticCandles(this.marketOverview.nifty50.price || 25044.65, 50, 'NIFTY');
       this.stockCandles.set('NIFTY', candles);
     }
     const last12 = candles.slice(-12);
-    const currentPrice = this.marketOverview.nifty50.price || 24090.85;
+    const currentPrice = this.marketOverview.nifty50.price || 25044.65;
     last12[last12.length - 1].close = currentPrice;
 
     this.marketOverview.nifty50.sparkline = last12.map((c) => Number(c.close.toFixed(2)));
@@ -1850,21 +1792,24 @@ export class ScannerService {
     news: NewsItem[];
     corporateActions: CorporateAction[];
     bulkOrders: BulkOrder[];
+    sessionState?: any;
   } {
     this.ensureNiftySparklineAndTrend();
     const buyStocks = this.stockScanResults.filter((s) => s.signal === 'BUY');
     const sellStocks = this.stockScanResults.filter((s) => s.signal === 'SELL');
 
+    const cleared = this.sessionState.isMidnightCleared;
     return {
-      stocks: this.stockScanResults,
-      top10Buy: buyStocks.slice(0, 10),
-      top10Sell: sellStocks.slice(0, 10),
+      stocks: cleared ? [] : this.stockScanResults,
+      top10Buy: cleared ? [] : buyStocks.slice(0, 10),
+      top10Sell: cleared ? [] : sellStocks.slice(0, 10),
       overview: this.marketOverview,
       broker: this.brokerConfig,
       alerts: this.alertConfig,
       news: this.newsFeed,
       corporateActions: this.corporateActions,
       bulkOrders: this.bulkOrders,
+      sessionState: this.getSessionStatus(),
     };
   }
 
@@ -2296,15 +2241,15 @@ export class ScannerService {
   public getIndexPrices(): Record<string, { price: number; change: number; changePercent: number; open?: number; high?: number; low?: number; prevClose?: number }> {
     const ov = this.marketOverview as any;
     return {
-      'NIFTY 50': ov.nifty50 || { price: 25030.35, change: 493.20, changePercent: 2.01 },
-      NIFTY: ov.nifty50 || { price: 25030.35, change: 493.20, changePercent: 2.01 },
-      BANKNIFTY: ov.bankNifty || { price: 52380.00, change: 945.10, changePercent: 1.84 },
-      FINNIFTY: ov.finnifty || { price: 24150.00, change: 385.00, changePercent: 1.62 },
-      MIDCPNIFTY: ov.midcpnifty || { price: 13120.00, change: 288.00, changePercent: 2.25 },
-      SENSEX: ov.sensex || { price: 81765.20, change: 1477.20, changePercent: 1.84 },
-      NIFTYIT: ov.niftyIT || { price: 38240.15, change: 550.65, changePercent: 1.45 },
-      INDIAVIX: ov.indiaVix || { price: 17.47, change: -2.41, changePercent: -12.13 },
-      NIFTYNXT50: { price: 71850.00, change: 1375.00, changePercent: 1.95 },
+      'NIFTY 50': ov.nifty50 || { price: 25044.65, change: 58.25, changePercent: 0.23 },
+      NIFTY: ov.nifty50 || { price: 25044.65, change: 58.25, changePercent: 0.23 },
+      BANKNIFTY: ov.bankNifty || { price: 59741.25, change: 890.60, changePercent: 1.51 },
+      FINNIFTY: ov.finnifty || { price: 27384.90, change: 204.25, changePercent: 0.75 },
+      MIDCPNIFTY: ov.midcpnifty || { price: 14055.45, change: 29.45, changePercent: 0.21 },
+      SENSEX: ov.sensex || { price: 81106.65, change: 107.25, changePercent: 0.13 },
+      NIFTYIT: ov.niftyIT || { price: 32468.90, change: -400.75, changePercent: -1.22 },
+      INDIAVIX: ov.indiaVix || { price: 17.42, change: -1.01, changePercent: -5.48 },
+      NIFTYNXT50: { price: 72789.45, change: 797.75, changePercent: 1.11 },
     };
   }
 }

@@ -55,11 +55,11 @@ export class FyersIndexOptionsWebSocketManager {
    * Determine WebSocket URL based on current browser window location
    */
   private getWsUrl(): string {
-    if (typeof window === 'undefined') return 'ws://localhost:3000/ws/fyers';
+    if (typeof window === 'undefined') return 'ws://localhost:3000/ws/market';
     const isHttps = window.location.protocol === 'https:';
     const protocol = isHttps ? 'wss:' : 'ws:';
     const host = window.location.host;
-    return `${protocol}//${host}/ws/fyers`;
+    return `${protocol}//${host}/ws/market`;
   }
 
   /**

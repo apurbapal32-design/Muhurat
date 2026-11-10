@@ -105,13 +105,13 @@ export default function App() {
   };
 
   const [broker, setBroker] = useState<BrokerConfig>({
-    selectedBroker: 'fyers',
-    apiKey: 'RMR62XB492-100',
-    apiSecret: '0WF68SFOJD',
+    selectedBroker: 'upstox',
+    apiKey: '',
+    apiSecret: '',
     accessToken: '',
-    fyersAppId: 'RMR62XB492-100',
-    fyersAccessToken: '',
-    status: 'connected',
+    upstoxApiKey: '',
+    upstoxAccessToken: '',
+    status: 'autonomous',
   });
 
   const [alertsConfig, setAlertsConfig] = useState<AlertConfig>({

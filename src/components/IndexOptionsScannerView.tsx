@@ -196,7 +196,7 @@ export const IndexOptionsScannerView: React.FC<IndexOptionsScannerViewProps> = (
     const config = INDEX_CONFIGS[selectedIndex];
     const qty = lots * (config?.lotSize || 25);
     try {
-      const response = await fetch('/api/fyers/place-order', {
+      const response = await fetch('/api/upstox/place-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

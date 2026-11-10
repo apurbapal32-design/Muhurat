@@ -590,13 +590,18 @@ export interface TradePosition {
 }
 
 export interface BrokerConfig {
-  selectedBroker: 'simulator' | 'fyers' | 'zerodha' | 'upstox' | 'angelone' | 'dhan';
+  selectedBroker: 'simulator' | 'autonomous' | 'upstox' | 'fyers' | 'zerodha' | 'angelone' | 'dhan';
   apiKey: string;
   apiSecret: string;
   accessToken: string;
+  upstoxApiKey?: string;
+  upstoxApiSecret?: string;
+  upstoxAccessToken?: string;
+  upstoxProfileName?: string;
+  upstoxTokenType?: 'USER_ACCESS' | 'ANALYTICS_READONLY' | 'NONE';
   fyersAppId?: string;
   fyersAccessToken?: string;
-  status: 'connected' | 'disconnected' | 'simulated';
+  status: 'connected' | 'disconnected' | 'simulated' | 'autonomous';
   lastPingTime?: string;
 }
 
@@ -1664,7 +1669,7 @@ export interface FyersWsTick {
   timestamp: number; // Unix Epoch ms
   ltt: string; // Last Traded Time string (e.g. "14:23:45 IST")
   feedMode: 'LTP' | 'FULL_QUOTE' | 'DEPTH';
-  source: 'FYERS_V3_WS' | 'SERVER_WS_RELAY' | 'SIMULATED_WS';
+  source: 'UPSTOX_API_V2' | 'AUTONOMOUS_WS_RELAY' | 'FYERS_V3_WS' | 'SERVER_WS_RELAY' | 'SIMULATED_WS';
 }
 
 export interface FyersWsStatus {
@@ -1677,13 +1682,15 @@ export interface FyersWsStatus {
   latencyMs: number;
   reconnectAttempts: number;
   error?: string;
-  transport: 'NATIVE_WS' | 'SERVER_RELAY';
+  transport: 'NATIVE_WS' | 'SERVER_RELAY' | 'UPSTOX_LIVE_RELAY' | 'AUTONOMOUS_LIVE_RELAY';
   connectedAt?: string;
 }
 
 export interface FyersWsClientMessage {
-  type: 'subscribe' | 'unsubscribe' | 'ping' | 'get_status';
+  type: 'subscribe' | 'unsubscribe' | 'subscribe_index_options' | 'ping' | 'get_status';
   symbols?: string[];
+  index?: SupportedIndexSymbol;
+  strikes?: number[];
   mode?: 'LTP' | 'FULL_QUOTE' | 'DEPTH';
   clientTimestamp?: number;
 }

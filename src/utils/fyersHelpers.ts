@@ -328,49 +328,51 @@ export function getTradingViewSymbol(symbol: string): string {
 }
 
 /**
- * Fetch Live Indian Index Quotes from Server API (bridged with Fyers API v3)
+ * Fetch Live Indian Index Quotes from Server API (Upstox API + Autonomous Live Engine)
  */
 export async function fetchLiveIndexQuotes(): Promise<Record<SupportedIndexSymbol, FyersQuote>> {
   try {
     const headers: Record<string, string> = {};
     if (typeof window !== 'undefined') {
-      const appId = localStorage.getItem('fyers_app_id');
-      const accessToken = localStorage.getItem('fyers_access_token');
-      if (appId) headers['x-fyers-app-id'] = appId;
-      if (accessToken) headers['x-fyers-access-token'] = accessToken;
+      const accessToken = localStorage.getItem('upstox_access_token');
+      if (accessToken) headers['x-upstox-access-token'] = accessToken;
     }
 
-    const res = await fetch('/api/fyers/index-quotes', { headers });
+    const res = await fetch('/api/market/index-quotes', { headers });
     if (!res.ok) {
       throw new Error(`Failed to fetch index quotes: ${res.statusText}`);
     }
     const data = await res.json();
     return data;
   } catch (err) {
-    console.warn('[Fyers Client] Error fetching live index quotes:', err);
+    console.warn('[Market Client] Error fetching live index quotes:', err);
     throw err;
   }
 }
 
 /**
- * Test Fyers API Credentials
+ * Validate Upstox API Credentials
  */
 export async function testFyersCredentials(
-  appId: string,
+  apiKey: string,
   accessToken: string
 ): Promise<{ success: boolean; message: string; data?: any }> {
   try {
-    const res = await fetch('/api/fyers/token-test', {
+    const res = await fetch('/api/upstox/config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ appId, accessToken }),
+      body: JSON.stringify({ apiKey, accessToken }),
     });
     const data = await res.json();
-    return data;
+    return {
+      success: Boolean(data.connected || data.status === 'ok'),
+      message: data.message || 'Upstox API check complete',
+      data: data.profile,
+    };
   } catch (err: any) {
     return {
       success: false,
-      message: err.message || 'Failed to connect to Fyers API server',
+      message: err.message || 'Failed to connect to Upstox API gateway',
     };
   }
 }

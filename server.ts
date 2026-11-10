@@ -9,25 +9,31 @@ import {
   generateHollyAiBriefing,
 } from './server/gemini';
 import { scannerService } from './server/scannerService';
-import { fetchFyersQuotes, fetchIndexLiveQuotes, getFyersSymbol } from './server/fyersService';
-import { fyersWebSocketServer } from './server/fyersWebSocketServer';
+import { upstoxService } from './server/upstoxService';
+import { marketWebSocketServer } from './server/marketWebSocketServer';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
 import { calculateMarketStatus } from './src/data/marketSchedule';
+import { UnifiedMarketQuote } from './server/autonomousPriceService';
 
 async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
 
-  // Auto-load Fyers credentials from environment on startup if configured
-  const envFyersAppId = process.env.FYERS_APP_ID || 'RMR62XB492-100';
-  const envFyersToken = process.env.FYERS_ACCESS_TOKEN || '';
-  if (envFyersToken && envFyersToken.length > 10) {
-    console.log('[Server] 🟢 Initializing with FYERS API v3 token from environment...');
+  // Auto-load Upstox credentials from environment on startup if configured
+  const envUpstoxKey = process.env.UPSTOX_API_KEY || '';
+  const envUpstoxSecret = process.env.UPSTOX_API_SECRET || '';
+  const envUpstoxToken = process.env.UPSTOX_ACCESS_TOKEN || '';
+  if (envUpstoxToken && envUpstoxToken.length > 15) {
+    console.log('[Server] 🟢 Initializing with Upstox API token from environment...');
     scannerService.updateBrokerConfig({
-      selectedBroker: 'fyers',
-      fyersAppId: envFyersAppId,
-      fyersAccessToken: envFyersToken,
+      selectedBroker: 'upstox',
+      apiKey: envUpstoxKey,
+      apiSecret: envUpstoxSecret,
+      accessToken: envUpstoxToken,
+      upstoxApiKey: envUpstoxKey,
+      upstoxApiSecret: envUpstoxSecret,
+      upstoxAccessToken: envUpstoxToken,
       status: 'connected',
     });
   }
@@ -41,8 +47,8 @@ async function startServer() {
     PORT = parseInt(process.env.PORT, 10) || 3000;
   }
 
-  // Initialize Fyers WebSocket Server on /ws/fyers
-  fyersWebSocketServer.init(httpServer);
+  // Initialize Unified Market Live WebSocket Relay on /ws/market
+  marketWebSocketServer.init(httpServer);
 
   app.use(express.json());
 
@@ -55,14 +61,14 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // Fyers WebSocket Server Telemetry & Status
-  app.get('/api/fyers/ws-status', (req, res) => {
+  // WebSocket Server Telemetry & Status
+  app.get('/api/market/ws-status', (req, res) => {
     try {
-      const status = fyersWebSocketServer.getStatus();
+      const status = marketWebSocketServer.getStatus();
       res.json({
         status: 'ok',
         ...status,
-        path: '/ws/fyers',
+        path: '/ws/market',
         timestamp: new Date().toISOString(),
       });
     } catch (err: any) {
@@ -70,104 +76,155 @@ async function startServer() {
     }
   });
 
-  // Fyers API v3 Single Stock Live Price Quote endpoint
-  app.get('/api/fyers/quote/:symbol', async (req, res) => {
+  // Single Stock Live Price Quote endpoint (Upstox API v2 + Autonomous Batch Engine)
+  app.get('/api/market/quote/:symbol', async (req, res) => {
     try {
       const rawParam = decodeURIComponent(req.params.symbol);
-      const symbol = rawParam.toUpperCase();
+      const cleanSym = upstoxService.cleanSymbol(rawParam);
       const scannedData = scannerService.getScanResults();
-      const matched = scannedData.stocks.find((s) => s.symbol === symbol || s.symbol === rawParam);
+      const matched = scannedData.stocks.find((s) => upstoxService.cleanSymbol(s.symbol) === cleanSym);
       const broker = scannerService.getBrokerConfig();
-      const appId = broker.fyersAppId || broker.apiKey;
-      const accessToken = broker.fyersAccessToken || broker.accessToken;
-      const quotes = await fetchFyersQuotes(
-        [symbol],
-        appId,
+      const accessToken =
+        (req.headers['x-upstox-access-token'] as string) ||
+        broker.upstoxAccessToken ||
+        broker.accessToken ||
+        process.env.UPSTOX_ACCESS_TOKEN ||
+        '';
+      const quotes = await upstoxService.fetchUnifiedMarketQuotes(
+        [cleanSym],
         accessToken,
-        matched ? { [symbol]: matched.price } : undefined
+        matched ? { [cleanSym]: matched.price } : undefined
       );
-      const cleanSym = symbol.replace(/\.NS$/, '').replace(/^NSE:/, '');
-      const quote = quotes[cleanSym] || quotes[symbol] || quotes[rawParam] || Object.values(quotes)[0];
+      const quote = quotes[cleanSym] || quotes[rawParam] || Object.values(quotes)[0];
       res.json(quote);
     } catch (error: any) {
-      res.status(500).json({ error: error.message || 'Failed to fetch Fyers API v3 quote' });
+      res.status(500).json({ error: error.message || 'Failed to fetch live quote' });
     }
   });
 
-  // Fyers API v3 Batch & Full Universe Live Quotes endpoint (GET & POST)
-  const handleFyersQuotes = async (req: express.Request, res: express.Response) => {
+  // Unified Market Quotes Endpoint (Upstox API v2/v3 + High-Speed Autonomous Live Feed)
+  const handleMarketQuotes = async (req: express.Request, res: express.Response) => {
     try {
       const broker = scannerService.getBrokerConfig();
-      const appId =
-        (req.headers['x-fyers-app-id'] as string) ||
-        (req.query.appId as string) ||
-        (req.body?.appId as string) ||
-        broker.fyersAppId ||
-        broker.apiKey ||
-        process.env.FYERS_APP_ID ||
-        'RMR62XB492-100';
       const accessToken =
-        (req.headers['x-fyers-access-token'] as string) ||
+        (req.headers['x-upstox-access-token'] as string) ||
         (req.headers.authorization?.replace(/^Bearer\s+/, '')) ||
         (req.query.accessToken as string) ||
         (req.body?.accessToken as string) ||
-        broker.fyersAccessToken ||
+        broker.upstoxAccessToken ||
         broker.accessToken ||
-        process.env.FYERS_ACCESS_TOKEN ||
+        process.env.UPSTOX_ACCESS_TOKEN ||
         '';
 
-      if (accessToken && accessToken.length > 10 && broker.fyersAccessToken !== accessToken) {
+      if (accessToken && accessToken.trim().length > 15 && broker.upstoxAccessToken !== accessToken.trim()) {
         scannerService.updateBrokerConfig({
-          selectedBroker: 'fyers',
-          fyersAppId: appId,
-          fyersAccessToken: accessToken,
+          selectedBroker: 'upstox',
+          upstoxAccessToken: accessToken.trim(),
+          accessToken: accessToken.trim(),
           status: 'connected',
         });
-        fyersWebSocketServer.connectUpstreamFyers();
+        marketWebSocketServer.refreshUpstreamQuotes().catch(() => {});
       }
 
       const scannedData = scannerService.getScanResults();
       const pricesMap: Record<string, number> = {};
-      scannedData.stocks.forEach((s) => { pricesMap[s.symbol] = s.price; });
+      scannedData.stocks.forEach((s) => {
+        pricesMap[s.symbol] = s.price;
+      });
 
       let symbols: string[] = [];
       if (req.body?.symbols && Array.isArray(req.body.symbols) && req.body.symbols.length > 0) {
         symbols = req.body.symbols;
       } else if (req.query?.symbols && typeof req.query.symbols === 'string') {
-        symbols = (req.query.symbols as string).split(',').map((s: string) => s.trim()).filter(Boolean);
+        symbols = (req.query.symbols as string)
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean);
       } else {
-        symbols = scannedData.stocks.map((s) => s.symbol);
+        const allSyms = new Set<string>(scannedData.stocks.map((s) => s.symbol));
+        ['RELIANCE', 'HDFCBANK', 'ICICIBANK', 'TCS', 'INFY', 'SBIN', 'BHARTIARTL', 'AXISBANK', 'KOTAKBANK', 'LT', 'BAJFINANCE'].forEach(
+          (x) => allSyms.add(x)
+        );
+        symbols = Array.from(allSyms);
       }
 
-      const quotes = await fetchFyersQuotes(
-        symbols,
-        appId,
-        accessToken,
-        pricesMap
-      );
+      const quotes = await upstoxService.fetchUnifiedMarketQuotes(symbols, accessToken, pricesMap);
 
-      const indexPrices = scannerService.getIndexPrices();
-      const indexQuotes = await fetchIndexLiveQuotes(appId, accessToken, indexPrices);
-
-      // Key quotes by both clean symbol and Fyers format "NSE:SYM-EQ"
-      const formattedQuotes: Record<string, any> = {};
-      Object.entries(quotes).forEach(([sym, q]: [string, any]) => {
-        formattedQuotes[sym] = q;
-        const fsym = q?.fyersSymbol || getFyersSymbol(sym);
-        formattedQuotes[fsym] = q;
-      });
+      const toIdxPayload = (q: UnifiedMarketQuote | undefined, fallback: any) =>
+        q
+          ? {
+              ...q,
+              prev_close_price: q.prevClose,
+              open_price: q.open,
+              high_price: q.high,
+              low_price: q.low,
+              pcr: fallback.pcr,
+            }
+          : fallback;
 
       const formattedIndices: Record<string, any> = {
-        'NSE:NIFTY50-INDEX': indexQuotes['NIFTY 50'] || { lp: 25030.35, ch: 493.20, chp: 2.01, pcr: 1.64, prev_close_price: 24537.15 },
-        'NSE:NIFTYBANK-INDEX': indexQuotes['BANKNIFTY'] || { lp: 52380.00, ch: 945.10, chp: 1.84, pcr: 1.08, prev_close_price: 51434.90 },
-        'NSE:FINNIFTY-INDEX': indexQuotes['FINNIFTY'] || { lp: 24150.00, ch: 385.00, chp: 1.62, pcr: 1.34, prev_close_price: 23765.00 },
-        'NSE:MIDCPNIFTY-INDEX': indexQuotes['MIDCPNIFTY'] || { lp: 13120.00, ch: 288.00, chp: 2.25, pcr: 1.15, prev_close_price: 12832.00 },
-        'NSE:NIFTYNXT50-INDEX': indexQuotes['NIFTYNXT50'] || { lp: 71850.00, ch: 1375.00, chp: 1.95, pcr: 1.10, prev_close_price: 70475.00 },
-        'BSE:SENSEX-INDEX': indexQuotes['SENSEX'] || { lp: 81765.20, ch: 1477.20, chp: 1.84, prev_close_price: 80288.0 },
-        'NSE:INDIAVIX-INDEX': indexQuotes['INDIAVIX'] || { lp: 17.47, ch: -2.41, chp: -12.13, prev_close_price: 19.88 },
+        'NSE:NIFTY50-INDEX': toIdxPayload(quotes['NIFTY 50'] || quotes['NIFTY'], {
+          lp: 25044.65,
+          ch: 58.25,
+          chp: 0.23,
+          pcr: 1.48,
+          prev_close_price: 24986.4,
+        }),
+        'NSE:NIFTYBANK-INDEX': toIdxPayload(quotes['BANKNIFTY'], {
+          lp: 59741.25,
+          ch: 890.6,
+          chp: 1.51,
+          pcr: 1.18,
+          prev_close_price: 58850.65,
+        }),
+        'NSE:FINNIFTY-INDEX': toIdxPayload(quotes['FINNIFTY'], {
+          lp: 27384.9,
+          ch: 204.25,
+          chp: 0.75,
+          pcr: 1.24,
+          prev_close_price: 27180.65,
+        }),
+        'NSE:MIDCPNIFTY-INDEX': toIdxPayload(quotes['MIDCPNIFTY'], {
+          lp: 14055.45,
+          ch: 29.45,
+          chp: 0.21,
+          pcr: 1.12,
+          prev_close_price: 14026.0,
+        }),
+        'NSE:NIFTYNXT50-INDEX': toIdxPayload(quotes['NIFTYNXT50'], {
+          lp: 72789.45,
+          ch: 797.75,
+          chp: 1.11,
+          pcr: 1.1,
+          prev_close_price: 71991.7,
+        }),
+        'BSE:SENSEX-INDEX': toIdxPayload(quotes['SENSEX'], {
+          lp: 81106.65,
+          ch: 107.25,
+          chp: 0.13,
+          prev_close_price: 80999.4,
+        }),
+        'NSE:INDIAVIX-INDEX': toIdxPayload(quotes['INDIAVIX'], {
+          lp: 17.42,
+          ch: -1.01,
+          chp: -5.48,
+          prev_close_price: 18.43,
+        }),
       };
 
+      const formattedQuotes: Record<string, any> = {};
+      Object.entries(quotes).forEach(([sym, q]) => {
+        formattedQuotes[sym] = q;
+        if (q?.instrumentKey) formattedQuotes[q.instrumentKey] = q;
+        formattedQuotes[`NSE:${upstoxService.cleanSymbol(sym)}-EQ`] = q;
+      });
+
+      const hasUpstoxLive = Object.values(quotes).some((q) => q && q.source === 'UPSTOX_API_V2');
+      const hasAutoLive = Object.values(quotes).some(
+        (q) => q && (q.source === 'AUTONOMOUS_LIVE_ENGINE' || q.source === 'MONEYCONTROL_FEED')
+      );
       const marketStatusInfo = calculateMarketStatus();
+
       res.json({
         status: 'ok',
         quotes: formattedQuotes,
@@ -175,35 +232,42 @@ async function startServer() {
         isMarketOpen: marketStatusInfo.isOpen,
         marketStatus: marketStatusInfo.statusLabel,
         marketSession: marketStatusInfo.session,
-        source: (quotes && Object.values(quotes).some((q: any) => q && q.fyersStatus === 'LIVE_V3_FEED'))
-          ? 'FYERS_API_V3_LIVE'
-          : ((appId && accessToken && accessToken.length > 10) ? 'FYERS_API_V3_LIVE' : 'QUANT_LIVE_ENGINE'),
+        source: hasUpstoxLive
+          ? 'UPSTOX_API_V2_LIVE'
+          : hasAutoLive
+          ? 'AUTONOMOUS_LIVE_ENGINE'
+          : 'SETTLED_CLOSE',
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
-      res.status(500).json({ status: 'error', error: error.message || 'Failed to fetch batch Fyers quotes' });
+      res.status(500).json({ status: 'error', error: error.message || 'Failed to fetch market quotes' });
     }
   };
 
-  // Fyers API Connection Status endpoint
-  app.get('/api/fyers/status', (req, res) => {
-    const broker = scannerService.getBrokerConfig();
-    const appId = broker.fyersAppId || broker.apiKey || process.env.FYERS_APP_ID || 'RMR62XB492-100';
-    const accessToken = broker.fyersAccessToken || broker.accessToken || process.env.FYERS_ACCESS_TOKEN || '';
-    const hasToken = Boolean(accessToken && accessToken.trim().length > 10);
-    const wsStatus = fyersWebSocketServer.getStatus();
+  app.get('/api/market/quotes', handleMarketQuotes);
+  app.post('/api/market/quotes', handleMarketQuotes);
 
+  // Upstox Connection Status Endpoint
+  app.get('/api/upstox/status', (req, res) => {
+    const broker = scannerService.getBrokerConfig();
+    const accessToken = broker.upstoxAccessToken || broker.accessToken || process.env.UPSTOX_ACCESS_TOKEN || '';
+    const hasToken = Boolean(accessToken && accessToken.trim().length > 15);
+    const wsStatus = marketWebSocketServer.getStatus();
     const currentMarket = calculateMarketStatus();
+
     res.json({
       status: 'ok',
       connected: hasToken,
+      upstoxConnected: hasToken,
+      autonomousActive: true,
+      feedSource: hasToken ? 'UPSTOX_API_V2_LIVE' : wsStatus.feedSource || 'AUTONOMOUS_LIVE_ENGINE',
+      profileName: broker.upstoxProfileName || 'Upstox Direct Feed',
+      tokenType: broker.upstoxTokenType || (hasToken ? 'USER_ACCESS' : 'NONE'),
+      apiKeyConfigured: Boolean(broker.upstoxApiKey || broker.apiKey || process.env.UPSTOX_API_KEY),
       isMarketOpen: currentMarket.isOpen,
       marketStatus: currentMarket.statusLabel,
       marketSession: currentMarket.session,
       broker: broker.selectedBroker,
-      appId,
-      maskedAppId: appId.substring(0, 4) + '****' + (appId.length > 7 ? appId.substring(appId.length - 4) : ''),
-      hasValidToken: hasToken,
       upstreamConnected: wsStatus.upstreamConnected,
       activeClients: wsStatus.activeClients,
       ticksPerSecond: wsStatus.ticksPerSecond,
@@ -212,126 +276,171 @@ async function startServer() {
     });
   });
 
-  // Fyers API Configuration & Dynamic Token Registration endpoint
-  app.post('/api/fyers/config', async (req, res) => {
+  // Upstox OAuth2 Dialog URL Generator
+  app.get('/api/upstox/auth-url', (req, res) => {
     try {
-      const { appId, accessToken } = req.body;
-      if (!appId || !accessToken || accessToken.trim().length < 10) {
+      const apiKey = (req.query.apiKey as string) || process.env.UPSTOX_API_KEY || scannerService.getBrokerConfig().upstoxApiKey || '';
+      if (!apiKey.trim()) {
+        return res.status(400).json({ status: 'error', message: 'Please provide your Upstox API Key first.' });
+      }
+      const host = req.headers.host || 'muhuratscreener.onrender.com';
+      const proto = req.headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
+      const redirectUri = (req.query.redirectUri as string) || `${proto}://${host}/api/upstox/callback`;
+
+      const apiSecret = (req.query.apiSecret as string) || '';
+      if (apiSecret.trim()) {
+        scannerService.updateBrokerConfig({
+          apiKey: apiKey.trim(),
+          apiSecret: apiSecret.trim(),
+          upstoxApiKey: apiKey.trim(),
+          upstoxApiSecret: apiSecret.trim(),
+        });
+      }
+
+      const authUrl = upstoxService.getAuthDialogUrl(apiKey.trim(), redirectUri);
+      res.json({ status: 'ok', authUrl, redirectUri });
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  // Upstox OAuth2 Callback (Exchanges code -> access_token cleanly)
+  app.get('/api/upstox/callback', async (req, res) => {
+    try {
+      const code = req.query.code as string;
+      if (!code) {
+        return res.status(400).send('Upstox OAuth callback missing authorization code.');
+      }
+
+      const broker = scannerService.getBrokerConfig();
+      const apiKey = broker.upstoxApiKey || broker.apiKey || process.env.UPSTOX_API_KEY || '';
+      const apiSecret = broker.upstoxApiSecret || broker.apiSecret || process.env.UPSTOX_API_SECRET || '';
+      const host = req.headers.host || 'muhuratscreener.onrender.com';
+      const proto = req.headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
+      const redirectUri = `${proto}://${host}/api/upstox/callback`;
+
+      if (!apiKey || !apiSecret) {
+        return res.status(400).send('Server missing Upstox API Key / Secret. Please save them in the modal first.');
+      }
+
+      const { accessToken, profile } = await upstoxService.exchangeAuthCode(code, apiKey, apiSecret, redirectUri);
+      scannerService.updateBrokerConfig({
+        selectedBroker: 'upstox',
+        upstoxApiKey: apiKey,
+        upstoxApiSecret: apiSecret,
+        upstoxAccessToken: accessToken,
+        accessToken,
+        upstoxProfileName: profile?.user_name || profile?.user_id || 'Upstox Live',
+        upstoxTokenType: 'USER_ACCESS',
+        status: 'connected',
+      });
+      marketWebSocketServer.refreshUpstreamQuotes().catch(() => {});
+
+      res.redirect('/?upstox=connected');
+    } catch (err: any) {
+      res.status(500).send(`Upstox Authorization Failed: ${err.message}`);
+    }
+  });
+
+  // Upstox Configuration & Token Registration (Supports Daily Access Token & 1-Year Analytics Token)
+  app.post('/api/upstox/config', async (req, res) => {
+    try {
+      const { accessToken, apiKey, apiSecret } = req.body || {};
+      if (!accessToken || String(accessToken).trim().length < 15) {
         return res.status(400).json({
           status: 'error',
-          message: 'Please provide valid Fyers App ID (e.g. RMR62XB492-100) and Access Token',
+          message: 'Please paste a valid Upstox Access Token or 1-Year Analytics Token.',
         });
       }
 
-      const cleanAppId = appId.trim();
-      const cleanToken = accessToken.trim();
+      const cleanToken = String(accessToken).trim();
+      const check = await upstoxService.validateAccessToken(cleanToken);
 
-      // Test credentials with Fyers API profile or quotes endpoint
-      let isVerified = false;
-      let profileData: any = null;
-      let infoMessage = '';
-
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        const profileRes = await fetch('https://api-v3.fyers.in/api/v3/profile', {
-          method: 'GET',
-          headers: {
-            Authorization: `${cleanAppId}:${cleanToken}`,
-            'Content-Type': 'application/json',
-          },
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (profileRes.ok) {
-          const json = await profileRes.json();
-          if (json.s === 'ok' && json.data) {
-            isVerified = true;
-            profileData = json.data;
-            infoMessage = `Trader: ${json.data.name || json.data.fy_id || 'Active'} (${json.data.fy_id || 'Verified'})`;
-          }
-        }
-      } catch (err: any) {
-        console.warn('[Server] Fyers profile test notice:', err.message);
-      }
-
-      if (!isVerified) {
-        try {
-          const controller2 = new AbortController();
-          const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
-          const quoteCheck = await fetch('https://api-v3.fyers.in/data/quotes?symbols=NSE%3ANIFTY50-INDEX', {
-            headers: { Authorization: `${cleanAppId}:${cleanToken}` },
-            signal: controller2.signal,
-          });
-          clearTimeout(timeoutId2);
-
-          if (quoteCheck.ok) {
-            const qJson = await quoteCheck.json();
-            if (qJson.s === 'ok') {
-              isVerified = true;
-              infoMessage = 'Market Data Feed Verified';
-            }
-          }
-        } catch (err: any) {
-          console.warn('[Server] Fyers quotes test notice:', err.message);
-        }
-      }
-
-      if (isVerified) {
+      if (check.valid) {
         scannerService.updateBrokerConfig({
-          selectedBroker: 'fyers',
-          fyersAppId: cleanAppId,
-          fyersAccessToken: cleanToken,
+          selectedBroker: 'upstox',
+          upstoxApiKey: apiKey ? String(apiKey).trim() : scannerService.getBrokerConfig().upstoxApiKey,
+          upstoxApiSecret: apiSecret ? String(apiSecret).trim() : scannerService.getBrokerConfig().upstoxApiSecret,
+          upstoxAccessToken: cleanToken,
+          accessToken: cleanToken,
+          upstoxProfileName: check.profile?.user_name || check.profile?.user_id || 'Upstox Analytics/Live',
+          upstoxTokenType: check.tokenType === 'INVALID' ? 'NONE' : check.tokenType,
           status: 'connected',
         });
-        fyersWebSocketServer.connectUpstreamFyers();
+        await marketWebSocketServer.refreshUpstreamQuotes();
 
         return res.json({
           status: 'ok',
           connected: true,
-          message: `Fyers API v3 Connected! ${infoMessage}`,
-          profile: profileData,
-          appId: cleanAppId,
-        });
-      } else {
-        return res.status(401).json({
-          status: 'error',
-          message: 'Fyers API returned Invalid Token or Unauthorized. Please verify your App ID & today’s generated Access Token.',
+          tokenType: check.tokenType,
+          profile: check.profile,
+          message: check.message || 'Upstox API Connected & Streaming Live Quotes!',
         });
       }
+
+      return res.status(401).json({
+        status: 'error',
+        message: check.message || 'Upstox token unauthorized or expired.',
+      });
     } catch (err: any) {
-      res.status(500).json({ status: 'error', message: err.message || 'Error configuring Fyers' });
+      res.status(500).json({ status: 'error', message: err.message || 'Error configuring Upstox' });
     }
   });
 
-  app.get('/api/fyers/quotes', handleFyersQuotes);
-  app.post('/api/fyers/quotes', handleFyersQuotes);
+  // Disconnect Upstox token -> fallback seamlessly to Autonomous Real-Time Engine
+  app.post('/api/upstox/disconnect', (req, res) => {
+    scannerService.updateBrokerConfig({
+      selectedBroker: 'autonomous',
+      upstoxAccessToken: '',
+      accessToken: '',
+      upstoxTokenType: 'NONE',
+      status: 'autonomous',
+    });
+    res.json({
+      status: 'ok',
+      connected: false,
+      message: 'Upstox disconnected. Autonomous High-Speed Market Feed active.',
+    });
+  });
 
-  // Fyers Stock List with Live Quotes & Symbol mapping endpoint
-  app.get('/api/fyers/stock-list', async (req, res) => {
+  // Upstox Live Option Chain Endpoint
+  app.get('/api/upstox/option-chain', async (req, res) => {
+    try {
+      const symbol = (req.query.symbol as string) || 'NIFTY 50';
+      const expiry = req.query.expiry as string | undefined;
+      const broker = scannerService.getBrokerConfig();
+      const token =
+        (req.headers['x-upstox-access-token'] as string) ||
+        broker.upstoxAccessToken ||
+        broker.accessToken ||
+        process.env.UPSTOX_ACCESS_TOKEN ||
+        '';
+      const oc = await upstoxService.fetchLiveOptionChain(symbol, token, expiry);
+      res.json({ status: 'ok', ...oc });
+    } catch (err: any) {
+      res.status(500).json({ status: 'error', message: err.message });
+    }
+  });
+
+  // Stock List with Live Quotes (Upstox API + Autonomous Engine)
+  app.get('/api/market/stock-list', async (req, res) => {
     try {
       const scannedData = scannerService.getScanResults();
       const broker = scannerService.getBrokerConfig();
-      const appId = broker.fyersAppId || broker.apiKey;
-      const accessToken = broker.fyersAccessToken || broker.accessToken;
+      const accessToken = broker.upstoxAccessToken || broker.accessToken || '';
       const symbols = scannedData.stocks.map((s) => s.symbol);
       const pricesMap: Record<string, number> = {};
-      scannedData.stocks.forEach((s) => { pricesMap[s.symbol] = s.price; });
+      scannedData.stocks.forEach((s) => {
+        pricesMap[s.symbol] = s.price;
+      });
 
-      const quotes = await fetchFyersQuotes(
-        symbols,
-        appId,
-        accessToken,
-        pricesMap
-      );
-
-      const fyersStocks = scannedData.stocks.map((stock) => {
-        const q = quotes[stock.symbol];
+      const quotes = await upstoxService.fetchUnifiedMarketQuotes(symbols, accessToken, pricesMap);
+      const enriched = scannedData.stocks.map((stock) => {
+        const q = quotes[upstoxService.cleanSymbol(stock.symbol)] || quotes[stock.symbol];
         return {
           ...stock,
-          fyersSymbol: q?.fyersSymbol || getFyersSymbol(stock.symbol),
-          fyersData: q,
+          instrumentKey: q?.instrumentKey || upstoxService.getInstrumentKey(stock.symbol),
+          quoteData: q,
           price: q ? q.lp : stock.price,
           change: q ? q.ch : stock.change,
           changePercent: q ? q.chp : stock.changePercent,
@@ -339,181 +448,89 @@ async function startServer() {
       });
 
       res.json({
-        count: fyersStocks.length,
-        stocks: fyersStocks,
-        brokerStatus: broker.selectedBroker === 'fyers' ? 'CONNECTED_FYERS_V3' : 'SIMULATED_FEED',
-        lastRefreshed: new Date().toISOString()
+        count: enriched.length,
+        stocks: enriched,
+        source: accessToken ? 'UPSTOX_API_V2_LIVE' : 'AUTONOMOUS_LIVE_ENGINE',
+        lastRefreshed: new Date().toISOString(),
       });
     } catch (error: any) {
-      res.status(500).json({ error: error.message || 'Failed to fetch Fyers stock list' });
+      res.status(500).json({ error: error.message || 'Failed to fetch market stock list' });
     }
   });
 
-  // Fyers Live Quotes for Indian Indices (NIFTY 50, BANKNIFTY, FINNIFTY, MIDCPNIFTY, SENSEX)
+  // Live Quotes for Major Indian Benchmark Indices
   const handleIndexQuotes = async (req: express.Request, res: express.Response) => {
     try {
       const broker = scannerService.getBrokerConfig();
-      const appId =
-        (req.headers['x-fyers-app-id'] as string) ||
-        (req.query.appId as string) ||
-        broker.fyersAppId ||
-        broker.apiKey;
       const accessToken =
-        (req.headers['x-fyers-access-token'] as string) ||
+        (req.headers['x-upstox-access-token'] as string) ||
         (req.headers.authorization?.replace(/^Bearer\s+/, '')) ||
         (req.query.accessToken as string) ||
-        broker.fyersAccessToken ||
-        broker.accessToken;
-      const indexPrices = scannerService.getIndexPrices();
-      const quotes = await fetchIndexLiveQuotes(appId, accessToken, indexPrices);
+        broker.upstoxAccessToken ||
+        broker.accessToken ||
+        '';
+      const quotes = await upstoxService.fetchIndexQuotes(accessToken);
       res.json(quotes);
     } catch (error: any) {
       res.status(500).json({ error: error.message || 'Failed to fetch Indian index live quotes' });
     }
   };
 
-  app.get('/api/fyers/index-quotes', handleIndexQuotes);
+  app.get('/api/market/index-quotes', handleIndexQuotes);
   app.get('/api/index/quotes', handleIndexQuotes);
 
-  // Fyers API Credential Validation / Connection Test
-  app.post('/api/fyers/token-test', async (req, res) => {
+  // Upstox Order Placement Endpoint (with clean paper-trade fallback if read-only/autonomous)
+  app.post('/api/upstox/place-order', async (req, res) => {
     try {
-      const { appId, accessToken } = req.body;
-      if (!appId || !accessToken || accessToken.trim().length < 5) {
-        return res.status(400).json({
-          success: false,
-          message: 'Please provide valid Fyers App ID (e.g. RMR62XB492-100) and Access Token',
-        });
-      }
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-      const fyersRes = await fetch('https://api-v3.fyers.in/api/v3/profile', {
-        method: 'GET',
-        headers: {
-          Authorization: `${appId}:${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-
-      if (fyersRes.ok) {
-        const json = await fyersRes.json();
-        if (json.s === 'ok' && json.data) {
-          // Update broker configuration with valid token
-          scannerService.updateBrokerConfig({
-            selectedBroker: 'fyers',
-            fyersAppId: appId,
-            fyersAccessToken: accessToken,
-            status: 'connected',
-          });
-
-          // Trigger WebSocket upstream connection
-          fyersWebSocketServer.connectUpstreamFyers();
-
-          return res.json({
-            success: true,
-            message: `Fyers API v3 Connected! User: ${json.data.name || json.data.fy_id || 'Trader'} (${json.data.fy_id || 'Active'})`,
-            data: json.data,
-          });
-        }
-      }
-
-      // If profile fails, check quote access
-      const quoteCheck = await fetch('https://api-v3.fyers.in/data/quotes?symbols=NSE%3ANIFTY50-INDEX', {
-        headers: {
-          Authorization: `${appId}:${accessToken}`,
-        },
-      });
-
-      if (quoteCheck.ok) {
-        const qJson = await quoteCheck.json();
-        if (qJson.s === 'ok') {
-          scannerService.updateBrokerConfig({
-            selectedBroker: 'fyers',
-            fyersAppId: appId,
-            fyersAccessToken: accessToken,
-            status: 'connected',
-          });
-
-          // Trigger WebSocket upstream connection
-          fyersWebSocketServer.connectUpstreamFyers();
-
-          return res.json({
-            success: true,
-            message: 'Fyers API v3 Market Data Feed Connected successfully!',
-          });
-        }
-      }
-
-      res.status(401).json({
-        success: false,
-        message: 'Fyers API returned Invalid Token or Unauthorized. Please verify App ID & generated Access Token for today.',
-      });
-    } catch (err: any) {
-      res.status(500).json({
-        success: false,
-        message: err.message || 'Error communicating with Fyers API gateway',
-      });
-    }
-  });
-
-  // Fyers API v3 Order Placement / Webhook trigger
-  app.post('/api/fyers/place-order', async (req, res) => {
-    try {
-      const { symbol, qty, type, side, productType = 'INTRADAY', limitPrice } = req.body;
+      const { symbol, qty, side, product = 'I', orderType = 'MARKET', price = 0 } = req.body;
       const broker = scannerService.getBrokerConfig();
+      const accessToken = broker.upstoxAccessToken || broker.accessToken || '';
+      const instrumentToken = upstoxService.getInstrumentKey(symbol);
 
-      const appId = broker.fyersAppId || broker.apiKey;
-      const accessToken = broker.fyersAccessToken || broker.accessToken;
-
-      if (broker.selectedBroker === 'fyers' && appId && accessToken) {
+      if (broker.selectedBroker === 'upstox' && accessToken.length > 15 && broker.upstoxTokenType !== 'ANALYTICS_READONLY') {
         try {
-          const orderBody = {
-            symbol,
-            qty: Number(qty) || 1,
-            type: limitPrice ? 1 : 2, // 1 = Limit, 2 = Market
-            side: side === 'BUY' ? 1 : -1,
-            productType,
-            limitPrice: limitPrice || 0,
-            stopPrice: 0,
-            validity: 'DAY',
-            disclosedQty: 0,
-            offlineOrder: false,
-          };
-
-          const fyersOrderRes = await fetch('https://api-v3.fyers.in/api/v3/orders/sync', {
+          const orderRes = await fetch('https://api-hft.upstox.com/v2/order/place', {
             method: 'POST',
             headers: {
-              Authorization: `${appId}:${accessToken}`,
+              Accept: 'application/json',
+              Authorization: `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(orderBody),
+            body: JSON.stringify({
+              quantity: Number(qty) || 1,
+              product,
+              validity: 'DAY',
+              price: Number(price) || 0,
+              tag: 'muhurat_terminal',
+              instrument_token: instrumentToken,
+              order_type: orderType,
+              transaction_type: side === 'SELL' ? 'SELL' : 'BUY',
+              disclosed_quantity: 0,
+              trigger_price: 0,
+              is_amo: false,
+            }),
           });
-
-          const result = await fyersOrderRes.json();
-          if (result.s === 'ok') {
+          const result = await orderRes.json();
+          if (result?.status === 'success') {
             return res.json({
               status: 'success',
-              mode: 'FYERS_LIVE_V3',
-              orderId: result.id || `FY-${Date.now()}`,
-              message: `Order submitted to Fyers exchange: ${side} ${qty} ${symbol}`,
-              fyersResponse: result,
+              mode: 'UPSTOX_LIVE_V2',
+              orderId: result.data?.order_id || `UPX-${Date.now()}`,
+              message: `Order submitted via Upstox API: ${side} ${qty} ${symbol}`,
+              upstoxResponse: result,
             });
           }
-        } catch (fyersErr) {
-          console.warn('[Fyers Order] Live order dispatch fallback:', fyersErr);
+        } catch (upxErr) {
+          console.warn('[Upstox Order] Paper-trade fallback:', upxErr);
         }
       }
 
-      // Fallback: Recorded as paper trade
       res.json({
         status: 'success',
         mode: 'PAPER_TRADE_SIMULATED',
-        orderId: `SIM-FY-${Date.now()}`,
-        message: `Simulated Order Executed: ${side} ${qty} ${symbol} @ Market LTP`,
+        orderId: `SIM-UPX-${Date.now()}`,
+        instrumentToken,
+        message: `Simulated Order Executed: ${side} ${qty} ${symbol} (${instrumentToken}) @ Market LTP`,
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Failed to place order' });
@@ -567,10 +584,11 @@ async function startServer() {
   // 12:00 AM Midnight Auto-Purge Trigger Endpoint
   app.post('/api/scan/reset-midnight', (req, res) => {
     try {
-      scannerService.resetMidnightPurge();
+      scannerService.resetMidnightPurge(undefined, true);
       res.json({
         status: 'success',
-        message: '12:00 AM Midnight Purge executed. All scanner results emptied for next trading day.',
+        sessionState: scannerService.getSessionStatus(),
+        message: '12:00 AM Midnight Flush executed. All scanner tables emptied until next market open.',
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -578,36 +596,30 @@ async function startServer() {
     }
   });
 
-  // Scanner Session Status Endpoint
+  // Scanner Session Status Endpoint (synced with persisted Midnight Flush & Next-Day Scan state)
   app.get('/api/scan/session-status', (req, res) => {
     try {
-      const now = new Date();
-      const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-      const istDate = new Date(istStr);
-      const hours = istDate.getHours();
-      const minutes = istDate.getMinutes();
-      const isMidnightPeriod = hours >= 0 && hours < 9;
+      const sess = scannerService.getSessionStatus();
       res.json({
         status: 'ok',
-        isMidnightPeriod,
-        hours,
-        minutes,
-        istTime: istStr,
-        stocksCount: scannerService.getScanResults().stocks.length,
-        nextTradingSession: '09:00 AM IST (Pre-Open) / 09:15 AM IST (Regular Market)',
+        ...sess,
+        isMidnightPeriod: sess.isMidnightCleared || (sess.hours >= 0 && sess.hours < 9),
+        nextTradingSession: '09:00 AM IST (Pre-Open) / 09:15 AM IST (Regular Market Open)',
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message || 'Failed to get session status' });
     }
   });
 
-  // Trigger manual 1-min rescan
+  // Trigger fresh scan cycle (unlocks midnight flush if overridden or discovers fresh today candidates)
   app.post('/api/scan/trigger', async (req, res) => {
     try {
-      const updatedStocks = await scannerService.runScanCycle();
+      const updatedStocks = await scannerService.triggerManualScanOverride();
       res.json({
         status: 'success',
         scannedCount: updatedStocks.length,
+        sessionState: scannerService.getSessionStatus(),
+        stocks: updatedStocks,
         timestamp: new Date().toISOString(),
       });
     } catch (error: any) {
@@ -983,7 +995,7 @@ async function startServer() {
   }
 
   httpServer.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Nifty 200 Scanner Server with Fyers WebSocket running on http://localhost:${PORT}`);
+    console.log(`🚀 Nifty 200 Scanner Server with Upstox API & Autonomous Live Engine running on http://localhost:${PORT}`);
   });
 }
 

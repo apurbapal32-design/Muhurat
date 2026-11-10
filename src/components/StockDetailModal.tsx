@@ -98,7 +98,7 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
 
   const fetchFyersLive = (symbol: string) => {
     setSyncingFyers(true);
-    fetch(`/api/fyers/quote/${encodeURIComponent(symbol)}`)
+    fetch(`/api/market/quote/${encodeURIComponent(symbol)}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) setFyersQuote(data);
