@@ -14,6 +14,7 @@ import { marketWebSocketServer } from './server/marketWebSocketServer';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
 import { calculateMarketStatus } from './src/data/marketSchedule';
+import { NIFTY_200_STOCKS } from './src/data/nifty200';
 import { UnifiedMarketQuote } from './server/autonomousPriceService';
 
 async function startServer() {
@@ -141,7 +142,11 @@ async function startServer() {
           .map((s: string) => s.trim())
           .filter(Boolean);
       } else {
-        const allSyms = new Set<string>(scannedData.stocks.map((s) => s.symbol));
+        const universeSyms =
+          scannedData.stocks.length > 0
+            ? scannedData.stocks.map((s) => s.symbol)
+            : NIFTY_200_STOCKS.map((s) => s.symbol);
+        const allSyms = new Set<string>(universeSyms);
         ['RELIANCE', 'HDFCBANK', 'ICICIBANK', 'TCS', 'INFY', 'SBIN', 'BHARTIARTL', 'AXISBANK', 'KOTAKBANK', 'LT', 'BAJFINANCE'].forEach(
           (x) => allSyms.add(x)
         );
@@ -975,8 +980,11 @@ async function startServer() {
       res.status(404).send('Muhurat Android APK not found');
     });
 
-    // Serve Muhurat Quant Screener Dashboard directly on root /
+    // Serve Muhurat Quant Screener Dashboard directly on root / (no-store so mobile/WebView never caches stale market state)
     app.get(['/', '/muhurat', '/dashboard', '/quant_screener_dashboard.html'], (req, res) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       const dashboardFile = path.join(process.cwd(), 'quant_screener_dashboard.html');
       if (fs.existsSync(dashboardFile)) {
         return res.sendFile(dashboardFile);
