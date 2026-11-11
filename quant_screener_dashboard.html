@@ -5539,6 +5539,49 @@
       return !INDEX_SYMBOLS_SET.has(sym) && sec !== 'indices' && sec !== 'index';
     }
 
+    function normalizeCycleBuildup(rawBuildup, pctChange = 0, oiChgPct = 0, bidAskRatio = 1.0) {
+      const pct = Number(pctChange) || 0;
+      const oi = Number(oiChgPct) || 0;
+      const ba = Number(bidAskRatio) || 1.0;
+      const clean = String(rawBuildup || '')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toUpperCase();
+
+      let mapped = '';
+      if (clean.includes('LONG') && clean.includes('BUILD')) mapped = 'Long Buildup';
+      else if (clean.includes('SHORT') && clean.includes('BUILD')) mapped = 'Short Buildup';
+      else if (clean.includes('SHORT') && clean.includes('COVER')) mapped = 'Short Covering';
+      else if (clean.includes('LONG') && clean.includes('UNWIND')) mapped = 'Long Unwinding';
+
+      // Reconcile if live intraday price flipped direction vs stale cached buildup tag
+      if (mapped === 'Long Buildup' || mapped === 'Short Covering') {
+        if (pct < -0.25) mapped = (oi >= 0 || ba <= 0.85) ? 'Short Buildup' : 'Long Unwinding';
+      } else if (mapped === 'Short Buildup' || mapped === 'Long Unwinding') {
+        if (pct > 0.25) mapped = (oi >= 0 || ba >= 1.15) ? 'Long Buildup' : 'Short Covering';
+      }
+
+      if (!mapped) {
+        if (pct >= 0) mapped = (oi >= 0 || ba >= 1.1) ? 'Long Buildup' : 'Short Covering';
+        else mapped = (oi >= 0 || ba <= 0.9) ? 'Short Buildup' : 'Long Unwinding';
+      }
+      return mapped;
+    }
+
+    function renderCycleBuildupPill(buildupLabel) {
+      if (buildupLabel === 'Long Buildup') {
+        return `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-long-buildup whitespace-nowrap">🟢 Long Buildup</span>`;
+      }
+      if (buildupLabel === 'Short Buildup') {
+        return `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-short-buildup whitespace-nowrap">🔴 Short Buildup</span>`;
+      }
+      if (buildupLabel === 'Short Covering') {
+        return `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-short-covering whitespace-nowrap">⚡ Short Covering</span>`;
+      }
+      return `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-long-unwinding whitespace-nowrap">🟠 Long Unwind</span>`;
+    }
+
     function scoreEquityFormulaMove(s, isBull) {
       const pct = Number(s.pct_change) || 0;
       const rvol = Number(s.rvol) || 1.0;
@@ -5554,6 +5597,10 @@
       if (typeof DATA === 'undefined' || !DATA) return;
       if (Array.isArray(DATA.all_stocks)) {
         DATA.all_stocks = DATA.all_stocks.filter(isPureEquityStock);
+        DATA.all_stocks.forEach(s => {
+          s.buildup = normalizeCycleBuildup(s.buildup, s.pct_change, s.oi_chg_pct, s.bid_ask_ratio);
+          s.buildup_type = (s.buildup === 'Long Buildup' || s.buildup === 'Short Covering') ? 'BULLISH' : 'BEARISH';
+        });
       }
       const pool = Array.isArray(DATA.all_stocks) ? DATA.all_stocks : [];
       const bullKeys = [
@@ -6144,11 +6191,11 @@
 
         // Buildup
         if (s.buildup !== 'ALL') {
-          const btype = (stock.buildup_type || stock.buildup || '').toUpperCase();
-          if (s.buildup === 'LONG' && !btype.includes('LONG BUILDUP') && stock.side !== 'LONG') return false;
-          if (s.buildup === 'SHORT' && !btype.includes('SHORT BUILDUP') && stock.side !== 'SHORT') return false;
-          if (s.buildup === 'COVERING' && !btype.includes('SHORT COVERING')) return false;
-          if (s.buildup === 'UNWINDING' && !btype.includes('LONG UNWINDING')) return false;
+          const normB = normalizeCycleBuildup(stock.buildup, stock.pct_change, stock.oi_chg_pct, stock.bid_ask_ratio);
+          if (s.buildup === 'LONG' && normB !== 'Long Buildup') return false;
+          if (s.buildup === 'SHORT' && normB !== 'Short Buildup') return false;
+          if (s.buildup === 'COVERING' && normB !== 'Short Covering') return false;
+          if (s.buildup === 'UNWINDING' && normB !== 'Long Unwinding') return false;
         }
 
         // VWAP (ATP)
@@ -6263,7 +6310,7 @@
         const isAboveVwap = price >= atp;
         const turnover = Number(stock.turnover_cr) || 0;
         const oiChg = Number(stock.oi_chg_pct) || 0;
-        const buildup = stock.buildup_type || stock.buildup || (isUp ? 'Long Buildup' : 'Short Buildup');
+        const buildup = normalizeCycleBuildup(stock.buildup, pct, oiChg, stock.bid_ask_ratio);
 
         rowsHTML += `
           <tr class="hover:bg-[#0c1220] transition group">
@@ -6329,12 +6376,9 @@
         }
 
         if (cols.buildup) {
-          const isLong = buildup.toUpperCase().includes('LONG');
-          const isCover = buildup.toUpperCase().includes('COVERING');
-          const pillClass = isCover ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' : (isLong ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border-rose-500/30');
           rowsHTML += `
             <td class="p-2.5">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${pillClass}">${buildup}</span>
+              ${renderCycleBuildupPill(buildup)}
             </td>
           `;
         }
@@ -7442,7 +7486,7 @@
 
     function getClaudeAiTraderSkillStrategy(s, isBullish) {
       const pct = Number(s.pct_change) || 0;
-      const buildup = s.buildup || '';
+      const buildup = normalizeCycleBuildup(s.buildup, pct, s.oi_chg_pct, s.bid_ask_ratio);
       const rvol = Number(s.rvol) || 1.0;
       const delta = Number(s.delta) || 0;
       const ratio = Number(s.bid_ask_ratio) || 1.0;
@@ -7604,11 +7648,10 @@
       const reward = Math.abs(targetVal - entryVal);
       const rrRatio = (risk > 0 && reward > 0) ? `1:${(reward / risk).toFixed(1)} R` : `1:${strat.rrMultiplier || 3.0} R`;
 
-      let buildupPill = '';
-      if (s.buildup === 'Long Buildup') buildupPill = `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-long-buildup whitespace-nowrap">🟢 Long Buildup</span>`;
-      else if (s.buildup === 'Short Buildup') buildupPill = `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-short-buildup whitespace-nowrap">🔴 Short Buildup</span>`;
-      else if (s.buildup === 'Short Covering') buildupPill = `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-short-covering whitespace-nowrap">🟡 Short Covering</span>`;
-      else buildupPill = `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-long-unwinding whitespace-nowrap">🟠 Long Unwind</span>`;
+      const normBuildup = normalizeCycleBuildup(s.buildup, s.pct_change, s.oi_chg_pct, s.bid_ask_ratio);
+      s.buildup = normBuildup;
+      s.buildup_type = (normBuildup === 'Long Buildup' || normBuildup === 'Short Covering') ? 'BULLISH' : 'BEARISH';
+      const buildupPill = renderCycleBuildupPill(normBuildup);
 
       const pcrColor = s.pcr >= 1.0 ? 'text-emerald-400' : (s.pcr <= 0.8 ? 'text-rose-400' : 'text-slate-300');
       const ratioBadge = s.bid_ask_ratio >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (s.bid_ask_ratio <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
@@ -9265,7 +9308,11 @@ function renderJournal() {
           order_book_bias: orderBookBias,
           oi: oiData.openInterest ? oiData.openInterest.toFixed(1) + ' L' : (baseStock?.oi || '14.2 L'),
           oi_chg_pct: Number(oiData.changeInOIPercent ?? (isBull ? 4.8 : -2.6)),
-          buildup: oiData.buildup || (isBull ? 'Long Buildup' : 'Short Buildup'),
+          buildup: normalizeCycleBuildup(oiData.buildup, pct, Number(oiData.changeInOIPercent ?? (isBull ? 4.8 : -2.6)), ratio),
+          buildup_type: (() => {
+            const nb = normalizeCycleBuildup(oiData.buildup, pct, Number(oiData.changeInOIPercent ?? (isBull ? 4.8 : -2.6)), ratio);
+            return (nb === 'Long Buildup' || nb === 'Short Covering') ? 'BULLISH' : 'BEARISH';
+          })(),
           put_writing_strike: `${atm - step} PE`,
           put_writing_contracts: `+${Math.round(vol * 0.08).toLocaleString('en-IN')}`,
           call_writing_strike: `${atm + step} CE`,
@@ -9776,6 +9823,10 @@ function renderJournal() {
               : 'Balanced Order Book';
           }
           s.delta = Math.round((s.volume || 200000) * ((s.pct_change || 0) / 100) * 0.4);
+          if (typeof normalizeCycleBuildup === 'function') {
+            s.buildup = normalizeCycleBuildup(s.buildup, s.pct_change, s.oi_chg_pct, s.bid_ask_ratio);
+            s.buildup_type = (s.buildup === 'Long Buildup' || s.buildup === 'Short Covering') ? 'BULLISH' : 'BEARISH';
+          }
 
           // Update dynamic strikes around spot, but NEVER overwrite formula-locked Entry/Stop/Target!
           const step = newLp > 3000 ? 50 : newLp > 1000 ? 20 : 10;
@@ -9880,6 +9931,10 @@ function renderJournal() {
             }
             s.day_high = Math.max(s.day_high || 0, s.price);
             s.day_low = Math.min(s.day_low || 999999, s.price);
+            if (typeof normalizeCycleBuildup === 'function') {
+              s.buildup = normalizeCycleBuildup(s.buildup, s.pct_change, s.oi_chg_pct, s.bid_ask_ratio);
+              s.buildup_type = (s.buildup === 'Long Buildup' || s.buildup === 'Short Covering') ? 'BULLISH' : 'BEARISH';
+            }
             if (s.price !== oldPrice) {
               this.previousPrices.set(s.symbol, { old: oldPrice, new: s.price, dir: s.price > oldPrice ? 'up' : 'down' });
             }
@@ -14130,13 +14185,15 @@ ${json.message || 'Unauthorized token.'}`);
           const pcr = itm.pcr ? Number(itm.pcr) : (isBull ? 1.18 : 0.78);
           const oiChg = (itm.oi_chg_pct !== undefined && itm.oi_chg_pct !== null) ? itm.oi_chg_pct : (isBull ? 6.4 : -3.2);
 
+          const normItmB = (typeof normalizeCycleBuildup === 'function')
+            ? normalizeCycleBuildup(itm.buildup, itm.pct_change ?? (isBull ? 0.5 : -0.5), oiChg, ratio)
+            : (itm.buildup || '');
           let buildupBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-bold">🟢 Long Buildup</span>`;
-          const bLower = (itm.buildup || '').toLowerCase();
-          if (bLower.includes('short buildup') || (!isBull && oiChg > 0)) {
+          if (normItmB === 'Short Buildup' || (!isBull && oiChg > 0 && normItmB !== 'Long Unwinding')) {
             buildupBadge = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-bold">🔴 Short Buildup</span>`;
-          } else if (bLower.includes('short covering') || (isBull && oiChg < 0)) {
+          } else if (normItmB === 'Short Covering') {
             buildupBadge = `<span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[9px] font-bold">⚡ Short Covering</span>`;
-          } else if (bLower.includes('long unwinding') || (!isBull && oiChg < 0)) {
+          } else if (normItmB === 'Long Unwinding') {
             buildupBadge = `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold">⚠️ Long Unwind</span>`;
           }
 
