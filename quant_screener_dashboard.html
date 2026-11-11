@@ -11,8 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- TradingView Widget Script -->
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <!-- TradingView Widget Script (deferred so HTML/first-paint never blocks) -->
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js" defer></script>
   <style>
     @keyframes priceUpFlash {
       0% { background-color: rgba(16, 185, 129, 0.45); color: #6ee7b7; text-shadow: 0 0 8px rgba(16, 185, 129, 0.8); }
@@ -108,9 +108,36 @@
     }
 
     .glass-panel {
-      background: rgba(13, 18, 31, 0.85);
-      backdrop-filter: blur(12px);
+      background: rgba(13, 18, 31, 0.94);
       border: 1px solid var(--border-subtle);
+    }
+    @media (min-width: 1025px) {
+      .glass-panel {
+        background: rgba(13, 18, 31, 0.85);
+        backdrop-filter: blur(10px);
+      }
+    }
+    /* High-FPS Performance Rules for Web, Mobile & Android WebView */
+    @keyframes soft-live-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    .animate-ping {
+      animation: soft-live-dot 2.2s ease-in-out infinite !important;
+    }
+    @media (max-width: 1024px) {
+      .backdrop-blur-md, .backdrop-blur-xl, .backdrop-blur-2xl, .backdrop-blur-sm {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+    }
+    .tab-pane:not(.hidden) .card {
+      content-visibility: auto;
+      contain-intrinsic-size: auto 340px;
+    }
+    .overflow-x-auto {
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
     }
     .glass-card {
       background: rgba(13, 18, 31, 0.95);
@@ -5735,6 +5762,14 @@
         const sigSell = cleanSig.filter(s => String(s.side || '').includes('SELL')).slice(0, 10);
         DATA.cloud_ai_signals = sortByListedAtNewestFirstAtoZ([...sigBuy, ...sigSell]);
       }
+      window._scannersDirty = false;
+      window._lastScannersBuildAt = Date.now();
+    }
+
+    function isElementVisiblePane(el) {
+      if (!el) return false;
+      const pane = el.closest('.tab-pane');
+      return !pane || !pane.classList.contains('hidden');
     }
 
     let activeWatchlist = JSON.parse(localStorage.getItem('quant_watchlist') || '[]');
@@ -8423,16 +8458,30 @@
       if (filtered.length === 0) {
         html += `
           <tr>
-            <td colspan="16" class="p-8 text-center text-slate-500 font-mono">
+            <td colspan="17" class="p-8 text-center text-slate-500 font-mono">
               <div class="text-sm font-bold text-slate-400 mb-1">No stocks match your active filter.</div>
               <div class="text-xs">${watchlistViewMode === 'starred' ? 'You have not starred any stocks yet. Click the ⭐ icon on any stock row to add it!' : 'Try clearing your search query or selecting "All 12 Sectors".'}</div>
             </td>
           </tr>
         `;
       } else {
-        filtered.forEach(s => {
+        const isDefaultAll = !q && secFilter === 'ALL' && watchlistViewMode === 'all';
+        const limit = (isDefaultAll && !window._watchlistShowAll) ? 50 : filtered.length;
+        const visibleRows = filtered.slice(0, limit);
+        visibleRows.forEach(s => {
           html += buildEngineRow(s, s.pct_change >= 0);
         });
+        if (filtered.length > visibleRows.length) {
+          html += `
+            <tr>
+              <td colspan="17" class="p-4 text-center bg-[#090d16]">
+                <button onclick="window._watchlistShowAll = true; renderWatchlistTable();" class="px-5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border border-cyan-500/40 font-mono font-bold text-xs transition cursor-pointer">
+                  ⚡ Showing ${visibleRows.length} of ${filtered.length} Stocks (Fast Mode) &bull; Click to Show All ${filtered.length}
+                </button>
+              </td>
+            </tr>
+          `;
+        }
       }
 
       html += '</tbody>';
@@ -9469,7 +9518,7 @@ function renderJournal() {
         if (this.isScanningNow) return;
         this.isScanningNow = true;
         try {
-          const res = await fetch('/api/scan/results');
+          const res = await fetch('/api/scan/results?compact=1');
           if (res.ok) {
             const json = await res.json();
             if (Array.isArray(json.stocks) && json.stocks.length > 0) {
@@ -9507,7 +9556,7 @@ function renderJournal() {
 
           // Fetch already auto-populated backend scan first (zero manual action needed); trigger only if needed
           let freshPool = null;
-          let res = await fetch('/api/scan/results');
+          let res = await fetch('/api/scan/results?compact=1');
           if (res.ok) {
             const existing = await res.json();
             if (Array.isArray(existing.stocks) && existing.stocks.length > 0 && existing.sessionState && !existing.sessionState.isMidnightCleared) {
@@ -9763,17 +9812,32 @@ function renderJournal() {
 
       startPolling() {
         if (this.pollTimer) clearInterval(this.pollTimer);
-        this.pollTimer = setInterval(() => {
+        if (this._settlementTimer) {
+          clearInterval(this._settlementTimer);
+          this._settlementTimer = null;
+        }
+        this._lastQuotePollAt = 0;
+        const runPollCycle = () => {
+          if (typeof document !== 'undefined' && document.hidden) return;
+          const now = Date.now();
           const mkt = getIndianMarketStatus(new Date());
-          // Poll every 2.5s when open/simulating, or every 15s when closed to keep settled prices exact
-          if (mkt.status === 'OPEN' || mkt.status === 'PRE-OPEN') {
+          const isOpenOrPre = (mkt.status === 'OPEN' || mkt.status === 'PRE-OPEN');
+          const intervalMs = isOpenOrPre ? (this.wsConnected ? 18000 : 6000) : 35000;
+          if (now - (this._lastQuotePollAt || 0) >= intervalMs) {
+            this._lastQuotePollAt = now;
             this.fetchBatchQuotes();
           }
-        }, 2500);
-        // Periodic settlement sync every 15s even outside market hours
-        setInterval(() => {
-          this.fetchBatchQuotes();
-        }, 15000);
+        };
+        this.pollTimer = setInterval(runPollCycle, 3000);
+        if (typeof document !== 'undefined' && !this._visibilityHookBound) {
+          this._visibilityHookBound = true;
+          document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+              this._lastQuotePollAt = 0;
+              this.fetchBatchQuotes();
+            }
+          });
+        }
       },
 
       startTpsMeter() {
@@ -9781,6 +9845,7 @@ function renderJournal() {
         this.tpsInterval = setInterval(() => {
           this.lastTps = this.tpsCounter;
           this.tpsCounter = 0;
+          if (typeof document !== 'undefined' && document.hidden) return;
           const tpsEl = document.getElementById('live-feed-tps');
           const mkt = getIndianMarketStatus(new Date());
           if (tpsEl) {
@@ -9801,12 +9866,14 @@ function renderJournal() {
       },
 
       async fetchBatchQuotes() {
+        if (this._fetchingQuotes) return;
+        this._fetchingQuotes = true;
         try {
           const accessToken = localStorage.getItem('upstox_access_token') || '';
           const headers = {};
           if (accessToken) headers['x-upstox-access-token'] = accessToken;
 
-          const res = await fetch('/api/market/quotes', { headers });
+          const res = await fetch('/api/market/quotes?compact=1', { headers });
           if (!res.ok) return;
           const json = await res.json();
           if (json.status === 'ok') {
@@ -9821,6 +9888,9 @@ function renderJournal() {
             this.batchRender();
           }
         } catch (e) {}
+        finally {
+          this._fetchingQuotes = false;
+        }
       },
 
       syncSectorStocksFromAllStocks() {
@@ -9952,6 +10022,9 @@ function renderJournal() {
           }
         }
         this.syncSectorStocksFromAllStocks();
+        if (Date.now() - (window._lastScannersBuildAt || 0) >= 8000) {
+          window._scannersDirty = true;
+        }
       },
 
       applyIndicesQuotes(indicesMap) {
@@ -9961,7 +10034,9 @@ function renderJournal() {
         updateIndicesUI();
         checkUpstoxStatus();
         syncIndicesToEngines();
-        if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
+        if (typeof renderClaudeIndicesOptions === 'function' && isElementVisiblePane(document.getElementById('claude-options-grid'))) {
+          renderClaudeIndicesOptions();
+        }
       },
 
       processIncomingTick(tick) {
@@ -10076,24 +10151,51 @@ function renderJournal() {
       },
 
       batchRender() {
-        const activeTab = document.querySelector('.tab-pane:not(.hidden)');
-        const activeTabId = activeTab ? activeTab.id.replace('tab-', '') : 'home';
+        if (typeof document !== 'undefined' && document.hidden) return;
+        if (this._renderScheduled) return;
+        const now = Date.now();
+        const elapsed = now - (this._lastBatchRenderAt || 0);
+        const minGap = 1250;
+        const runFlush = () => {
+          this._renderScheduled = false;
+          if (typeof document !== 'undefined' && document.hidden) return;
+          this._lastBatchRenderAt = Date.now();
+          const activeTab = document.querySelector('.tab-pane:not(.hidden)');
+          const activeTabId = activeTab ? activeTab.id.replace('tab-', '') : 'home';
 
-        if (activeTabId === 'support-resistance' && typeof ClaudeSrHunterEngine !== 'undefined') {
-          ClaudeSrHunterEngine.renderAll();
-        } else if (activeTabId === 'pre-open' && typeof PreOpenEngine !== 'undefined') {
-          PreOpenEngine.renderAll();
-        } else if (activeTabId === 'heatmap') {
-          if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
-        } else if (activeTabId === 'indices-options') {
-          if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
-        } else if (activeTabId === 'home' || activeTabId === 'nifty') {
-          if (typeof renderNiftyOptionChain === 'function') renderNiftyOptionChain();
-          if (typeof renderAllTables === 'function') renderAllTables();
-        } else if (activeTabId === 'sector-rank') {
-          if (typeof renderSectorRank === 'function') renderSectorRank();
-        } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(activeTabId)) {
-          if (typeof renderAllTables === 'function') renderAllTables();
+          if (activeTabId === 'support-resistance' && typeof ClaudeSrHunterEngine !== 'undefined') {
+            ClaudeSrHunterEngine.renderAll();
+          } else if (activeTabId === 'pre-open' && typeof PreOpenEngine !== 'undefined') {
+            PreOpenEngine.renderAll();
+          } else if (activeTabId === 'heatmap') {
+            if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
+          } else if (activeTabId === 'indices-options') {
+            if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
+          } else if (activeTabId === 'home' || activeTabId === 'nifty') {
+            if (typeof renderNiftyOptionChain === 'function') renderNiftyOptionChain();
+            if (typeof renderAllTables === 'function') renderAllTables();
+          } else if (activeTabId === 'sector-rank') {
+            if (typeof renderSectorRank === 'function') renderSectorRank();
+          } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(activeTabId)) {
+            if (typeof renderAllTables === 'function') renderAllTables();
+          }
+        };
+
+        this._renderScheduled = true;
+        if (elapsed >= minGap) {
+          if (typeof requestAnimationFrame === 'function') {
+            requestAnimationFrame(runFlush);
+          } else {
+            setTimeout(runFlush, 16);
+          }
+        } else {
+          setTimeout(() => {
+            if (typeof requestAnimationFrame === 'function') {
+              requestAnimationFrame(runFlush);
+            } else {
+              runFlush();
+            }
+          }, minGap - elapsed);
         }
       }
     };
@@ -10112,7 +10214,7 @@ function renderJournal() {
         const headers = {};
         if (accessToken) headers['x-upstox-access-token'] = accessToken;
 
-        const res = await fetch('/api/market/quotes', { headers });
+        const res = await fetch('/api/market/quotes?compact=1', { headers });
         const json = await res.json();
         if (json.status === 'ok') {
           if (json.quotes) CyberLivePriceEngine.applyBatchQuotes(json.quotes);
@@ -10698,18 +10800,29 @@ ${json.message || 'Unauthorized token.'}`);
     }
 
     function renderAllTables() {
-      if (typeof sanitizeDataScannersUniverse === 'function') sanitizeDataScannersUniverse();
+      if (window._scannersDirty !== false && typeof sanitizeDataScannersUniverse === 'function') {
+        sanitizeDataScannersUniverse();
+      }
+      const renderVisibleTable = (tid, list, isBull, useStrategy = false) => {
+        const tbl = document.getElementById(tid);
+        if (tbl && isElementVisiblePane(tbl)) {
+          renderTable(tid, list, isBull, useStrategy);
+        }
+      };
+
       // Claude AI Automated Signals
-      renderCloudAISignals();
+      if (isElementVisiblePane(document.getElementById('cloud-ai-signals-container'))) {
+        renderCloudAISignals();
+      }
 
       // Home Tab Previews (Strictly Pure Equity Top 10)
-      renderTable('table-home-sonic-bullish', (DATA.sonic_bullish || []).slice(0, 10), true);
-      renderTable('table-home-titan-bearish', (DATA.titan_bearish || []).slice(0, 10), false);
-      renderTable('table-home-elite-bearish', (DATA.quant_elite_bearish || []).slice(0, 10), false);
-      renderTable('table-home-elite-pro-bearish', (DATA.quant_elite_pro_bearish || []).slice(0, 10), false);
-      renderTable('table-home-titan-cash-bearish', (DATA.titan_cash_bearish || []).slice(0, 10), false);
-      renderTable('table-home-momentum-upside', (DATA.best_momentum_upside || []).slice(0, 10), true);
-      renderTable('table-home-momentum-downside', (DATA.best_momentum_downside || []).slice(0, 10), false);
+      renderVisibleTable('table-home-sonic-bullish', (DATA.sonic_bullish || []).slice(0, 10), true);
+      renderVisibleTable('table-home-titan-bearish', (DATA.titan_bearish || []).slice(0, 10), false);
+      renderVisibleTable('table-home-elite-bearish', (DATA.quant_elite_bearish || []).slice(0, 10), false);
+      renderVisibleTable('table-home-elite-pro-bearish', (DATA.quant_elite_pro_bearish || []).slice(0, 10), false);
+      renderVisibleTable('table-home-titan-cash-bearish', (DATA.titan_cash_bearish || []).slice(0, 10), false);
+      renderVisibleTable('table-home-momentum-upside', (DATA.best_momentum_upside || []).slice(0, 10), true);
+      renderVisibleTable('table-home-momentum-downside', (DATA.best_momentum_downside || []).slice(0, 10), false);
       // ============================================================
       // CLAUDE AI TRADE SKILL FORMULA: TOP 10 UPSIDE & DOWNSIDE
       // ============================================================
@@ -10754,71 +10867,81 @@ ${json.message || 'Unauthorized token.'}`);
       }
 
       const allStocks = (DATA && DATA.all_stocks) ? DATA.all_stocks.filter(isPureEquityStock) : [];
+      const needTopTradedHome =
+        isElementVisiblePane(document.getElementById('table-home-top-traded')) ||
+        isElementVisiblePane(document.getElementById('table-home-top-traded-downside'));
 
-      // Rank Upside Candidates by Claude AI Trade Skill Formula
-      let upsideTraded = allStocks.filter(s => s.pct_change >= 0);
-      if (upsideTraded.length === 0 && DATA.top_traded_value) {
-        upsideTraded = [...DATA.top_traded_value];
+      if (needTopTradedHome || !window.TOP_10_UPSIDE) {
+        // Rank Upside Candidates by Claude AI Trade Skill Formula
+        let upsideTraded = allStocks.filter(s => s.pct_change >= 0);
+        if (upsideTraded.length === 0 && DATA.top_traded_value) {
+          upsideTraded = [...DATA.top_traded_value];
+        }
+        upsideTraded.forEach(s => {
+          s.claude_ai_score = calcClaudeAiTradeSkillScore(s, true);
+        });
+        upsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
+
+        // Rank Downside Candidates by Claude AI Trade Skill Formula
+        let downsideTraded = allStocks.filter(s => s.pct_change < 0);
+        if (downsideTraded.length === 0) {
+          downsideTraded = [...allStocks].sort((a, b) => (a.pct_change || 0) - (b.pct_change || 0));
+        }
+        downsideTraded.forEach(s => {
+          s.claude_ai_score = calcClaudeAiTradeSkillScore(s, false);
+        });
+        downsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
+
+        // Sanitize and validate LISTED AT time for Top 10 Downside Traded Candidates (Heavy Selling)
+        downsideTraded.slice(0, 10).forEach((s, idx) => {
+          sanitizeStockListedTime(s, idx, true, 10);
+        });
+
+        // Sanitize and validate LISTED AT time for Top 10 Upside Traded Candidates
+        upsideTraded.slice(0, 10).forEach((s, idx) => {
+          sanitizeStockListedTime(s, idx, false, 10);
+        });
+
+        window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(upsideTraded.slice(0, 10));
+        window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(downsideTraded.slice(0, 10));
+
+        renderVisibleTable('table-home-top-traded', window.TOP_10_UPSIDE, true, activeAiStrategyFilter !== 'ALL');
+        renderVisibleTable('table-home-top-traded-downside', window.TOP_10_DOWNSIDE, false, activeAiStrategyFilter !== 'ALL');
       }
-      upsideTraded.forEach(s => {
-        s.claude_ai_score = calcClaudeAiTradeSkillScore(s, true);
-      });
-      upsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-      // Rank Downside Candidates by Claude AI Trade Skill Formula
-      let downsideTraded = allStocks.filter(s => s.pct_change < 0);
-      if (downsideTraded.length === 0) {
-        downsideTraded = [...allStocks].sort((a, b) => (a.pct_change || 0) - (b.pct_change || 0));
+      if (isElementVisiblePane(document.getElementById('table-world-strategy'))) {
+        renderWorldStrategyTab();
       }
-      downsideTraded.forEach(s => {
-        s.claude_ai_score = calcClaudeAiTradeSkillScore(s, false);
-      });
-      downsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
-
-      // Sanitize and validate LISTED AT time for Top 10 Downside Traded Candidates (Heavy Selling)
-      downsideTraded.slice(0, 10).forEach((s, idx) => {
-        sanitizeStockListedTime(s, idx, true, 10);
-      });
-
-      // Sanitize and validate LISTED AT time for Top 10 Upside Traded Candidates
-      upsideTraded.slice(0, 10).forEach((s, idx) => {
-        sanitizeStockListedTime(s, idx, false, 10);
-      });
-
-      window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(upsideTraded.slice(0, 10));
-      window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(downsideTraded.slice(0, 10));
-
-      renderTable('table-home-top-traded', window.TOP_10_UPSIDE, true, activeAiStrategyFilter !== 'ALL');
-      renderTable('table-home-top-traded-downside', window.TOP_10_DOWNSIDE, false, activeAiStrategyFilter !== 'ALL');
-      renderWorldStrategyTab();
 
       // Dedicated Engine Tabs
-      renderTable('table-strong-bullish', DATA.strong_bullish, true);
-      renderTable('table-strong-bearish', DATA.strong_bearish, false);
-      renderTable('table-sonic-bullish', DATA.sonic_bullish, true);
-      renderTable('table-sonic-bearish', DATA.sonic_bearish, false);
-      renderTable('table-titan-bullish', DATA.titan_bullish, true);
-      renderTable('table-titan-bearish', DATA.titan_bearish, false);
-      renderTable('table-elite-bullish', DATA.quant_elite_bullish, true);
-      renderTable('table-elite-bearish', DATA.quant_elite_bearish, false);
-      renderTable('table-elite-pro-bullish', DATA.quant_elite_pro_bullish, true);
-      renderTable('table-elite-pro-bearish', DATA.quant_elite_pro_bearish, false);
-      renderTable('table-titan-cash-bullish', DATA.titan_cash_bullish, true);
-      renderTable('table-titan-cash-bearish', DATA.titan_cash_bearish, false);
+      renderVisibleTable('table-strong-bullish', DATA.strong_bullish, true);
+      renderVisibleTable('table-strong-bearish', DATA.strong_bearish, false);
+      renderVisibleTable('table-sonic-bullish', DATA.sonic_bullish, true);
+      renderVisibleTable('table-sonic-bearish', DATA.sonic_bearish, false);
+      renderVisibleTable('table-titan-bullish', DATA.titan_bullish, true);
+      renderVisibleTable('table-titan-bearish', DATA.titan_bearish, false);
+      renderVisibleTable('table-elite-bullish', DATA.quant_elite_bullish, true);
+      renderVisibleTable('table-elite-bearish', DATA.quant_elite_bearish, false);
+      renderVisibleTable('table-elite-pro-bullish', DATA.quant_elite_pro_bullish, true);
+      renderVisibleTable('table-elite-pro-bearish', DATA.quant_elite_pro_bearish, false);
+      renderVisibleTable('table-titan-cash-bullish', DATA.titan_cash_bullish, true);
+      renderVisibleTable('table-titan-cash-bearish', DATA.titan_cash_bearish, false);
 
       // New Momentum & Liquidity Tables
-      renderTable('table-momentum-upside', DATA.best_momentum_upside, true);
-      renderTable('table-momentum-downside', DATA.best_momentum_downside, false);
+      renderVisibleTable('table-momentum-upside', DATA.best_momentum_upside, true);
+      renderVisibleTable('table-momentum-downside', DATA.best_momentum_downside, false);
       // Market Liquidity Dedicated Tab: Strictly Top 10 Upside & Top 10 Downside by Monetary Turnover (Rs Cr), newest Listed At on top
-      const liqUp = sortByListedAtNewestFirstAtoZ(
-        [...allStocks].filter(s => (Number(s.pct_change) || 0) >= 0).sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0)).slice(0, 10)
-      );
-      const liqDn = sortByListedAtNewestFirstAtoZ(
-        [...allStocks].filter(s => (Number(s.pct_change) || 0) < 0).sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0)).slice(0, 10)
-      );
-      renderTable('table-top-traded', liqUp, true);
-      renderTable('table-top-traded-downside', liqDn, false);
-      renderTable('table-most-active', DATA.most_active_volume, true);
+      if (isElementVisiblePane(document.getElementById('table-top-traded')) || isElementVisiblePane(document.getElementById('table-top-traded-downside'))) {
+        const liqUp = sortByListedAtNewestFirstAtoZ(
+          [...allStocks].filter(s => (Number(s.pct_change) || 0) >= 0).sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0)).slice(0, 10)
+        );
+        const liqDn = sortByListedAtNewestFirstAtoZ(
+          [...allStocks].filter(s => (Number(s.pct_change) || 0) < 0).sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0)).slice(0, 10)
+        );
+        renderVisibleTable('table-top-traded', liqUp, true);
+        renderVisibleTable('table-top-traded-downside', liqDn, false);
+      }
+      renderVisibleTable('table-most-active', DATA.most_active_volume, true);
     }
 
     // Modal Orders & Formulas
@@ -11924,6 +12047,9 @@ ${json.message || 'Unauthorized token.'}`);
     function renderNiftyOptionChain() {
       const tbody = document.getElementById('nifty-option-chain-body');
       const tbodyDedicated = document.getElementById('nifty-option-chain-body-dedicated');
+      const showHome = isElementVisiblePane(tbody);
+      const showDedicated = isElementVisiblePane(tbodyDedicated);
+      if (!showHome && !showDedicated) return;
 
       let html = '';
       NIFTY_OPTION_CHAIN_STRIKES.forEach(row => {
@@ -11999,8 +12125,8 @@ ${json.message || 'Unauthorized token.'}`);
         `;
       });
 
-      if (tbody) tbody.innerHTML = html;
-      if (tbodyDedicated) tbodyDedicated.innerHTML = html;
+      if (showHome && tbody) tbody.innerHTML = html;
+      if (showDedicated && tbodyDedicated) tbodyDedicated.innerHTML = html;
     }
 
 
@@ -13023,59 +13149,64 @@ ${json.message || 'Unauthorized token.'}`);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      // Enforce Stock-Only Isolation & Top 10 Up/Down Limits before first paint
+      // 1. Enforce Stock-Only Isolation & Render Only Active Tab Above-the-Fold First
       if (typeof sanitizeDataScannersUniverse === 'function') {
         sanitizeDataScannersUniverse();
       }
-      // Initialize Claude AI Autonomous Sentinel Agent & Notification Engine
       try {
-        ClaudeSentinelAgent.init();
-        ClaudeNotificationEngine.init();
-        ClaudeSrHunterEngine.init();
-        PreOpenEngine.init();
         CyberLivePriceEngine.init();
         MidnightSessionManager.init();
-        if (typeof Claude10SkillsAgent !== 'undefined') Claude10SkillsAgent.init();
       } catch (e) {
-        console.warn('Engine init warning:', e);
+        console.warn('Core live init warning:', e);
       }
 
       renderAllTables();
-      renderSectorHeatmap();
-      renderClaudeIndicesOptions();
       renderNiftyOptionChain();
-      renderSectorRank();
-      renderNews();
-      renderWatchlistTable();
-      renderJournal();
       updateIndicesUI();
 
-      // Populate Sector Filters safely
-      const secSelect = document.getElementById('watchlist-sector-filter');
-      const hmSelect = document.getElementById('heatmap-sector-filter');
-      const uniqueSecs = Array.from(new Set((DATA.sectors || []).map(s => s.name))).sort();
-      uniqueSecs.forEach(sec => {
-        if (secSelect) {
-          const opt = document.createElement('option');
-          opt.value = sec;
-          opt.innerText = sec;
-          secSelect.appendChild(opt);
+      // 2. Defer secondary & hidden-tab initialization off the critical first-paint frame
+      setTimeout(() => {
+        try {
+          ClaudeSentinelAgent.init();
+          ClaudeNotificationEngine.init();
+          ClaudeSrHunterEngine.init();
+          PreOpenEngine.init();
+          if (typeof Claude10SkillsAgent !== 'undefined') Claude10SkillsAgent.init();
+        } catch (e) {
+          console.warn('Deferred engine init warning:', e);
         }
-        if (hmSelect) {
-          const opt2 = document.createElement('option');
-          opt2.value = sec;
-          opt2.innerText = sec;
-          hmSelect.appendChild(opt2);
-        }
-      });
 
-      // Auto-refresh quotes every 30 seconds
-      setInterval(syncMarketLive, 15000);
+        // Populate Sector Filters safely
+        const secSelect = document.getElementById('watchlist-sector-filter');
+        const hmSelect = document.getElementById('heatmap-sector-filter');
+        const uniqueSecs = Array.from(new Set((DATA.sectors || []).map(s => s.name))).sort();
+        const secFrag = document.createDocumentFragment();
+        const hmFrag = document.createDocumentFragment();
+        uniqueSecs.forEach(sec => {
+          if (secSelect) {
+            const opt = document.createElement('option');
+            opt.value = sec;
+            opt.innerText = sec;
+            secFrag.appendChild(opt);
+          }
+          if (hmSelect) {
+            const opt2 = document.createElement('option');
+            opt2.value = sec;
+            opt2.innerText = sec;
+            hmFrag.appendChild(opt2);
+          }
+        });
+        if (secSelect) secSelect.appendChild(secFrag);
+        if (hmSelect) hmSelect.appendChild(hmFrag);
+
+        renderNews();
+        renderJournal();
+      }, 150);
 
       // Automatically show Fast Login / Sign In modal on page open as requested
       setTimeout(() => {
         openAuthModal('signin');
-      }, 250);
+      }, 280);
     });
 
     // ============================================================
@@ -13296,6 +13427,7 @@ ${json.message || 'Unauthorized token.'}`);
 
       animateHistogram() {
         if (!this.bars || this.bars.length === 0) return;
+        if ((typeof document !== 'undefined' && document.hidden) || !isElementVisiblePane(this.bars[0])) return;
         this.bars.forEach((bar, idx) => {
           const target = Math.floor(Math.sin((Date.now() / 300) + (idx * 0.45)) * 35 + 50);
           const clamped = Math.max(15, Math.min(95, target + (Math.random() * 20 - 10)));
@@ -13435,6 +13567,7 @@ ${json.message || 'Unauthorized token.'}`);
         const clockEl = document.getElementById('preopen-live-clock');
         const badgeEl = document.getElementById('preopen-status-badge');
         if (!clockEl) return;
+        if ((typeof document !== 'undefined' && document.hidden) || !isElementVisiblePane(clockEl)) return;
         const now = new Date();
         const ist = getISTDatePartsNow(now);
         clockEl.innerText = `${String(ist.hours).padStart(2, '0')}:${String(ist.minutes).padStart(2, '0')}:${String(ist.seconds).padStart(2, '0')} IST`;

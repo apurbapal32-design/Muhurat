@@ -157,10 +157,18 @@ async function startServer() {
 
       const quotes = await upstoxService.fetchUnifiedMarketQuotes(symbols, accessToken, pricesMap);
 
+      const includeBars = req.query.bars === '1';
+      const isCompact = req.query.compact === '1';
+      const leanQuoteObj = (q: UnifiedMarketQuote) => {
+        if (includeBars) return q;
+        const { intradayBars: _omitBars, ...rest } = q;
+        return rest;
+      };
+
       const toIdxPayload = (q: UnifiedMarketQuote | undefined, fallback: any) =>
         q
           ? {
-              ...q,
+              ...leanQuoteObj(q),
               prev_close_price: q.prevClose,
               open_price: q.open,
               high_price: q.high,
@@ -221,9 +229,13 @@ async function startServer() {
 
       const formattedQuotes: Record<string, any> = {};
       Object.entries(quotes).forEach(([sym, q]) => {
-        formattedQuotes[sym] = q;
-        if (q?.instrumentKey) formattedQuotes[q.instrumentKey] = q;
-        formattedQuotes[`NSE:${upstoxService.cleanSymbol(sym)}-EQ`] = q;
+        if (!q) return;
+        const lean = leanQuoteObj(q);
+        formattedQuotes[sym] = lean;
+        if (!isCompact) {
+          if (q.instrumentKey) formattedQuotes[q.instrumentKey] = lean;
+          formattedQuotes[`NSE:${upstoxService.cleanSymbol(sym)}-EQ`] = lean;
+        }
       });
 
       const hasUpstoxLive = Object.values(quotes).some((q) => q && q.source === 'UPSTOX_API_V2');
@@ -581,6 +593,68 @@ async function startServer() {
   app.get('/api/scan/results', (req, res) => {
     try {
       const data = scannerService.getScanResults();
+      if (req.query.compact === '1') {
+        const shrinkStock = (s: any) => ({
+          symbol: s.symbol,
+          name: s.name,
+          fyersSymbol: s.fyersSymbol,
+          sector: s.sector,
+          price: s.price,
+          change: s.change,
+          changePercent: s.changePercent,
+          volume: s.volume,
+          turnover: s.turnover,
+          signal: s.signal,
+          aiScore: s.aiScore,
+          bidQty: s.bidQty,
+          askQty: s.askQty,
+          bidAskRatio: s.bidAskRatio,
+          orderBookBias: s.orderBookBias,
+          listedAt: s.listedAt,
+          signalListedAt: s.signalListedAt,
+          fixedEntryPrice: s.fixedEntryPrice,
+          fixedStopLoss: s.fixedStopLoss,
+          fixedTarget1: s.fixedTarget1,
+          formulaCode: s.formulaCode,
+          formulaName: s.formulaName,
+          tradeStatus: s.tradeStatus,
+          entryTime: s.entryTime,
+          strikeStep: s.strikeStep,
+          risk: s.risk
+            ? { entryPrice: s.risk.entryPrice, stopLoss: s.risk.stopLoss, target1: s.risk.target1 }
+            : undefined,
+          indicators: s.indicators
+            ? {
+                price: s.indicators.price,
+                vwap: s.indicators.vwap,
+                rsi: s.indicators.rsi,
+                adx: s.indicators.adx,
+                rvol: s.indicators.rvol,
+                high: s.indicators.high,
+                low: s.indicators.low,
+                open: s.indicators.open,
+                close: s.indicators.close,
+                squeezeOn: s.indicators.squeezeOn,
+              }
+            : undefined,
+          oiData: s.oiData
+            ? {
+                buildup: s.oiData.buildup,
+                openInterest: s.oiData.openInterest,
+                changeInOIPercent: s.oiData.changeInOIPercent,
+                pcr: s.oiData.pcr,
+              }
+            : undefined,
+          greeks: s.greeks ? { iv: s.greeks.iv, ivPercentile: s.greeks.ivPercentile } : undefined,
+        });
+        return res.json({
+          stocks: (data.stocks || []).map(shrinkStock),
+          top10Buy: (data.top10Buy || []).map(shrinkStock),
+          top10Sell: (data.top10Sell || []).map(shrinkStock),
+          overview: data.overview,
+          sessionState: data.sessionState,
+        });
+      }
       res.json(data);
     } catch (error: any) {
       console.error('Error in /api/scan/results:', error);
