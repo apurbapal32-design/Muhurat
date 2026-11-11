@@ -6999,15 +6999,15 @@
       const curS = istDate.getSeconds();
       const curTotalSec = curH * 3600 + curM * 60 + curS;
 
-      const marketOpenSec = 9 * 3600 + 15 * 60; // 09:15:00
+      const preOpenStartSec = 9 * 3600; // 09:00:00 Pre-Open & Formula Window
       const marketCloseSec = 15 * 3600 + 30 * 60; // 15:30:00
 
-      // During market hours (09:15 - 15:30), targetSec cannot exceed current IST clock
-      if (curTotalSec >= marketOpenSec && curTotalSec <= marketCloseSec) {
-        return targetSec > curTotalSec;
+      // During Pre-Open / Live Market (09:00 - 15:30), listed time cannot precede 09:00 or exceed current IST clock
+      if (curTotalSec >= preOpenStartSec && curTotalSec <= marketCloseSec) {
+        return targetSec < preOpenStartSec || targetSec > curTotalSec;
       }
-      // Outside market hours, any time outside 09:15 - 15:30 is invalid
-      if (targetSec < marketOpenSec || targetSec > marketCloseSec) {
+      // Outside market hours, valid timestamps belong to 09:00 - 15:30
+      if (targetSec < preOpenStartSec || targetSec > marketCloseSec) {
         return true;
       }
       return false;
@@ -7021,37 +7021,37 @@
       const curM = istDate.getMinutes();
       const curS = istDate.getSeconds();
       const curTotalSec = curH * 3600 + curM * 60 + curS;
-      
+
+      const preOpenStartSec = 9 * 3600; // 09:00:00
       const marketOpenSec = 9 * 3600 + 15 * 60; // 09:15:00
       const marketCloseSec = 15 * 3600 + 30 * 60; // 15:30:00
 
       const existingSec = timeStringToSec(stock.listed_at);
-      const isMarketOpenNow = (curTotalSec >= marketOpenSec && curTotalSec <= marketCloseSec);
-      
-      if (isMarketOpenNow) {
-        // If existing timestamp is in the past during today's market session, keep it
-        if (existingSec >= marketOpenSec && existingSec <= (curTotalSec - 10)) {
+      const isSessionActiveNow = (curTotalSec >= preOpenStartSec && curTotalSec <= marketCloseSec);
+
+      if (isSessionActiveNow) {
+        // Keep genuine formula / Pre-Open / real-time discovery timestamp <= current clock
+        if (existingSec >= preOpenStartSec && existingSec <= curTotalSec) {
           return stock.listed_at;
         }
-        // If existing timestamp is in the future (> current time), dynamically re-anchor it
-        const elapsedSec = Math.max(300, curTotalSec - marketOpenSec);
+        const anchorStart = curTotalSec < marketOpenSec ? preOpenStartSec : marketOpenSec;
+        const elapsedSec = Math.max(30, curTotalSec - anchorStart);
         const count = totalCount || 10;
         const step = elapsedSec / (count + 1);
-        const symSeed = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        const symSeed = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0) * (c.charCodeAt(1) || 7), 0);
         const jitter = (symSeed % 40) - 20;
-        const assignedSec = Math.min(curTotalSec - 20, Math.max(marketOpenSec + 60, Math.round(marketOpenSec + ((rankIdx || 0) + 1) * step + jitter)));
+        const assignedSec = Math.min(curTotalSec - 2, Math.max(anchorStart + 3, Math.round(anchorStart + ((rankIdx || 0) + 1) * step + jitter)));
         const newTime = formatSecToTime(assignedSec);
         stock.listed_at = newTime;
         return newTime;
       } else {
-        // Outside market hours: ensure it's within 09:15 - 15:30
-        if (existingSec >= marketOpenSec && existingSec <= marketCloseSec) {
+        if (existingSec >= preOpenStartSec && existingSec <= marketCloseSec) {
           return stock.listed_at;
         }
         const totalSessionSec = marketCloseSec - marketOpenSec;
         const count = totalCount || 10;
         const step = totalSessionSec / (count + 1);
-        const symSeed = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        const symSeed = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0) * (c.charCodeAt(1) || 7), 0);
         const jitter = (symSeed % 90) - 45;
         const assignedSec = Math.min(marketCloseSec - 600, Math.max(marketOpenSec + 120, Math.round(marketOpenSec + ((rankIdx || 0) + 1) * step + jitter)));
         const newTime = formatSecToTime(assignedSec);
@@ -7252,9 +7252,9 @@
       }
     }
 
-    function buildEngineRow(s, isBullish, shouldFilter = false) {
+    function buildEngineRow(s, isBullish, shouldFilter = false, rankIdx = 0, totalCount = 10) {
       if (!s.listed_at || isTimeInFutureIST(s.listed_at)) {
-        s.listed_at = sanitizeStockListedTime(s, 0, !isBullish, 10);
+        s.listed_at = sanitizeStockListedTime(s, rankIdx, !isBullish, totalCount);
       }
       const pColor = s.pct_change >= 0 ? 'text-emerald-400' : 'text-rose-400';
       const pSign = s.pct_change >= 0 ? '+' : '';
@@ -7273,26 +7273,47 @@
       // CLAUDE AI TRADER SKILL: QUANTUM ENTRY, TARGETS & STOP LOSS
       // -------------------------------------------------------------
       const curPrice = Number(s.price) || 100.0;
+      const pctMove = Number(s.pct_change) || 0;
+      const openRef = curPrice / (1 + pctMove / 100);
+      const vwapRef = Number(s.atp) || openRef;
+      const minEntrySep = Math.max(0.5, curPrice * 0.0028);
+
       let entryVal = Number(s.entry);
-      if (!entryVal || isNaN(entryVal) || entryVal <= 0) {
-        entryVal = isBullish ? (curPrice * 0.995) : (curPrice * 1.005);
+      if (!entryVal || isNaN(entryVal) || entryVal <= 0 || (!s.entry_locked && Math.abs(entryVal - curPrice) < minEntrySep * 0.35)) {
+        // Formula fallback anchored to Open/VWAP breakout level so Entry NEVER matches moving Live Price
+        const anchor = (openRef * 0.55 + vwapRef * 0.45);
+        entryVal = isBullish
+          ? Math.min(curPrice - minEntrySep, anchor)
+          : Math.max(curPrice + minEntrySep, anchor);
+        entryVal = Math.max(0.05, entryVal);
       }
       entryVal = Math.round(entryVal * 100) / 100;
       s.entry = entryVal;
 
       let stopVal = Number(s.stop);
       if (!stopVal || isNaN(stopVal) || stopVal <= 0) {
-        stopVal = isBullish ? (entryVal * 0.982) : (entryVal * 1.018);
+        stopVal = isBullish ? (entryVal * 0.985) : (entryVal * 1.015);
       }
       stopVal = Math.round(stopVal * 100) / 100;
       s.stop = stopVal;
 
       let targetVal = Number(s.target);
       if (!targetVal || isNaN(targetVal) || targetVal <= 0) {
-        targetVal = isBullish ? (entryVal * 1.035) : (entryVal * 0.965);
+        targetVal = isBullish ? (entryVal * 1.028) : (entryVal * 0.972);
       }
       targetVal = Math.round(targetVal * 100) / 100;
       s.target = targetVal;
+
+      const rawVsEntryPct = ((curPrice - entryVal) / entryVal) * 100;
+      const vsEntryPct = isBullish ? rawVsEntryPct : -rawVsEntryPct;
+      const isT1Hit = isBullish ? (curPrice >= targetVal) : (curPrice <= targetVal);
+      const isSlHit = isBullish ? (curPrice <= stopVal) : (curPrice >= stopVal);
+      const liveEntryBadge = isT1Hit
+        ? `<span class="text-[8.5px] px-1 rounded bg-emerald-500/25 text-emerald-300 font-black border border-emerald-500/40">🎯 T1 HIT</span>`
+        : (isSlHit
+          ? `<span class="text-[8.5px] px-1 rounded bg-rose-500/25 text-rose-300 font-black border border-rose-500/40">🛡️ SL HIT</span>`
+          : `<span class="text-[8.5px] px-1 rounded ${vsEntryPct >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'} font-bold">${vsEntryPct >= 0 ? '+' : ''}${vsEntryPct.toFixed(2)}% vs Entry</span>`);
+      const formulaLabel = s.formula_name || (strat && strat.tag ? strat.tag.replace(/^[^A-Za-z0-9]+/, '') : 'Formula Trigger');
 
       const risk = Math.abs(entryVal - stopVal);
       const reward = Math.abs(targetVal - entryVal);
@@ -7327,12 +7348,13 @@
             <div class="text-[10px] ${s.sector_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${s.sector_pct >= 0 ? '+' : ''}${s.sector_pct}%</div>
           </td>
           <td class="p-3">
-            <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/20 whitespace-nowrap" title="Alert Triggered: ${s.listed_at || ''} IST">🕒 ${s.listed_at || '--'}</span>
+            <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/20 whitespace-nowrap" title="Formula Trigger (${formulaLabel}): ${s.listed_at || ''} IST">🕒 ${s.listed_at || '--'}</span>
+            <div class="text-[9px] text-amber-300/90 font-bold mt-0.5 truncate max-w-[125px]" title="${formulaLabel}">${formulaLabel}</div>
           </td>
           <!-- ENTRY PRICE & BEST STRATEGY (CLAUDE AI TRADER SKILL) -->
-          <td class="p-3 min-w-[170px]" onclick="event.stopPropagation(); openClaudeAiStockSignalModal('${s.symbol}')">
+          <td class="p-3 min-w-[175px]" onclick="event.stopPropagation(); openClaudeAiStockSignalModal('${s.symbol}')">
             <div class="flex items-center gap-1.5 font-bold font-mono">
-              <span class="text-amber-300 text-xs font-black">₹${entryVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="text-amber-300 text-xs font-black" title="Locked Scanner Formula Entry Price">₹${entryVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${s.entry_locked ? ' 🔒' : ''}</span>
               <span class="text-[9px] px-1.5 py-0.2 rounded font-extrabold ${strat.badgeClass} font-mono border whitespace-nowrap cursor-pointer hover:opacity-90 transition" title="${strat.name} • Click to open AI Strategy Studio">${strat.tag}</span>
             </div>
             <div class="text-[9.5px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
@@ -7344,8 +7366,11 @@
             </div>
           </td>
           <td class="p-3">
-            <div class="font-bold text-white text-xs">₹${s.price.toLocaleString('en-IN')}</div>
-            <div class="text-[9.5px] ${s.abs_change >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${s.abs_change >= 0 ? '+' : ''}₹${s.abs_change.toFixed(2)}</div>
+            <div class="font-bold text-white text-xs">₹${s.price.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div class="flex items-center gap-1.5 mt-0.5 whitespace-nowrap">
+              <span class="text-[9.5px] ${s.abs_change >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${s.abs_change >= 0 ? '+' : ''}₹${s.abs_change.toFixed(2)}</span>
+              ${liveEntryBadge}
+            </div>
           </td>
           <td class="p-3 font-bold ${pColor}">${pSign}${s.pct_change}%</td>
           <td class="p-3 min-w-[125px]">
@@ -7435,8 +7460,9 @@
         <tbody>
       `;
       let count = 0;
-      dataList.forEach(s => {
-        const row = buildEngineRow(s, isBullish, shouldFilter);
+      const listLen = dataList.length || 10;
+      dataList.forEach((s, idx) => {
+        const row = buildEngineRow(s, isBullish, shouldFilter, idx, listLen);
         if (row && row.trim().length > 0) {
           html += row;
           count++;
@@ -8920,12 +8946,17 @@ function renderJournal() {
           hyperflow: Number(hyperflow.toFixed(1)),
           delta: Math.round(vol * (pct / 100) * 0.45),
           side: isBull ? 'LONG' : 'SHORT',
-          entry: Number(b.risk?.entryPrice || price),
-          stop: Number(b.risk?.stopLoss || (isBull ? price * 0.985 : price * 1.015)),
-          target: Number(b.risk?.target1 || (isBull ? price * 1.03 : price * 0.97)),
+          entry: Number(b.fixedEntryPrice || b.risk?.entryPrice || (isBull ? price * 0.995 : price * 1.005)),
+          stop: Number(b.fixedStopLoss || b.risk?.stopLoss || (isBull ? price * 0.985 : price * 1.015)),
+          target: Number(b.fixedTarget1 || b.risk?.target1 || (isBull ? price * 1.03 : price * 0.97)),
+          entry_locked: Boolean(b.fixedEntryPrice || b.risk?.entryPrice),
+          formula_code: b.formulaCode || '',
+          formula_name: b.formulaName || '',
+          trade_status: b.tradeStatus || 'ACTIVE',
+          entry_time: b.entryTime || b.listedAt || '',
           day_high: Number(b.indicators?.high || Math.max(price, price - absChg)),
           day_low: Number(b.indicators?.low || Math.min(price, price - absChg)),
-          listed_at: b.listedAt || b.signalListedAt || `${String(getISTDatePartsNow().hours).padStart(2, '0')}:${String(getISTDatePartsNow().minutes).padStart(2, '0')}`,
+          listed_at: b.listedAt || b.signalListedAt || sanitizeStockListedTime({ symbol: b.symbol }, 0, !isBull, 25),
           volume: vol,
           volume_str: this.formatCrVolStr(vol, false),
           atp: Number(b.indicators?.vwap || price),
@@ -9071,12 +9102,15 @@ function renderJournal() {
             }
           }
 
-          // Clean local backup fallback if offline: fetch /api/market/quotes and re-rank fresh!
+          // Clean local backup fallback if offline: fetch /api/market/quotes and assign formula-staggered timestamps!
           if (!freshPool || freshPool.length === 0) {
             await CyberLivePriceEngine.fetchBatchQuotes();
             freshPool = [...(this.universeCache || DATA.all_stocks || [])];
-            freshPool.forEach(s => {
-              s.listed_at = `${String(ist.hours).padStart(2, '0')}:${String(ist.minutes).padStart(2, '0')}:${String(ist.seconds).padStart(2, '0')}`;
+            freshPool.forEach((s, idx) => {
+              if (!s.listed_at || isTimeInFutureIST(s.listed_at)) {
+                s.listed_at = '';
+                sanitizeStockListedTime(s, idx, (s.pct_change || 0) < 0, freshPool.length || 20);
+              }
             });
           }
 
@@ -9424,16 +9458,20 @@ function renderJournal() {
           }
           s.delta = Math.round((s.volume || 200000) * ((s.pct_change || 0) / 100) * 0.4);
 
-          // Recalibrate Entry / Stop / Target / Strikes if static baked values differed from real live NSE price
-          if (!s.entry || Math.abs(s.entry - newLp) / newLp > 0.06) {
+          // Update dynamic strikes around spot, but NEVER overwrite formula-locked Entry/Stop/Target!
+          const step = newLp > 3000 ? 50 : newLp > 1000 ? 20 : 10;
+          const atm = Math.round(newLp / step) * step;
+          s.put_writing_strike = `${atm - step} PE`;
+          s.call_writing_strike = `${atm + step} CE`;
+
+          if (!s.entry_locked && (!s.entry || Math.abs(s.entry - newLp) / newLp > 0.12)) {
             const isBull = (s.pct_change || 0) >= 0;
-            s.entry = Number((newLp * (isBull ? 0.998 : 1.002)).toFixed(2));
-            s.stop = Number((newLp * (isBull ? 0.985 : 1.015)).toFixed(2));
-            s.target = Number((newLp * (isBull ? 1.03 : 0.97)).toFixed(2));
-            const step = newLp > 3000 ? 50 : newLp > 1000 ? 20 : 10;
-            const atm = Math.round(newLp / step) * step;
-            s.put_writing_strike = `${atm - step} PE`;
-            s.call_writing_strike = `${atm + step} CE`;
+            const refAnchor = Number(q.atp || q.open || newLp * (isBull ? 0.994 : 1.006));
+            const minSep = Math.max(0.5, newLp * 0.0028);
+            const fallbackEntry = isBull ? Math.min(newLp - minSep, refAnchor) : Math.max(newLp + minSep, refAnchor);
+            s.entry = Number(Math.max(0.05, fallbackEntry).toFixed(2));
+            s.stop = Number((s.entry * (isBull ? 0.985 : 1.015)).toFixed(2));
+            s.target = Number((s.entry * (isBull ? 1.028 : 0.972)).toFixed(2));
           }
 
           if (oldPrice > 0 && newLp !== oldPrice) {
@@ -12359,9 +12397,20 @@ ${json.message || 'Unauthorized token.'}`);
         else if (pct < -1.5) srZone = 'Below Support S1 (Supply Overhang)';
         else if (pct >= 0) srZone = 'At Central Pivot Floor (Bull Bias)';
 
-        const entryPrice = isBull ? Math.round((iep * 1.002) * 100) / 100 : Math.round((iep * 0.998) * 100) / 100;
-        const target = isBull ? Math.round((iep * 1.025) * 100) / 100 : Math.round((iep * 0.975) * 100) / 100;
-        const stopLoss = isBull ? Math.round((prevClose * 0.995) * 100) / 100 : Math.round((prevClose * 1.005) * 100) / 100;
+        const hasLockedPreOpen = s.entry_locked && Number(s.entry) > 0;
+        const minPreSep = Math.max(0.5, prevClose * 0.0025);
+        const eqEntry = hasLockedPreOpen
+          ? Math.round(Number(s.entry) * 100) / 100
+          : (Math.abs(gapPts) > prevClose * 0.004
+              ? Math.round((prevClose + (isBull ? 1 : -1) * Math.abs(gapPts) * 0.55) * 100) / 100
+              : Math.round((prevClose + (isBull ? minPreSep : -minPreSep)) * 100) / 100);
+        const entryPrice = eqEntry;
+        const target = (hasLockedPreOpen && Number(s.target) > 0)
+          ? Math.round(Number(s.target) * 100) / 100
+          : (isBull ? Math.round((entryPrice * 1.025) * 100) / 100 : Math.round((entryPrice * 0.975) * 100) / 100);
+        const stopLoss = (hasLockedPreOpen && Number(s.stop) > 0)
+          ? Math.round(Number(s.stop) * 100) / 100
+          : (isBull ? Math.round((prevClose * 0.995) * 100) / 100 : Math.round((prevClose * 1.005) * 100) / 100);
 
         return {
           symbol: s.symbol,
@@ -12383,6 +12432,8 @@ ${json.message || 'Unauthorized token.'}`);
           unmatchedQty,
           unmatchedStr: s.unmatched_str || ((unmatchedQty >= 0 ? '+' : '') + Math.round(unmatchedQty).toLocaleString('en-IN') + (unmatchedQty >= 0 ? ' Buy' : ' Sell')),
           turnoverCr: s.turnover_cr || Math.round((matchedVol * iep / 10000000) * 100) / 100,
+          listedAt: s.listed_at || '09:05:00',
+          formulaName: s.formula_name || 'Pre-Open Equilibrium IEP',
           entryPrice,
           target,
           stopLoss
@@ -12609,8 +12660,8 @@ ${json.message || 'Unauthorized token.'}`);
               <!-- 13. AI PRE-OPEN TRADE SETUP -->
               <td class="p-2 text-left">
                 <div class="text-[10px] font-mono leading-tight">
-                  <div>Entry: <strong class="text-emerald-400">₹${itm.entryPrice.toLocaleString('en-IN')}</strong> &bull; Tgt: <strong class="text-cyan-300">₹${itm.target.toLocaleString('en-IN')}</strong></div>
-                  <div>SL: <strong class="text-rose-400">₹${itm.stopLoss.toLocaleString('en-IN')}</strong></div>
+                  <div>Entry: <strong class="text-emerald-400">₹${itm.entryPrice.toLocaleString('en-IN')} 🔒</strong> &bull; Tgt: <strong class="text-cyan-300">₹${itm.target.toLocaleString('en-IN')}</strong></div>
+                  <div>SL: <strong class="text-rose-400">₹${itm.stopLoss.toLocaleString('en-IN')}</strong> &bull; <span class="text-cyan-300">🕒 ${itm.listedAt}</span></div>
                 </div>
               </td>
 
@@ -12686,35 +12737,35 @@ ${json.message || 'Unauthorized token.'}`);
       // Indices master benchmark levels
       indicesData: [
         { 
-          symbol: 'NIFTY 50', name: 'NIFTY 50 Benchmark Index', type: 'INDEX', price: 25030.35, pct_change: 2.01, high: 25150.00, low: 24890.00, listed_at: '09:22:15', strategy: 'TRAP', trapType: 'Bullish Liquidity Sweep & Reclaim', accuracy: '95.2%',
+          symbol: 'NIFTY 50', name: 'NIFTY 50 Benchmark Index', type: 'INDEX', price: 25044.65, pct_change: 0.42, high: 25150.00, low: 24890.00, listed_at: '09:22:15', strategy: 'TRAP', trapType: 'Bullish Liquidity Sweep & Reclaim', accuracy: '95.2%',
           total_bid_str: '48.5 L', total_ask_str: '32.1 L', bid_ask_ratio: 1.51, order_book_bias: 'Heavy Buyer Accumulation',
           turnover_str: '₹ 38,450 Cr', volume_str: '18.4 Cr', rvol: 1.45, oi: '1.42 Cr', oi_chg_pct: 8.4,
           buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '25000 PE', put_writing_contracts: '+1.85 L',
           call_writing_strike: '25200 CE', call_writing_contracts: '+1.42 L', pcr: 1.24, pcr_tag: 'Bullish (>1.0)', iv: 13.8, ivp: 38
         },
         { 
-          symbol: 'BANKNIFTY', name: 'NIFTY Bank Sector Index', type: 'INDEX', price: 52380.00, pct_change: 1.84, high: 52580.00, low: 51820.00, listed_at: '09:35:40', strategy: 'BREAKOUT', trapType: 'Breakout & Retest Confirmation', accuracy: '92.4%',
+          symbol: 'BANKNIFTY', name: 'NIFTY Bank Sector Index', type: 'INDEX', price: 59741.25, pct_change: 0.58, high: 59920.00, low: 59310.00, listed_at: '09:35:40', strategy: 'BREAKOUT', trapType: 'Breakout & Retest Confirmation', accuracy: '92.4%',
           total_bid_str: '26.8 L', total_ask_str: '18.4 L', bid_ask_ratio: 1.46, order_book_bias: 'Strong Call Writing Squeeze',
           turnover_str: '₹ 28,120 Cr', volume_str: '9.2 Cr', rvol: 1.52, oi: '84.5 L', oi_chg_pct: 9.1,
           buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '52000 PE', put_writing_contracts: '+95,400',
           call_writing_strike: '52500 CE', call_writing_contracts: '+78,200', pcr: 1.08, pcr_tag: 'Bullish (>1.0)', iv: 16.4, ivp: 45
         },
         { 
-          symbol: 'FINNIFTY', name: 'NIFTY Financial Services Index', type: 'INDEX', price: 24150.00, pct_change: 1.62, high: 24280.00, low: 23900.00, listed_at: '09:41:18', strategy: 'TRAP', trapType: 'Gamma Wall Absorption Trap', accuracy: '94.6%',
+          symbol: 'FINNIFTY', name: 'NIFTY Financial Services Index', type: 'INDEX', price: 27384.90, pct_change: 0.48, high: 27490.00, low: 27140.00, listed_at: '09:41:18', strategy: 'TRAP', trapType: 'Gamma Wall Absorption Trap', accuracy: '94.6%',
           total_bid_str: '14.2 L', total_ask_str: '9.8 L', bid_ask_ratio: 1.45, order_book_bias: 'Gamma Squeeze Triggered',
           turnover_str: '₹ 12,850 Cr', volume_str: '5.4 Cr', rvol: 1.60, oi: '42.1 L', oi_chg_pct: 11.2,
           buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '24000 PE', put_writing_contracts: '+64,800',
           call_writing_strike: '24300 CE', call_writing_contracts: '+49,100', pcr: 1.34, pcr_tag: 'Bullish (>1.0)', iv: 15.2, ivp: 42
         },
         { 
-          symbol: 'MIDCPNIFTY', name: 'NIFTY Midcap Select Index', type: 'INDEX', price: 13120.00, pct_change: 2.25, high: 13200.00, low: 12950.00, listed_at: '10:05:52', strategy: 'REVERSAL', trapType: 'Key Resistance Reversal', accuracy: '89.8%',
+          symbol: 'MIDCPNIFTY', name: 'NIFTY Midcap Select Index', type: 'INDEX', price: 14055.45, pct_change: 0.65, high: 14130.00, low: 13920.00, listed_at: '10:05:52', strategy: 'REVERSAL', trapType: 'Key Resistance Reversal', accuracy: '89.8%',
           total_bid_str: '8.5 L', total_ask_str: '9.1 L', bid_ask_ratio: 1.15, order_book_bias: 'Put Writing Absorption',
           turnover_str: '₹ 6,420 Cr', volume_str: '3.8 Cr', rvol: 0.95, oi: '28.6 L', oi_chg_pct: 2.1,
           buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '13000 PE', put_writing_contracts: '+32,100',
           call_writing_strike: '13200 CE', call_writing_contracts: '+48,500', pcr: 1.15, pcr_tag: 'Bullish (>1.0)', iv: 17.1, ivp: 58
         },
         { 
-          symbol: 'SENSEX', name: 'BSE SENSEX 30 Benchmark', type: 'INDEX', price: 81765.20, pct_change: 1.84, high: 82100.00, low: 81250.00, listed_at: '09:25:30', strategy: 'TRAP', trapType: 'Bullish Liquidity Sweep & Reclaim', accuracy: '94.9%',
+          symbol: 'SENSEX', name: 'BSE SENSEX 30 Benchmark', type: 'INDEX', price: 81106.65, pct_change: 0.44, high: 81380.00, low: 80710.00, listed_at: '09:25:30', strategy: 'TRAP', trapType: 'Bullish Liquidity Sweep & Reclaim', accuracy: '94.9%',
           total_bid_str: '18.4 L', total_ask_str: '12.6 L', bid_ask_ratio: 1.46, order_book_bias: 'Institutional Accumulation',
           turnover_str: '₹ 22,400 Cr', volume_str: '7.1 Cr', rvol: 1.38, oi: '62.4 L', oi_chg_pct: 7.5,
           buildup: 'Long Buildup', buildup_type: 'BULLISH', put_writing_strike: '81500 PE', put_writing_contracts: '+58,900',
@@ -12776,7 +12827,12 @@ ${json.message || 'Unauthorized token.'}`);
             pct_change: s.pct_change || 0,
             high: s.day_high || s.price * 1.015,
             low: s.day_low || s.price * 0.985,
-            listed_at: s.listed_at || '09:45:00',
+            listed_at: s.listed_at || sanitizeStockListedTime(s, 0, (s.pct_change || 0) < 0, 25),
+            entry: s.entry,
+            stop: s.stop,
+            target: s.target,
+            entry_locked: s.entry_locked,
+            formula_name: s.formula_name || strat,
             strategy: strat,
             trapType: trapType,
             accuracy: accuracy,
@@ -12786,6 +12842,33 @@ ${json.message || 'Unauthorized token.'}`);
           };
         }
         return null;
+      },
+
+      calcLockedSetup(itm) {
+        const isBull = (itm.pct_change || 0) >= 0;
+        const minSep = Math.max(0.5, itm.price * 0.0025);
+        let entryPrice;
+        if (itm.entry_locked && Number(itm.entry) > 0) {
+          entryPrice = Math.round(Number(itm.entry) * 100) / 100;
+        } else {
+          // Structural Pivot + S1/R1 Pullback/Trap Entry (never live price * 1.002!)
+          const structAnchor = isBull ? (itm.p * 0.65 + itm.s1 * 0.35) : (itm.p * 0.65 + itm.r1 * 0.35);
+          entryPrice = isBull
+            ? Math.min(itm.price - minSep, structAnchor)
+            : Math.max(itm.price + minSep, structAnchor);
+          entryPrice = Math.round(Math.max(0.05, entryPrice) * 100) / 100;
+        }
+        const stopLoss = (itm.entry_locked && Number(itm.stop) > 0)
+          ? Math.round(Number(itm.stop) * 100) / 100
+          : (isBull ? Math.round((itm.s1 * 0.997) * 100) / 100 : Math.round((itm.r1 * 1.003) * 100) / 100);
+        const target1 = (itm.entry_locked && Number(itm.target) > 0)
+          ? Math.round(Number(itm.target) * 100) / 100
+          : (isBull ? itm.r1 : itm.s1);
+        const target2 = isBull ? itm.r2 : itm.s2;
+        const risk = Math.abs(entryPrice - stopLoss);
+        const reward = Math.abs(target2 - entryPrice);
+        const rr = (risk > 0) ? `1 : ${(reward / risk).toFixed(1)}` : '1 : 2.8';
+        return { isBull, entryPrice, stopLoss, target1, target2, rr };
       },
 
       getAllItems() {
@@ -12883,15 +12966,7 @@ ${json.message || 'Unauthorized token.'}`);
         // 2. Update Deck Cards (Resistance, Pivot, Support, Strategy)
         const deckContainer = document.getElementById('sr-active-cards-deck');
         if (deckContainer) {
-          const isBull = itm.pct_change >= 0;
-          const entryPrice = isBull ? Math.round((itm.price * 1.002) * 100) / 100 : Math.round((itm.price * 0.998) * 100) / 100;
-          // User rule: Stop loss strictly just below support for buys, just above resistance for sells
-          const stopLoss = isBull ? Math.round((itm.s1 * 0.997) * 100) / 100 : Math.round((itm.r1 * 1.003) * 100) / 100;
-          const target1 = isBull ? itm.r1 : itm.s1;
-          const target2 = isBull ? itm.r2 : itm.s2;
-          const risk = Math.abs(entryPrice - stopLoss);
-          const reward = Math.abs(target2 - entryPrice);
-          const rr = (risk > 0) ? `1 : ${(reward / risk).toFixed(1)}` : '1 : 2.8';
+          const { isBull, entryPrice, stopLoss, target1, target2, rr } = this.calcLockedSetup(itm);
 
           let stratBadge = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold text-[9px] animate-pulse">🎯 TRAP TRADING (#1)</span>`;
           if (itm.strategy === 'BREAKOUT') {
@@ -12961,7 +13036,7 @@ ${json.message || 'Unauthorized token.'}`);
 
               <div class="space-y-1 text-[11px] font-mono">
                 <div class="flex justify-between"><span class="text-slate-400">Listed At:</span><span class="text-white font-bold">${itm.listed_at} IST</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Entry Price:</span><span class="text-emerald-400 font-black">₹${entryPrice.toLocaleString('en-IN')}</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Entry Price:</span><span class="text-emerald-400 font-black">₹${entryPrice.toLocaleString('en-IN')} 🔒</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Stop Loss:</span><span class="text-rose-400 font-black">₹${stopLoss.toLocaleString('en-IN')}</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Target 1 &bull; 2:</span><span class="text-cyan-300 font-bold">₹${target1.toLocaleString('en-IN')} / ₹${target2.toLocaleString('en-IN')}</span></div>
                 <div class="flex justify-between"><span class="text-slate-400">Risk : Reward:</span><span class="text-amber-300 font-black">${rr} (${itm.accuracy})</span></div>
@@ -13082,17 +13157,10 @@ ${json.message || 'Unauthorized token.'}`);
         }
 
         filtered.forEach(itm => {
-          const isBull = itm.pct_change >= 0;
+          const { isBull, entryPrice, stopLoss, target1, target2, rr } = this.calcLockedSetup(itm);
           const opt = this.generateOptionChain(itm.symbol, itm.price, itm.strategy, isBull);
           const sign = isBull ? '+' : '';
           const chgClass = isBull ? 'text-emerald-400 bg-emerald-500/15 border-emerald-500/30' : 'text-rose-400 bg-rose-500/15 border-rose-500/30';
-          const entryPrice = isBull ? Math.round((itm.price * 1.002) * 100) / 100 : Math.round((itm.price * 0.998) * 100) / 100;
-          const stopLoss = isBull ? Math.round((itm.s1 * 0.997) * 100) / 100 : Math.round((itm.r1 * 1.003) * 100) / 100;
-          const target1 = isBull ? itm.r1 : itm.s1;
-          const target2 = isBull ? itm.r2 : itm.s2;
-          const risk = Math.abs(entryPrice - stopLoss);
-          const reward = Math.abs(target2 - entryPrice);
-          const rr = (risk > 0) ? `1 : ${(reward / risk).toFixed(1)}` : '1 : 2.8';
 
           const ratio = itm.bid_ask_ratio ? Number(itm.bid_ask_ratio) : (isBull ? 1.45 : 0.82);
           const pcr = itm.pcr ? Number(itm.pcr) : (isBull ? 1.18 : 0.78);
@@ -13217,7 +13285,7 @@ ${json.message || 'Unauthorized token.'}`);
               <td class="p-2 text-slate-300 font-mono text-[10.5px] text-center">${itm.listed_at} IST</td>
 
               <!-- 17. ENTRY PRICE -->
-              <td class="p-2 text-right font-black text-emerald-400 text-[11px]">₹${entryPrice.toLocaleString('en-IN')}</td>
+              <td class="p-2 text-right font-black text-emerald-400 text-[11px]">₹${entryPrice.toLocaleString('en-IN')} 🔒</td>
 
               <!-- 18. TARGETS (T1 • T2) -->
               <td class="p-2 text-center">

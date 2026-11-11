@@ -343,6 +343,8 @@ export interface ScannedStock {
   fixedTarget1?: number;
   fixedTarget2?: number;
   fixedTarget3?: number;
+  formulaName?: string;
+  formulaCode?: string;
   newsSentiment?: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
   newsTitle?: string;
   keyTriggers: string[];
