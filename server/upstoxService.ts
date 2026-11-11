@@ -6,6 +6,7 @@ import { NIFTY_200_STOCKS } from '../src/data/nifty200';
 import { calculateMarketStatus } from '../src/data/marketSchedule';
 import {
   autonomousPriceService,
+  deriveOrderBookDepth,
   getIndexBaselinePrices,
   UnifiedMarketQuote,
 } from './autonomousPriceService';
@@ -498,6 +499,17 @@ class UpstoxService {
         }
       }
 
+      const fbDepth = deriveOrderBookDepth({
+        volume: 350000,
+        lp: basePrice,
+        open: prevClose,
+        high: Math.max(basePrice, prevClose) * 1.005,
+        low: Math.min(basePrice, prevClose) * 0.995,
+        chp,
+        atp: (basePrice + prevClose) / 2,
+        isIdx: Boolean(idxInfo),
+      });
+
       result[clean] = {
         symbol: clean,
         instrumentKey: this.getInstrumentKey(clean),
@@ -516,8 +528,8 @@ class UpstoxService {
         atp: Number(((basePrice + prevClose) / 2).toFixed(2)),
         bid: Number((basePrice - 0.1).toFixed(2)),
         ask: Number((basePrice + 0.1).toFixed(2)),
-        bidQty: 12000,
-        askQty: 11500,
+        bidQty: fbDepth.bidQty,
+        askQty: fbDepth.askQty,
         oi: 0,
         ltt: 'EOD Settlement',
         source: 'SETTLED_CLOSE',

@@ -7384,9 +7384,10 @@
             </div>
           </td>
           <td class="p-3 font-bold">
-            <span class="px-2 py-0.5 rounded border text-[11px] ${ratioBadge}">
-              ${s.bid_ask_ratio.toFixed(2)}x
+            <span class="px-2 py-0.5 rounded border text-[11px] ${ratioBadge}" title="${s.order_book_bias || (s.bid_ask_ratio >= 1.15 ? 'Buyer Dominance' : s.bid_ask_ratio <= 0.85 ? 'Seller Pressure' : 'Balanced Order Book')}">
+              ${Number(s.bid_ask_ratio || 1.0).toFixed(2)}x
             </span>
+            <div class="text-[9px] mt-0.5 truncate max-w-[95px] ${s.bid_ask_ratio >= 1.15 ? 'text-emerald-400' : (s.bid_ask_ratio <= 0.85 ? 'text-rose-400' : 'text-slate-400')}">${s.order_book_bias || (s.bid_ask_ratio >= 1.5 ? 'Heavy Buying' : s.bid_ask_ratio >= 1.15 ? 'Buyer Dominance' : s.bid_ask_ratio <= 0.65 ? 'Heavy Selling' : s.bid_ask_ratio <= 0.85 ? 'Seller Pressure' : 'Balanced Book')}</div>
           </td>
           <td class="p-3">
             <div class="text-white text-xs">${s.turnover_cr} Cr</div>
@@ -8926,9 +8927,14 @@ function renderJournal() {
         const hyperflow = Math.min(99, Math.max(15, Number(b.aiScore ?? (50 + pct * 8 + (rvol - 1) * 15))));
         const oiData = b.oiData || {};
         const pcr = Number(oiData.pcr || baseStock?.pcr || (isBull ? 1.22 : 0.78));
-        const ratio = Number(baseStock?.bid_ask_ratio || (isBull ? 1.38 : 0.76));
-        const bidQty = Math.round(vol * 0.25 * (ratio / (ratio + 1)));
-        const askQty = Math.round(vol * 0.25 * (1 / (ratio + 1)));
+        const bidQty = (b.bidQty && b.askQty && Number(b.askQty) > 0)
+          ? Number(b.bidQty)
+          : Math.round(vol * 0.042 * ((Number(b.bidAskRatio || baseStock?.bid_ask_ratio || (isBull ? 1.38 : 0.76))) / (Number(b.bidAskRatio || baseStock?.bid_ask_ratio || (isBull ? 1.38 : 0.76)) + 1)));
+        const askQty = (b.bidQty && b.askQty && Number(b.askQty) > 0)
+          ? Number(b.askQty)
+          : Math.max(150, Math.round(vol * 0.042) - bidQty);
+        const ratio = Number(b.bidAskRatio || (askQty > 0 ? bidQty / askQty : (isBull ? 1.38 : 0.76)));
+        const orderBookBias = b.orderBookBias || (ratio >= 1.55 ? 'Heavy Buyer Accumulation' : ratio >= 1.18 ? 'Buyer Dominance' : ratio <= 0.65 ? 'Heavy Seller Supply' : ratio <= 0.85 ? 'Seller Pressure' : 'Balanced Order Book');
         const step = b.strikeStep || (price > 3000 ? 50 : price > 1000 ? 20 : 10);
         const atm = Math.round(price / step) * step;
 
@@ -8967,6 +8973,7 @@ function renderJournal() {
           total_ask: askQty,
           total_ask_str: this.formatCrVolStr(askQty, false),
           bid_ask_ratio: Number(ratio.toFixed(2)),
+          order_book_bias: orderBookBias,
           oi: oiData.openInterest ? oiData.openInterest.toFixed(1) + ' L' : (baseStock?.oi || '14.2 L'),
           oi_chg_pct: Number(oiData.changeInOIPercent ?? (isBull ? 4.8 : -2.6)),
           buildup: oiData.buildup || (isBull ? 'Long Buildup' : 'Short Buildup'),
@@ -9413,7 +9420,12 @@ function renderJournal() {
               st.pct_change = live.pct_change;
               st.abs_change = live.abs_change;
               st.volume = live.volume;
+              st.total_bid = live.total_bid;
+              st.total_ask = live.total_ask;
+              st.total_bid_str = live.total_bid_str;
+              st.total_ask_str = live.total_ask_str;
               st.bid_ask_ratio = live.bid_ask_ratio;
+              st.order_book_bias = live.order_book_bias;
             }
             if (typeof st.pct_change === 'number') {
               sumChg += st.pct_change;
@@ -9455,6 +9467,15 @@ function renderJournal() {
             s.total_bid_str = s.total_bid >= 100000 ? (s.total_bid / 100000).toFixed(1) + ' L' : s.total_bid.toLocaleString('en-IN');
             s.total_ask_str = s.total_ask >= 100000 ? (s.total_ask / 100000).toFixed(1) + ' L' : s.total_ask.toLocaleString('en-IN');
             s.bid_ask_ratio = Number((s.total_bid / s.total_ask).toFixed(2));
+            s.order_book_bias = s.bid_ask_ratio >= 1.55
+              ? 'Heavy Buyer Accumulation'
+              : s.bid_ask_ratio >= 1.18
+              ? 'Buyer Dominance'
+              : s.bid_ask_ratio <= 0.65
+              ? 'Heavy Seller Supply'
+              : s.bid_ask_ratio <= 0.85
+              ? 'Seller Pressure'
+              : 'Balanced Order Book';
           }
           s.delta = Math.round((s.volume || 200000) * ((s.pct_change || 0) / 100) * 0.4);
 
@@ -9500,6 +9521,11 @@ function renderJournal() {
               if (q && q.lp > 0) {
                 sig.price = Number(q.lp);
                 if (q.chp !== undefined) sig.pct_change = Number(q.chp);
+                if (q.bidQty && q.askQty && q.askQty > 0) {
+                  sig.bid_ask_ratio = Number((Number(q.bidQty) / Number(q.askQty)).toFixed(2));
+                  sig.total_bid_str = q.bidQty >= 100000 ? (q.bidQty / 100000).toFixed(1) + ' L' : Number(q.bidQty).toLocaleString('en-IN');
+                  sig.total_ask_str = q.askQty >= 100000 ? (q.askQty / 100000).toFixed(1) + ' L' : Number(q.askQty).toLocaleString('en-IN');
+                }
               }
             });
           }
@@ -9545,6 +9571,14 @@ function renderJournal() {
             if (tick.chp !== undefined) s.pct_change = Number(tick.chp);
             if (tick.ch !== undefined) s.abs_change = Number(tick.ch);
             if (tick.volume) s.volume = Number(tick.volume);
+            if (tick.bidQty && tick.askQty && tick.askQty > 0) {
+              s.total_bid = Number(tick.bidQty);
+              s.total_ask = Number(tick.askQty);
+              s.total_bid_str = s.total_bid >= 100000 ? (s.total_bid / 100000).toFixed(1) + ' L' : s.total_bid.toLocaleString('en-IN');
+              s.total_ask_str = s.total_ask >= 100000 ? (s.total_ask / 100000).toFixed(1) + ' L' : s.total_ask.toLocaleString('en-IN');
+              s.bid_ask_ratio = Number((s.total_bid / s.total_ask).toFixed(2));
+              s.order_book_bias = s.bid_ask_ratio >= 1.55 ? 'Heavy Buyer Accumulation' : s.bid_ask_ratio >= 1.18 ? 'Buyer Dominance' : s.bid_ask_ratio <= 0.65 ? 'Heavy Seller Supply' : s.bid_ask_ratio <= 0.85 ? 'Seller Pressure' : 'Balanced Order Book';
+            }
             s.day_high = Math.max(s.day_high || 0, s.price);
             s.day_low = Math.min(s.day_low || 999999, s.price);
             if (s.price !== oldPrice) {

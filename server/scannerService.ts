@@ -25,7 +25,7 @@ import {
 import { calculateStockOI } from '../src/utils/oiAnalysis';
 import { calculateMarketStatus, getISTDateParts } from '../src/data/marketSchedule';
 import { upstoxService } from './upstoxService';
-import { autonomousPriceService, IntradayCandleBar, UnifiedMarketQuote } from './autonomousPriceService';
+import { autonomousPriceService, deriveOrderBookDepth, IntradayCandleBar, UnifiedMarketQuote } from './autonomousPriceService';
 import { marketWebSocketServer } from './marketWebSocketServer';
 
 const SESSION_STATE_FILE = path.join(os.tmpdir(), 'muhurat_scanner_session_state.json');
@@ -1329,6 +1329,26 @@ export class ScannerService {
         stock.volume = q.volume || stock.volume;
         stock.indicators.price = q.lp;
         stock.indicators.close = q.lp;
+        const tickDepth =
+          q.bidQty > 0 && q.askQty > 0
+            ? {
+                bidQty: q.bidQty,
+                askQty: q.askQty,
+                bidAskRatio: Number((q.bidQty / q.askQty).toFixed(2)),
+              }
+            : deriveOrderBookDepth({
+                volume: stock.volume,
+                lp: q.lp,
+                open: q.open || stock.indicators.open || q.lp,
+                high: q.high || stock.indicators.high || q.lp,
+                low: q.low || stock.indicators.low || q.lp,
+                chp: q.chp,
+                atp: q.atp || stock.indicators.vwap || q.lp,
+                intradayBars: q.intradayBars,
+              });
+        stock.bidQty = tickDepth.bidQty;
+        stock.askQty = tickDepth.askQty;
+        stock.bidAskRatio = tickDepth.bidAskRatio;
         stock.oiData = calculateStockOI(stock.symbol, stock.price, stock.changePercent, stock.volume);
       }
     }
@@ -1706,6 +1726,33 @@ export class ScannerService {
           scannedStock.changePercent,
           scannedStock.volume
         );
+
+        const scanDepth = deriveOrderBookDepth({
+          volume: scannedStock.volume,
+          lp: scannedStock.price,
+          open: q?.open || prevClose,
+          high: dayHigh,
+          low: dayLow,
+          chp: scannedStock.changePercent,
+          atp: q?.atp || scannedStock.indicators.vwap || scannedStock.price,
+          intradayBars: q?.intradayBars,
+        });
+        const effBidQty = q?.bidQty && q.bidQty > 0 ? q.bidQty : scanDepth.bidQty;
+        const effAskQty = q?.askQty && q.askQty > 0 ? q.askQty : scanDepth.askQty;
+        const effRatio = Number((effBidQty / Math.max(1, effAskQty)).toFixed(2));
+        scannedStock.bidQty = effBidQty;
+        scannedStock.askQty = effAskQty;
+        scannedStock.bidAskRatio = effRatio;
+        scannedStock.orderBookBias =
+          effRatio >= 1.55
+            ? 'Heavy Buyer Accumulation'
+            : effRatio >= 1.18
+            ? 'Buyer Dominance'
+            : effRatio <= 0.65
+            ? 'Heavy Seller Supply'
+            : effRatio <= 0.85
+            ? 'Seller Pressure'
+            : 'Balanced Order Book';
 
         scannedStock.sparkline = candles.slice(-12).map((c) => Number(c.close.toFixed(2)));
         scannedStock.alertCreateTime = nowIso;

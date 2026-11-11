@@ -345,6 +345,10 @@ export interface ScannedStock {
   fixedTarget3?: number;
   formulaName?: string;
   formulaCode?: string;
+  bidQty?: number;
+  askQty?: number;
+  bidAskRatio?: number;
+  orderBookBias?: string;
   newsSentiment?: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
   newsTitle?: string;
   keyTriggers: string[];

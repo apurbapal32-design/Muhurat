@@ -163,6 +163,80 @@ export function getIndexBaselinePrices() {
   return INDEX_BASELINE_PRICES;
 }
 
+/**
+ * Derives realistic NSE order-book Bid/Ask Quantities & Bid/Ask Ratio from
+ * real 5-minute intraday OHLCV accumulation/distribution pressure, intraday range location,
+ * VWAP/ATP control, and session momentum whenever full exchange depth is not provided.
+ */
+export function deriveOrderBookDepth(params: {
+  volume: number;
+  lp: number;
+  open: number;
+  high: number;
+  low: number;
+  chp: number;
+  atp?: number;
+  intradayBars?: IntradayCandleBar[];
+  isIdx?: boolean;
+}): { bidQty: number; askQty: number; bidAskRatio: number; orderBookBias: string } {
+  const { volume, lp, open, high, low, chp, atp, intradayBars, isIdx } = params;
+  const effVol = Math.max(isIdx ? 1000000 : 25000, Number(volume) || 0);
+  const effAtp = atp && atp > 0 ? atp : (open + high + low + lp) / 4;
+
+  // 1. Intraday bar Close-Location Value (CLV) weighted toward latest 5m candles
+  let barsPressure = 0;
+  if (Array.isArray(intradayBars) && intradayBars.length >= 2) {
+    const recent = intradayBars.slice(-10);
+    let weightedClv = 0;
+    let weightSum = 0;
+    for (let i = 0; i < recent.length; i++) {
+      const b = recent[i];
+      const span = Math.max(0.05, b.high - b.low);
+      const clv = Math.max(-1, Math.min(1, ((b.close - b.low) / span) * 2 - 1));
+      const w = (i + 1) * Math.max(1, Math.sqrt(b.volume || 1000));
+      weightedClv += clv * w;
+      weightSum += w;
+    }
+    barsPressure = weightSum > 0 ? Math.max(-1, Math.min(1, weightedClv / weightSum)) : 0;
+  } else {
+    const barSpan = Math.max(0.05, high - low);
+    barsPressure = Math.max(-1, Math.min(1, ((lp - open) / barSpan) * 1.4));
+  }
+
+  // 2. Session day-range location [-1 .. +1]
+  const daySpan = high > low ? high - low : Math.max(0.05, lp * 0.01);
+  const rangePos = Math.max(-1, Math.min(1, ((lp - low) / daySpan) * 2 - 1));
+
+  // 3. VWAP / ATP control [-1 .. +1]
+  const vwapBias = Math.max(-1, Math.min(1, (lp - effAtp) / Math.max(0.05, lp * 0.008)));
+
+  // 4. Directional momentum [-1 .. +1]
+  const momentumBias = Math.max(-1, Math.min(1, chp / 2.8));
+
+  const imbalance = Math.max(
+    -0.95,
+    Math.min(0.95, 0.38 * barsPressure + 0.24 * rangePos + 0.16 * vwapBias + 0.22 * momentumBias)
+  );
+
+  // Maps smoothly to realistic NSE depth ratio ~0.38x (heavy selling) .. ~2.65x (heavy buying)
+  const rawRatio = Math.exp(imbalance * 1.02);
+  const bidAskRatio = Number(Math.max(0.35, Math.min(2.85, rawRatio)).toFixed(2));
+
+  const bookFactor = isIdx ? 0.018 : 0.042;
+  const totalDepth = Math.max(2500, Math.round(effVol * bookFactor));
+  const bidQty = Math.max(150, Math.round(totalDepth * (bidAskRatio / (bidAskRatio + 1))));
+  const askQty = Math.max(150, totalDepth - bidQty);
+  const exactRatio = Number((bidQty / askQty).toFixed(2));
+
+  let orderBookBias = 'Balanced Order Book';
+  if (exactRatio >= 1.55) orderBookBias = 'Heavy Buyer Accumulation';
+  else if (exactRatio >= 1.18) orderBookBias = 'Buyer Dominance';
+  else if (exactRatio <= 0.65) orderBookBias = 'Heavy Seller Supply';
+  else if (exactRatio <= 0.85) orderBookBias = 'Seller Pressure';
+
+  return { bidQty, askQty, bidAskRatio: exactRatio, orderBookBias };
+}
+
 const YAHOO_EQUITY_ALIASES: Record<string, string> = {
   ZOMATO: 'ETERNAL.NS',
   'M&M': 'M%26M.NS',
@@ -353,6 +427,17 @@ class AutonomousPriceService {
             const isIdx = Boolean(INDEX_BASELINE_PRICES[cleanSym]);
             const exchange: 'NSE' | 'BSE' = tvSym.startsWith('BSE:') ? 'BSE' : 'NSE';
 
+            const depthTv = deriveOrderBookDepth({
+              volume: volume || (isIdx ? 35000000 : 450000),
+              lp,
+              open: openPrice,
+              high: highPrice,
+              low: lowPrice,
+              chp,
+              atp: (openPrice + highPrice + lowPrice + lp) / 4,
+              intradayBars: this.lastBarsCache.get(cleanSym),
+              isIdx,
+            });
             const quoteObj: UnifiedMarketQuote = {
               symbol: cleanSym,
               instrumentKey: isIdx ? `${exchange}_INDEX|${cleanSym}` : `${exchange}_EQ|${cleanSym}`,
@@ -371,8 +456,8 @@ class AutonomousPriceService {
               atp: Number(((openPrice + highPrice + lowPrice + lp) / 4).toFixed(2)),
               bid: Number((lp - (isIdx ? 0.25 : 0.05)).toFixed(2)),
               ask: Number((lp + (isIdx ? 0.25 : 0.05)).toFixed(2)),
-              bidQty: Math.max(1500, Math.round(volume * 0.02)),
-              askQty: Math.max(1500, Math.round(volume * 0.018)),
+              bidQty: depthTv.bidQty,
+              askQty: depthTv.askQty,
               oi: 0,
               ltt: isOpen ? `${istTime} IST` : 'EOD Settlement',
               rsi,
@@ -419,8 +504,10 @@ class AutonomousPriceService {
         resultMap[sym] = yq;
         this.lastQuoteCache.set(sym, yq);
       } else {
-        // Attach real 5m intraday bars onto TV quote & fill missing live fields
+        // Attach real 5m intraday bars & bar-weighted Bid/Ask depth onto TV quote
         existing.intradayBars = yq.intradayBars || existing.intradayBars;
+        existing.bidQty = yq.bidQty;
+        existing.askQty = yq.askQty;
         if (yq.lp > 0 && (!existing.lp || yq.type === 'EQUITY')) {
           existing.lp = yq.lp;
           existing.ch = yq.ch;
@@ -564,6 +651,17 @@ class AutonomousPriceService {
         const atp = volSum > 0 ? Number((tpvSum / volSum).toFixed(2)) : Number(((dayOpen + dayHigh + dayLow + lp) / 4).toFixed(2));
         const turnoverCr = Number(((volume * atp) / 10000000).toFixed(2));
 
+        const depthYf = deriveOrderBookDepth({
+          volume,
+          lp,
+          open: dayOpen,
+          high: dayHigh,
+          low: dayLow,
+          chp,
+          atp,
+          intradayBars: activeBars,
+          isIdx: job.isIdx,
+        });
         const qObj: UnifiedMarketQuote = {
           symbol: job.sym,
           instrumentKey: job.isIdx ? `${job.exchange}_INDEX|${job.sym}` : `${job.exchange}_EQ|${job.sym}`,
@@ -582,8 +680,8 @@ class AutonomousPriceService {
           atp,
           bid: Number((lp - (job.isIdx ? 0.25 : 0.05)).toFixed(2)),
           ask: Number((lp + (job.isIdx ? 0.25 : 0.05)).toFixed(2)),
-          bidQty: Math.max(1500, Math.round(volume * 0.02)),
-          askQty: Math.max(1500, Math.round(volume * 0.018)),
+          bidQty: depthYf.bidQty,
+          askQty: depthYf.askQty,
           oi: 0,
           ltt: isOpen ? `${istTime} IST` : 'EOD Settlement',
           intradayBars: activeBars,
@@ -652,6 +750,19 @@ class AutonomousPriceService {
           if (lp <= 0) return;
 
           const prevClose = Number((lp - ch).toFixed(2));
+          const mcOpen = parseNum(idx.open) || prevClose;
+          const mcHigh = parseNum(idx.high) || lp;
+          const mcLow = parseNum(idx.low) || lp;
+          const depthMc = deriveOrderBookDepth({
+            volume: 35000000,
+            lp,
+            open: mcOpen,
+            high: mcHigh,
+            low: mcLow,
+            chp,
+            atp: lp,
+            isIdx: true,
+          });
           const quoteObj: UnifiedMarketQuote = {
             symbol: item.sym,
             instrumentKey: `${item.exchange}_INDEX|${item.sym}`,
@@ -659,9 +770,9 @@ class AutonomousPriceService {
             exchange: item.exchange,
             type: 'INDEX',
             lp: Number(lp.toFixed(2)),
-            open: parseNum(idx.open) || prevClose,
-            high: parseNum(idx.high) || lp,
-            low: parseNum(idx.low) || lp,
+            open: mcOpen,
+            high: mcHigh,
+            low: mcLow,
             prevClose,
             ch: Number(ch.toFixed(2)),
             chp: Number(chp.toFixed(2)),
@@ -670,8 +781,8 @@ class AutonomousPriceService {
             atp: lp,
             bid: Number((lp - 0.25).toFixed(2)),
             ask: Number((lp + 0.25).toFixed(2)),
-            bidQty: 1800,
-            askQty: 2250,
+            bidQty: depthMc.bidQty,
+            askQty: depthMc.askQty,
             oi: 0,
             ltt: isOpen ? `${istTime} IST` : 'EOD Settlement',
             source: 'MONEYCONTROL_FEED',
