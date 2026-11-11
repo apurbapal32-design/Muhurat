@@ -17,7 +17,7 @@ import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
 import { calculateMarketStatus } from './src/data/marketSchedule';
 import { NIFTY_200_STOCKS } from './src/data/nifty200';
-import { UnifiedMarketQuote } from './server/autonomousPriceService';
+import { autonomousPriceService, UnifiedMarketQuote } from './server/autonomousPriceService';
 
 async function startServer() {
   const app = express();
@@ -1099,18 +1099,65 @@ async function startServer() {
       res.status(404).send('Muhurat Android APK not found');
     });
 
+    let cachedDashPath = '';
+    let cachedDashMtime = 0;
+    let cachedDashHtml = '';
+
     // Serve Muhurat Quant Screener Dashboard directly on root / (no-store so mobile/WebView never caches stale market state)
     app.get(['/', '/muhurat', '/dashboard', '/quant_screener_dashboard.html'], (req, res) => {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
       const dashboardFile = path.join(process.cwd(), 'quant_screener_dashboard.html');
-      if (fs.existsSync(dashboardFile)) {
-        return res.sendFile(dashboardFile);
-      }
       const publicDashboard = path.join(process.cwd(), 'public', 'quant_screener_dashboard.html');
-      if (fs.existsSync(publicDashboard)) {
-        return res.sendFile(publicDashboard);
+      const targetPath = fs.existsSync(dashboardFile)
+        ? dashboardFile
+        : fs.existsSync(publicDashboard)
+        ? publicDashboard
+        : '';
+
+      if (targetPath) {
+        try {
+          const stat = fs.statSync(targetPath);
+          if (cachedDashPath !== targetPath || cachedDashMtime !== stat.mtimeMs || !cachedDashHtml) {
+            cachedDashHtml = fs.readFileSync(targetPath, 'utf-8');
+            cachedDashPath = targetPath;
+            cachedDashMtime = stat.mtimeMs;
+          }
+          const qCache = autonomousPriceService.getCachedQuotes();
+          const idxKeyMap: Array<[string, string]> = [
+            ['NSE:NIFTY50-INDEX', 'NIFTY 50'],
+            ['NSE:NIFTYBANK-INDEX', 'BANKNIFTY'],
+            ['NSE:FINNIFTY-INDEX', 'FINNIFTY'],
+            ['NSE:MIDCPNIFTY-INDEX', 'MIDCPNIFTY'],
+            ['NSE:NIFTYNXT50-INDEX', 'NIFTYNXT50'],
+            ['BSE:SENSEX-INDEX', 'SENSEX'],
+            ['NSE:INDIAVIX-INDEX', 'INDIAVIX'],
+          ];
+          const bootstrapIndices: Record<string, any> = {};
+          for (const [wireKey, symKey] of idxKeyMap) {
+            const q = qCache[symKey] || (symKey === 'NIFTY 50' ? qCache['NIFTY'] : undefined);
+            if (q && q.lp > 0) {
+              bootstrapIndices[wireKey] = {
+                lp: q.lp,
+                ch: q.ch,
+                chp: q.chp,
+                prev_close_price: q.prevClose,
+                open_price: q.open,
+                high_price: q.high,
+                low_price: q.low,
+              };
+            }
+          }
+          if (Object.keys(bootstrapIndices).length > 0 && cachedDashHtml.includes('</head>')) {
+            const bootTag = `<script>window.__SERVER_INDICES_BOOTSTRAP__=${JSON.stringify(bootstrapIndices)};</script></head>`;
+            res.type('text/html').send(cachedDashHtml.replace('</head>', bootTag));
+            return;
+          }
+        } catch {
+          // Fall back cleanly to static sendFile if boostrap fails
+        }
+        return res.sendFile(targetPath);
       }
       res.sendFile(path.join(distPath, 'index.html'));
     });

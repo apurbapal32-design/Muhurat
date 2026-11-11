@@ -52,55 +52,55 @@ const INDEX_BASELINE_PRICES: Record<
   { price: number; prevClose: number; name: string; exchange: 'NSE' | 'BSE'; tvTicker: string; mcId?: string }
 > = {
   'NIFTY 50': {
-    price: 25044.65,
-    prevClose: 24986.4,
+    price: 25255.05,
+    prevClose: 25044.65,
     name: 'NIFTY 50 Index',
     exchange: 'NSE',
     tvTicker: 'NSE:NIFTY',
     mcId: '9',
   },
   NIFTY: {
-    price: 25044.65,
-    prevClose: 24986.4,
+    price: 25255.05,
+    prevClose: 25044.65,
     name: 'NIFTY 50 Index',
     exchange: 'NSE',
     tvTicker: 'NSE:NIFTY',
     mcId: '9',
   },
   BANKNIFTY: {
-    price: 59741.25,
-    prevClose: 58850.65,
+    price: 60792.4,
+    prevClose: 59741.25,
     name: 'NIFTY Bank Index',
     exchange: 'NSE',
     tvTicker: 'NSE:BANKNIFTY',
     mcId: '23',
   },
   FINNIFTY: {
-    price: 27384.9,
-    prevClose: 27180.65,
+    price: 27663.4,
+    prevClose: 27384.9,
     name: 'NIFTY Financial Services',
     exchange: 'NSE',
     tvTicker: 'NSE:CNXFINANCE',
     mcId: '47',
   },
   MIDCPNIFTY: {
-    price: 14055.45,
-    prevClose: 14026.0,
+    price: 14193.55,
+    prevClose: 14055.45,
     name: 'NIFTY Midcap Select',
     exchange: 'NSE',
     tvTicker: 'NSE:NIFTY_MID_SELECT',
   },
   NIFTYNXT50: {
-    price: 72789.45,
-    prevClose: 71991.7,
+    price: 73486.2,
+    prevClose: 72789.45,
     name: 'NIFTY Next 50 Index',
     exchange: 'NSE',
     tvTicker: 'NSE:NIFTYJR',
     mcId: '6',
   },
   SENSEX: {
-    price: 81106.65,
-    prevClose: 80999.4,
+    price: 81879.4,
+    prevClose: 81106.65,
     name: 'BSE SENSEX 30',
     exchange: 'BSE',
     tvTicker: 'BSE:SENSEX',
@@ -115,8 +115,8 @@ const INDEX_BASELINE_PRICES: Record<
     mcId: '19',
   },
   INDIAVIX: {
-    price: 17.42,
-    prevClose: 18.43,
+    price: 17.55,
+    prevClose: 17.42,
     name: 'India Volatility Index',
     exchange: 'NSE',
     tvTicker: 'NSE:INDIAVIX',
@@ -298,8 +298,10 @@ class AutonomousPriceService {
    */
   public async fetchAllMarketQuotes(forceRefresh = false): Promise<Record<string, UnifiedMarketQuote>> {
     const now = Date.now();
-    const isOpen = calculateMarketStatus().isOpen;
-    const minTtlMs = isOpen ? 3500 : 15000;
+    const status = calculateMarketStatus();
+    const isOpen = status.isOpen;
+    const isTransitionWindow = status.session === 'POST_MARKET' || status.session === 'PRE_OPEN';
+    const minTtlMs = isOpen ? 3500 : isTransitionWindow ? 45000 : 10 * 60 * 1000;
     if (!forceRefresh && now - this.lastFetchTimestamp < minTtlMs && this.lastQuoteCache.size > 100) {
       return this.getCachedQuotes();
     }
@@ -318,6 +320,8 @@ class AutonomousPriceService {
   private async executeBatchFetch(forceRefresh = false): Promise<Record<string, UnifiedMarketQuote>> {
     const marketStatus = calculateMarketStatus();
     const isOpen = marketStatus.isOpen;
+    const isTransitionWindow = marketStatus.session === 'POST_MARKET' || marketStatus.session === 'PRE_OPEN';
+    const yahooTtlMs = isOpen ? 10000 : isTransitionWindow ? 45000 : 10 * 60 * 1000;
     const nowIso = new Date().toISOString();
     const istTime = new Date().toLocaleTimeString('en-IN', {
       timeZone: 'Asia/Kolkata',
@@ -354,7 +358,7 @@ class AutonomousPriceService {
     const needYahooRefresh =
       forceRefresh ||
       this.lastBarsCache.size < 150 ||
-      Date.now() - this.lastYahooFetchTimestamp > (isOpen ? 10000 : 45000);
+      Date.now() - this.lastYahooFetchTimestamp > yahooTtlMs;
 
     const tvTask = (async () => {
       try {
@@ -531,6 +535,19 @@ class AutonomousPriceService {
           cached.marketSession = isOpen ? marketStatus.session : 'CLOSED_SETTLEMENT';
           cached.intradayBars = this.lastBarsCache.get(sym) || cached.intradayBars;
           resultMap[sym] = cached;
+        }
+      }
+    }
+
+    // When closed, preserve previously settled cached indices so transient single-source timeouts never cause wobble
+    if (!isOpen) {
+      for (const idxSym of ['NIFTY 50', 'NIFTY', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'NIFTYNXT50', 'SENSEX', 'NIFTYIT', 'INDIAVIX']) {
+        if (!resultMap[idxSym] && this.lastQuoteCache.has(idxSym)) {
+          const cachedIdx = { ...this.lastQuoteCache.get(idxSym)! };
+          cachedIdx.isMarketOpen = false;
+          cachedIdx.marketSession = 'CLOSED_SETTLEMENT';
+          cachedIdx.ltt = 'EOD Settlement';
+          resultMap[idxSym] = cachedIdx;
         }
       }
     }

@@ -31,6 +31,8 @@ class MarketWebSocketServerManager {
   private accessTokenResolver: (() => string) | null = null;
   private isFetchingUpstream = false;
   private lastFeedSource: string = 'AUTONOMOUS_LIVE_ENGINE';
+  private lastClosedSignature: string = '';
+  private lastClosedBroadcastAt: number = 0;
 
   public setAccessTokenResolver(fn: () => string) {
     this.accessTokenResolver = fn;
@@ -163,17 +165,23 @@ class MarketWebSocketServerManager {
     if (this.tickIntervalId) clearInterval(this.tickIntervalId);
     if (this.pollIntervalId) clearInterval(this.pollIntervalId);
 
-    // Refresh real upstream quotes every 2.5s when market open, every 20s when closed
+    // Refresh real upstream quotes every 2.5s when market open; during closed settlement lock for 5m
     let pollCounter = 0;
     this.pollIntervalId = setInterval(() => {
       pollCounter++;
       const marketStatus = calculateMarketStatus();
-      if (marketStatus.isOpen || pollCounter % 8 === 0) {
+      const isTransitionWindow =
+        marketStatus.session === 'POST_MARKET' || marketStatus.session === 'PRE_OPEN';
+      if (
+        marketStatus.isOpen ||
+        (isTransitionWindow && pollCounter % 8 === 0) ||
+        (!marketStatus.isOpen && pollCounter % 120 === 0)
+      ) {
         this.refreshUpstreamQuotes().catch(() => {});
       }
     }, 2500);
 
-    // Broadcast latest synced quotes & TPS tracking every 1s to active WebSocket clients
+    // Broadcast latest synced quotes & TPS tracking every 1s when open; when closed, only on EOD value change or 30s keepalive
     let lastSecTick = Date.now();
     let ticksThisSec = 0;
 
@@ -187,6 +195,21 @@ class MarketWebSocketServerManager {
       }
 
       if (this.clients.size === 0) return;
+
+      const marketStatus = calculateMarketStatus();
+      if (!marketStatus.isOpen) {
+        const closedSig = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'NIFTYNXT50', 'SENSEX', 'INDIAVIX']
+          .map((k) => {
+            const q = this.latestQuotes.get(k);
+            return q ? `${k}:${q.lp}:${q.ch}` : k;
+          })
+          .join('|');
+        if (closedSig === this.lastClosedSignature && now - this.lastClosedBroadcastAt < 30000) {
+          return;
+        }
+        this.lastClosedSignature = closedSig;
+        this.lastClosedBroadcastAt = now;
+      }
 
       const uniqueSyms = new Set<string>();
       for (const session of this.clients.values()) {
