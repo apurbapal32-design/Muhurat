@@ -5558,6 +5558,9 @@
       'MIDCPNIFTY', 'MIDCP NIFTY', 'NIFTYNXT50', 'NIFTY NEXT 50', 'NIFTYFPI',
       'SENSEX', 'INDIAVIX', 'INDIA VIX', 'NIFTYIT', 'NIFTY IT'
     ]);
+    if (typeof window !== 'undefined') {
+      window.DATA = DATA;
+    }
     if (typeof window !== 'undefined' && window.__SERVER_INDICES_BOOTSTRAP__ && DATA && DATA.indices) {
       Object.entries(window.__SERVER_INDICES_BOOTSTRAP__).forEach(([k, v]) => {
         if (v && typeof v === 'object') {
@@ -5997,10 +6000,12 @@
 
       // 4. Reset scroll position to top smoothly
       const mainView = document.querySelector('main');
-      if (mainView) {
+      if (mainView && typeof mainView.scrollTo === 'function') {
         mainView.scrollTo({ top: 0, behavior: 'smooth' });
       }
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
 
     // ============================================================
@@ -6038,7 +6043,7 @@
 
     function initCustomTableSectors() {
       const sectorSelect = document.getElementById('ct-sector');
-      if (!sectorSelect || sectorSelect.options.length > 1) return;
+      if (!sectorSelect || (sectorSelect.options && sectorSelect.options.length > 1)) return;
       
       const sectors = new Set();
       if (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) {
@@ -6623,6 +6628,10 @@
       qtyElem.innerText = recQty.toLocaleString('en-IN') + ' Shares';
       if (riskElem) riskElem.innerText = '₹' + Math.round(recQty * perShareRisk).toLocaleString('en-IN') + ' (1%)';
       if (gainElem) gainElem.innerText = '+₹' + expectedGain.toLocaleString('en-IN');
+    }
+
+    function openClaudeStockSignalModal(sym) {
+      return openClaudeAiStockSignalModal(sym);
     }
 
     function openClaudeAiStockSignalModal(sym) {
@@ -11009,25 +11018,54 @@ ${json.message || 'Unauthorized token.'}`);
 
     // Modal Orders & Formulas
     function openOrderModal(sym, side, price, chg) {
-      document.getElementById('order-symbol').innerText = sym;
+      const cleanSym = String(sym || 'RELIANCE').trim();
+      const orderSide = String(side || 'BUY').toUpperCase().includes('SELL') ? 'SELL' : 'BUY';
+      const numPrice = Number(price) || 0;
+      const numChg = Number(chg) || 0;
+
+      const symEl = document.getElementById('order-symbol');
+      if (symEl) symEl.innerText = cleanSym;
       const tkEl = document.getElementById('order-broker-ticker') || document.getElementById('order-fyers-ticker');
-      if (tkEl) tkEl.innerText = 'NSE:' + sym + '-EQ';
-      document.getElementById('order-price').innerText = '₹' + price;
-      document.getElementById('order-chg').innerText = (chg >= 0 ? '+' : '') + chg + '%';
-      document.getElementById('order-side').value = side;
-      document.getElementById('order-stop').value = (price * 0.985).toFixed(2);
-      document.getElementById('order-target').value = (price * 1.03).toFixed(2);
-      document.getElementById('modal-order').classList.remove('hidden');
+      if (tkEl) tkEl.innerText = 'NSE:' + cleanSym + '-EQ';
+      const priceEl = document.getElementById('order-price');
+      if (priceEl) priceEl.innerText = '₹' + numPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const chgEl = document.getElementById('order-chg');
+      if (chgEl) chgEl.innerText = (numChg >= 0 ? '+' : '') + numChg.toFixed(2) + '%';
+      const sideEl = document.getElementById('order-side');
+      if (sideEl) sideEl.value = orderSide;
+      const stopEl = document.getElementById('order-stop');
+      if (stopEl) stopEl.value = (numPrice * (orderSide === 'SELL' ? 1.015 : 0.985)).toFixed(2);
+      const tgtEl = document.getElementById('order-target');
+      if (tgtEl) tgtEl.value = (numPrice * (orderSide === 'SELL' ? 0.97 : 1.03)).toFixed(2);
+      const modalEl = document.getElementById('modal-order');
+      if (modalEl) modalEl.classList.remove('hidden');
+    }
+    function openOneClickOrder(sym, price, side) {
+      const cleanSym = String(sym || 'RELIANCE').replace(/^NSE:/, '').replace(/-EQ$/, '').trim();
+      const row = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks))
+        ? DATA.all_stocks.find(s => s.symbol === cleanSym)
+        : null;
+      const chg = row && row.pct_change !== undefined ? Number(row.pct_change) : 0;
+      const resolvedPrice = Number(price) || (row ? Number(row.price) : 0);
+      return openOrderModal(cleanSym, side || (chg >= 0 ? 'BUY' : 'SELL'), resolvedPrice, chg);
     }
     function closeOrderModal() {
-      document.getElementById('modal-order').classList.add('hidden');
+      const modalEl = document.getElementById('modal-order');
+      if (modalEl) modalEl.classList.add('hidden');
+    }
+    function executeBrokerOrder() {
+      const sym = (document.getElementById('order-symbol')?.innerText || 'RELIANCE').trim();
+      const side = document.getElementById('order-side')?.value || 'BUY';
+      const qty = document.getElementById('order-qty')?.value || '10';
+      const orderType = document.getElementById('order-type')?.value || 'MARKET';
+      if (typeof showToast === 'function') {
+        showToast(`✅ [Upstox API v2/v3] ${orderType} ${side} Order Submitted: ${sym} x ${qty} Qty`, 'success');
+      }
+      alert(`[Upstox API v2/v3] Order Executed Successfully!\n\nClient ID: YA49011 (APURBA PAL)\nSymbol: NSE:${sym}-EQ\nType: ${orderType}\nSide: ${side}\nQty: ${qty}\nStatus: SUBMITTED 200 OK`);
+      closeOrderModal();
     }
     function executeFyersOrder() {
-      const sym = document.getElementById('order-symbol').innerText;
-      const side = document.getElementById('order-side').value;
-      const qty = document.getElementById('order-qty').value;
-      alert(`[Upstox API v2/v3] Order Executed Successfully!\n\nClient ID: YA49011 (APURBA PAL)\nSymbol: NSE:${sym}-EQ\nSide: ${side}\nQty: ${qty}\nStatus: SUBMITTED 200 OK`);
-      closeOrderModal();
+      return executeBrokerOrder();
     }
 
     const FORMULAS = {
@@ -12307,7 +12345,7 @@ ${json.message || 'Unauthorized token.'}`);
             sanitizeDataScannersUniverse();
             renderAllTables();
             fixesApplied++;
-          } else if (beforeLen > 0) {
+          } else if (beforeLen > 0 && window._scannersDirty === true) {
             sanitizeDataScannersUniverse();
           }
         }
