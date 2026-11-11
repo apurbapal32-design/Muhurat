@@ -456,6 +456,7 @@ class UpstoxService {
               ema20: prevAuto?.ema20,
               sma50: prevAuto?.sma50,
               recommendScore: prevAuto?.recommendScore,
+              intradayBars: prevAuto?.intradayBars,
               source: 'UPSTOX_API_V2',
               isMarketOpen: isLiveMarket,
               marketSession: isLiveMarket ? marketStatus.session : 'CLOSED_SETTLEMENT',

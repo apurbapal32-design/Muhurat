@@ -1,6 +1,18 @@
 import { NIFTY_200_STOCKS } from '../src/data/nifty200';
 import { calculateMarketStatus } from '../src/data/marketSchedule';
 
+export interface IntradayCandleBar {
+  tsSec: number;
+  dateIST: string;
+  timeIST: string;
+  secIST: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
 export interface UnifiedMarketQuote {
   symbol: string;
   instrumentKey: string;
@@ -28,6 +40,7 @@ export interface UnifiedMarketQuote {
   ema20?: number;
   sma50?: number;
   recommendScore?: number;
+  intradayBars?: IntradayCandleBar[];
   source: 'UPSTOX_API_V2' | 'AUTONOMOUS_LIVE_ENGINE' | 'MONEYCONTROL_FEED' | 'SETTLED_CLOSE';
   isMarketOpen: boolean;
   marketSession: string;
@@ -150,9 +163,51 @@ export function getIndexBaselinePrices() {
   return INDEX_BASELINE_PRICES;
 }
 
+const YAHOO_EQUITY_ALIASES: Record<string, string> = {
+  ZOMATO: 'ETERNAL.NS',
+  'M&M': 'M%26M.NS',
+  'M&MFIN': 'M%26MFIN.NS',
+  'L&TFH': 'LTF.NS',
+  'MCDOWELL-N': 'UNITDSPR.NS',
+  GMRINFRA: 'GMRAIRPORT.NS',
+};
+
+const YAHOO_INDEX_TICKERS: Array<{ sym: string; yf: string; exchange: 'NSE' | 'BSE' }> = [
+  { sym: 'NIFTY 50', yf: '^NSEI', exchange: 'NSE' },
+  { sym: 'BANKNIFTY', yf: '^NSEBANK', exchange: 'NSE' },
+  { sym: 'FINNIFTY', yf: 'NIFTY_FIN_SERVICE.NS', exchange: 'NSE' },
+  { sym: 'MIDCPNIFTY', yf: 'NIFTY_MID_SELECT.NS', exchange: 'NSE' },
+  { sym: 'NIFTYNXT50', yf: '^NSMIDCP', exchange: 'NSE' },
+  { sym: 'NIFTYIT', yf: '^CNXIT', exchange: 'NSE' },
+  { sym: 'SENSEX', yf: '^BSESN', exchange: 'BSE' },
+  { sym: 'INDIAVIX', yf: '^INDIAVIX', exchange: 'NSE' },
+];
+
+function toYahooEquityTicker(cleanSym: string): string {
+  if (YAHOO_EQUITY_ALIASES[cleanSym]) return YAHOO_EQUITY_ALIASES[cleanSym];
+  return `${encodeURIComponent(cleanSym)}.NS`;
+}
+
+function getISTPartsFromEpochSec(tsSec: number): { dateIST: string; timeIST: string; secIST: number } {
+  const d = new Date(tsSec * 1000 + 19800000);
+  const dateIST = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(
+    d.getUTCDate()
+  ).padStart(2, '0')}`;
+  const hh = d.getUTCHours();
+  const mm = d.getUTCMinutes();
+  const ss = d.getUTCSeconds();
+  return {
+    dateIST,
+    timeIST: `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`,
+    secIST: hh * 3600 + mm * 60 + ss,
+  };
+}
+
 class AutonomousPriceService {
   private lastQuoteCache: Map<string, UnifiedMarketQuote> = new Map();
+  private lastBarsCache: Map<string, IntradayCandleBar[]> = new Map();
   private lastFetchTimestamp = 0;
+  private lastYahooFetchTimestamp = 0;
   private inFlightPromise: Promise<Record<string, UnifiedMarketQuote>> | null = null;
 
   public getCachedQuotes(): Record<string, UnifiedMarketQuote> {
@@ -165,19 +220,20 @@ class AutonomousPriceService {
 
   /**
    * Fetches all Indian Benchmark Indices and Nifty 200 F&O Equities concurrently
-   * in a single ~180ms batch request via TradingView India Scanner, backed by Moneycontrol.
+   * combining TradingView India Scanner, Moneycontrol Indices, and Real-Time Yahoo Finance NSE 5m Chart API.
    */
   public async fetchAllMarketQuotes(forceRefresh = false): Promise<Record<string, UnifiedMarketQuote>> {
     const now = Date.now();
-    // Deduplicate bursts within 1200ms
-    if (!forceRefresh && now - this.lastFetchTimestamp < 1200 && this.lastQuoteCache.size > 50) {
+    const isOpen = calculateMarketStatus().isOpen;
+    const minTtlMs = isOpen ? 3500 : 15000;
+    if (!forceRefresh && now - this.lastFetchTimestamp < minTtlMs && this.lastQuoteCache.size > 100) {
       return this.getCachedQuotes();
     }
     if (this.inFlightPromise) {
       return this.inFlightPromise;
     }
 
-    this.inFlightPromise = this.executeBatchFetch()
+    this.inFlightPromise = this.executeBatchFetch(forceRefresh)
       .finally(() => {
         this.inFlightPromise = null;
       });
@@ -185,7 +241,7 @@ class AutonomousPriceService {
     return this.inFlightPromise;
   }
 
-  private async executeBatchFetch(): Promise<Record<string, UnifiedMarketQuote>> {
+  private async executeBatchFetch(forceRefresh = false): Promise<Record<string, UnifiedMarketQuote>> {
     const marketStatus = calculateMarketStatus();
     const isOpen = marketStatus.isOpen;
     const nowIso = new Date().toISOString();
@@ -193,6 +249,7 @@ class AutonomousPriceService {
       timeZone: 'Asia/Kolkata',
       hour12: false,
     });
+    const todayDateIST = getISTPartsFromEpochSec(Math.floor(Date.now() / 1000)).dateIST;
 
     const tickers: string[] = [
       'NSE:NIFTY',
@@ -205,8 +262,12 @@ class AutonomousPriceService {
       'NSE:INDIAVIX',
     ];
 
+    const equitySymbols: string[] = [];
     for (const stock of NIFTY_200_STOCKS) {
       const clean = cleanSymName(stock.symbol);
+      if (!INDEX_BASELINE_PRICES[clean] && clean !== 'NIFTYFPI' && !equitySymbols.includes(clean)) {
+        equitySymbols.push(clean);
+      }
       const tv = toTvTicker(clean);
       if (tv && !tickers.includes(tv)) {
         tickers.push(tv);
@@ -215,127 +276,180 @@ class AutonomousPriceService {
 
     const resultMap: Record<string, UnifiedMarketQuote> = {};
 
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5500);
+    // 1. Run TradingView Scanner (fast 1.8s timeout) + Moneycontrol Indices + Yahoo Real-Time NSE Feed concurrently
+    const needYahooRefresh =
+      forceRefresh ||
+      this.lastBarsCache.size < 150 ||
+      Date.now() - this.lastYahooFetchTimestamp > (isOpen ? 10000 : 45000);
 
-      const response = await fetch('https://scanner.tradingview.com/india/scan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        },
-        body: JSON.stringify({
-          symbols: { tickers, query: { types: [] } },
-          columns: [
-            'name',
-            'close',
-            'change',
-            'change_abs',
-            'open',
-            'high',
-            'low',
-            'volume',
-            'Value.Traded',
-            'RSI',
-            'MACD.macd',
-            'EMA20',
-            'SMA50',
-            'Recommend.All',
-          ],
-        }),
-        signal: controller.signal,
-      });
+    const tvTask = (async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1800);
 
-      clearTimeout(timeoutId);
+        const response = await fetch('https://scanner.tradingview.com/india/scan', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          },
+          body: JSON.stringify({
+            symbols: { tickers, query: { types: [] } },
+            columns: [
+              'name',
+              'close',
+              'change',
+              'change_abs',
+              'open',
+              'high',
+              'low',
+              'volume',
+              'Value.Traded',
+              'RSI',
+              'MACD.macd',
+              'EMA20',
+              'SMA50',
+              'Recommend.All',
+            ],
+          }),
+          signal: controller.signal,
+        });
 
-      if (response.ok) {
-        const json = await response.json();
-        const rows = Array.isArray(json?.data) ? json.data : [];
+        clearTimeout(timeoutId);
 
-        for (const row of rows) {
-          const tvSym: string = row?.s;
-          const cols: any[] = row?.d;
-          if (!tvSym || !Array.isArray(cols) || cols.length < 7) continue;
+        if (response.ok) {
+          const json = await response.json();
+          const rows = Array.isArray(json?.data) ? json.data : [];
 
-          const lp = Number(cols[1]);
-          if (!Number.isFinite(lp) || lp <= 0) continue;
+          for (const row of rows) {
+            const tvSym: string = row?.s;
+            const cols: any[] = row?.d;
+            if (!tvSym || !Array.isArray(cols) || cols.length < 7) continue;
 
-          const chpRaw = Number(cols[2]);
-          const chRaw = Number(cols[3]);
-          const openPrice = Number(cols[4]) || lp;
-          const highPrice = Number(cols[5]) || lp;
-          const lowPrice = Number(cols[6]) || lp;
-          const volume = Math.round(Number(cols[7]) || 0);
-          const valueTraded = Number(cols[8]) || volume * lp;
-          const rsi = Number.isFinite(Number(cols[9])) ? Number(Number(cols[9]).toFixed(2)) : undefined;
-          const macd = Number.isFinite(Number(cols[10])) ? Number(Number(cols[10]).toFixed(2)) : undefined;
-          const ema20 = Number.isFinite(Number(cols[11])) ? Number(Number(cols[11]).toFixed(2)) : undefined;
-          const sma50 = Number.isFinite(Number(cols[12])) ? Number(Number(cols[12]).toFixed(2)) : undefined;
-          const recommendScore = Number.isFinite(Number(cols[13]))
-            ? Number(Number(cols[13]).toFixed(2))
-            : undefined;
+            const lp = Number(cols[1]);
+            if (!Number.isFinite(lp) || lp <= 0) continue;
 
-          const ch = Number.isFinite(chRaw) ? Number(chRaw.toFixed(2)) : 0;
-          const chp = Number.isFinite(chpRaw) ? Number(chpRaw.toFixed(2)) : 0;
-          const prevClose = Number((lp - ch).toFixed(2));
-          const turnoverCr = Number((valueTraded / 10000000).toFixed(2));
-          const cleanSym =
-            TV_TICKER_REVERSE[tvSym] || tvSym.replace(/^NSE:/, '').replace(/^BSE:/, '');
-          const isIdx = Boolean(INDEX_BASELINE_PRICES[cleanSym]);
-          const exchange: 'NSE' | 'BSE' = tvSym.startsWith('BSE:') ? 'BSE' : 'NSE';
+            const chpRaw = Number(cols[2]);
+            const chRaw = Number(cols[3]);
+            const openPrice = Number(cols[4]) || lp;
+            const highPrice = Number(cols[5]) || lp;
+            const lowPrice = Number(cols[6]) || lp;
+            const volume = Math.round(Number(cols[7]) || 0);
+            const valueTraded = Number(cols[8]) || volume * lp;
+            const rsi = Number.isFinite(Number(cols[9])) ? Number(Number(cols[9]).toFixed(2)) : undefined;
+            const macd = Number.isFinite(Number(cols[10])) ? Number(Number(cols[10]).toFixed(2)) : undefined;
+            const ema20 = Number.isFinite(Number(cols[11])) ? Number(Number(cols[11]).toFixed(2)) : undefined;
+            const sma50 = Number.isFinite(Number(cols[12])) ? Number(Number(cols[12]).toFixed(2)) : undefined;
+            const recommendScore = Number.isFinite(Number(cols[13]))
+              ? Number(Number(cols[13]).toFixed(2))
+              : undefined;
 
-          const quoteObj: UnifiedMarketQuote = {
-            symbol: cleanSym,
-            instrumentKey: isIdx ? `${exchange}_INDEX|${cleanSym}` : `${exchange}_EQ|${cleanSym}`,
-            description: INDEX_BASELINE_PRICES[cleanSym]?.name || `${cleanSym} (${exchange})`,
-            exchange,
-            type: isIdx ? 'INDEX' : 'EQUITY',
-            lp: Number(lp.toFixed(2)),
-            open: Number(openPrice.toFixed(2)),
-            high: Number(highPrice.toFixed(2)),
-            low: Number(lowPrice.toFixed(2)),
-            prevClose,
-            ch,
-            chp,
-            volume: volume || (isIdx ? 35000000 : 450000),
-            turnoverCr: turnoverCr > 0 ? turnoverCr : Number(((volume * lp) / 10000000).toFixed(2)),
-            atp: Number(((openPrice + highPrice + lowPrice + lp) / 4).toFixed(2)),
-            bid: Number((lp - (isIdx ? 0.25 : 0.05)).toFixed(2)),
-            ask: Number((lp + (isIdx ? 0.25 : 0.05)).toFixed(2)),
-            bidQty: Math.max(1500, Math.round(volume * 0.02)),
-            askQty: Math.max(1500, Math.round(volume * 0.018)),
-            oi: 0,
-            ltt: isOpen ? `${istTime} IST` : 'EOD Settlement',
-            rsi,
-            macd,
-            ema20,
-            sma50,
-            recommendScore,
-            source: 'AUTONOMOUS_LIVE_ENGINE',
-            isMarketOpen: isOpen,
-            marketSession: isOpen ? marketStatus.session : 'CLOSED_SETTLEMENT',
-            lastRefreshed: nowIso,
-          };
+            const ch = Number.isFinite(chRaw) ? Number(chRaw.toFixed(2)) : 0;
+            const chp = Number.isFinite(chpRaw) ? Number(chpRaw.toFixed(2)) : 0;
+            const prevClose = Number((lp - ch).toFixed(2));
+            const turnoverCr = Number((valueTraded / 10000000).toFixed(2));
+            const cleanSym =
+              TV_TICKER_REVERSE[tvSym] || tvSym.replace(/^NSE:/, '').replace(/^BSE:/, '');
+            const isIdx = Boolean(INDEX_BASELINE_PRICES[cleanSym]);
+            const exchange: 'NSE' | 'BSE' = tvSym.startsWith('BSE:') ? 'BSE' : 'NSE';
 
-          resultMap[cleanSym] = quoteObj;
-          this.lastQuoteCache.set(cleanSym, quoteObj);
+            const quoteObj: UnifiedMarketQuote = {
+              symbol: cleanSym,
+              instrumentKey: isIdx ? `${exchange}_INDEX|${cleanSym}` : `${exchange}_EQ|${cleanSym}`,
+              description: INDEX_BASELINE_PRICES[cleanSym]?.name || `${cleanSym} (${exchange})`,
+              exchange,
+              type: isIdx ? 'INDEX' : 'EQUITY',
+              lp: Number(lp.toFixed(2)),
+              open: Number(openPrice.toFixed(2)),
+              high: Number(highPrice.toFixed(2)),
+              low: Number(lowPrice.toFixed(2)),
+              prevClose,
+              ch,
+              chp,
+              volume: volume || (isIdx ? 35000000 : 450000),
+              turnoverCr: turnoverCr > 0 ? turnoverCr : Number(((volume * lp) / 10000000).toFixed(2)),
+              atp: Number(((openPrice + highPrice + lowPrice + lp) / 4).toFixed(2)),
+              bid: Number((lp - (isIdx ? 0.25 : 0.05)).toFixed(2)),
+              ask: Number((lp + (isIdx ? 0.25 : 0.05)).toFixed(2)),
+              bidQty: Math.max(1500, Math.round(volume * 0.02)),
+              askQty: Math.max(1500, Math.round(volume * 0.018)),
+              oi: 0,
+              ltt: isOpen ? `${istTime} IST` : 'EOD Settlement',
+              rsi,
+              macd,
+              ema20,
+              sma50,
+              recommendScore,
+              intradayBars: this.lastBarsCache.get(cleanSym),
+              source: 'AUTONOMOUS_LIVE_ENGINE',
+              isMarketOpen: isOpen,
+              marketSession: isOpen ? marketStatus.session : 'CLOSED_SETTLEMENT',
+              lastRefreshed: nowIso,
+            };
 
-          if (cleanSym === 'NIFTY 50') {
-            resultMap['NIFTY'] = quoteObj;
-            this.lastQuoteCache.set('NIFTY', quoteObj);
-          } else if (cleanSym === 'NIFTY') {
-            resultMap['NIFTY 50'] = quoteObj;
-            this.lastQuoteCache.set('NIFTY 50', quoteObj);
+            resultMap[cleanSym] = quoteObj;
+            this.lastQuoteCache.set(cleanSym, quoteObj);
+
+            if (cleanSym === 'NIFTY 50') {
+              resultMap['NIFTY'] = quoteObj;
+              this.lastQuoteCache.set('NIFTY', quoteObj);
+            } else if (cleanSym === 'NIFTY') {
+              resultMap['NIFTY 50'] = quoteObj;
+              this.lastQuoteCache.set('NIFTY 50', quoteObj);
+            }
           }
         }
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          console.warn('[AutonomousPriceService] TV fetch notice:', err?.message || err);
+        }
       }
-    } catch (err: any) {
-      console.warn('[AutonomousPriceService] Batch fetch warning:', err?.message || err);
+    })();
+
+    const yahooTask = needYahooRefresh
+      ? this.fetchYahooRealTimeQuotesAndBars(equitySymbols, todayDateIST, isOpen, marketStatus.session, istTime, nowIso)
+      : Promise.resolve<Record<string, UnifiedMarketQuote>>({});
+
+    const [_, yahooQuotes] = await Promise.all([tvTask, yahooTask]);
+
+    // Merge Yahoo real-time equity quotes + intraday 5m bars cleanly
+    for (const [sym, yq] of Object.entries(yahooQuotes)) {
+      const existing = resultMap[sym];
+      if (!existing) {
+        resultMap[sym] = yq;
+        this.lastQuoteCache.set(sym, yq);
+      } else {
+        // Attach real 5m intraday bars onto TV quote & fill missing live fields
+        existing.intradayBars = yq.intradayBars || existing.intradayBars;
+        if (yq.lp > 0 && (!existing.lp || yq.type === 'EQUITY')) {
+          existing.lp = yq.lp;
+          existing.ch = yq.ch;
+          existing.chp = yq.chp;
+          existing.prevClose = yq.prevClose;
+          existing.open = yq.open || existing.open;
+          existing.high = Math.max(existing.high || 0, yq.high || 0) || yq.high;
+          existing.low = (existing.low > 0 && yq.low > 0 ? Math.min(existing.low, yq.low) : yq.low) || existing.low;
+          existing.volume = Math.max(existing.volume || 0, yq.volume || 0);
+        }
+        this.lastQuoteCache.set(sym, existing);
+      }
     }
 
-    // Secondary backup: if major indices missing (e.g. TradingView hiccup), query Moneycontrol indices
-    if (!resultMap['NIFTY 50'] || !resultMap['BANKNIFTY']) {
+    // Re-attach cached quotes + bars for any symbol not updated in this partial tick
+    if (!needYahooRefresh) {
+      for (const sym of equitySymbols) {
+        if (!resultMap[sym] && this.lastQuoteCache.has(sym)) {
+          const cached = { ...this.lastQuoteCache.get(sym)! };
+          cached.isMarketOpen = isOpen;
+          cached.marketSession = isOpen ? marketStatus.session : 'CLOSED_SETTLEMENT';
+          cached.intradayBars = this.lastBarsCache.get(sym) || cached.intradayBars;
+          resultMap[sym] = cached;
+        }
+      }
+    }
+
+    // Ensure major benchmark indices via Moneycontrol + Yahoo fallback
+    if (!resultMap['NIFTY 50'] || !resultMap['BANKNIFTY'] || !resultMap['SENSEX']) {
       await this.fetchMoneycontrolIndicesBackup(resultMap, isOpen, marketStatus.session, istTime, nowIso);
     }
 
@@ -344,6 +458,160 @@ class AutonomousPriceService {
     }
 
     return Object.keys(resultMap).length > 0 ? resultMap : this.getCachedQuotes();
+  }
+
+  private async fetchYahooRealTimeQuotesAndBars(
+    equitySymbols: string[],
+    todayDateIST: string,
+    isOpen: boolean,
+    marketSession: string,
+    istTime: string,
+    nowIso: string
+  ): Promise<Record<string, UnifiedMarketQuote>> {
+    const out: Record<string, UnifiedMarketQuote> = {};
+    const jobs: Array<{ sym: string; yf: string; exchange: 'NSE' | 'BSE'; isIdx: boolean }> = [
+      ...YAHOO_INDEX_TICKERS.map((idx) => ({ sym: idx.sym, yf: idx.yf, exchange: idx.exchange, isIdx: true })),
+      ...equitySymbols.map((sym) => ({ sym, yf: toYahooEquityTicker(sym), exchange: 'NSE' as const, isIdx: false })),
+    ];
+
+    let cursor = 0;
+    const workerCount = 24;
+
+    const runOne = async (job: { sym: string; yf: string; exchange: 'NSE' | 'BSE'; isIdx: boolean }) => {
+      try {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 3800);
+        const res = await fetch(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${job.yf}?interval=5m&range=1d`,
+          {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+              Accept: 'application/json',
+            },
+            signal: controller.signal,
+          }
+        );
+        clearTimeout(tid);
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const chart = data?.chart?.result?.[0];
+        const meta = chart?.meta;
+        if (!meta) return;
+
+        const lp = Number(meta.regularMarketPrice || 0);
+        if (!Number.isFinite(lp) || lp <= 0) return;
+
+        const prevClose = Number(meta.chartPreviousClose || meta.previousClose || lp);
+        const ch = Number((lp - prevClose).toFixed(2));
+        const chp = prevClose > 0 ? Number(((ch / prevClose) * 100).toFixed(2)) : 0;
+
+        const rawTs: number[] = Array.isArray(chart?.timestamp) ? chart.timestamp : [];
+        const q0 = chart?.indicators?.quote?.[0] || {};
+        const opens: number[] = Array.isArray(q0.open) ? q0.open : [];
+        const highs: number[] = Array.isArray(q0.high) ? q0.high : [];
+        const lows: number[] = Array.isArray(q0.low) ? q0.low : [];
+        const closes: number[] = Array.isArray(q0.close) ? q0.close : [];
+        const vols: number[] = Array.isArray(q0.volume) ? q0.volume : [];
+
+        const bars: IntradayCandleBar[] = [];
+        let volSum = 0;
+        let tpvSum = 0;
+        let barOpenFirst = 0;
+        let barHighMax = 0;
+        let barLowMin = Infinity;
+
+        for (let i = 0; i < rawTs.length; i++) {
+          const tsSec = Number(rawTs[i] || 0);
+          const c = Number(closes[i]);
+          if (!tsSec || !Number.isFinite(c) || c <= 0) continue;
+          const o = Number.isFinite(Number(opens[i])) && Number(opens[i]) > 0 ? Number(opens[i]) : c;
+          const h = Number.isFinite(Number(highs[i])) && Number(highs[i]) > 0 ? Number(highs[i]) : Math.max(o, c);
+          const l = Number.isFinite(Number(lows[i])) && Number(lows[i]) > 0 ? Number(lows[i]) : Math.min(o, c);
+          const v = Math.max(0, Math.round(Number(vols[i]) || 0));
+
+          const istP = getISTPartsFromEpochSec(tsSec);
+          if (istP.secIST < 9 * 3600 + 15 * 60 || istP.secIST > 15 * 3600 + 30 * 60) continue;
+          if (!barOpenFirst) barOpenFirst = o;
+          if (h > barHighMax) barHighMax = h;
+          if (l < barLowMin) barLowMin = l;
+          volSum += v;
+          tpvSum += ((h + l + c) / 3) * (v || 1);
+
+          bars.push({
+            tsSec,
+            dateIST: istP.dateIST,
+            timeIST: istP.timeIST,
+            secIST: istP.secIST,
+            open: Number(o.toFixed(2)),
+            high: Number(h.toFixed(2)),
+            low: Number(l.toFixed(2)),
+            close: Number(c.toFixed(2)),
+            volume: v,
+          });
+        }
+
+        const todayBars = bars.filter((b) => b.dateIST === todayDateIST);
+        const activeBars = todayBars.length >= 2 ? todayBars : bars;
+        if (activeBars.length > 0) {
+          this.lastBarsCache.set(job.sym, activeBars);
+        }
+
+        const volume = Number(meta.regularMarketVolume || volSum || (job.isIdx ? 35000000 : 450000));
+        const dayHigh = Number(meta.regularMarketDayHigh || (barHighMax > 0 ? barHighMax : Math.max(lp, prevClose)));
+        const dayLow = Number(meta.regularMarketDayLow || (barLowMin < Infinity ? barLowMin : Math.min(lp, prevClose)));
+        const dayOpen = barOpenFirst || Number(meta.regularMarketOpen || prevClose);
+        const atp = volSum > 0 ? Number((tpvSum / volSum).toFixed(2)) : Number(((dayOpen + dayHigh + dayLow + lp) / 4).toFixed(2));
+        const turnoverCr = Number(((volume * atp) / 10000000).toFixed(2));
+
+        const qObj: UnifiedMarketQuote = {
+          symbol: job.sym,
+          instrumentKey: job.isIdx ? `${job.exchange}_INDEX|${job.sym}` : `${job.exchange}_EQ|${job.sym}`,
+          description: INDEX_BASELINE_PRICES[job.sym]?.name || `${job.sym} (${job.exchange})`,
+          exchange: job.exchange,
+          type: job.isIdx ? 'INDEX' : 'EQUITY',
+          lp: Number(lp.toFixed(2)),
+          open: Number(dayOpen.toFixed(2)),
+          high: Number(dayHigh.toFixed(2)),
+          low: Number(dayLow.toFixed(2)),
+          prevClose: Number(prevClose.toFixed(2)),
+          ch,
+          chp,
+          volume,
+          turnoverCr,
+          atp,
+          bid: Number((lp - (job.isIdx ? 0.25 : 0.05)).toFixed(2)),
+          ask: Number((lp + (job.isIdx ? 0.25 : 0.05)).toFixed(2)),
+          bidQty: Math.max(1500, Math.round(volume * 0.02)),
+          askQty: Math.max(1500, Math.round(volume * 0.018)),
+          oi: 0,
+          ltt: isOpen ? `${istTime} IST` : 'EOD Settlement',
+          intradayBars: activeBars,
+          source: 'AUTONOMOUS_LIVE_ENGINE',
+          isMarketOpen: isOpen,
+          marketSession: isOpen ? marketSession : 'CLOSED_SETTLEMENT',
+          lastRefreshed: nowIso,
+        };
+
+        out[job.sym] = qObj;
+        if (job.sym === 'NIFTY 50') out['NIFTY'] = qObj;
+      } catch {
+        // Non-fatal per ticker
+      }
+    };
+
+    const workers = Array.from({ length: Math.min(workerCount, jobs.length) }, async () => {
+      while (cursor < jobs.length) {
+        const idx = cursor++;
+        if (idx < jobs.length) await runOne(jobs[idx]);
+      }
+    });
+
+    await Promise.allSettled(workers);
+    if (Object.keys(out).length >= 50) {
+      this.lastYahooFetchTimestamp = Date.now();
+    }
+    return out;
   }
 
   private async fetchMoneycontrolIndicesBackup(

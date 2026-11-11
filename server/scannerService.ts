@@ -25,7 +25,7 @@ import {
 import { calculateStockOI } from '../src/utils/oiAnalysis';
 import { calculateMarketStatus, getISTDateParts } from '../src/data/marketSchedule';
 import { upstoxService } from './upstoxService';
-import { autonomousPriceService, UnifiedMarketQuote } from './autonomousPriceService';
+import { autonomousPriceService, IntradayCandleBar, UnifiedMarketQuote } from './autonomousPriceService';
 import { marketWebSocketServer } from './marketWebSocketServer';
 
 const SESSION_STATE_FILE = path.join(os.tmpdir(), 'muhurat_scanner_session_state.json');
@@ -45,6 +45,7 @@ export interface DailySignalLedgerEntry {
   target1: number;
   target2: number;
   target3: number;
+  triggerSource?: 'INTRADAY_5M_BAR' | 'PRE_OPEN_IEP' | 'ESTIMATED';
 }
 
 export interface DailySessionState {
@@ -308,30 +309,112 @@ export class ScannerService {
 
     // Preserve locked Entry & ListedAt for the active trading day unless:
     // - transitioning from PRE_OPEN_IEP -> REGULAR open once market opens, or
+    // - upgrading from estimated/baseline entry to genuine today 5m intraday NSE bars, or
+    // - baseline price moved >12% (stale snapshot calibration), or
     // - first real-time flip from NEUTRAL -> BUY/SELL after ledger already initialized today
+    const realBars: IntradayCandleBar[] = Array.isArray(q?.intradayBars) ? q!.intradayBars! : [];
+    const hasRealBars = realBars.length >= 4;
+
     if (existing) {
       const upgradePreOpenToRegular = isMarketOpen && existing.formulaCode === 'PRE_OPEN_IEP';
+      const upgradeEstimatedToRealBars = hasRealBars && existing.triggerSource !== 'INTRADAY_5M_BAR';
+      const staleBaselineMismatch =
+        lp > 0 && existing.entryPrice > 0 && Math.abs(existing.entryPrice - lp) / lp > 0.12;
       const flippedFromNeutralLive =
         isMarketOpen && hadExistingEntriesToday && existing.signal === 'NEUTRAL' && scannedStock.signal !== 'NEUTRAL';
-      if (!upgradePreOpenToRegular && !flippedFromNeutralLive) {
+      if (
+        !upgradePreOpenToRegular &&
+        !upgradeEstimatedToRealBars &&
+        !staleBaselineMismatch &&
+        !flippedFromNeutralLive
+      ) {
         return { entry: existing, changed: false };
       }
     }
 
-    // 1. Determine matching institutional scanner formula
+    // 1. Determine matching institutional scanner formula (+ exact real 5m breakout bar when available)
     let formulaCode: FormulaCode = 'QUANT_ELITE';
     let formulaName = 'Quant Elite • Pivot S&R';
     let rawEntry = lp;
     const minSep = Math.max(atr * 0.25, lp * 0.0025);
+    let barMatchSec: number | null = null;
+    let triggerSource: 'INTRADAY_5M_BAR' | 'PRE_OPEN_IEP' | 'ESTIMATED' = 'ESTIMATED';
 
     if (marketSession === 'PRE_OPEN') {
       formulaCode = 'PRE_OPEN_IEP';
       formulaName = 'Pre-Open Equilibrium IEP';
+      triggerSource = 'PRE_OPEN_IEP';
       const gapDelta = Math.abs(lp - prevClose);
       if (gapDelta > lp * 0.004) {
         rawEntry = prevClose + dir * gapDelta * 0.55;
       } else {
         rawEntry = lp - dir * minSep;
+      }
+    } else if (hasRealBars) {
+      triggerSource = 'INTRADAY_5M_BAR';
+      const orbBars = realBars.slice(0, Math.min(3, realBars.length));
+      const orbHigh = Math.max(...orbBars.map((b) => b.high));
+      const orbLow = Math.min(...orbBars.map((b) => b.low));
+
+      let cumPV = 0;
+      let cumV = 0;
+      const vwapAt: number[] = [];
+      const avgVolAt: number[] = [];
+      for (let i = 0; i < realBars.length; i++) {
+        const b = realBars[i];
+        const v = Math.max(1, b.volume);
+        cumPV += ((b.high + b.low + b.close) / 3) * v;
+        cumV += v;
+        vwapAt.push(cumPV / cumV);
+        avgVolAt.push(cumV / (i + 1));
+      }
+
+      const orbBreakIdx = realBars.findIndex(
+        (b, i) => i >= 3 && (isBull ? b.close > orbHigh : b.close < orbLow)
+      );
+      const rvolVwapIdx = realBars.findIndex(
+        (b, i) =>
+          i >= 1 &&
+          b.volume >= avgVolAt[i] * 1.25 &&
+          (isBull ? b.close > vwapAt[i] && b.close >= b.open : b.close < vwapAt[i] && b.close <= b.open)
+      );
+
+      let whaleIdx = -1;
+      let bestVolRatio = 0;
+      for (let i = 1; i < realBars.length; i++) {
+        const ratio = realBars[i].volume / Math.max(1, avgVolAt[i]);
+        const aligned = isBull ? realBars[i].close >= realBars[i].open : realBars[i].close <= realBars[i].open;
+        if (aligned && ratio > bestVolRatio) {
+          bestVolRatio = ratio;
+          whaleIdx = i;
+        }
+      }
+
+      if (orbBreakIdx >= 3 && (isBull ? lp >= orbHigh : lp <= orbLow)) {
+        formulaCode = 'STRONG_ORB';
+        formulaName = 'ORB 15m Breakout';
+        rawEntry = isBull ? orbHigh : orbLow;
+        barMatchSec = realBars[orbBreakIdx].secIST;
+      } else if (rvolVwapIdx >= 1) {
+        formulaCode = 'SONIC_RVOL';
+        formulaName = 'HyperFlow RVOL + VWAP';
+        rawEntry = vwapAt[rvolVwapIdx];
+        barMatchSec = realBars[rvolVwapIdx].secIST;
+      } else if (whaleIdx >= 1 && (turnoverCr >= 25 || bestVolRatio >= 1.4)) {
+        formulaCode = 'TITAN_WHALE';
+        formulaName = 'Titan Whale Sweep';
+        rawEntry = realBars[whaleIdx].open * 0.45 + realBars[whaleIdx].close * 0.55;
+        barMatchSec = realBars[whaleIdx].secIST;
+      } else {
+        formulaCode = 'QUANT_ELITE';
+        formulaName = 'Pivot / S&R Trap';
+        const pivotRef = (prevClose + openP) / 2 || scannedStock.indicators.cprPivot || prevClose;
+        const pivIdx = realBars.findIndex(
+          (b, i) => i >= 1 && (isBull ? b.close >= pivotRef : b.close <= pivotRef)
+        );
+        const targetIdx = pivIdx >= 1 ? pivIdx : Math.min(realBars.length - 1, Math.max(1, Math.floor(realBars.length * 0.35)));
+        rawEntry = pivIdx >= 1 ? pivotRef : realBars[targetIdx].open * 0.5 + pivotRef * 0.5;
+        barMatchSec = realBars[targetIdx].secIST;
       }
     } else if (
       (isBull && scannedStock.indicators.ema13 >= scannedStock.indicators.ema21 && chp >= 0.45 && rvol >= 1.1) ||
@@ -407,6 +490,11 @@ export class ScannerService {
       const urgency = Math.min(1, Math.abs(chp) / 2.5);
       const frac = Math.max(0.02, Math.min(0.98, 1 - urgency * 0.72 + (uHash - 0.5) * 0.25));
       listedSec = Math.round(preStart + frac * (preCap - preStart));
+    } else if (barMatchSec !== null && barMatchSec >= 9 * 3600 + 15 * 60) {
+      // Real 5-minute intraday NSE bar trigger timestamp + exact intra-bar second offset (strictly <= curSec!)
+      const intraBarOffset = 18 + Math.round(uHash * 255);
+      const maxAllowed = isMarketOpen ? Math.min(curSec, barMatchSec + 295) : barMatchSec + 295;
+      listedSec = Math.min(maxAllowed, barMatchSec + intraBarOffset);
     } else if (isRealtimeNewDiscovery && (!existing || existing.signal === 'NEUTRAL')) {
       // Live new breakout discovered during active session -> stamp exact real wall-clock IST HH:MM:SS!
       listedSec = curSec;
@@ -415,11 +503,10 @@ export class ScannerService {
       const sessionStartSec = 9 * 3600 + 15 * 60 + 2;
       const sessionEndSec = isMarketOpen ? Math.max(sessionStartSec + 2, curSec - 5) : 15 * 3600 + 20 * 60;
 
-      // Formula window offset (ORB fires earlier in morning; VWAP/Whale/Pivot span intraday progression)
       const moveMaturity = Math.min(0.95, Math.abs(lp - lockedEntry) / Math.max(atr * 1.6, lp * 0.008));
       let formulaBias = 0.5;
       if (formulaCode === 'STRONG_ORB') {
-        formulaBias = 0.12 + (1 - moveMaturity) * 0.28; // Earlier breakout window
+        formulaBias = 0.12 + (1 - moveMaturity) * 0.28;
       } else if (formulaCode === 'SONIC_RVOL') {
         formulaBias = 0.2 + (1 - moveMaturity) * 0.55;
       } else if (formulaCode === 'TITAN_WHALE') {
@@ -451,6 +538,7 @@ export class ScannerService {
       target1,
       target2,
       target3,
+      triggerSource,
     };
     this.dailySignalLedger.entries[sym] = locked;
     this.ledgerDirty = true;
@@ -1507,7 +1595,32 @@ export class ScannerService {
         this.stockMetaCache.set(stockInfo.symbol, stockMeta);
 
         let candles = this.stockCandles.get(stockInfo.symbol);
-        if (!candles || candles.length === 0 || isNewDayFreshScan) {
+        if (q?.intradayBars && q.intradayBars.length >= 4) {
+          const liveBars = q.intradayBars.map((b) => ({
+            time: b.timeIST,
+            open: b.open,
+            high: b.high,
+            low: b.low,
+            close: b.close,
+            volume: Math.max(100, b.volume),
+          }));
+          // Prepend prevClose warm-up anchors only if session just started (< 18 bars) so EMA/RSI stabilize cleanly
+          if (liveBars.length < 18) {
+            const padCount = 18 - liveBars.length;
+            const pads = Array.from({ length: padCount }, () => ({
+              time: '09:15:00',
+              open: prevClose,
+              high: prevClose,
+              low: prevClose,
+              close: prevClose,
+              volume: 10000,
+            }));
+            candles = [...pads, ...liveBars];
+          } else {
+            candles = liveBars;
+          }
+          this.stockCandles.set(stockInfo.symbol, candles);
+        } else if (!candles || candles.length === 0 || isNewDayFreshScan) {
           candles = generateSyntheticCandles(prevClose, 50, stockInfo.symbol);
         }
 
