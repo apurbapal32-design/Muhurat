@@ -5582,15 +5582,137 @@
       return `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-long-unwinding whitespace-nowrap">🟠 Long Unwind</span>`;
     }
 
+    function sortByListedAtNewestFirstAtoZ(arr) {
+      return [...(arr || [])].sort((a, b) => {
+        const rawA = a.listed_at || a.listedAt || '09:15:00';
+        const rawB = b.listed_at || b.listedAt || '09:15:00';
+        const secA = typeof timeStringToSec === 'function' ? timeStringToSec(rawA) : 0;
+        const secB = typeof timeStringToSec === 'function' ? timeStringToSec(rawB) : 0;
+        if (secB !== secA) return secB - secA; // Newest listed stock UP (top) -> oldest listed stock DOWN (bottom)
+        return String(a.symbol || '').localeCompare(String(b.symbol || '')); // Clean A -> Z tie-break
+      });
+    }
+
+    function normLogRvol(s) {
+      return Math.min(8, Math.log10(Math.max(1, Number(s && s.rvol) || 1)) * 3.5);
+    }
+
     function scoreEquityFormulaMove(s, isBull) {
       const pct = Number(s.pct_change) || 0;
-      const rvol = Number(s.rvol) || 1.0;
       const ba = Number(s.bid_ask_ratio) || 1.0;
       const turn = Number(s.turnover_cr) || 0;
       const ai = Number(s.aiScore || s.hyperflow || 60);
+      const adx = Number(s.adx) || 25;
       return isBull
-        ? pct * 10 + (rvol - 1) * 14 + (ba - 1) * 12 + Math.min(40, turn * 0.08) + ai * 0.25
-        : -pct * 10 + (rvol - 1) * 14 + (1 - ba) * 12 + Math.min(40, turn * 0.08) + ai * 0.25;
+        ? pct * 12 + normLogRvol(s) * 4 + (ba - 1) * 14 + Math.min(40, Math.sqrt(Math.max(0, turn)) * 2) + ai * 0.4 + adx * 0.35
+        : -pct * 12 + normLogRvol(s) * 4 + (1 - ba) * 14 + Math.min(40, Math.sqrt(Math.max(0, turn)) * 2) + ai * 0.4 + adx * 0.35;
+    }
+
+    function buildDistinctFormulaScanners(equityPool) {
+      const pool = (equityPool || []).filter(isPureEquityStock);
+      const bull = pool.filter(s => (Number(s.pct_change) || 0) >= 0);
+      const bear = pool.filter(s => (Number(s.pct_change) || 0) < 0);
+
+      const rangePos = (s) => {
+        const hi = Number(s.day_high) || Number(s.price) || 1;
+        const lo = Number(s.day_low) || Number(s.price) || 1;
+        const span = Math.max(0.05, hi - lo);
+        return Math.max(0, Math.min(1, ((Number(s.price) || lo) - lo) / span));
+      };
+
+      const pickTop10 = (arr, scoreFn) =>
+        sortByListedAtNewestFirstAtoZ([...arr].sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, 10));
+
+      // 1. Muhurat Strong (ORB 15m Breakout + ADX Trend + Day-Range Extension)
+      const scoreStrong = (isBull) => (s) =>
+        (s.formula_code === 'STRONG_ORB' ? 120 : 0) +
+        (Number(s.adx) || 25) * 1.4 +
+        Math.abs(Number(s.pct_change) || 0) * 10 +
+        (isBull ? rangePos(s) : (1 - rangePos(s))) * 30;
+
+      // 2. Muhurat Pulse (Relative Volume Shock + OI Spike + Cycle Confirmation)
+      const scorePulse = (isBull) => (s) =>
+        (s.formula_code === 'SONIC_RVOL' ? 120 : 0) +
+        (Number(s.rvol) || 1) * 1.4 +
+        Math.abs(Number(s.oi_chg_pct) || 0) * 3.8 +
+        ((isBull && (s.buildup === 'Long Buildup' || s.buildup === 'Short Covering')) ||
+        (!isBull && (s.buildup === 'Short Buildup' || s.buildup === 'Long Unwinding')) ? 25 : 0);
+
+      // 3. Muhurat Flow (Institutional Whales + Order-Book Skew + Delta)
+      const scoreFlow = (isBull) => (s) =>
+        (s.formula_code === 'TITAN_WHALE' ? 140 : 0) +
+        (isBull ? (Number(s.bid_ask_ratio) || 1) * 35 : (1 / Math.max(0.15, Number(s.bid_ask_ratio) || 1)) * 35) +
+        Math.min(40, Math.sqrt(Math.max(0, Number(s.turnover_cr) || 0)) * 2.2) +
+        Math.min(30, Math.abs(Number(s.delta) || 0) / 50000);
+
+      // 4. Muhurat Elite (3m Volatility Squeeze Coil + ADX + RSI Sweet Spot)
+      const scoreElite = (isBull) => (s) => {
+        const apct = Math.abs(Number(s.pct_change) || 0);
+        const rsi = Number(s.rsi) || 50;
+        const rsiFit = isBull ? (rsi >= 52 && rsi <= 74 ? 32 : 0) : (rsi >= 26 && rsi <= 48 ? 32 : 0);
+        return (
+          (s.squeeze_on ? 60 : 0) +
+          (Number(s.adx) || 25) * 2.6 +
+          (apct >= 0.35 && apct <= 4.2 ? 45 : 0) +
+          rsiFit +
+          (Number(s.aiScore) || 60) * 0.5
+        );
+      };
+
+      // 5. Muhurat Elite Pro (6m Waves + Options PCR Floor/Ceiling Divergence)
+      const scoreElitePro = (isBull) => (s) => {
+        const pcr = Number(s.pcr) || 1.0;
+        return isBull
+          ? (pcr >= 1.2 ? 55 : 0) + pcr * 45 + (s.buildup === 'Short Covering' ? 40 : 0) + (Number(s.aiScore) || 60) * 0.55
+          : (pcr <= 0.85 ? 55 : 0) + Math.max(0, 2.2 - pcr) * 45 + (s.buildup === 'Short Buildup' ? 40 : 0) + (Number(s.aiScore) || 60) * 0.55;
+      };
+
+      // 6. Muhurat Flow Cash (Institutional Delivery Value & Controlled VWAP Accumulation)
+      const scoreFlowCash = () => (s) => {
+        const turn = Number(s.turnover_cr) || 0;
+        const apct = Math.abs(Number(s.pct_change) || 0);
+        const vwapGap = Math.abs(Number(s.price) - Number(s.atp || s.price)) / Math.max(1, Number(s.price) || 1);
+        return (
+          (turn >= 25 && apct <= 3.2 ? 70 : 0) +
+          Math.min(85, Math.sqrt(Math.max(0, turn)) * 4.5) +
+          Math.max(0, 30 - vwapGap * 1200) +
+          (Number(s.aiScore) || 60) * 0.45
+        );
+      };
+
+      // 7. Top Momentum (Pure % Intraday Price Velocity Gainers & Losers)
+      const scorePureMomentum = (isBull) => (s) =>
+        (isBull ? (Number(s.pct_change) || 0) : -(Number(s.pct_change) || 0)) * 20 +
+        (isBull ? rangePos(s) : (1 - rangePos(s))) * 8;
+
+      // 8. Market Liquidity (Pure Institutional Monetary Turnover Rs Cr)
+      const scorePureLiquidity = (s) =>
+        (Number(s.turnover_cr) || 0) * 1.0 + Math.abs(Number(s.pct_change) || 0) * 12;
+
+      return {
+        strong_bullish: pickTop10(bull, scoreStrong(true)),
+        strong_bearish: pickTop10(bear, scoreStrong(false)),
+        sonic_bullish: pickTop10(bull, scorePulse(true)),
+        sonic_bearish: pickTop10(bear, scorePulse(false)),
+        titan_bullish: pickTop10(bull, scoreFlow(true)),
+        titan_bearish: pickTop10(bear, scoreFlow(false)),
+        quant_elite_bullish: pickTop10(bull, scoreElite(true)),
+        quant_elite_bearish: pickTop10(bear, scoreElite(false)),
+        quant_elite_pro_bullish: pickTop10(bull, scoreElitePro(true)),
+        quant_elite_pro_bearish: pickTop10(bear, scoreElitePro(false)),
+        titan_cash_bullish: pickTop10(bull, scoreFlowCash()),
+        titan_cash_bearish: pickTop10(bear, scoreFlowCash()),
+        best_momentum_upside: pickTop10(bull, scorePureMomentum(true)),
+        best_momentum_downside: pickTop10(bear, scorePureMomentum(false)),
+        top_gainer: pickTop10(bull, scorePureMomentum(true)),
+        top_loser: pickTop10(bear, scorePureMomentum(false)),
+        market_pulse: pickTop10(bull, scorePulse(true)),
+        top_traded_value: pickTop10(pool, scorePureLiquidity),
+        most_active_volume: sortByListedAtNewestFirstAtoZ([
+          ...pickTop10(bull, (s) => Number(s.volume) || 0),
+          ...pickTop10(bear, (s) => Number(s.volume) || 0)
+        ])
+      };
     }
 
     function sanitizeDataScannersUniverse() {
@@ -5603,49 +5725,15 @@
         });
       }
       const pool = Array.isArray(DATA.all_stocks) ? DATA.all_stocks : [];
-      const bullKeys = [
-        'sonic_bullish', 'strong_bullish', 'titan_bullish',
-        'quant_elite_bullish', 'quant_elite_pro_bullish',
-        'titan_cash_bullish', 'best_momentum_upside', 'top_gainer'
-      ];
-      const bearKeys = [
-        'sonic_bearish', 'strong_bearish', 'titan_bearish',
-        'quant_elite_bearish', 'quant_elite_pro_bearish',
-        'titan_cash_bearish', 'best_momentum_downside', 'top_loser'
-      ];
-      bullKeys.forEach(k => {
-        let arr = Array.isArray(DATA[k]) ? DATA[k].filter(isPureEquityStock) : [];
-        if (arr.length === 0 && pool.length > 0) {
-          arr = pool.filter(s => (Number(s.pct_change) || 0) >= 0);
-        }
-        arr.sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true));
-        DATA[k] = arr.slice(0, 10);
-      });
-      bearKeys.forEach(k => {
-        let arr = Array.isArray(DATA[k]) ? DATA[k].filter(isPureEquityStock) : [];
-        if (arr.length === 0 && pool.length > 0) {
-          arr = pool.filter(s => (Number(s.pct_change) || 0) < 0);
-        }
-        arr.sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false));
-        DATA[k] = arr.slice(0, 10);
-      });
-      if (Array.isArray(DATA.top_traded_value)) {
-        DATA.top_traded_value = DATA.top_traded_value.filter(isPureEquityStock).slice(0, 10);
-      }
-      if (Array.isArray(DATA.most_active_volume)) {
-        const cleanVol = DATA.most_active_volume.filter(isPureEquityStock);
-        const volUp = cleanVol.filter(s => (Number(s.pct_change) || 0) >= 0).sort((a, b) => (b.volume || 0) - (a.volume || 0)).slice(0, 10);
-        const volDn = cleanVol.filter(s => (Number(s.pct_change) || 0) < 0).sort((a, b) => (b.volume || 0) - (a.volume || 0)).slice(0, 10);
-        DATA.most_active_volume = [...volUp, ...volDn];
-      }
-      if (Array.isArray(DATA.market_pulse)) {
-        DATA.market_pulse = DATA.market_pulse.filter(isPureEquityStock).slice(0, 10);
+      if (pool.length > 0) {
+        const distinct = buildDistinctFormulaScanners(pool);
+        Object.assign(DATA, distinct);
       }
       if (Array.isArray(DATA.cloud_ai_signals)) {
         const cleanSig = DATA.cloud_ai_signals.filter(isPureEquityStock);
         const sigBuy = cleanSig.filter(s => String(s.side || '').includes('BUY')).slice(0, 10);
         const sigSell = cleanSig.filter(s => String(s.side || '').includes('SELL')).slice(0, 10);
-        DATA.cloud_ai_signals = [...sigBuy, ...sigSell];
+        DATA.cloud_ai_signals = sortByListedAtNewestFirstAtoZ([...sigBuy, ...sigSell]);
       }
     }
 
@@ -7473,7 +7561,7 @@
         .filter(s => (Number(s.pct_change) || 0) < 0)
         .sort((a, b) => rankOmni(b, false) - rankOmni(a, false))
         .slice(0, 10);
-      const balancedTop20 = [...top10Up, ...top10Down];
+      const balancedTop20 = sortByListedAtNewestFirstAtoZ([...top10Up, ...top10Down]);
 
       const countElem = document.getElementById('world-strat-count');
       if (countElem) {
@@ -7764,7 +7852,9 @@
       }
       if (!Array.isArray(dataList)) dataList = [];
       const isCombinedDualTable = (tableId === 'table-world-strategy' || tableId === 'table-most-active');
-      dataList = dataList.filter(isPureEquityStock).slice(0, isCombinedDualTable ? 20 : 10);
+      dataList = sortByListedAtNewestFirstAtoZ(
+        dataList.filter(isPureEquityStock).slice(0, isCombinedDualTable ? 20 : 10)
+      );
 
       let html = `
         <thead>
@@ -8295,13 +8385,15 @@
       const starredPill = document.getElementById('starred-count-pill');
       if (starredPill) starredPill.innerText = activeWatchlist.length;
 
-      let filtered = DATA.all_stocks.filter(s => {
-        if (!isPureEquityStock(s)) return false;
-        const matchesQ = !q || s.symbol.includes(q) || (s.name && s.name.toUpperCase().includes(q));
-        const matchesSec = secFilter === 'ALL' || s.sector === secFilter;
-        const matchesMode = (watchlistViewMode === 'all') || activeWatchlist.includes(s.symbol);
-        return matchesQ && matchesSec && matchesMode;
-      });
+      let filtered = sortByListedAtNewestFirstAtoZ(
+        DATA.all_stocks.filter(s => {
+          if (!isPureEquityStock(s)) return false;
+          const matchesQ = !q || s.symbol.includes(q) || (s.name && s.name.toUpperCase().includes(q));
+          const matchesSec = secFilter === 'ALL' || s.sector === secFilter;
+          const matchesMode = (watchlistViewMode === 'all') || activeWatchlist.includes(s.symbol);
+          return matchesQ && matchesSec && matchesMode;
+        })
+      );
 
       let html = `
         <thead>
@@ -9321,7 +9413,9 @@ function renderJournal() {
           iv: Number(b.greeks?.iv || baseStock?.iv || 16.4),
           ivp: Number(b.greeks?.ivPercentile || baseStock?.ivp || 54),
           aiScore: Number(b.aiScore || Math.round(hyperflow)),
-          rsi
+          rsi,
+          adx: Number(b.indicators?.adx || baseStock?.adx || 25),
+          squeeze_on: Boolean(b.indicators?.squeezeOn || false)
         };
       },
 
@@ -9330,45 +9424,23 @@ function renderJournal() {
 
         // Pure Equity Universe Only (zero benchmark indices inside Candidate Engines)
         const equityPool = freshPool.filter(isPureEquityStock);
-
-        // Formula-specific Top 10 Up + Top 10 Down ranking
-        const bull = equityPool
-          .filter(s => (Number(s.pct_change) || 0) >= 0)
-          .sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true));
-        const bear = equityPool
-          .filter(s => (Number(s.pct_change) || 0) < 0)
-          .sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false));
-        const byTurn = [...equityPool].sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0));
-        const byRvolBull = [...bull].sort((a, b) => (b.rvol * 12 + b.pct_change * 6 + ((b.bid_ask_ratio || 1) - 1) * 10) - (a.rvol * 12 + a.pct_change * 6 + ((a.bid_ask_ratio || 1) - 1) * 10));
-        const byRvolBear = [...bear].sort((a, b) => (b.rvol * 12 + Math.abs(b.pct_change) * 6 + (1 - (b.bid_ask_ratio || 1)) * 10) - (a.rvol * 12 + Math.abs(a.pct_change) * 6 + (1 - (a.bid_ask_ratio || 1)) * 10));
-        const byMomentumUp = [...bull].sort((a, b) => (b.pct_change * 8 + b.rvol * 3) - (a.pct_change * 8 + a.rvol * 3));
-        const byMomentumDn = [...bear].sort((a, b) => (Math.abs(b.pct_change) * 8 + b.rvol * 3) - (Math.abs(a.pct_change) * 8 + a.rvol * 3));
-
         DATA.all_stocks = equityPool;
         this.universeCache = equityPool;
-        DATA.sonic_bullish = byRvolBull.slice(0, 10);
-        DATA.sonic_bearish = byRvolBear.slice(0, 10);
-        DATA.strong_bullish = bull.slice(0, 10);
-        DATA.strong_bearish = bear.slice(0, 10);
-        DATA.titan_bullish = byTurn.filter(s => (Number(s.pct_change) || 0) >= 0).slice(0, 10);
-        DATA.titan_bearish = byTurn.filter(s => (Number(s.pct_change) || 0) < 0).slice(0, 10);
-        DATA.quant_elite_bullish = [...bull].sort((a, b) => ((b.aiScore || 0) + b.pct_change * 8) - ((a.aiScore || 0) + a.pct_change * 8)).slice(0, 10);
-        DATA.quant_elite_bearish = [...bear].sort((a, b) => ((b.aiScore || 0) + Math.abs(b.pct_change) * 8) - ((a.aiScore || 0) + Math.abs(a.pct_change) * 8)).slice(0, 10);
-        DATA.quant_elite_pro_bullish = bull.filter(s => (s.pcr || 1) >= 1.0).concat(bull.filter(s => (s.pcr || 1) < 1.0)).slice(0, 10);
-        DATA.quant_elite_pro_bearish = bear.filter(s => (s.pcr || 1) < 1.1).concat(bear.filter(s => (s.pcr || 1) >= 1.1)).slice(0, 10);
-        DATA.titan_cash_bullish = byTurn.filter(s => (s.turnover_cr || 0) >= 20 && (Number(s.pct_change) || 0) >= 0).concat(bull).slice(0, 10);
-        DATA.titan_cash_bearish = byTurn.filter(s => (s.turnover_cr || 0) >= 20 && (Number(s.pct_change) || 0) < 0).concat(bear).slice(0, 10);
-        DATA.best_momentum_upside = byMomentumUp.slice(0, 10);
-        DATA.best_momentum_downside = byMomentumDn.slice(0, 10);
-        DATA.top_gainer = byMomentumUp.slice(0, 10);
-        DATA.top_loser = byMomentumDn.slice(0, 10);
-        DATA.market_pulse = byRvolBull.slice(0, 10);
-        DATA.top_traded_value = byTurn.slice(0, 10);
-        const volUp = [...bull].sort((a, b) => (b.volume || 0) - (a.volume || 0)).slice(0, 10);
-        const volDn = [...bear].sort((a, b) => (b.volume || 0) - (a.volume || 0)).slice(0, 10);
-        DATA.most_active_volume = [...volUp, ...volDn];
 
-        const topSignals = [...byMomentumUp.slice(0, 10), ...byMomentumDn.slice(0, 10)];
+        // Assign distinct, formula-specific Top 10 Up + Top 10 Down per scanner (ordered Newest Listed At first, A-Z tie-break)
+        const distinct = buildDistinctFormulaScanners(equityPool);
+        Object.assign(DATA, distinct);
+
+        const bullTop = equityPool
+          .filter(s => (Number(s.pct_change) || 0) >= 0)
+          .sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true))
+          .slice(0, 10);
+        const bearTop = equityPool
+          .filter(s => (Number(s.pct_change) || 0) < 0)
+          .sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false))
+          .slice(0, 10);
+
+        const topSignals = sortByListedAtNewestFirstAtoZ([...bullTop, ...bearTop]);
         DATA.cloud_ai_signals = topSignals.map(s => {
           const isLong = (Number(s.pct_change) || 0) >= 0;
           return {
@@ -10555,7 +10627,7 @@ ${json.message || 'Unauthorized token.'}`);
       const pureSignals = (DATA.cloud_ai_signals || []).filter(isPureEquityStock);
       const buySigs = pureSignals.filter(s => String(s.side || '').includes('BUY')).slice(0, 10);
       const sellSigs = pureSignals.filter(s => String(s.side || '').includes('SELL')).slice(0, 10);
-      const displaySignals = [...buySigs, ...sellSigs];
+      const displaySignals = sortByListedAtNewestFirstAtoZ([...buySigs, ...sellSigs]);
 
       let html = '';
       displaySignals.forEach(sig => {
@@ -10658,24 +10730,24 @@ ${json.message || 'Unauthorized token.'}`);
 
         if (isUpside) {
           // Claude AI Upside Trade Skill Formula:
-          // Heavy Turnover + Price Momentum Velocity + RVOL Surge + HyperFlow Intensity + Positive Delta + Confluence
-          const turnoverWeight = turnover * 0.45;
-          const momentumWeight = Math.max(0, pct) * 85.0;
-          const rvolWeight = Math.max(0, rvol - 0.8) * 60.0;
-          const hyperflowWeight = hyperflow * 3.5;
+          // Heavy Monetary Turnover + Price Momentum Velocity + Normalized RVOL + HyperFlow + Positive Delta + Confluence
+          const turnoverWeight = turnover * 1.15;
+          const momentumWeight = Math.max(0, pct) * 65.0;
+          const rvolWeight = Math.min(180, Math.log10(Math.max(1, rvol)) * 85.0);
+          const hyperflowWeight = hyperflow * 2.5;
           const deltaWeight = (delta > 0 ? 1 : -0.5) * Math.min(100, Math.abs(delta) / 10000.0) * 1.5;
-          const confluenceWeight = confluence * 30.0;
+          const confluenceWeight = confluence * 25.0;
 
           return turnoverWeight + momentumWeight + rvolWeight + hyperflowWeight + deltaWeight + confluenceWeight;
         } else {
           // Claude AI Downside Trade Skill Formula:
-          // Heavy Turnover + Price Breakdown Velocity + RVOL Surge + Distribution (100 - Hyperflow) + Negative Delta + Confluence
-          const turnoverWeight = turnover * 0.45;
-          const breakdownWeight = Math.abs(Math.min(0, pct)) * 85.0;
-          const rvolWeight = Math.max(0, rvol - 0.8) * 60.0;
-          const distributionWeight = (100.0 - hyperflow) * 3.5;
+          // Heavy Monetary Turnover + Price Breakdown Velocity + Normalized RVOL + Distribution + Negative Delta + Confluence
+          const turnoverWeight = turnover * 1.15;
+          const breakdownWeight = Math.abs(Math.min(0, pct)) * 65.0;
+          const rvolWeight = Math.min(180, Math.log10(Math.max(1, rvol)) * 85.0);
+          const distributionWeight = (100.0 - hyperflow) * 2.5;
           const deltaWeight = (delta < 0 ? 1 : -0.5) * Math.min(100, Math.abs(delta) / 10000.0) * 1.5;
-          const confluenceWeight = confluence * 30.0;
+          const confluenceWeight = confluence * 25.0;
 
           return turnoverWeight + breakdownWeight + rvolWeight + distributionWeight + deltaWeight + confluenceWeight;
         }
@@ -10713,8 +10785,8 @@ ${json.message || 'Unauthorized token.'}`);
         sanitizeStockListedTime(s, idx, false, 10);
       });
 
-      window.TOP_10_UPSIDE = upsideTraded.slice(0, 10);
-      window.TOP_10_DOWNSIDE = downsideTraded.slice(0, 10);
+      window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(upsideTraded.slice(0, 10));
+      window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(downsideTraded.slice(0, 10));
 
       renderTable('table-home-top-traded', window.TOP_10_UPSIDE, true, activeAiStrategyFilter !== 'ALL');
       renderTable('table-home-top-traded-downside', window.TOP_10_DOWNSIDE, false, activeAiStrategyFilter !== 'ALL');
@@ -10737,9 +10809,15 @@ ${json.message || 'Unauthorized token.'}`);
       // New Momentum & Liquidity Tables
       renderTable('table-momentum-upside', DATA.best_momentum_upside, true);
       renderTable('table-momentum-downside', DATA.best_momentum_downside, false);
-      // Market Liquidity Dedicated Tab: ONLY TOP 10 STOCKS AS PER CLAUDE AI TRADE SKILL FORMULA
-      renderTable('table-top-traded', upsideTraded.slice(0, 10), true);
-      renderTable('table-top-traded-downside', downsideTraded.slice(0, 10), false);
+      // Market Liquidity Dedicated Tab: Strictly Top 10 Upside & Top 10 Downside by Monetary Turnover (Rs Cr), newest Listed At on top
+      const liqUp = sortByListedAtNewestFirstAtoZ(
+        [...allStocks].filter(s => (Number(s.pct_change) || 0) >= 0).sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0)).slice(0, 10)
+      );
+      const liqDn = sortByListedAtNewestFirstAtoZ(
+        [...allStocks].filter(s => (Number(s.pct_change) || 0) < 0).sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0)).slice(0, 10)
+      );
+      renderTable('table-top-traded', liqUp, true);
+      renderTable('table-top-traded-downside', liqDn, false);
       renderTable('table-most-active', DATA.most_active_volume, true);
     }
 

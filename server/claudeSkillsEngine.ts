@@ -75,16 +75,17 @@ export function buildClaude10SkillsReport(
       )
   );
 
+  const normRvol = (rv: number) => Math.min(18, Math.log10(Math.max(1, rv)) * 8);
   const scoreBuy = (s: ScannedStock) =>
-    s.changePercent * 8 +
-    (s.indicators.rvol - 1) * 14 +
+    s.changePercent * 10 +
+    normRvol(s.indicators.rvol) +
     ((s.bidAskRatio || 1) - 1) * 18 +
     s.aiScore * 0.45 +
     (s.indicators.price >= s.indicators.vwap ? 10 : -5);
 
   const scoreSell = (s: ScannedStock) =>
-    -s.changePercent * 8 +
-    (s.indicators.rvol - 1) * 14 +
+    -s.changePercent * 10 +
+    normRvol(s.indicators.rvol) +
     (1 - (s.bidAskRatio || 1)) * 18 +
     s.aiScore * 0.45 +
     (s.indicators.price <= s.indicators.vwap ? 10 : -5);

@@ -2327,16 +2327,25 @@ export class ScannerService {
     this.ensureNiftySparklineAndTrend();
     const isPureStock = (s: ScannedStock) =>
       s.sector !== 'Indices' && !INDEX_SYMBOLS_UNIVERSE.has(s.symbol.toUpperCase());
+    const normRvolScore = (rv: number) => Math.min(18, Math.log10(Math.max(1, rv)) * 8);
     const scoreFormulaBuy = (s: ScannedStock) =>
-      s.changePercent * 8 +
-      (s.indicators.rvol - 1) * 14 +
+      s.changePercent * 10 +
+      normRvolScore(s.indicators.rvol) +
       ((s.bidAskRatio || 1) - 1) * 16 +
       s.aiScore * 0.45;
     const scoreFormulaSell = (s: ScannedStock) =>
-      -s.changePercent * 8 +
-      (s.indicators.rvol - 1) * 14 +
+      -s.changePercent * 10 +
+      normRvolScore(s.indicators.rvol) +
       (1 - (s.bidAskRatio || 1)) * 16 +
       s.aiScore * 0.45;
+    const parseSec = (t?: string) => {
+      if (!t) return 0;
+      const p = t.split(':').map((x) => parseInt(x, 10) || 0);
+      return (p[0] || 0) * 3600 + (p[1] || 0) * 60 + (p[2] || 0);
+    };
+    const sortNewestFirstAtoZ = (arr: ScannedStock[]) =>
+      [...arr].sort((a, b) => parseSec(b.listedAt) - parseSec(a.listedAt) || a.symbol.localeCompare(b.symbol));
+
     const buyStocks = this.stockScanResults
       .filter((s) => isPureStock(s) && s.signal === 'BUY')
       .sort((a, b) => scoreFormulaBuy(b) - scoreFormulaBuy(a));
@@ -2347,8 +2356,8 @@ export class ScannerService {
     const cleared = this.sessionState.isMidnightCleared;
     return {
       stocks: cleared ? [] : this.stockScanResults,
-      top10Buy: cleared ? [] : buyStocks.slice(0, 10),
-      top10Sell: cleared ? [] : sellStocks.slice(0, 10),
+      top10Buy: cleared ? [] : sortNewestFirstAtoZ(buyStocks.slice(0, 10)),
+      top10Sell: cleared ? [] : sortNewestFirstAtoZ(sellStocks.slice(0, 10)),
       overview: this.marketOverview,
       broker: this.brokerConfig,
       alerts: this.alertConfig,
