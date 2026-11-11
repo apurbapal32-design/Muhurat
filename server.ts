@@ -11,6 +11,8 @@ import {
 import { scannerService } from './server/scannerService';
 import { upstoxService } from './server/upstoxService';
 import { marketWebSocketServer } from './server/marketWebSocketServer';
+import { buildClaude10SkillsReport } from './server/claudeSkillsEngine';
+import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
 import { calculateMarketStatus } from './src/data/marketSchedule';
@@ -930,6 +932,49 @@ async function startServer() {
   // Export full Python production project files
   app.get('/api/export/python', (req, res) => {
     res.json({ files: PYTHON_PROJECT_FILES });
+  });
+
+  // Next-Generation 10-Skill Claude AI Assistant + Buy/Sell Recommender
+  app.get('/api/ai-assistant/10-skills', (req, res) => {
+    try {
+      const capital = Number(req.query.capital) || 100000;
+      const riskPct = Number(req.query.riskPct) || 1.5;
+      const leverage = Number(req.query.leverage) || 5;
+      const maxPositions = Number(req.query.maxPositions) || 6;
+      const timeSlice = typeof req.query.timeSlice === 'string' ? req.query.timeSlice : '11:30';
+
+      const report = buildClaude10SkillsReport(
+        scannerService.getAllStocksDirect(),
+        scannerService.getAllCandlesMap(),
+        scannerService.getNewsFeedDirect(),
+        { capital, riskPct, leverage, maxPositions, timeSlice },
+        scannerService.getIndiaVixPrice(),
+        (sym: string) =>
+          scannerService.runBacktest({
+            symbol: sym,
+            timeframe: '3M',
+            initialCapital: capital,
+            strategyPreset: 'BALANCED',
+          })
+      );
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute 10-Skill Claude AI analysis' });
+    }
+  });
+
+  // Autonomous Sentinel Watchdog & Self-Healing Monitor
+  app.get('/api/sentinel/status', (req, res) => {
+    res.json(sentinelAgentService.getStatus());
+  });
+
+  app.post('/api/sentinel/heal', async (req, res) => {
+    try {
+      const status = await sentinelAgentService.runAuditAndAutoHeal(true);
+      res.json(status);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Sentinel self-healing audit failed' });
+    }
   });
 
   // Catch-all 404 for API endpoints so API calls never receive HTML

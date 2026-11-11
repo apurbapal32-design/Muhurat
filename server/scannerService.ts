@@ -27,6 +27,24 @@ import { calculateMarketStatus, getISTDateParts } from '../src/data/marketSchedu
 import { upstoxService } from './upstoxService';
 import { autonomousPriceService, deriveOrderBookDepth, IntradayCandleBar, UnifiedMarketQuote } from './autonomousPriceService';
 import { marketWebSocketServer } from './marketWebSocketServer';
+import { sentinelAgentService } from './sentinelAgentService';
+
+const INDEX_SYMBOLS_UNIVERSE = new Set([
+  'NIFTY',
+  'NIFTY 50',
+  'BANKNIFTY',
+  'FINNIFTY',
+  'NIFTYFPI',
+  'MIDCPNIFTY',
+  'NIFTYNXT50',
+  'SENSEX',
+  'INDIAVIX',
+  'NIFTYIT',
+]);
+
+const EQUITY_ONLY_STOCKS = NIFTY_200_STOCKS.filter(
+  (s) => s.sector !== 'Indices' && !INDEX_SYMBOLS_UNIVERSE.has(s.symbol.toUpperCase())
+);
 
 const SESSION_STATE_FILE = path.join(os.tmpdir(), 'muhurat_scanner_session_state.json');
 const DAILY_SIGNAL_LEDGER_FILE = path.join(os.tmpdir(), 'muhurat_daily_signal_ledger.json');
@@ -150,6 +168,23 @@ export class ScannerService {
   };
 
   constructor() {
+    sentinelAgentService.registerProviders({
+      getStocks: () => this.stockScanResults,
+      getQuotes: () => autonomousPriceService.getCachedQuotes(),
+      isMidnightCleared: () => this.sessionState.isMidnightCleared,
+      forceRefreshQuotes: () => this.forceRefreshLiveFeeds(),
+      triggerSafeRescan: async () => {
+        await this.runScanCycle(false);
+      },
+      getWsStatus: () => {
+        const ws = marketWebSocketServer.getStatus();
+        return {
+          connectedClients: ws.activeClients,
+          ticksPerSecond: ws.ticksPerSecond,
+          lastFeedSource: ws.feedSource,
+        };
+      },
+    });
     marketWebSocketServer.setAccessTokenResolver(
       () =>
         this.brokerConfig.upstoxAccessToken ||
@@ -1206,7 +1241,7 @@ export class ScannerService {
   private initializeCandleData() {
     const initialResults: ScannedStock[] = [];
 
-    for (const stock of NIFTY_200_STOCKS) {
+    for (const stock of EQUITY_ONLY_STOCKS) {
       const candles = generateSyntheticCandles(stock.basePrice, 50, stock.symbol);
       this.stockCandles.set(stock.symbol, candles);
 
@@ -1592,7 +1627,7 @@ export class ScannerService {
         Object.keys(this.dailySignalLedger.entries).length >= 50;
       let ledgerModified = false;
 
-      for (const stockInfo of NIFTY_200_STOCKS) {
+      for (const stockInfo of EQUITY_ONLY_STOCKS) {
         if (myEpoch !== this.scanEpoch || this.sessionState.isMidnightCleared) {
           return this.stockScanResults;
         }
@@ -2290,8 +2325,24 @@ export class ScannerService {
     sessionState?: any;
   } {
     this.ensureNiftySparklineAndTrend();
-    const buyStocks = this.stockScanResults.filter((s) => s.signal === 'BUY');
-    const sellStocks = this.stockScanResults.filter((s) => s.signal === 'SELL');
+    const isPureStock = (s: ScannedStock) =>
+      s.sector !== 'Indices' && !INDEX_SYMBOLS_UNIVERSE.has(s.symbol.toUpperCase());
+    const scoreFormulaBuy = (s: ScannedStock) =>
+      s.changePercent * 8 +
+      (s.indicators.rvol - 1) * 14 +
+      ((s.bidAskRatio || 1) - 1) * 16 +
+      s.aiScore * 0.45;
+    const scoreFormulaSell = (s: ScannedStock) =>
+      -s.changePercent * 8 +
+      (s.indicators.rvol - 1) * 14 +
+      (1 - (s.bidAskRatio || 1)) * 16 +
+      s.aiScore * 0.45;
+    const buyStocks = this.stockScanResults
+      .filter((s) => isPureStock(s) && s.signal === 'BUY')
+      .sort((a, b) => scoreFormulaBuy(b) - scoreFormulaBuy(a));
+    const sellStocks = this.stockScanResults
+      .filter((s) => isPureStock(s) && s.signal === 'SELL')
+      .sort((a, b) => scoreFormulaSell(b) - scoreFormulaSell(a));
 
     const cleared = this.sessionState.isMidnightCleared;
     return {
@@ -2728,6 +2779,26 @@ export class ScannerService {
       equityCurve,
       trades,
     };
+  }
+
+  public getAllCandlesMap(): Map<string, Candle[]> {
+    return this.stockCandles;
+  }
+
+  public getAllStocksDirect(): ScannedStock[] {
+    return this.stockScanResults;
+  }
+
+  public getNewsFeedDirect(): NewsItem[] {
+    return this.newsFeed;
+  }
+
+  public getIndiaVixPrice(): number {
+    return this.marketOverview.indiaVix?.price || 17.42;
+  }
+
+  public async forceRefreshLiveFeeds(): Promise<void> {
+    await autonomousPriceService.fetchAllMarketQuotes(true);
   }
 
   /**
