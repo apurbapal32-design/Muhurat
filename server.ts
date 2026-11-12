@@ -12,6 +12,7 @@ import { scannerService } from './server/scannerService';
 import { upstoxService } from './server/upstoxService';
 import { marketWebSocketServer } from './server/marketWebSocketServer';
 import { buildClaude10SkillsReport } from './server/claudeSkillsEngine';
+import { buildSmartMoneyFlowReport } from './server/moneyFlowEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
@@ -1006,6 +1007,26 @@ async function startServer() {
   // Export full Python production project files
   app.get('/api/export/python', (req, res) => {
     res.json({ files: PYTHON_PROJECT_FILES });
+  });
+
+  // Smart Money Flow + Supertrend(10,2) + Hull Suite(HMA 55) + BOS/CHoCH + Order Block Scanner
+  app.get('/api/money-flow/scan', async (req, res) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      if (stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.fetchAllMarketQuotes(false).catch(() => {});
+      }
+      const report = buildSmartMoneyFlowReport(
+        stocks,
+        (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        scannerService.getAllCandlesMap(),
+        Boolean(sessionState?.isMidnightCleared)
+      );
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Money Flow Surge scan' });
+    }
   });
 
   // Next-Generation 10-Skill Claude AI Assistant + Buy/Sell Recommender

@@ -280,9 +280,15 @@ function getISTPartsFromEpochSec(tsSec: number): { dateIST: string; timeIST: str
 class AutonomousPriceService {
   private lastQuoteCache: Map<string, UnifiedMarketQuote> = new Map();
   private lastBarsCache: Map<string, IntradayCandleBar[]> = new Map();
+  private lastExtendedBarsCache: Map<string, IntradayCandleBar[]> = new Map();
   private lastFetchTimestamp = 0;
   private lastYahooFetchTimestamp = 0;
   private inFlightPromise: Promise<Record<string, UnifiedMarketQuote>> | null = null;
+
+  public getExtendedBars(symbol: string): IntradayCandleBar[] | undefined {
+    const clean = cleanSymName(symbol);
+    return this.lastExtendedBarsCache.get(clean) || this.lastBarsCache.get(clean);
+  }
 
   public getCachedQuotes(): Record<string, UnifiedMarketQuote> {
     const out: Record<string, UnifiedMarketQuote> = {};
@@ -586,7 +592,7 @@ class AutonomousPriceService {
         const controller = new AbortController();
         const tid = setTimeout(() => controller.abort(), 3800);
         const res = await fetch(
-          `https://query1.finance.yahoo.com/v8/finance/chart/${job.yf}?interval=5m&range=1d`,
+          `https://query1.finance.yahoo.com/v8/finance/chart/${job.yf}?interval=5m&range=5d`,
           {
             headers: {
               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
@@ -606,10 +612,6 @@ class AutonomousPriceService {
         const lp = Number(meta.regularMarketPrice || 0);
         if (!Number.isFinite(lp) || lp <= 0) return;
 
-        const prevClose = Number(meta.chartPreviousClose || meta.previousClose || lp);
-        const ch = Number((lp - prevClose).toFixed(2));
-        const chp = prevClose > 0 ? Number(((ch / prevClose) * 100).toFixed(2)) : 0;
-
         const rawTs: number[] = Array.isArray(chart?.timestamp) ? chart.timestamp : [];
         const q0 = chart?.indicators?.quote?.[0] || {};
         const opens: number[] = Array.isArray(q0.open) ? q0.open : [];
@@ -619,12 +621,6 @@ class AutonomousPriceService {
         const vols: number[] = Array.isArray(q0.volume) ? q0.volume : [];
 
         const bars: IntradayCandleBar[] = [];
-        let volSum = 0;
-        let tpvSum = 0;
-        let barOpenFirst = 0;
-        let barHighMax = 0;
-        let barLowMin = Infinity;
-
         for (let i = 0; i < rawTs.length; i++) {
           const tsSec = Number(rawTs[i] || 0);
           const c = Number(closes[i]);
@@ -636,11 +632,6 @@ class AutonomousPriceService {
 
           const istP = getISTPartsFromEpochSec(tsSec);
           if (istP.secIST < 9 * 3600 + 15 * 60 || istP.secIST > 15 * 3600 + 30 * 60) continue;
-          if (!barOpenFirst) barOpenFirst = o;
-          if (h > barHighMax) barHighMax = h;
-          if (l < barLowMin) barLowMin = l;
-          volSum += v;
-          tpvSum += ((h + l + c) / 3) * (v || 1);
 
           bars.push({
             tsSec,
@@ -656,9 +647,36 @@ class AutonomousPriceService {
         }
 
         const todayBars = bars.filter((b) => b.dateIST === todayDateIST);
-        const activeBars = todayBars.length >= 2 ? todayBars : bars;
+        const latestBarDate = bars.length > 0 ? bars[bars.length - 1].dateIST : todayDateIST;
+        const activeDate = todayBars.length >= 2 ? todayDateIST : latestBarDate;
+        const activeBars = bars.filter((b) => b.dateIST === activeDate);
+        const priorBars = bars.filter((b) => b.dateIST < activeDate);
+        const prevDayClose = priorBars.length > 0 ? priorBars[priorBars.length - 1].close : undefined;
+
+        const prevClose = Number(
+          meta.previousClose || meta.regularMarketPreviousClose || prevDayClose || meta.chartPreviousClose || lp
+        );
+        const ch = Number((lp - prevClose).toFixed(2));
+        const chp = prevClose > 0 ? Number(((ch / prevClose) * 100).toFixed(2)) : 0;
+
+        let volSum = 0;
+        let tpvSum = 0;
+        let barOpenFirst = 0;
+        let barHighMax = 0;
+        let barLowMin = Infinity;
+        for (const ab of activeBars) {
+          if (!barOpenFirst) barOpenFirst = ab.open;
+          if (ab.high > barHighMax) barHighMax = ab.high;
+          if (ab.low < barLowMin) barLowMin = ab.low;
+          volSum += ab.volume;
+          tpvSum += ((ab.high + ab.low + ab.close) / 3) * (ab.volume || 1);
+        }
+
         if (activeBars.length > 0) {
           this.lastBarsCache.set(job.sym, activeBars);
+        }
+        if (bars.length > 0) {
+          this.lastExtendedBarsCache.set(job.sym, bars.slice(-140));
         }
 
         const volume = Number(meta.regularMarketVolume || volSum || (job.isIdx ? 35000000 : 450000));
