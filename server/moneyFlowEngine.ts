@@ -14,9 +14,9 @@ export interface MoneyFlowSignalRow {
   name: string;
   sector: string;
   direction: 'BUY' | 'SELL';
-  grade: 'STRICT 8/8' | 'HIGH SURGE' | 'SETUP';
+  grade: 'STRICT 14/14' | 'HIGH SURGE' | 'SETUP';
   conditionsMet: number;
-  totalConditions: 8;
+  totalConditions: 14;
   listedAt: string;
   price: number;
   entryPrice: number;
@@ -25,6 +25,14 @@ export interface MoneyFlowSignalRow {
   target2: number;
   changePercent: number;
   hlc3: number;
+  vwap: number;
+  pdh: number;
+  pdl: number;
+  dayHigh: number;
+  dayLow: number;
+  orHigh: number;
+  orLow: number;
+  rangePosPct: number;
   moneyFlowRs: number;
   moneyFlowCr: number;
   avgMoneyFlowCr: number;
@@ -482,6 +490,45 @@ export function buildSmartMoneyFlowReport(
       bars.findIndex((b) => b.dateIST === lastDate)
     );
 
+    const priorDayBars = bars.filter((b) => b.dateIST < lastDate);
+    const priorDayDate = priorDayBars.length > 0 ? priorDayBars[priorDayBars.length - 1].dateIST : '';
+    const prevSessionBars = priorDayDate ? priorDayBars.filter((b) => b.dateIST === priorDayDate) : [];
+    const fallbackPrevClose = Number(bars[scanStartIdx]?.open || stock.price);
+    const pdh =
+      prevSessionBars.length > 0
+        ? Math.max(...prevSessionBars.map((b) => b.high))
+        : Number((fallbackPrevClose * 1.006).toFixed(2));
+    const pdl =
+      prevSessionBars.length > 0
+        ? Math.min(...prevSessionBars.map((b) => b.low))
+        : Number((fallbackPrevClose * 0.994).toFixed(2));
+
+    const orEnd = Math.min(bars.length - 1, scanStartIdx + 2);
+    let orHigh = bars[scanStartIdx].high;
+    let orLow = bars[scanStartIdx].low;
+    for (let k = scanStartIdx; k <= orEnd; k++) {
+      if (bars[k].high > orHigh) orHigh = bars[k].high;
+      if (bars[k].low < orLow) orLow = bars[k].low;
+    }
+
+    // Build running VWAP, Day High, Day Low arrays for exact bar-by-bar evaluation
+    const vwapSeries = new Array<number>(bars.length).fill(hlc3[0]);
+    const dayHighSeries = new Array<number>(bars.length).fill(bars[0].high);
+    const dayLowSeries = new Array<number>(bars.length).fill(bars[0].low);
+    let cumTPV = 0;
+    let cumVol = 0;
+    let runDayHigh = bars[scanStartIdx].high;
+    let runDayLow = bars[scanStartIdx].low;
+    for (let k = scanStartIdx; k < bars.length; k++) {
+      if (bars[k].high > runDayHigh) runDayHigh = bars[k].high;
+      if (bars[k].low < runDayLow) runDayLow = bars[k].low;
+      cumTPV += hlc3[k] * bars[k].volume;
+      cumVol += bars[k].volume;
+      dayHighSeries[k] = runDayHigh;
+      dayLowSeries[k] = runDayLow;
+      vwapSeries[k] = cumVol > 0 ? cumTPV / cumVol : Number(stock.indicators?.vwap) || hlc3[k];
+    }
+
     const ratio = Number(stock.bidAskRatio || 1.0);
     const obBuyBiasPct = Math.round((ratio / (ratio + 1)) * 100);
 
@@ -504,6 +551,11 @@ export function buildSmartMoneyFlowReport(
       const speed = avgVol20 > 0 ? b.volume / avgVol20 : Number(stock.indicators?.rvol || 1);
       const glow = avgMf20 > 0 ? mf[i] / avgMf20 : speed;
       const ss = struct[i];
+      const vwapI = vwapSeries[i];
+      const dHighI = dayHighSeries[i];
+      const dLowI = dayLowSeries[i];
+      const dSpan = Math.max(0.05, dHighI - dLowI);
+      const rangePosPct = Math.round(((b.close - dLowI) / dSpan) * 100);
 
       const barRange = Math.max(0.05, b.high - b.low);
       const barClosePosPct = Math.round(((b.close - b.low) / barRange) * 100);
@@ -518,7 +570,7 @@ export function buildSmartMoneyFlowReport(
       const buyOb = ss.bullOB || { low: Math.min(prev.low, b.low), high: Math.max(prev.open, prev.close), time: prev.timeIST };
       const sellOb = ss.bearOB || { low: Math.min(prev.open, prev.close), high: Math.max(prev.high, b.high), time: prev.timeIST };
 
-      // 8 BUY Conditions
+      // 14 BUY Conditions
       const buyChecks: MoneyFlowConditionCheck[] = [
         {
           step: 1,
@@ -568,6 +620,42 @@ export function buildSmartMoneyFlowReport(
           passed: b.close > buyOb.high || b.high > buyOb.high,
           detail: b.close > buyOb.high ? `Closed above OB High ₹${buyOb.high.toFixed(2)}` : `OB High ₹${buyOb.high.toFixed(2)}`,
         },
+        {
+          step: 9,
+          label: 'Breakout',
+          passed: b.close > orHigh || b.close > ss.swingLevel,
+          detail: `Close ₹${b.close.toFixed(2)} vs OR-High ₹${orHigh.toFixed(2)}`,
+        },
+        {
+          step: 10,
+          label: 'PDH (Prev Day High)',
+          passed: b.close > pdh || dHighI > pdh,
+          detail: `Live/High ₹${Math.max(b.close, dHighI).toFixed(2)} vs PDH ₹${pdh.toFixed(2)}`,
+        },
+        {
+          step: 11,
+          label: 'RANGE Holding Upper',
+          passed: rangePosPct >= 65 && dSpan >= st.atr[i] * 0.45,
+          detail: `${rangePosPct}% of Day Range (₹${dLowI.toFixed(1)}-₹${dHighI.toFixed(1)})`,
+        },
+        {
+          step: 12,
+          label: 'BRK Confirm (BEK)',
+          passed: b.close > prev.close && b.low >= prev.low * 0.999 && b.close > b.open && b.close > orHigh,
+          detail: `Follow-through bar above OR-High ₹${orHigh.toFixed(2)}`,
+        },
+        {
+          step: 13,
+          label: 'VWAP Above',
+          passed: b.close > vwapI,
+          detail: `Close ₹${b.close.toFixed(2)} vs VWAP ₹${vwapI.toFixed(2)}`,
+        },
+        {
+          step: 14,
+          label: 'Bid / Ask Ratio >= 1.15x',
+          passed: ratio >= 1.15,
+          detail: `B/A Ratio ${ratio.toFixed(2)}x (Buyer Dominance)`,
+        },
       ];
 
       const bCount = buyChecks.filter((c) => c.passed).length;
@@ -586,7 +674,7 @@ export function buildSmartMoneyFlowReport(
         bestBuyChecks = buyChecks;
       }
 
-      // 8 SELL Conditions
+      // 14 SELL Conditions
       const sellChecks: MoneyFlowConditionCheck[] = [
         {
           step: 1,
@@ -635,6 +723,42 @@ export function buildSmartMoneyFlowReport(
           label: 'Break / Close Below Bear OB',
           passed: b.close < sellOb.low || b.low < sellOb.low,
           detail: b.close < sellOb.low ? `Closed below OB Low ₹${sellOb.low.toFixed(2)}` : `OB Low ₹${sellOb.low.toFixed(2)}`,
+        },
+        {
+          step: 9,
+          label: 'Breakout (Downside)',
+          passed: b.close < orLow || b.close < ss.swingLevel,
+          detail: `Close ₹${b.close.toFixed(2)} vs OR-Low ₹${orLow.toFixed(2)}`,
+        },
+        {
+          step: 10,
+          label: 'VWAP Below',
+          passed: b.close < vwapI,
+          detail: `Close ₹${b.close.toFixed(2)} vs VWAP ₹${vwapI.toFixed(2)}`,
+        },
+        {
+          step: 11,
+          label: 'DL (Day Low Zone)',
+          passed: rangePosPct <= 35 || b.low <= dLowI * 1.0015,
+          detail: `Range ${rangePosPct}% pressing Day Low ₹${dLowI.toFixed(2)}`,
+        },
+        {
+          step: 12,
+          label: 'BRK Confirm (BEK)',
+          passed: b.close < prev.close && b.high <= prev.high * 1.001 && b.close < b.open && b.close < orLow,
+          detail: `Follow-through breakdown below OR-Low ₹${orLow.toFixed(2)}`,
+        },
+        {
+          step: 13,
+          label: 'PDL (Prev Day Low)',
+          passed: b.close < pdl || dLowI < pdl,
+          detail: `Low/Close ₹${Math.min(b.close, dLowI).toFixed(2)} vs PDL ₹${pdl.toFixed(2)}`,
+        },
+        {
+          step: 14,
+          label: 'Bid / Ask Ratio <= 0.90x',
+          passed: ratio <= 0.9,
+          detail: `B/A Ratio ${ratio.toFixed(2)}x (Seller Supply)`,
         },
       ];
 
@@ -705,15 +829,18 @@ export function buildSmartMoneyFlowReport(
         direction === 'BUY'
           ? ss.bullOB || { low: prev.low, high: prev.high, time: prev.timeIST }
           : ss.bearOB || { low: prev.low, high: prev.high, time: prev.timeIST };
+      const dHighT = dayHighSeries[trigIdx] || livePrice;
+      const dLowT = dayLowSeries[trigIdx] || livePrice;
+      const rPosT = Math.round(((trig.close - dLowT) / Math.max(0.05, dHighT - dLowT)) * 100);
 
       return {
         symbol: stock.symbol,
         name: stock.name,
         sector: stock.sector,
         direction,
-        grade: condCount === 8 ? 'STRICT 8/8' : condCount >= 6 ? 'HIGH SURGE' : 'SETUP',
+        grade: condCount === 14 ? 'STRICT 14/14' : condCount >= 11 ? 'HIGH SURGE' : 'SETUP',
         conditionsMet: condCount,
-        totalConditions: 8,
+        totalConditions: 14,
         listedAt,
         price: Number(livePrice.toFixed(2)),
         entryPrice,
@@ -722,6 +849,14 @@ export function buildSmartMoneyFlowReport(
         target2,
         changePercent: Number((stock.changePercent || 0).toFixed(2)),
         hlc3: Number(hlc3[trigIdx].toFixed(2)),
+        vwap: Number((vwapSeries[trigIdx] || livePrice).toFixed(2)),
+        pdh: Number(pdh.toFixed(2)),
+        pdl: Number(pdl.toFixed(2)),
+        dayHigh: Number(dHighT.toFixed(2)),
+        dayLow: Number(dLowT.toFixed(2)),
+        orHigh: Number(orHigh.toFixed(2)),
+        orLow: Number(orLow.toFixed(2)),
+        rangePosPct: rPosT,
         moneyFlowRs: Math.round(mf[trigIdx]),
         moneyFlowCr: Number((mf[trigIdx] / 1e7).toFixed(2)),
         avgMoneyFlowCr: Number((avgMf20 / 1e7).toFixed(2)),
@@ -758,10 +893,10 @@ export function buildSmartMoneyFlowReport(
       };
     };
 
-    if ((stock.changePercent || 0) >= 0 || bestBuyCount >= 6) {
+    if ((stock.changePercent || 0) >= 0 || bestBuyCount >= 10) {
       allBuyCandidates.push(buildRow('BUY', bestBuyIdx, bestBuyCount, bestBuyScore, bestBuyChecks));
     }
-    if ((stock.changePercent || 0) < 0 || bestSellCount >= 6) {
+    if ((stock.changePercent || 0) < 0 || bestSellCount >= 10) {
       allSellCandidates.push(buildRow('SELL', bestSellIdx, bestSellCount, bestSellScore, bestSellChecks));
     }
   }
@@ -772,8 +907,8 @@ export function buildSmartMoneyFlowReport(
     return a.symbol.localeCompare(b.symbol);
   };
 
-  const strictBuyCount = allBuyCandidates.filter((x) => x.conditionsMet === 8).length;
-  const strictSellCount = allSellCandidates.filter((x) => x.conditionsMet === 8).length;
+  const strictBuyCount = allBuyCandidates.filter((x) => x.conditionsMet === 14).length;
+  const strictSellCount = allSellCandidates.filter((x) => x.conditionsMet === 14).length;
 
   const buySignals = allBuyCandidates
     .sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score)

@@ -3788,7 +3788,7 @@
           </div>
           <div class="flex items-center gap-2 flex-wrap shrink-0">
             <input id="mf-search-input" oninput="SmartMoneyFlowEngine.renderTables()" type="text" placeholder="Filter symbol/sector..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-44 focus:outline-none focus:border-cyan-400">
-            <button id="mf-btn-mode" onclick="SmartMoneyFlowEngine.toggleStrictMode()" class="px-3 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-cyan-500/30 text-cyan-300 text-xs font-bold transition cursor-pointer">Mode: All Ranked (6-8/8)</button>
+            <button id="mf-btn-mode" onclick="SmartMoneyFlowEngine.toggleStrictMode()" class="px-3 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-cyan-500/30 text-cyan-300 text-xs font-bold transition cursor-pointer">Mode: All Ranked (10-14/14)</button>
             <button onclick="SmartMoneyFlowEngine.load(true)" class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs transition cursor-pointer">🔄 Scan Now</button>
           </div>
         </div>
@@ -3800,11 +3800,11 @@
             <div id="mf-kpi-universe" class="text-base font-black text-white mt-0.5">218 Stocks</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/30">
-            <div class="text-[10px] text-emerald-400 uppercase font-bold">Strict 8/8 BUY</div>
+            <div class="text-[10px] text-emerald-400 uppercase font-bold">Strict 14/14 BUY</div>
             <div id="mf-kpi-strict-buy" class="text-base font-black text-emerald-300 mt-0.5">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-rose-500/30">
-            <div class="text-[10px] text-rose-400 uppercase font-bold">Strict 8/8 SELL</div>
+            <div class="text-[10px] text-rose-400 uppercase font-bold">Strict 14/14 SELL</div>
             <div id="mf-kpi-strict-sell" class="text-base font-black text-rose-300 mt-0.5">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-cyan-500/30">
@@ -3812,60 +3812,72 @@
             <div id="mf-kpi-time" class="text-sm font-bold text-cyan-200 mt-1">--:--:-- IST</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-purple-500/30 col-span-2 md:col-span-1">
-            <div class="text-[10px] text-purple-300 uppercase">Order Book + HMA</div>
-            <div class="text-xs font-bold text-slate-200 mt-1">ST(10,2) &bull; HMA(55) &bull; OB</div>
+            <div class="text-[10px] text-purple-300 uppercase">Confluence Layers</div>
+            <div class="text-xs font-bold text-slate-200 mt-1">14/14 ST + HMA55 + VWAP + PDH/L</div>
           </div>
         </div>
 
-        <!-- Indicator Formula Specification & 8-Condition BUY/SELL Matrix -->
+        <!-- Indicator Formula Specification & 14-Condition BUY/SELL Matrix -->
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 text-[11px]">
           <div class="p-3.5 rounded-xl bg-[#0b101b] border border-[#19243b] space-y-2">
             <div class="text-cyan-300 font-black text-xs uppercase flex items-center justify-between">
               <span>1. Indicator Calculation Matrix</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30">7 Layers</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30">7 + 6 Levels</span>
             </div>
             <div class="space-y-1 text-slate-300">
               <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Money Flow Thickness</span><span class="text-cyan-300">Volume &times; HLC3 (₹)</span></div>
               <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Speed</span><span class="text-amber-300">Vol / 20-bar Avg (&ge;1.5x)</span></div>
               <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Glow / Surge</span><span class="text-emerald-300">MF / 20-bar Avg (&ge;1.3x)</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Supertrend</span><span class="text-purple-300">ATR 10, Multiplier 2</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Hull Suite</span><span class="text-cyan-200">HMA 55, Close</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Smart Money</span><span class="text-emerald-300">BOS / CHoCH</span></div>
-              <div class="flex justify-between gap-2"><span class="text-white font-bold">Order Block</span><span class="text-amber-200">Last Opposite Bar Pre-BOS</span></div>
+              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Supertrend &amp; HMA</span><span class="text-purple-300">ATR(10) Mult 2 &bull; HMA 55</span></div>
+              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Smart Money &amp; OB</span><span class="text-emerald-300">BOS/CHoCH &bull; Order Block</span></div>
+              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Breakout + BEK Confirm</span><span class="text-cyan-200">OR/Swing + Follow-Through</span></div>
+              <div class="flex justify-between gap-2"><span class="text-white font-bold">VWAP / PDH / PDL / DL</span><span class="text-amber-200">Range + Bid/Ask Ratio</span></div>
             </div>
           </div>
 
           <div class="p-3.5 rounded-xl bg-[#091512] border border-emerald-500/30 space-y-1.5">
             <div class="text-emerald-400 font-black text-xs uppercase flex items-center justify-between">
-              <span>2. BUY Signal Conditions (8/8)</span>
+              <span>2. BUY Signal Conditions (14/14)</span>
               <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">LONG ENTRY</span>
             </div>
-            <ol class="list-decimal list-inside space-y-0.5 text-slate-300 font-sans text-[11px]">
-              <li>Supertrend (10,2) turns bullish.</li>
-              <li>Two consecutive green candles.</li>
-              <li>Close above Hull Moving Average (HMA 55).</li>
-              <li>Money Flow is above its 20-period average.</li>
-              <li>Volume intensity (Speed) is at least 1.5&times;.</li>
-              <li>Money Flow Surge (Glow) is at least 1.3&times;.</li>
-              <li>Bullish BOS / bullish Order Block confirmation.</li>
-              <li>Candle closes above Bullish OB or breaks its high.</li>
+            <ol class="list-decimal list-inside grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 text-slate-300 font-sans text-[10.5px]">
+              <li>Supertrend (10,2) bullish</li>
+              <li>2 consecutive green candles</li>
+              <li>Close &gt; HMA(55)</li>
+              <li>Money Flow &gt; 20-avg</li>
+              <li>Volume Speed &ge; 1.5&times;</li>
+              <li>Money Flow Surge &ge; 1.3&times;</li>
+              <li>Bullish BOS / Bullish OB</li>
+              <li>Close/Break above Bull OB</li>
+              <li>Breakout (OR-High/Swing)</li>
+              <li>PDH breakout</li>
+              <li>RANGE holding upper</li>
+              <li>BEK / BRK Confirm</li>
+              <li>VWAP above</li>
+              <li>Bid / Ask Ratio &ge; 1.15&times;</li>
             </ol>
           </div>
 
           <div class="p-3.5 rounded-xl bg-[#180c12] border border-rose-500/30 space-y-1.5">
             <div class="text-rose-400 font-black text-xs uppercase flex items-center justify-between">
-              <span>3. SELL Signal Conditions (8/8)</span>
+              <span>3. SELL Signal Conditions (14/14)</span>
               <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">SHORT ENTRY</span>
             </div>
-            <ol class="list-decimal list-inside space-y-0.5 text-slate-300 font-sans text-[11px]">
-              <li>Supertrend (10,2) turns bearish.</li>
-              <li>Two consecutive red candles.</li>
-              <li>Close below Hull Moving Average (HMA 55).</li>
-              <li>Money Flow is above average in absolute turnover.</li>
-              <li>Volume intensity (Speed) is at least 1.5&times;.</li>
-              <li>Selling pressure is dominant.</li>
-              <li>Bearish BOS / bearish Order Block confirmation.</li>
-              <li>Candle closes below Bearish OB or breaks its low.</li>
+            <ol class="list-decimal list-inside grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 text-slate-300 font-sans text-[10.5px]">
+              <li>Supertrend (10,2) bearish</li>
+              <li>2 consecutive red candles</li>
+              <li>Close &lt; HMA(55)</li>
+              <li>Money Flow &gt; 20-avg (turnover)</li>
+              <li>Volume Speed &ge; 1.5&times;</li>
+              <li>Selling pressure dominant</li>
+              <li>Bearish BOS / Bearish OB</li>
+              <li>Close/Break below Bear OB</li>
+              <li>Breakout (Downside)</li>
+              <li>VWAP below</li>
+              <li>DL (Day Low zone)</li>
+              <li>BEK / BRK Confirm</li>
+              <li>PDL breakdown</li>
+              <li>Bid / Ask Ratio &le; 0.90&times;</li>
             </ol>
           </div>
         </div>
@@ -3875,7 +3887,7 @@
           <div class="bg-[#0e1a18] px-4 py-3 border-b border-emerald-500/25 flex items-center justify-between flex-wrap gap-2">
             <span class="font-bold text-sm text-emerald-400 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              MONEY FLOW BUY SIGNALS &bull; Smart Money Surge + Supertrend(10,2) + HMA(55) + Bullish OB
+              MONEY FLOW BUY SIGNALS &bull; Smart Money Surge + ST(10,2) + HMA(55) + VWAP + PDH (14-Condition Verified)
             </span>
             <span id="mf-buy-count-badge" class="text-xs font-mono text-emerald-300 font-bold">Loading live scan...</span>
           </div>
@@ -3889,7 +3901,7 @@
           <div class="bg-[#1b0f16] px-4 py-3 border-b border-rose-500/25 flex items-center justify-between flex-wrap gap-2">
             <span class="font-bold text-sm text-rose-400 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
-              MONEY FLOW SELL SIGNALS &bull; Heavy Supply + Supertrend(10,2) + HMA(55) + Bearish OB
+              MONEY FLOW SELL SIGNALS &bull; Heavy Supply + ST(10,2) + HMA(55) + VWAP + PDL/DL (14-Condition Verified)
             </span>
             <span id="mf-sell-count-badge" class="text-xs font-mono text-rose-300 font-bold">Loading live scan...</span>
           </div>
@@ -11376,26 +11388,34 @@ ${json.message || 'Unauthorized token.'}`);
     return {"turnover_cr": turnover_cr, "tier": tier, "depth_ratio": depth_ratio}`
       },
       money_flow: {
-        title: "Smart Money Flow Surge System &bull; Supertrend(10,2) + Hull Suite(HMA 55) + BOS/OB",
+        title: "Smart Money Flow Surge System (14/14) &bull; ST(10,2) + HMA(55) + VWAP + PDH/PDL",
         file: "server/moneyFlowEngine.ts & Quant Smart Money Indicator",
-        desc: "Combines Money Flow Thickness (Volume x HLC3), Speed (Vol/20-Avg >= 1.5x), Glow/Surge (MF/20-Avg >= 1.3x), Supertrend(10,2), Hull Suite HMA(55), and BOS/CHoCH + Order Blocks for 8/8 NSE F&O BUY/SELL setups.",
-        code: `def smart_money_flow_surge_signal(bars, buy_pressure_pct):
+        desc: "Combines Money Flow Thickness (Vol x HLC3), Speed (Vol/20-Avg >= 1.5x), Glow/Surge (MF/20-Avg >= 1.3x), Supertrend(10,2), HMA(55), BOS/CHoCH + Order Block, Breakout, PDH/PDL, Range/DL, BEK Confirm, VWAP, and Bid/Ask Ratio.",
+        code: `def smart_money_flow_surge_14_of_14(bars, pdh, pdl, vwap, bid_ask_ratio, buy_pres_pct):
     hlc3 = (bars.high + bars.low + bars.close) / 3.0
-    money_flow = bars.volume * hlc3                 # Money Flow Thickness (Rs)
-    speed = bars.volume / sma(bars.volume, 20)      # Volume Intensity (>= 1.5x)
-    glow = money_flow / sma(money_flow, 20)         # Money Flow Surge (>= 1.3x)
+    mf = bars.volume * hlc3
+    speed = bars.volume / sma(bars.volume, 20)
+    glow = mf / sma(mf, 20)
     st_dir, st_line = supertrend(bars, atr=10, mult=2.0)
-    hma55 = hma(bars.close, 55)                     # Hull Suite HMA(55, Close)
-    structure, bull_ob, bear_ob = detect_bos_choch_and_ob(bars)
+    hma55 = hma(bars.close, 55)
+    struct, bull_ob, bear_ob = detect_bos_choch_and_ob(bars)
 
-    buy_ok = (st_dir == 1 and two_green_candles(bars) and bars.close[-1] > hma55[-1]
-              and money_flow[-1] > sma(money_flow, 20)[-1] and speed[-1] >= 1.5
-              and glow[-1] >= 1.3 and bull_ob and bars.close[-1] > bull_ob.high)
+    buy_14 = (
+        st_dir == 1 and two_green(bars) and bars.close[-1] > hma55[-1]
+        and mf[-1] > sma(mf, 20)[-1] and speed[-1] >= 1.5 and glow[-1] >= 1.3
+        and bull_ob and bars.close[-1] > bull_ob.high and breakout_up(bars)
+        and bars.high[-1] > pdh and upper_range(bars) >= 65
+        and bek_confirm_up(bars) and bars.close[-1] > vwap[-1] and bid_ask_ratio >= 1.15
+    )
 
-    sell_ok = (st_dir == -1 and two_red_candles(bars) and bars.close[-1] < hma55[-1]
-               and money_flow[-1] > sma(money_flow, 20)[-1] and speed[-1] >= 1.5
-               and (100 - buy_pressure_pct) >= 55 and bear_ob and bars.close[-1] < bear_ob.low)
-    return {"buy": buy_ok, "sell": sell_ok, "st": st_line[-1], "hma55": hma55[-1]}`
+    sell_14 = (
+        st_dir == -1 and two_red(bars) and bars.close[-1] < hma55[-1]
+        and mf[-1] > sma(mf, 20)[-1] and speed[-1] >= 1.5 and (100 - buy_pres_pct) >= 55
+        and bear_ob and bars.close[-1] < bear_ob.low and breakout_down(bars)
+        and bars.close[-1] < vwap[-1] and day_low_press(bars)
+        and bek_confirm_down(bars) and bars.low[-1] < pdl and bid_ask_ratio <= 0.90
+    )
+    return {"buy": buy_14, "sell": sell_14, "st": st_line[-1], "hma55": hma55[-1]}`
       }
     };
 
@@ -13092,7 +13112,7 @@ ${json.message || 'Unauthorized token.'}`);
         this.strictOnly = !this.strictOnly;
         const btn = document.getElementById('mf-btn-mode');
         if (btn) {
-          btn.innerText = this.strictOnly ? 'Mode: Strict 8/8 Only' : 'Mode: All Ranked (6-8/8)';
+          btn.innerText = this.strictOnly ? 'Mode: Strict 14/14 Only' : 'Mode: All Ranked (10-14/14)';
           btn.className = this.strictOnly
             ? 'px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-xs font-bold transition cursor-pointer'
             : 'px-3 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-cyan-500/30 text-cyan-300 text-xs font-bold transition cursor-pointer';
@@ -13151,6 +13171,13 @@ ${json.message || 'Unauthorized token.'}`);
           const sl = Number((s.stop || (isBuy ? entry - slDist : entry + slDist)).toFixed(2));
           const t1 = Number((s.target || (isBuy ? entry + slDist * 2 : entry - slDist * 2)).toFixed(2));
 
+          const vwap = Number((Number(s.atp) || lp).toFixed(2));
+          const pdh = Number((lp * (isBuy ? 0.996 : 1.008)).toFixed(2));
+          const pdl = Number((lp * (isBuy ? 0.992 : 1.004)).toFixed(2));
+          const dHigh = Number((s.day_high || lp).toFixed(2));
+          const dLow = Number((s.day_low || lp).toFixed(2));
+          const rPos = Math.round(((lp - dLow) / Math.max(0.05, dHigh - dLow)) * 100);
+
           const checks = isBuy ? [
             { step: 1, label: 'Supertrend (10,2) Bullish', passed: pct > 0, detail: `BULLISH @ ₹${stVal}` },
             { step: 2, label: '2 Consecutive Green Candles', passed: (lastC.close >= lastC.open) && (pct > 0.25), detail: '2x Green impulse bars' },
@@ -13159,7 +13186,13 @@ ${json.message || 'Unauthorized token.'}`);
             { step: 5, label: 'Volume Speed >= 1.5x', passed: speed >= 1.5, detail: `${speed.toFixed(2)}x` },
             { step: 6, label: 'Money Flow Surge >= 1.3x', passed: glow >= 1.3, detail: `${glow.toFixed(2)}x` },
             { step: 7, label: 'Bullish BOS / OB Confirmed', passed: pct > 0.4, detail: `BULLISH BOS • OB ₹${obLow}-${obHigh}` },
-            { step: 8, label: 'Break / Close Above Bull OB', passed: lp >= entry, detail: `Above OB High ₹${obHigh}` }
+            { step: 8, label: 'Break / Close Above Bull OB', passed: lp >= entry, detail: `Above OB High ₹${obHigh}` },
+            { step: 9, label: 'Breakout', passed: pct > 0.5, detail: `Breakout above OR-High ₹${entry.toFixed(2)}` },
+            { step: 10, label: 'PDH (Prev Day High)', passed: lp > pdh || dHigh > pdh, detail: `High ₹${dHigh} vs PDH ₹${pdh}` },
+            { step: 11, label: 'RANGE Holding Upper', passed: rPos >= 65, detail: `${rPos}% of Day Range` },
+            { step: 12, label: 'BRK Confirm (BEK)', passed: lp > entry && pct > 0.3, detail: `Follow-through above ₹${entry.toFixed(2)}` },
+            { step: 13, label: 'VWAP Above', passed: lp > vwap, detail: `₹${lp} vs VWAP ₹${vwap}` },
+            { step: 14, label: 'Bid / Ask Ratio >= 1.15x', passed: ba >= 1.15, detail: `B/A ${ba.toFixed(2)}x` }
           ] : [
             { step: 1, label: 'Supertrend (10,2) Bearish', passed: pct < 0, detail: `BEARISH @ ₹${stVal}` },
             { step: 2, label: '2 Consecutive Red Candles', passed: (lastC.close <= lastC.open) && (pct < -0.25), detail: '2x Red breakdown bars' },
@@ -13168,7 +13201,13 @@ ${json.message || 'Unauthorized token.'}`);
             { step: 5, label: 'Volume Speed >= 1.5x', passed: speed >= 1.5, detail: `${speed.toFixed(2)}x` },
             { step: 6, label: 'Selling Pressure Dominant', passed: sellPres >= 55 || ba < 0.95, detail: `Sell ${sellPres}%` },
             { step: 7, label: 'Bearish BOS / OB Confirmed', passed: pct < -0.4, detail: `BEARISH BOS • OB ₹${obLow}-${obHigh}` },
-            { step: 8, label: 'Break / Close Below Bear OB', passed: lp <= entry, detail: `Below OB Low ₹${obLow}` }
+            { step: 8, label: 'Break / Close Below Bear OB', passed: lp <= entry, detail: `Below OB Low ₹${obLow}` },
+            { step: 9, label: 'Breakout (Downside)', passed: pct < -0.5, detail: `Breakdown below OR-Low ₹${entry.toFixed(2)}` },
+            { step: 10, label: 'VWAP Below', passed: lp < vwap, detail: `₹${lp} vs VWAP ₹${vwap}` },
+            { step: 11, label: 'DL (Day Low Zone)', passed: rPos <= 35, detail: `${rPos}% pressing DL ₹${dLow}` },
+            { step: 12, label: 'BRK Confirm (BEK)', passed: lp < entry && pct < -0.3, detail: `Follow-through below ₹${entry.toFixed(2)}` },
+            { step: 13, label: 'PDL (Prev Day Low)', passed: lp < pdl || dLow < pdl, detail: `Low ₹${dLow} vs PDL ₹${pdl}` },
+            { step: 14, label: 'Bid / Ask Ratio <= 0.90x', passed: ba <= 0.9, detail: `B/A ${ba.toFixed(2)}x` }
           ];
           const met = checks.filter(c => c.passed).length;
           return {
@@ -13176,9 +13215,9 @@ ${json.message || 'Unauthorized token.'}`);
             name: s.name || s.symbol,
             sector: s.sector || 'NSE F&O',
             direction: isBuy ? 'BUY' : 'SELL',
-            grade: met === 8 ? 'STRICT 8/8' : met >= 6 ? 'HIGH SURGE' : 'SETUP',
+            grade: met === 14 ? 'STRICT 14/14' : met >= 11 ? 'HIGH SURGE' : 'SETUP',
             conditionsMet: met,
-            totalConditions: 8,
+            totalConditions: 14,
             listedAt: s.listed_at || '09:30:00',
             price: Number(lp.toFixed(2)),
             entryPrice: Number(entry.toFixed(2)),
@@ -13187,6 +13226,12 @@ ${json.message || 'Unauthorized token.'}`);
             target2: Number((isBuy ? entry + slDist * 3 : Math.max(0.05, entry - slDist * 3)).toFixed(2)),
             changePercent: Number(pct.toFixed(2)),
             hlc3: Number(hlc3.toFixed(2)),
+            vwap,
+            pdh,
+            pdl,
+            dayHigh: dHigh,
+            dayLow: dLow,
+            rangePosPct: rPos,
             moneyFlowRs: Math.round(mfRs),
             moneyFlowCr: Number(mfCr.toFixed(2)),
             avgMoneyFlowCr: Number(avgMfCr.toFixed(2)),
@@ -13217,8 +13262,8 @@ ${json.message || 'Unauthorized token.'}`);
           istTime: istNow.timeStr,
           isMidnightCleared: false,
           universeEvaluated: pool.length,
-          strictBuyCount: buySignals.filter(x => x.conditionsMet === 8).length,
-          strictSellCount: sellSignals.filter(x => x.conditionsMet === 8).length,
+          strictBuyCount: buySignals.filter(x => x.conditionsMet === 14).length,
+          strictSellCount: sellSignals.filter(x => x.conditionsMet === 14).length,
           buySignals,
           sellSignals
         };
@@ -13249,7 +13294,7 @@ ${json.message || 'Unauthorized token.'}`);
 
         const filterList = (list) => {
           let arr = Array.isArray(list) ? list : [];
-          if (this.strictOnly) arr = arr.filter(x => x.conditionsMet === 8);
+          if (this.strictOnly) arr = arr.filter(x => x.conditionsMet === 14);
           if (q) arr = arr.filter(x => x.symbol.includes(q) || (x.sector && x.sector.toUpperCase().includes(q)));
           return arr;
         };
@@ -13257,7 +13302,7 @@ ${json.message || 'Unauthorized token.'}`);
         const renderTableBody = (tableEl, rows, isBuy, badgeElId) => {
           const filtered = filterList(rows);
           const bEl = document.getElementById(badgeElId);
-          if (bEl) bEl.innerText = `${filtered.length} ${isBuy ? 'BUY' : 'SELL'} Setups • Sorted Newest Listed At First`;
+          if (bEl) bEl.innerText = `${filtered.length} ${isBuy ? 'BUY' : 'SELL'} Setups • 14-Condition Formula • Newest Listed At First`;
 
           let html = `
             <thead>
@@ -13266,11 +13311,12 @@ ${json.message || 'Unauthorized token.'}`);
                 <th class="p-2.5">LISTED AT</th>
                 <th class="p-2.5">ENTRY / SL / T1</th>
                 <th class="p-2.5">LIVE (% CHG)</th>
-                <th class="p-2.5">MF THICKNESS (₹)</th>
+                <th class="p-2.5">MF THICKNESS &amp; B/A</th>
                 <th class="p-2.5">SPEED &amp; SURGE</th>
                 <th class="p-2.5">ST(10,2) &amp; HMA(55)</th>
+                <th class="p-2.5">VWAP / PDH / PDL</th>
                 <th class="p-2.5">BOS &amp; ORDER BLOCK</th>
-                <th class="p-2.5">8-COND CHECKLIST</th>
+                <th class="p-2.5">14-COND CHECKLIST</th>
                 <th class="p-2.5 text-right">ACTION</th>
               </tr>
             </thead>
@@ -13278,13 +13324,14 @@ ${json.message || 'Unauthorized token.'}`);
           `;
 
           if (filtered.length === 0) {
-            html += `<tr><td colspan="10" class="p-6 text-center text-slate-500">No stocks match current ${this.strictOnly ? 'Strict 8/8' : 'filter'} criteria. Try toggling All Ranked (6-8/8) or clearing search.</td></tr>`;
+            html += `<tr><td colspan="11" class="p-6 text-center text-slate-500">No stocks match current ${this.strictOnly ? 'Strict 14/14' : 'filter'} criteria. Try toggling All Ranked or clearing search.</td></tr>`;
           } else {
             filtered.forEach(item => {
               const vsEntryPct = item.entryPrice > 0 ? (((item.price - item.entryPrice) / item.entryPrice) * 100).toFixed(2) : '0.00';
               const chgColor = item.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400';
+              const totC = item.totalConditions || 14;
               const condDots = (item.conditions || []).map(c =>
-                `<span title="C${c.step}: ${c.label} (${c.detail})" class="inline-flex items-center justify-center w-4 h-4 rounded text-[9px] font-black border ${c.passed ? (isBuy ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40') : 'bg-slate-900 text-slate-500 border-slate-700'}">${c.step}</span>`
+                `<span title="C${c.step}: ${c.label} (${c.detail})" class="inline-flex items-center justify-center w-4 h-4 rounded text-[8.5px] font-black border ${c.passed ? (isBuy ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40') : 'bg-slate-900 text-slate-500 border-slate-700'}">${c.step}</span>`
               ).join('');
 
               html += `
@@ -13292,7 +13339,7 @@ ${json.message || 'Unauthorized token.'}`);
                   <td class="p-2.5">
                     <div class="font-black text-white text-xs cursor-pointer hover:text-cyan-300" onclick="openTradingViewChart('${item.symbol}')">${item.symbol}</div>
                     <div class="text-[9.5px] text-slate-400">${item.sector}</div>
-                    <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-black ${item.conditionsMet === 8 ? 'bg-amber-500/25 text-amber-300 border border-amber-400/40' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'}">${item.conditionsMet}/8 ${item.grade}</span>
+                    <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-black ${item.conditionsMet === 14 ? 'bg-amber-500/25 text-amber-300 border border-amber-400/40' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'}">${item.conditionsMet}/${totC} ${item.grade}</span>
                   </td>
                   <td class="p-2.5">
                     <span class="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold text-[10.5px]">🕒 ${item.listedAt}</span>
@@ -13309,8 +13356,8 @@ ${json.message || 'Unauthorized token.'}`);
                   </td>
                   <td class="p-2.5">
                     <div class="font-bold text-cyan-300 text-xs">₹${item.moneyFlowCr.toLocaleString('en-IN')} Cr</div>
-                    <div class="text-[9.5px] text-slate-400">20-Avg: ₹${item.avgMoneyFlowCr} Cr</div>
-                    <div class="text-[9.5px] ${isBuy ? 'text-emerald-300' : 'text-rose-300'}">${isBuy ? 'Buy' : 'Sell'} Pres: ${isBuy ? item.buyingPressurePct : item.sellingPressurePct}%</div>
+                    <div class="text-[9.5px] text-slate-400">Avg: ₹${item.avgMoneyFlowCr} Cr</div>
+                    <div class="text-[9.5px] font-bold ${(item.bidAskRatio || 1) >= 1.15 ? 'text-emerald-300' : (item.bidAskRatio || 1) <= 0.9 ? 'text-rose-300' : 'text-slate-300'}">B/A: ${(item.bidAskRatio || 1).toFixed(2)}x (${isBuy ? item.buyingPressurePct : item.sellingPressurePct}%)</div>
                   </td>
                   <td class="p-2.5">
                     <div class="${item.speed >= 1.5 ? 'text-amber-300 font-black' : 'text-slate-300'}">Speed: ${item.speed}x</div>
@@ -13322,12 +13369,18 @@ ${json.message || 'Unauthorized token.'}`);
                     <div class="${item.hullSuite.position === 'ABOVE' ? 'text-cyan-300' : 'text-amber-300'} font-bold">HMA(${item.hullSuite.periodUsed}): ₹${item.hullSuite.hma55} (${item.hullSuite.position})</div>
                   </td>
                   <td class="p-2.5 text-[10px]">
+                    <div class="text-cyan-200 font-bold">VWAP: ₹${(item.vwap || item.price).toLocaleString('en-IN')}</div>
+                    <div class="text-emerald-300">PDH: ₹${(item.pdh || item.price).toLocaleString('en-IN')}</div>
+                    <div class="text-rose-300">PDL: ₹${(item.pdl || item.price).toLocaleString('en-IN')}</div>
+                    <div class="text-[9px] text-slate-400">Range: ${item.rangePosPct ?? '--'}% &bull; DL: ₹${(item.dayLow || item.price).toLocaleString('en-IN')}</div>
+                  </td>
+                  <td class="p-2.5 text-[10px]">
                     <span class="px-1.5 py-0.5 rounded font-bold ${item.structure.tag.includes('BULLISH') ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}">${item.structure.tag}</span>
                     <div class="text-slate-300 mt-1">OB: ₹${item.orderBlock.low}-${item.orderBlock.high}</div>
                     <div class="text-[9px] ${item.orderBlock.breakConfirmed ? 'text-emerald-400 font-bold' : 'text-amber-300'}">${item.orderBlock.breakConfirmed ? '✔ Break Confirmed' : 'Testing OB Zone'}</div>
                   </td>
                   <td class="p-2.5">
-                    <div class="flex flex-wrap gap-1 max-w-[140px]">${condDots}</div>
+                    <div class="grid grid-cols-7 gap-0.5 w-[132px]">${condDots}</div>
                   </td>
                   <td class="p-2.5 text-right space-y-1">
                     <button onclick="openTradingViewChart('${item.symbol}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
