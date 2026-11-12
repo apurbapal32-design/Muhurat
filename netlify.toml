@@ -1,0 +1,16 @@
+"$schema" = "https://open-api.netlify.com/netlify.schema.json"
+
+[build]
+  command = "npm run build:netlify"
+  publish = "netlify-public"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[server]
+  size = "small"
+  includedFiles = ["quant_screener_dashboard.html", "public/quant_screener_dashboard.html"]
+
+[server.scale]
+  min = 0
+  max = 1

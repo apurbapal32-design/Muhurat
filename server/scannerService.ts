@@ -1429,6 +1429,21 @@ export class ScannerService {
     }, 5000);
   }
 
+  public stopBackground() {
+    if (this.autoScanTimer) {
+      clearInterval(this.autoScanTimer);
+      this.autoScanTimer = null;
+    }
+    if (this.midnightWatcherTimer) {
+      clearInterval(this.midnightWatcherTimer);
+      this.midnightWatcherTimer = null;
+    }
+    if (this.periodicFetchTimer) {
+      clearInterval(this.periodicFetchTimer);
+      this.periodicFetchTimer = null;
+    }
+  }
+
   private async evaluateMidnightAndScanSchedule() {
     const ist = getISTDateParts(new Date());
 
