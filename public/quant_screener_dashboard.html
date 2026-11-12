@@ -2914,6 +2914,18 @@
                   <input type="checkbox" id="col-actions" checked onchange="toggleCustomColumn('actions')" class="accent-cyan-400">
                   <span>1-Click Orders</span>
                 </label>
+                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-amber-500/30 cursor-pointer hover:border-amber-500/60">
+                  <input type="checkbox" id="col-listed-at" checked onchange="toggleCustomColumn('listed_at')" class="accent-amber-400">
+                  <span class="text-amber-300">🕒 Listed At</span>
+                </label>
+                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-purple-500/30 cursor-pointer hover:border-purple-500/60">
+                  <input type="checkbox" id="col-bid-ask" checked onchange="toggleCustomColumn('bid_ask')" class="accent-purple-400">
+                  <span class="text-purple-300">⚖️ Bid/Ask</span>
+                </label>
+                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-cyan-500/30 cursor-pointer hover:border-cyan-500/60">
+                  <input type="checkbox" id="col-scanner" checked onchange="toggleCustomColumn('scanner')" class="accent-cyan-400">
+                  <span class="text-cyan-300">🔬 Scanner</span>
+                </label>
               </div>
             </div>
 
@@ -6253,6 +6265,9 @@
         atp: true,
         day_range: true,
         turnover: true,
+        listed_at: true,
+        bid_ask: true,
+        scanner: true,
         actions: true
       }
     };
@@ -6497,7 +6512,7 @@
         return;
       }
 
-      const headers = ['Symbol', 'Company', 'Sector', 'LTP_INR', 'Pct_Change', 'RVOL', 'Volume', 'Turnover_Cr', 'ATP_VWAP', 'OI_Contracts', 'OI_Chg_Pct', 'Buildup', 'Day_Low', 'Day_High'];
+      const headers = ['Symbol', 'Company', 'Sector', 'Sector_Pct', 'LTP_INR', 'Pct_Change', 'RVOL', 'Volume', 'Turnover_Cr', 'ATP_VWAP', 'OI_Contracts', 'OI_Chg_Pct', 'Buildup', 'Day_Low', 'Day_High', 'Listed_At', 'Bid_Ask_Ratio', 'Scanner_Name'];
       const rows = filtered.map(s => [
         s.symbol,
         `"${(s.name || '').replace(/"/g, '""')}"`,
@@ -6512,7 +6527,10 @@
         s.oi_chg_pct || 0,
         `"${(s.buildup_type || s.buildup || '').replace(/"/g, '""')}"`,
         s.day_low || 0,
-        s.day_high || 0
+        s.day_high || 0,
+        '"' + (s.listed_at || s.listedAt || '09:15:00').replace(/"/g, '""') + '"',
+        (s.bid_ask_ratio || 1.0).toFixed ? (s.bid_ask_ratio || 1.0).toFixed(2) : (s.bid_ask_ratio || 1.0),
+        '"' + (s.formula_name || s.formula_code || s.scanner_name || 'Strong Bullish').replace(/"/g, '""') + '"'
       ]);
 
       const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
@@ -6612,6 +6630,9 @@
       if (cols.atp) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('atp')">VWAP (ATP) ${sortBy === 'atp' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
       if (cols.day_range) headerHTML += `<th class="p-2.5">DAY HIGH / LOW</th>`;
       if (cols.turnover) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('turnover_cr')">TURNOVER ${sortBy === 'turnover_cr' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
+      if (cols.listed_at) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white text-amber-300" onclick="sortCustomTableBy('listed_at')">LISTED AT ${sortBy === 'listed_at' ? (sortDir === 'asc' ? '&#9650;' : '&#9660;') : ''}</th>`;
+      if (cols.bid_ask) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white text-purple-300" onclick="sortCustomTableBy('bid_ask_ratio')">BID/ASK ${sortBy === 'bid_ask_ratio' ? (sortDir === 'asc' ? '&#9650;' : '&#9660;') : ''}</th>`;
+      if (cols.scanner) headerHTML += `<th class="p-2.5 text-cyan-300">SCANNER</th>`;
       if (cols.actions) headerHTML += `<th class="p-2.5 text-right">ACTION</th>`;
       theadRow.innerHTML = headerHTML;
 
@@ -6681,6 +6702,7 @@
           rowsHTML += `
             <td class="p-2.5">
               <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">${stock.sector || 'N/A'}</span>
+              <div class="${(() => { if (typeof DATA!=='undefined'&&Array.isArray(DATA.all_stocks)&&stock.sector){const _p=DATA.all_stocks.filter(x=>x.sector===stock.sector&&typeof x.pct_change==='number');if(_p.length>0){const _a=_p.reduce((a,x)=>a+x.pct_change,0)/_p.length;return _a>=0?'text-emerald-400':'text-rose-400';}}const _sp=Number(stock.sector_pct)||0;return _sp>=0?'text-emerald-400':'text-rose-400';})()}  text-[9px] font-bold mt-0.5">${(() => { if (typeof DATA!=='undefined'&&Array.isArray(DATA.all_stocks)&&stock.sector){const _p=DATA.all_stocks.filter(x=>x.sector===stock.sector&&typeof x.pct_change==='number');if(_p.length>0){const _a=_p.reduce((a,x)=>a+x.pct_change,0)/_p.length;return (_a>=0?'+':'')+_a.toFixed(2)+'%';}}const _sp=Number(stock.sector_pct)||0;return (_sp>=0?'+':'')+_sp.toFixed(2)+'%'; })()} Sector</div>
             </td>
           `;
         }
@@ -6770,6 +6792,73 @@
           rowsHTML += `
             <td class="p-2.5 font-bold ${turnover > 300 ? 'text-amber-300' : 'text-slate-300'}">
               ₹${turnover.toFixed(0)} Cr
+            </td>
+          `;
+        }
+
+        if (cols.listed_at) {
+          const listedTime = stock.listed_at || stock.listedAt || '09:15:00';
+          rowsHTML += `
+            <td class="p-2.5">
+              <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 font-mono">🕒 ${listedTime} IST</span>
+            </td>
+          `;
+        }
+
+        if (cols.bid_ask) {
+          const bar = Number(stock.bid_ask_ratio) || 1.0;
+          const isBidHeavy = bar >= 1.25;
+          const isAskHeavy = bar <= 0.80;
+          const dominanceTag = isBidHeavy ? 'Buyer Dom.' : (isAskHeavy ? 'Seller Press.' : 'Balanced');
+          const domColor = isBidHeavy ? 'text-emerald-300' : (isAskHeavy ? 'text-rose-300' : 'text-slate-400');
+          const barColor = isBidHeavy ? 'bg-emerald-500' : (isAskHeavy ? 'bg-rose-500' : 'bg-slate-500');
+          const bidW = Math.min(100, Math.round((bar / (bar + 1)) * 100));
+          rowsHTML += `
+            <td class="p-2.5 min-w-[110px]">
+              <div class="flex items-center gap-1 mb-0.5">
+                <span class="font-bold text-[11px] text-white">${bar.toFixed(2)}x</span>
+                <span class="text-[9px] font-bold ${domColor}">${dominanceTag}</span>
+              </div>
+              <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                <div class="${barColor} h-full inline-block" style="width:${bidW}%"></div>
+              </div>
+              <div class="text-[8px] text-slate-500 mt-0.5">Bid ${bidW}% / Ask ${100-bidW}%</div>
+            </td>
+          `;
+        }
+
+        if (cols.scanner) {
+          const scannerName = (() => {
+            if (stock.formula_name) return stock.formula_name;
+            if (stock.formula_code) return stock.formula_code;
+            if (stock.scanner_name) return stock.scanner_name;
+            if (typeof getClaudeAiTraderSkillStrategy === 'function') {
+              try { const _st = getClaudeAiTraderSkillStrategy(stock, (Number(stock.pct_change)||0) >= 0); if (_st && _st.tag) return _st.tag; } catch(e) {}
+            }
+            const _pct = Number(stock.pct_change) || 0;
+            const _rv = Number(stock.rvol) || 1;
+            const _to = Number(stock.turnover_cr) || 0;
+            if (_to > 300 && _rv > 2) return 'Titan Whale';
+            if (_rv > 2.5) return 'Sonic RVOL';
+            if (stock.buildup && stock.buildup.toString().toLowerCase().includes('long')) return 'Strong Bullish (ORB)';
+            if (stock.buildup && stock.buildup.toString().toLowerCase().includes('short')) return 'Short Buildup';
+            return 'Quant Elite Pro';
+          })();
+          const _scanColors = {
+            'TITAN_WHALE':'bg-amber-500/15 text-amber-300 border-amber-500/30',
+            'SONIC_RVOL':'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+            'STRONG_BULLISH':'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+            'SHORT_BUILDUP':'bg-rose-500/15 text-rose-300 border-rose-500/30',
+            'QUANT_ELITE':'bg-purple-500/15 text-purple-300 border-purple-500/30',
+            'TOP_MOMENTUM':'bg-pink-500/15 text-pink-300 border-pink-500/30',
+            'SMART_MONEY':'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
+          };
+          const _scanKey = scannerName.toUpperCase().replace(/[^A-Z]/g,'_');
+          const _scanMatch = Object.keys(_scanColors).find(k => _scanKey.includes(k));
+          const _scanCls = _scanMatch ? _scanColors[_scanMatch] : 'bg-slate-800 text-slate-300 border-slate-600';
+          rowsHTML += `
+            <td class="p-2.5">
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${_scanCls} max-w-[110px] inline-block truncate" title="${scannerName}">🔎 ${scannerName}</span>
             </td>
           `;
         }
