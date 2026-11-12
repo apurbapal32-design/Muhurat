@@ -9549,8 +9549,9 @@ function renderJournal() {
 
         this.emptyAllScannersInMemory();
         this.refreshAllRenderedViews();
-        if (typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.resetCandidateTrackers) {
-          ClaudeNotificationEngine.resetCandidateTrackers();
+        if (typeof ClaudeNotificationEngine !== 'undefined') {
+          if (ClaudeNotificationEngine.clearAllNotifications) ClaudeNotificationEngine.clearAllNotifications(true);
+          if (ClaudeNotificationEngine.resetCandidateTrackers) ClaudeNotificationEngine.resetCandidateTrackers();
         }
 
         if (syncServer) {
@@ -9759,6 +9760,10 @@ function renderJournal() {
         try {
           this.isPurged = false;
           this.manualOverride = false;
+          if (typeof ClaudeNotificationEngine !== 'undefined') {
+            if (ClaudeNotificationEngine.clearAllNotifications) ClaudeNotificationEngine.clearAllNotifications(true);
+            if (ClaudeNotificationEngine.resetCandidateTrackers) ClaudeNotificationEngine.resetCandidateTrackers();
+          }
           localStorage.setItem('midnight_scanner_purged', 'false');
           localStorage.setItem('midnight_preopen_scan_date_ist', ist.dateStr);
           if (phase !== 'PRE_OPEN') {
@@ -13480,17 +13485,155 @@ ${json.message || 'Unauthorized token.'}`);
       moneyFlowBaselineReady: false,
       _momentumBackendSyncSeen: false,
       lastAlertedAt: new Map(),
+      _sessionMonitorTimer: null,
+      STORAGE_KEY: 'muhurat_notif_history_v2',
 
       init() {
         if ('Notification' in window && Notification.permission === 'granted') {
           this.pushEnabled = true;
         }
         this.bindAudioUnlock();
+        this.restoreTodayNotificationsOrPurge();
+        this.checkDailySessionReset();
         if (typeof DATA !== 'undefined' && (Array.isArray(DATA.best_momentum_upside) || Array.isArray(DATA.best_momentum_downside))) {
           this.syncMomentumCandidates(DATA.best_momentum_upside, DATA.best_momentum_downside, false);
         }
-        this.seedInitialNotifications();
+        if (!this._sessionMonitorTimer) {
+          this._sessionMonitorTimer = setInterval(() => {
+            this.checkDailySessionReset();
+          }, 30000);
+        }
         this.updateNotificationUI();
+      },
+
+      parseTimeToSec(timeStr) {
+        if (!timeStr) return -1;
+        const clean = String(timeStr).trim().replace(/\s*IST$/i, '');
+        const m = clean.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+        if (!m) return -1;
+        const hh = parseInt(m[1], 10);
+        const mm = parseInt(m[2], 10);
+        const ss = parseInt(m[3] || '0', 10);
+        return hh * 3600 + mm * 60 + ss;
+      },
+
+      isWithinLiveAlertWindow(listedTimeStr, maxAgeSec = 300) {
+        const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
+        if (!ist) return true;
+        const nowSec = ist.hours * 3600 + ist.minutes * 60 + (ist.seconds || 0);
+        // Outside market session (before 09:00 or after 15:35 IST), never emit stale historical alerts
+        if (nowSec < 9 * 3600 || nowSec > 15 * 3600 + 35 * 60) return false;
+        const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(new Date(), true) : null;
+        if (mkt && mkt.status === 'CLOSED') return false;
+        const listedSec = this.parseTimeToSec(listedTimeStr);
+        if (listedSec < 0) return false;
+        const ageSec = nowSec - listedSec;
+        return ageSec >= -30 && ageSec <= maxAgeSec;
+      },
+
+      saveTodayNotifications() {
+        try {
+          const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
+          if (!ist) return;
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
+            dateIST: ist.dateStr,
+            items: this.history.slice(0, 50)
+          }));
+        } catch (e) {}
+      },
+
+      restoreTodayNotificationsOrPurge() {
+        try {
+          const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
+          if (!ist) return;
+          const nowMin = ist.hours * 60 + ist.minutes;
+          const afterClose = nowMin >= 15 * 60 + 35 || nowMin < 9 * 60;
+          if (afterClose || (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared())) {
+            this.clearAllNotifications(true);
+            return;
+          }
+          const raw = localStorage.getItem(this.STORAGE_KEY);
+          if (!raw) {
+            this.history = [];
+            return;
+          }
+          const parsed = JSON.parse(raw);
+          if (!parsed || parsed.dateIST !== ist.dateStr || !Array.isArray(parsed.items)) {
+            this.clearAllNotifications(true);
+            return;
+          }
+          const nowSec = ist.hours * 3600 + ist.minutes * 60 + (ist.seconds || 0);
+          // Only retain today's active-session notifications whose timestamps are valid for today (strictly >= 09:00 and <= nowSec)
+          this.history = parsed.items.filter(it => {
+            const sec = this.parseTimeToSec(it && it.time);
+            return sec >= 9 * 3600 && sec <= nowSec + 30;
+          });
+          this.history.forEach(it => {
+            if (it && it.symbol && it.type === 'stock_listed') {
+              const dir = it.isUpside ? 'UP' : 'DOWN';
+              this.seenMomentumSymbols.add(`${dir}:${it.symbol}`);
+              this.seenMoneyFlowSymbols.add(`${it.isUpside ? 'BUY' : 'SELL'}:${it.symbol}`);
+            }
+          });
+        } catch (e) {
+          this.history = [];
+        }
+      },
+
+      clearAllNotifications(silent = false) {
+        this.history = [];
+        try {
+          localStorage.removeItem(this.STORAGE_KEY);
+        } catch (e) {}
+        if (this.hasAndroidBridge() && typeof window.MuhuratAndroidBridge.clearOldNotifications === 'function') {
+          try { window.MuhuratAndroidBridge.clearOldNotifications(); } catch (e) {}
+        }
+        this.updateNotificationUI();
+        if (!silent && typeof showToast === 'function') {
+          showToast('Notifications cleared');
+        }
+      },
+
+      checkDailySessionReset() {
+        const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
+        if (!ist) return;
+        const nowMin = ist.hours * 60 + ist.minutes;
+        const isAfterMarketClose = nowMin >= 15 * 60 + 35; // 15:35 IST onwards after NSE close
+        const isPreMarket = nowMin < 9 * 60;
+        const mktCleared = (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared());
+
+        let savedDate = '';
+        try {
+          const raw = localStorage.getItem(this.STORAGE_KEY);
+          if (raw) savedDate = (JSON.parse(raw) || {}).dateIST || '';
+        } catch (e) {}
+
+        // 1. If stored date is from a previous trading day, wipe completely for fresh day start
+        if (savedDate && savedDate !== ist.dateStr) {
+          this.resetCandidateTrackers();
+          this.clearAllNotifications(true);
+          return;
+        }
+
+        // 2. Every day after market close (>= 15:35 IST) or during midnight-cleared pre-open wait: remove old notifications
+        if (isAfterMarketClose || isPreMarket || mktCleared) {
+          if (this.history.length > 0) {
+            this.resetCandidateTrackers();
+            this.clearAllNotifications(true);
+          }
+          try { localStorage.setItem('muhurat_notif_last_closed_date', ist.dateStr); } catch (e) {}
+          return;
+        }
+
+        // 3. New trading session morning reset (once per new trading date between 09:00-15:34 IST)
+        try {
+          const openedDate = localStorage.getItem('muhurat_notif_opened_date') || '';
+          if (openedDate !== ist.dateStr && nowMin >= 9 * 60 && nowMin <= 15 * 60 + 34) {
+            localStorage.setItem('muhurat_notif_opened_date', ist.dateStr);
+            this.resetCandidateTrackers();
+            this.clearAllNotifications(true);
+          }
+        } catch (e) {}
       },
 
       bindAudioUnlock() {
@@ -13681,6 +13824,10 @@ ${json.message || 'Unauthorized token.'}`);
           if (!stock || !stock.symbol) return;
           if (!this.seenMomentumSymbols.has(key)) {
             this.seenMomentumSymbols.add(key);
+            // Ignore stale morning/old-time stocks (e.g., 09:30 o'clock) when live clock is later (e.g., 14:20)
+            if (!this.isWithinLiveAlertWindow(stock.listed_at, 300)) {
+              return;
+            }
             const prevTs = this.lastAlertedAt.get(`MOMENTUM:${key}`) || 0;
             if (nowMs - prevTs >= cooldownMs) {
               this.lastAlertedAt.set(`MOMENTUM:${key}`, nowMs);
@@ -13729,6 +13876,10 @@ ${json.message || 'Unauthorized token.'}`);
           if (!stock || !stock.symbol) return;
           if (!this.seenMoneyFlowSymbols.has(key)) {
             this.seenMoneyFlowSymbols.add(key);
+            // Ignore stale morning/earlier-bar triggers (only alert live-time newly listed candidates <= 5 min old)
+            if (!this.isWithinLiveAlertWindow(stock.listedAt, 300)) {
+              return;
+            }
             const prevTs = this.lastAlertedAt.get(`MONEYFLOW:${key}`) || 0;
             if (nowMs - prevTs >= cooldownMs) {
               this.lastAlertedAt.set(`MONEYFLOW:${key}`, nowMs);
@@ -13854,6 +14005,7 @@ ${json.message || 'Unauthorized token.'}`);
 
       notifyStockListed(stock, isUpside) {
         const timeStr = stock.listed_at || new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false });
+        if (!this.isWithinLiveAlertWindow(timeStr, 300)) return;
         const sign = (stock.pct_change || 0) >= 0 ? '+' : '';
         const title = isUpside 
           ? `📈 STOCK LISTED • ${stock.symbol} (+${stock.pct_change}%)`
@@ -13909,63 +14061,13 @@ ${json.message || 'Unauthorized token.'}`);
       addHistory(entry) {
         this.history.unshift(entry);
         if (this.history.length > 50) this.history.pop();
+        this.saveTodayNotifications();
         this.updateNotificationUI();
       },
 
       seedInitialNotifications() {
-        if (window.DATA && window.DATA.all_stocks) {
-          const downside = window.DATA.all_stocks.filter(s => (s.pct_change || 0) < 0).slice(0, 2);
-          const upside = window.DATA.all_stocks.filter(s => (s.pct_change || 0) > 0).slice(0, 2);
-
-          downside.forEach(s => {
-            this.history.push({
-              type: 'stock_listed',
-              isUpside: false,
-              symbol: s.symbol,
-              time: s.listed_at || '10:47:55',
-              title: `📉 BREAKDOWN LISTED • ${s.symbol} (${s.pct_change}%)`,
-              message: `${s.name || s.symbol} triggered Heavy Selling Breakdown at ${s.listed_at} IST. Live Price: ₹${s.price}`,
-              price: s.price,
-              pct_change: s.pct_change
-            });
-          });
-
-          upside.forEach(s => {
-            this.history.push({
-              type: 'stock_listed',
-              isUpside: true,
-              symbol: s.symbol,
-              time: s.listed_at || '09:55:11',
-              title: `📈 STOCK LISTED • ${s.symbol} (+${s.pct_change}%)`,
-              message: `${s.name || s.symbol} triggered Bullish Momentum Surge at ${s.listed_at} IST. Live Price: ₹${s.price}`,
-              price: s.price,
-              pct_change: s.pct_change
-            });
-          });
-        }
-
-        const newsList = (window.INTEGRATED_NEWS_DATA && window.INTEGRATED_NEWS_DATA.length) 
-          ? window.INTEGRATED_NEWS_DATA 
-          : (window.DATA && window.DATA.news) || [];
-
-        newsList.forEach(n => {
-          const isBull = n.sentiment === 'BULLISH' || n.sentiment === 'POSITIVE';
-          this.history.push({
-            type: 'news',
-            isPositive: isBull,
-            symbol: n.symbol,
-            time: n.time || n.time_str || '10:30 AM',
-            source: n.source || 'Moneycontrol',
-            source_code: n.source_code || 'MC',
-            source_url: n.source_url || '#',
-            title: `${isBull ? '🟢 POSITIVE NEWS' : '🔴 NEGATIVE NEWS'} • [${n.source || 'Alert'}] • ${n.symbol} (${n.score || ''})`,
-            message: n.headline,
-            summary: n.summary || '',
-            catalyst: n.catalyst || '',
-            sentiment: n.sentiment,
-            score: n.score
-          });
-        });
+        // Strictly disabled: never seed old morning (e.g. 09:30) or static mock stocks into Notification Bar.
+        // Only live-time newly listed candidate alerts populate during active market hours and auto-clear after market close.
       },
 
       updateNotificationUI() {
@@ -13987,7 +14089,7 @@ ${json.message || 'Unauthorized token.'}`);
         });
 
         if (filtered.length === 0) {
-          container.innerHTML = '<div class="text-center py-8 text-slate-500 text-xs">No notifications matching filter</div>';
+          container.innerHTML = '<div class="text-center py-8 px-4 text-slate-400 text-xs font-mono leading-relaxed">⚡ Live Notification Monitor Active<br><span class="text-[10.5px] text-slate-500">Only newly listed live-time candidates on Top Momentum &amp; Money Flow appear here with a 3x Beep.<br>All notifications auto-clear after market close for a fresh start next trading day.</span></div>';
           return;
         }
 
@@ -16280,7 +16382,7 @@ generateOptionChain(symbol, spotPrice, strategy, isBull) {
       <button onclick="ClaudeNotificationEngine.triggerTestTripleBeepNotification('MONEY FLOW')" class="px-2 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold cursor-pointer" title="Test Web & Mobile Notification + 3x Beep">🔔 3x Beep</button>
 
       <!-- Clear Button -->
-      <button onclick="ClaudeNotificationEngine.history = []; ClaudeNotificationEngine.updateNotificationUI(); showToast('Notifications cleared');" class="text-slate-400 hover:text-rose-400 text-[10.5px] font-mono cursor-pointer">
+      <button onclick="ClaudeNotificationEngine.clearAllNotifications(false);" class="text-slate-400 hover:text-rose-400 text-[10.5px] font-mono cursor-pointer">
         Clear All
       </button>
     </div>
