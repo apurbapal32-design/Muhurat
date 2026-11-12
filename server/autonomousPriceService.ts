@@ -284,10 +284,88 @@ class AutonomousPriceService {
   private lastFetchTimestamp = 0;
   private lastYahooFetchTimestamp = 0;
   private inFlightPromise: Promise<Record<string, UnifiedMarketQuote>> | null = null;
+  private yahooInFlightPromise: Promise<void> | null = null;
 
   public getExtendedBars(symbol: string): IntradayCandleBar[] | undefined {
     const clean = cleanSymName(symbol);
     return this.lastExtendedBarsCache.get(clean) || this.lastBarsCache.get(clean);
+  }
+
+  public async ensureInitialBarsLoaded(): Promise<void> {
+    if (this.lastBarsCache.size >= 150) return;
+    if (!this.yahooInFlightPromise) {
+      await this.fetchAllMarketQuotes(false);
+    }
+    if (this.yahooInFlightPromise) {
+      await Promise.race([
+        this.yahooInFlightPromise,
+        new Promise<void>((resolve) => setTimeout(resolve, 12000)),
+      ]);
+    }
+  }
+
+  /**
+   * Overlays a real-time Upstox / TV quote onto the active 5-minute forming candle and quote cache
+   * so Money Flow, Supertrend, Hull Suite, and Scanner triggers never lag behind Yahoo's 5m feed.
+   */
+  public overlayLiveTickOnBars(symbol: string, quote: UnifiedMarketQuote) {
+    const clean = cleanSymName(symbol);
+    if (!clean || !quote || !Number.isFinite(quote.lp) || quote.lp <= 0) return;
+
+    this.lastQuoteCache.set(clean, quote);
+    if (clean === 'NIFTY 50') this.lastQuoteCache.set('NIFTY', quote);
+
+    if (!quote.isMarketOpen) return;
+
+    const nowTsSec = Math.floor(Date.now() / 1000);
+    const istNow = getISTPartsFromEpochSec(nowTsSec);
+    if (istNow.secIST < 9 * 3600 + 15 * 60 || istNow.secIST > 15 * 3600 + 30 * 60) return;
+
+    const bucketSec = Math.floor(istNow.secIST / 300) * 300;
+    const bh = String(Math.floor(bucketSec / 3600)).padStart(2, '0');
+    const bm = String(Math.floor((bucketSec % 3600) / 60)).padStart(2, '0');
+    const bucketTimeIST = `${bh}:${bm}:00`;
+    const bucketTsSec = nowTsSec - (istNow.secIST - bucketSec);
+
+    const updateArr = (arr: IntradayCandleBar[] | undefined): IntradayCandleBar[] => {
+      const list = Array.isArray(arr) ? arr.slice() : [];
+      const prevTotalVol = list.reduce((s, b) => s + (b.volume || 0), 0);
+      const liveDeltaVol = quote.volume > prevTotalVol ? Math.max(100, quote.volume - prevTotalVol) : 0;
+
+      if (list.length > 0 && list[list.length - 1].dateIST === istNow.dateIST && list[list.length - 1].secIST === bucketSec) {
+        const last = list[list.length - 1];
+        list[list.length - 1] = {
+          ...last,
+          high: Number(Math.max(last.high, quote.lp).toFixed(2)),
+          low: Number(Math.min(last.low, quote.lp).toFixed(2)),
+          close: Number(quote.lp.toFixed(2)),
+          volume: liveDeltaVol > 0 ? last.volume + liveDeltaVol : Math.max(last.volume, Math.round((quote.volume || 1000) / Math.max(1, list.length))),
+        };
+      } else {
+        const openPx = list.length > 0 && list[list.length - 1].dateIST === istNow.dateIST
+          ? list[list.length - 1].close
+          : Number((quote.open || quote.lp).toFixed(2));
+        list.push({
+          tsSec: bucketTsSec,
+          dateIST: istNow.dateIST,
+          timeIST: bucketTimeIST,
+          secIST: bucketSec,
+          open: openPx,
+          high: Number(Math.max(openPx, quote.lp).toFixed(2)),
+          low: Number(Math.min(openPx, quote.lp).toFixed(2)),
+          close: Number(quote.lp.toFixed(2)),
+          volume: liveDeltaVol > 0 ? liveDeltaVol : Math.max(100, Math.round((quote.volume || 10000) / Math.max(1, list.length + 1))),
+        });
+      }
+      return list;
+    };
+
+    if (this.lastBarsCache.has(clean)) {
+      this.lastBarsCache.set(clean, updateArr(this.lastBarsCache.get(clean)));
+    }
+    if (this.lastExtendedBarsCache.has(clean)) {
+      this.lastExtendedBarsCache.set(clean, updateArr(this.lastExtendedBarsCache.get(clean)).slice(-140));
+    }
   }
 
   public getCachedQuotes(): Record<string, UnifiedMarketQuote> {
@@ -300,14 +378,14 @@ class AutonomousPriceService {
 
   /**
    * Fetches all Indian Benchmark Indices and Nifty 200 F&O Equities concurrently
-   * combining TradingView India Scanner, Moneycontrol Indices, and Real-Time Yahoo Finance NSE 5m Chart API.
+   * using fast batch L1 quotes (<400ms) while refreshing 5m historical bars non-blockingly in background.
    */
   public async fetchAllMarketQuotes(forceRefresh = false): Promise<Record<string, UnifiedMarketQuote>> {
     const now = Date.now();
     const status = calculateMarketStatus();
     const isOpen = status.isOpen;
     const isTransitionWindow = status.session === 'POST_MARKET' || status.session === 'PRE_OPEN';
-    const minTtlMs = isOpen ? 3500 : isTransitionWindow ? 45000 : 10 * 60 * 1000;
+    const minTtlMs = isOpen ? 1200 : isTransitionWindow ? 30000 : 10 * 60 * 1000;
     if (!forceRefresh && now - this.lastFetchTimestamp < minTtlMs && this.lastQuoteCache.size > 100) {
       return this.getCachedQuotes();
     }
@@ -323,11 +401,54 @@ class AutonomousPriceService {
     return this.inFlightPromise;
   }
 
+  private triggerBackgroundYahooRefresh(
+    equitySymbols: string[],
+    todayDateIST: string,
+    isOpen: boolean,
+    marketSession: string,
+    istTime: string,
+    nowIso: string
+  ) {
+    if (this.yahooInFlightPromise) return;
+    this.lastYahooFetchTimestamp = Date.now();
+    this.yahooInFlightPromise = this.fetchYahooRealTimeQuotesAndBars(
+      equitySymbols,
+      todayDateIST,
+      isOpen,
+      marketSession,
+      istTime,
+      nowIso
+    )
+      .then((yahooQuotes) => {
+        for (const [sym, yq] of Object.entries(yahooQuotes)) {
+          const existing = this.lastQuoteCache.get(sym);
+          if (!existing) {
+            this.lastQuoteCache.set(sym, yq);
+          } else {
+            // Preserve newer fast L1 price (Upstox / TV) and only attach 5m bars + depth metadata
+            existing.intradayBars = yq.intradayBars || existing.intradayBars;
+            if ((!existing.bidQty || !existing.askQty) && yq.bidQty > 0 && yq.askQty > 0) {
+              existing.bidQty = yq.bidQty;
+              existing.askQty = yq.askQty;
+            }
+            if (isOpen && existing.lp > 0) {
+              this.overlayLiveTickOnBars(sym, existing);
+            }
+            this.lastQuoteCache.set(sym, existing);
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        this.yahooInFlightPromise = null;
+      });
+  }
+
   private async executeBatchFetch(forceRefresh = false): Promise<Record<string, UnifiedMarketQuote>> {
     const marketStatus = calculateMarketStatus();
     const isOpen = marketStatus.isOpen;
     const isTransitionWindow = marketStatus.session === 'POST_MARKET' || marketStatus.session === 'PRE_OPEN';
-    const yahooTtlMs = isOpen ? 10000 : isTransitionWindow ? 45000 : 10 * 60 * 1000;
+    const yahooTtlMs = isOpen ? 45000 : isTransitionWindow ? 90000 : 10 * 60 * 1000;
     const nowIso = new Date().toISOString();
     const istTime = new Date().toLocaleTimeString('en-IN', {
       timeZone: 'Asia/Kolkata',
@@ -360,16 +481,18 @@ class AutonomousPriceService {
 
     const resultMap: Record<string, UnifiedMarketQuote> = {};
 
-    // 1. Run TradingView Scanner (fast 1.8s timeout) + Moneycontrol Indices + Yahoo Real-Time NSE Feed concurrently
+    // Fire 5m bar history warmup asynchronously in background (NEVER blocks live quote responses!)
     const needYahooRefresh =
-      forceRefresh ||
       this.lastBarsCache.size < 150 ||
       Date.now() - this.lastYahooFetchTimestamp > yahooTtlMs;
+    if (needYahooRefresh) {
+      this.triggerBackgroundYahooRefresh(equitySymbols, todayDateIST, isOpen, marketStatus.session, istTime, nowIso);
+    }
 
     const tvTask = (async () => {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1800);
+        const timeoutId = setTimeout(() => controller.abort(), forceRefresh ? 2400 : 1800);
 
         const response = await fetch('https://scanner.tradingview.com/india/scan', {
           method: 'POST',
@@ -501,47 +624,20 @@ class AutonomousPriceService {
       }
     })();
 
-    const yahooTask = needYahooRefresh
-      ? this.fetchYahooRealTimeQuotesAndBars(equitySymbols, todayDateIST, isOpen, marketStatus.session, istTime, nowIso)
-      : Promise.resolve<Record<string, UnifiedMarketQuote>>({});
+    await tvTask;
 
-    const [_, yahooQuotes] = await Promise.all([tvTask, yahooTask]);
-
-    // Merge Yahoo real-time equity quotes + intraday 5m bars cleanly
-    for (const [sym, yq] of Object.entries(yahooQuotes)) {
-      const existing = resultMap[sym];
-      if (!existing) {
-        resultMap[sym] = yq;
-        this.lastQuoteCache.set(sym, yq);
-      } else {
-        // Attach real 5m intraday bars & bar-weighted Bid/Ask depth onto TV quote
-        existing.intradayBars = yq.intradayBars || existing.intradayBars;
-        existing.bidQty = yq.bidQty;
-        existing.askQty = yq.askQty;
-        if (yq.lp > 0 && (!existing.lp || yq.type === 'EQUITY')) {
-          existing.lp = yq.lp;
-          existing.ch = yq.ch;
-          existing.chp = yq.chp;
-          existing.prevClose = yq.prevClose;
-          existing.open = yq.open || existing.open;
-          existing.high = Math.max(existing.high || 0, yq.high || 0) || yq.high;
-          existing.low = (existing.low > 0 && yq.low > 0 ? Math.min(existing.low, yq.low) : yq.low) || existing.low;
-          existing.volume = Math.max(existing.volume || 0, yq.volume || 0);
-        }
-        this.lastQuoteCache.set(sym, existing);
-      }
-    }
-
-    // Re-attach cached quotes + bars for any symbol not updated in this partial tick
-    if (!needYahooRefresh) {
-      for (const sym of equitySymbols) {
-        if (!resultMap[sym] && this.lastQuoteCache.has(sym)) {
-          const cached = { ...this.lastQuoteCache.get(sym)! };
-          cached.isMarketOpen = isOpen;
-          cached.marketSession = isOpen ? marketStatus.session : 'CLOSED_SETTLEMENT';
-          cached.intradayBars = this.lastBarsCache.get(sym) || cached.intradayBars;
-          resultMap[sym] = cached;
-        }
+    // Overlay fresh TV prices onto active forming 5m bars + re-attach cached symbols if TV missed any
+    for (const sym of equitySymbols) {
+      const hit = resultMap[sym];
+      if (hit) {
+        if (isOpen) this.overlayLiveTickOnBars(sym, hit);
+        hit.intradayBars = this.lastBarsCache.get(sym) || hit.intradayBars;
+      } else if (this.lastQuoteCache.has(sym)) {
+        const cached = { ...this.lastQuoteCache.get(sym)! };
+        cached.isMarketOpen = isOpen;
+        cached.marketSession = isOpen ? marketStatus.session : 'CLOSED_SETTLEMENT';
+        cached.intradayBars = this.lastBarsCache.get(sym) || cached.intradayBars;
+        resultMap[sym] = cached;
       }
     }
 
@@ -585,12 +681,12 @@ class AutonomousPriceService {
     ];
 
     let cursor = 0;
-    const workerCount = 24;
+    const workerCount = 10;
 
     const runOne = async (job: { sym: string; yf: string; exchange: 'NSE' | 'BSE'; isIdx: boolean }) => {
       try {
         const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 3800);
+        const tid = setTimeout(() => controller.abort(), 3200);
         const res = await fetch(
           `https://query1.finance.yahoo.com/v8/finance/chart/${job.yf}?interval=5m&range=5d`,
           {

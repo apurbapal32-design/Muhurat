@@ -8161,7 +8161,10 @@
         }
       }
       html += '</tbody>';
-      table.innerHTML = html;
+      if (table._lastHtmlStr !== html) {
+        table._lastHtmlStr = html;
+        table.innerHTML = html;
+      }
     }
 
     // ============================================================
@@ -8577,7 +8580,10 @@
         `;
       });
       html += '</tbody>';
-      table.innerHTML = html;
+      if (table._lastHtmlStr !== html) {
+        table._lastHtmlStr = html;
+        table.innerHTML = html;
+      }
     }
 
     // ============================================================
@@ -8681,7 +8687,10 @@
       }
 
       html += '</tbody>';
-      table.innerHTML = html;
+      if (table._lastHtmlStr !== html) {
+        table._lastHtmlStr = html;
+        table.innerHTML = html;
+      }
     }
 
     function toggleWatchlist(sym) {
@@ -9360,7 +9369,10 @@ function renderJournal() {
         `;
       });
       html += '</tbody>';
-      table.innerHTML = html;
+      if (table._lastHtmlStr !== html) {
+        table._lastHtmlStr = html;
+        table.innerHTML = html;
+      }
     }
 
     // ============================================================
@@ -9995,6 +10007,14 @@ function renderJournal() {
                 }
                 return;
               }
+              if (msg.type === 'scan_update') {
+                const nowMs = Date.now();
+                if (typeof MidnightSessionManager !== 'undefined' && nowMs - (this._lastScanPullAt || 0) >= 4000) {
+                  this._lastScanPullAt = nowMs;
+                  MidnightSessionManager.pullFreshBackendScan(false);
+                }
+                return;
+              }
               if (msg.type === 'tick' && msg.tick) {
                 this._indicesBatchDirty = false;
                 this.processIncomingTick(msg.tick);
@@ -10037,18 +10057,25 @@ function renderJournal() {
           this._settlementTimer = null;
         }
         this._lastQuotePollAt = 0;
+        this._lastScanPullAt = 0;
         const runPollCycle = () => {
           if (typeof document !== 'undefined' && document.hidden) return;
           const now = Date.now();
           const mkt = getIndianMarketStatus(new Date());
           const isOpenOrPre = (mkt.status === 'OPEN' || mkt.status === 'PRE-OPEN');
-          const intervalMs = isOpenOrPre ? (this.wsConnected ? 18000 : 6000) : 35000;
+          const intervalMs = isOpenOrPre ? 3000 : 35000;
           if (now - (this._lastQuotePollAt || 0) >= intervalMs) {
             this._lastQuotePollAt = now;
             this.fetchBatchQuotes();
           }
+          if (isOpenOrPre && now - (this._lastScanPullAt || 0) >= 10000) {
+            this._lastScanPullAt = now;
+            if (typeof MidnightSessionManager !== 'undefined') {
+              MidnightSessionManager.pullFreshBackendScan(false);
+            }
+          }
         };
-        this.pollTimer = setInterval(runPollCycle, 3000);
+        this.pollTimer = setInterval(runPollCycle, 1500);
         if (typeof document !== 'undefined' && !this._visibilityHookBound) {
           this._visibilityHookBound = true;
           document.addEventListener('visibilitychange', () => {
@@ -10242,7 +10269,7 @@ function renderJournal() {
           }
         }
         this.syncSectorStocksFromAllStocks();
-        if (Date.now() - (window._lastScannersBuildAt || 0) >= 8000) {
+        if (Date.now() - (window._lastScannersBuildAt || 0) >= 3500) {
           window._scannersDirty = true;
           if (typeof MidnightSessionManager === 'undefined' || !MidnightSessionManager.isMidnightCleared()) {
             if (typeof sanitizeDataScannersUniverse === 'function') sanitizeDataScannersUniverse();
@@ -13119,12 +13146,17 @@ ${json.message || 'Unauthorized token.'}`);
       init() {
         setTimeout(() => {
           this.load(false);
-        }, 1600);
+        }, 1200);
         if (!this.refreshTimer) {
+          let mfTick = 0;
           this.refreshTimer = setInterval(() => {
             if (typeof document !== 'undefined' && document.hidden) return;
+            mfTick++;
+            const mkt = getIndianMarketStatus(new Date());
+            const isOpenOrPre = (mkt.status === 'OPEN' || mkt.status === 'PRE-OPEN');
+            if (!isOpenOrPre && mfTick % 6 !== 0) return;
             this.load(false);
-          }, 15000);
+          }, 5000);
         }
       },
 
@@ -13420,7 +13452,10 @@ ${json.message || 'Unauthorized token.'}`);
             });
           }
           html += '</tbody>';
-          tableEl.innerHTML = html;
+          if (tableEl._lastHtmlStr !== html) {
+            tableEl._lastHtmlStr = html;
+            tableEl.innerHTML = html;
+          }
         };
 
         renderTableBody(buyTbl, rpt.buySignals, true, 'mf-buy-count-badge');

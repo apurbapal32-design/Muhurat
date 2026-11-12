@@ -49,6 +49,10 @@ class UpstoxService {
   private reverseKeyMap: Map<string, string> = new Map();
   private instrumentsLoadedAt = 0;
   private loadingPromise: Promise<void> | null = null;
+  private lastUpstoxQuotes: Record<string, UnifiedMarketQuote> = {};
+  private lastUpstoxQuotesAt = 0;
+  private lastUpstoxTokenTag = '';
+  private inFlightUpstoxBatch: Promise<Record<string, UnifiedMarketQuote>> | null = null;
 
   constructor() {
     this.loadCachedMapFromDisk();
@@ -340,135 +344,168 @@ class UpstoxService {
       }
     );
 
-    // Layer Upstox Direct Live API v2 Full Market Quotes on top when authenticated
+    // Layer Upstox Direct Live API v2 Full Market Quotes on top when authenticated (with 1s coalesced cache)
     if (resolvedToken.length > 15 && this.eqInstrumentMap.size > 0) {
       try {
-        const keyToClean = new Map<string, string>();
-        const allKeys: string[] = [];
+        const tokenTag = resolvedToken.slice(-16);
+        const cacheFresh =
+          this.lastUpstoxTokenTag === tokenTag &&
+          Date.now() - this.lastUpstoxQuotesAt < (isLiveMarket ? 1000 : 30000) &&
+          Object.keys(this.lastUpstoxQuotes).length > 0;
 
-        const addKey = (symName: string) => {
-          const clean = this.cleanSymbol(symName);
-          if (clean === 'NIFTYFPI') return;
-          const k = this.getInstrumentKey(clean);
-          // Skip unmapped equity placeholders
-          if (k.startsWith('NSE_EQ|') && !k.includes('|INE')) return;
-          if (!keyToClean.has(k)) {
-            keyToClean.set(k, clean === 'NIFTY' ? 'NIFTY 50' : clean);
-            allKeys.push(k);
-          }
-        };
+        let upstoxBatch: Record<string, UnifiedMarketQuote>;
+        if (cacheFresh) {
+          upstoxBatch = this.lastUpstoxQuotes;
+        } else {
+          if (!this.inFlightUpstoxBatch) {
+            this.inFlightUpstoxBatch = (async () => {
+              const built: Record<string, UnifiedMarketQuote> = {};
+              const keyToClean = new Map<string, string>();
+              const allKeys: string[] = [];
 
-        ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'NIFTYNXT50', 'SENSEX', 'NIFTYIT', 'INDIAVIX'].forEach(
-          addKey
-        );
-        symbols.forEach(addKey);
+              const addKey = (symName: string) => {
+                const clean = this.cleanSymbol(symName);
+                if (clean === 'NIFTYFPI') return;
+                const k = this.getInstrumentKey(clean);
+                if (k.startsWith('NSE_EQ|') && !k.includes('|INE')) return;
+                if (!keyToClean.has(k)) {
+                  keyToClean.set(k, clean === 'NIFTY' ? 'NIFTY 50' : clean);
+                  allKeys.push(k);
+                }
+              };
 
-        // Upstox allows up to 500 keys per call; chunk safely at 400
-        const chunkSize = 400;
-        const chunks: string[][] = [];
-        for (let i = 0; i < allKeys.length; i += chunkSize) {
-          chunks.push(allKeys.slice(i, i + chunkSize));
-        }
+              ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'NIFTYNXT50', 'SENSEX', 'NIFTYIT', 'INDIAVIX'].forEach(
+                addKey
+              );
+              NIFTY_200_STOCKS.forEach((st) => addKey(st.symbol));
+              symbols.forEach(addKey);
 
-        const responses = await Promise.allSettled(
-          chunks.map(async (chunk) => {
-            const param = encodeURIComponent(chunk.join(','));
-            const controller = new AbortController();
-            const tid = setTimeout(() => controller.abort(), 5000);
-            const res = await fetch(
-              `https://api.upstox.com/v2/market-quote/quotes?instrument_key=${param}`,
-              {
-                method: 'GET',
-                headers: {
-                  Accept: 'application/json',
-                  Authorization: `Bearer ${resolvedToken}`,
-                },
-                signal: controller.signal,
+              const chunkSize = 400;
+              const chunks: string[][] = [];
+              for (let i = 0; i < allKeys.length; i += chunkSize) {
+                chunks.push(allKeys.slice(i, i + chunkSize));
               }
-            );
-            clearTimeout(tid);
-            if (!res.ok) return null;
-            return res.json();
-          })
-        );
 
-        for (const r of responses) {
-          if (r.status !== 'fulfilled' || !r.value || r.value.status !== 'success' || !r.value.data) {
-            continue;
+              const responses = await Promise.allSettled(
+                chunks.map(async (chunk) => {
+                  const param = encodeURIComponent(chunk.join(','));
+                  const controller = new AbortController();
+                  const tid = setTimeout(() => controller.abort(), 3200);
+                  const res = await fetch(
+                    `https://api.upstox.com/v2/market-quote/quotes?instrument_key=${param}`,
+                    {
+                      method: 'GET',
+                      headers: {
+                        Accept: 'application/json',
+                        Authorization: `Bearer ${resolvedToken}`,
+                      },
+                      signal: controller.signal,
+                    }
+                  );
+                  clearTimeout(tid);
+                  if (!res.ok) return null;
+                  return res.json();
+                })
+              );
+
+              for (const r of responses) {
+                if (r.status !== 'fulfilled' || !r.value || r.value.status !== 'success' || !r.value.data) {
+                  continue;
+                }
+                for (const [respKey, item] of Object.entries<any>(r.value.data)) {
+                  if (!item || typeof item.last_price !== 'number') continue;
+                  const instToken: string = item.instrument_token || respKey.replace(':', '|');
+                  const mappedClean =
+                    keyToClean.get(instToken) ||
+                    this.reverseKeyMap.get(instToken) ||
+                    (item.symbol ? this.cleanSymbol(item.symbol) : this.cleanSymbol(respKey.split(':')[1] || respKey));
+
+                  const lp = Number(item.last_price);
+                  if (lp <= 0) continue;
+
+                  const prevAuto = result[mappedClean] || autoQuotes[mappedClean];
+                  const netCh = typeof item.net_change === 'number' ? Number(item.net_change) : undefined;
+                  const ohlcClose = Number(item.ohlc?.close || 0);
+                  const prevClose =
+                    netCh !== undefined
+                      ? Number((lp - netCh).toFixed(2))
+                      : prevAuto?.prevClose || (ohlcClose > 0 && ohlcClose !== lp ? ohlcClose : lp);
+
+                  const ch = Number((lp - prevClose).toFixed(2));
+                  const chp = prevClose > 0 ? Number(((ch / prevClose) * 100).toFixed(2)) : 0;
+                  const topBuy = item.depth?.buy?.[0]?.price || prevAuto?.bid || lp;
+                  const topSell = item.depth?.sell?.[0]?.price || prevAuto?.ask || lp;
+                  const volume = Number(item.volume || prevAuto?.volume || 0);
+                  const atp = Number(item.average_price || prevAuto?.atp || lp);
+                  const isIdx = instToken.includes('_INDEX|');
+                  const exch: 'NSE' | 'BSE' = instToken.startsWith('BSE') ? 'BSE' : 'NSE';
+
+                  const quoteObj: UnifiedMarketQuote = {
+                    symbol: mappedClean,
+                    instrumentKey: instToken,
+                    description: prevAuto?.description || `${mappedClean} (${exch})`,
+                    exchange: exch,
+                    type: isIdx ? 'INDEX' : 'EQUITY',
+                    lp: Number(lp.toFixed(2)),
+                    open: Number((item.ohlc?.open || prevAuto?.open || lp).toFixed(2)),
+                    high: Number((item.ohlc?.high || prevAuto?.high || lp).toFixed(2)),
+                    low: Number((item.ohlc?.low || prevAuto?.low || lp).toFixed(2)),
+                    prevClose: Number(prevClose.toFixed(2)),
+                    ch,
+                    chp,
+                    volume,
+                    turnoverCr: Number(((volume * (atp || lp)) / 10000000).toFixed(2)),
+                    atp: Number(atp.toFixed(2)),
+                    bid: Number(topBuy),
+                    ask: Number(topSell),
+                    bidQty: Number(item.total_buy_quantity || prevAuto?.bidQty || 0),
+                    askQty: Number(item.total_sell_quantity || prevAuto?.askQty || 0),
+                    oi: Number(item.oi || 0),
+                    ltt: item.last_trade_time
+                      ? new Date(Number(item.last_trade_time)).toLocaleTimeString('en-IN', {
+                          timeZone: 'Asia/Kolkata',
+                          hour12: false,
+                        })
+                      : `${istTime} IST`,
+                    rsi: prevAuto?.rsi,
+                    macd: prevAuto?.macd,
+                    ema20: prevAuto?.ema20,
+                    sma50: prevAuto?.sma50,
+                    recommendScore: prevAuto?.recommendScore,
+                    intradayBars: prevAuto?.intradayBars,
+                    source: 'UPSTOX_API_V2',
+                    isMarketOpen: isLiveMarket,
+                    marketSession: isLiveMarket ? marketStatus.session : 'CLOSED_SETTLEMENT',
+                    lastRefreshed: nowIso,
+                  };
+
+                  built[mappedClean] = quoteObj;
+                  if (mappedClean === 'NIFTY 50') built['NIFTY'] = quoteObj;
+                  else if (mappedClean === 'NIFTY') built['NIFTY 50'] = quoteObj;
+
+                  autonomousPriceService.overlayLiveTickOnBars(mappedClean, quoteObj);
+                }
+              }
+
+              if (Object.keys(built).length > 0) {
+                this.lastUpstoxQuotes = built;
+                this.lastUpstoxQuotesAt = Date.now();
+                this.lastUpstoxTokenTag = tokenTag;
+              }
+              return built;
+            })().finally(() => {
+              this.inFlightUpstoxBatch = null;
+            });
           }
-          for (const [respKey, item] of Object.entries<any>(r.value.data)) {
-            if (!item || typeof item.last_price !== 'number') continue;
-            const instToken: string = item.instrument_token || respKey.replace(':', '|');
-            const mappedClean =
-              keyToClean.get(instToken) ||
-              this.reverseKeyMap.get(instToken) ||
-              (item.symbol ? this.cleanSymbol(item.symbol) : this.cleanSymbol(respKey.split(':')[1] || respKey));
-
-            const lp = Number(item.last_price);
-            if (lp <= 0) continue;
-
-            const prevAuto = result[mappedClean];
-            const netCh = typeof item.net_change === 'number' ? Number(item.net_change) : undefined;
-            const ohlcClose = Number(item.ohlc?.close || 0);
-            const prevClose =
-              netCh !== undefined
-                ? Number((lp - netCh).toFixed(2))
-                : prevAuto?.prevClose || (ohlcClose > 0 && ohlcClose !== lp ? ohlcClose : lp);
-
-            const ch = Number((lp - prevClose).toFixed(2));
-            const chp = prevClose > 0 ? Number(((ch / prevClose) * 100).toFixed(2)) : 0;
-
-            const topBuy = item.depth?.buy?.[0]?.price || prevAuto?.bid || lp;
-            const topSell = item.depth?.sell?.[0]?.price || prevAuto?.ask || lp;
-            const volume = Number(item.volume || prevAuto?.volume || 0);
-            const atp = Number(item.average_price || prevAuto?.atp || lp);
-            const isIdx = instToken.includes('_INDEX|');
-            const exch: 'NSE' | 'BSE' = instToken.startsWith('BSE') ? 'BSE' : 'NSE';
-
-            const quoteObj: UnifiedMarketQuote = {
-              symbol: mappedClean,
-              instrumentKey: instToken,
-              description: prevAuto?.description || `${mappedClean} (${exch})`,
-              exchange: exch,
-              type: isIdx ? 'INDEX' : 'EQUITY',
-              lp: Number(lp.toFixed(2)),
-              open: Number((item.ohlc?.open || prevAuto?.open || lp).toFixed(2)),
-              high: Number((item.ohlc?.high || prevAuto?.high || lp).toFixed(2)),
-              low: Number((item.ohlc?.low || prevAuto?.low || lp).toFixed(2)),
-              prevClose: Number(prevClose.toFixed(2)),
-              ch,
-              chp,
-              volume,
-              turnoverCr: Number(((volume * (atp || lp)) / 10000000).toFixed(2)),
-              atp: Number(atp.toFixed(2)),
-              bid: Number(topBuy),
-              ask: Number(topSell),
-              bidQty: Number(item.total_buy_quantity || prevAuto?.bidQty || 0),
-              askQty: Number(item.total_sell_quantity || prevAuto?.askQty || 0),
-              oi: Number(item.oi || 0),
-              ltt: item.last_trade_time
-                ? new Date(Number(item.last_trade_time)).toLocaleTimeString('en-IN', {
-                    timeZone: 'Asia/Kolkata',
-                    hour12: false,
-                  })
-                : `${istTime} IST`,
-              rsi: prevAuto?.rsi,
-              macd: prevAuto?.macd,
-              ema20: prevAuto?.ema20,
-              sma50: prevAuto?.sma50,
-              recommendScore: prevAuto?.recommendScore,
-              intradayBars: prevAuto?.intradayBars,
-              source: 'UPSTOX_API_V2',
-              isMarketOpen: isLiveMarket,
-              marketSession: isLiveMarket ? marketStatus.session : 'CLOSED_SETTLEMENT',
-              lastRefreshed: nowIso,
-            };
-
-            result[mappedClean] = quoteObj;
-            if (mappedClean === 'NIFTY 50') result['NIFTY'] = quoteObj;
-            else if (mappedClean === 'NIFTY') result['NIFTY 50'] = quoteObj;
-          }
+          upstoxBatch = await this.inFlightUpstoxBatch;
         }
+
+        Object.entries(upstoxBatch).forEach(([k, q]) => {
+          result[k] = {
+            ...q,
+            intradayBars: autonomousPriceService.getExtendedBars(k) || q.intradayBars,
+          };
+        });
       } catch (err: any) {
         console.warn('[UpstoxService] Live quotes warning (using autonomous engine):', err?.message || err);
       }

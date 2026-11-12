@@ -165,7 +165,7 @@ class MarketWebSocketServerManager {
     if (this.tickIntervalId) clearInterval(this.tickIntervalId);
     if (this.pollIntervalId) clearInterval(this.pollIntervalId);
 
-    // Refresh real upstream quotes every 2.5s when market open; during closed settlement lock for 5m
+    // Refresh real upstream quotes every 1.5s when market open; during closed settlement lock for 5m
     let pollCounter = 0;
     this.pollIntervalId = setInterval(() => {
       pollCounter++;
@@ -174,12 +174,12 @@ class MarketWebSocketServerManager {
         marketStatus.session === 'POST_MARKET' || marketStatus.session === 'PRE_OPEN';
       if (
         marketStatus.isOpen ||
-        (isTransitionWindow && pollCounter % 8 === 0) ||
-        (!marketStatus.isOpen && pollCounter % 120 === 0)
+        (isTransitionWindow && pollCounter % 10 === 0) ||
+        (!marketStatus.isOpen && pollCounter % 200 === 0)
       ) {
         this.refreshUpstreamQuotes().catch(() => {});
       }
-    }, 2500);
+    }, 1500);
 
     // Broadcast latest synced quotes & TPS tracking every 1s when open; when closed, only on EOD value change or 30s keepalive
     let lastSecTick = Date.now();

@@ -525,14 +525,14 @@ export class ScannerService {
       const urgency = Math.min(1, Math.abs(chp) / 2.5);
       const frac = Math.max(0.02, Math.min(0.98, 1 - urgency * 0.72 + (uHash - 0.5) * 0.25));
       listedSec = Math.round(preStart + frac * (preCap - preStart));
+    } else if (isRealtimeNewDiscovery) {
+      // Live new breakout discovered during active session -> stamp exact real wall-clock IST HH:MM:SS!
+      listedSec = curSec;
     } else if (barMatchSec !== null && barMatchSec >= 9 * 3600 + 15 * 60) {
       // Real 5-minute intraday NSE bar trigger timestamp + exact intra-bar second offset (strictly <= curSec!)
       const intraBarOffset = 18 + Math.round(uHash * 255);
       const maxAllowed = isMarketOpen ? Math.min(curSec, barMatchSec + 295) : barMatchSec + 295;
       listedSec = Math.min(maxAllowed, barMatchSec + intraBarOffset);
-    } else if (isRealtimeNewDiscovery && (!existing || existing.signal === 'NEUTRAL')) {
-      // Live new breakout discovered during active session -> stamp exact real wall-clock IST HH:MM:SS!
-      listedSec = curSec;
     } else {
       // Formula-based intraday trigger timestamp strictly <= current clock (never stamps all stocks to current "open time"!)
       const sessionStartSec = 9 * 3600 + 15 * 60 + 2;
@@ -1399,7 +1399,7 @@ export class ScannerService {
    * - 3s Live Quote synchronization when market open
    * - 20s Full Universe Batch Refresh (strictly skipped when Midnight Flushed)
    */
-  public startAutoScan(intervalSeconds: number = 3) {
+  public startAutoScan(intervalSeconds: number = 2) {
     if (this.autoScanTimer) clearInterval(this.autoScanTimer);
     if (this.midnightWatcherTimer) clearInterval(this.midnightWatcherTimer);
     if (this.periodicFetchTimer) clearInterval(this.periodicFetchTimer);
@@ -1413,15 +1413,20 @@ export class ScannerService {
       this.evaluateMidnightAndScanSchedule().catch(() => {});
     }, 1000);
 
-    // Periodic 20s full live fetch + re-evaluation (strictly guarded against midnight-flushed state!)
+    // Fast 5s scan cycle when market open (sub-300ms Upstox/TV batch); 45s when closed
+    let cycleTick = 0;
     this.periodicFetchTimer = setInterval(() => {
+      cycleTick++;
       if (this.sessionState.isMidnightCleared) {
-        // Keep scanners 100% empty while awaiting next market open! Only keep index overview fresh.
         this.fetchLiveIndices().catch(() => {});
         return;
       }
+      const st = calculateMarketStatus();
+      if (!st.isOpen && cycleTick % 9 !== 0) {
+        return;
+      }
       this.runScanCycle(false).catch(() => {});
-    }, 20000);
+    }, 5000);
   }
 
   private async evaluateMidnightAndScanSchedule() {
@@ -1603,7 +1608,10 @@ export class ScannerService {
         pricesMap[s.symbol] = meta?.price || s.basePrice;
       }
 
-      // Single concurrent call updates ALL 225 equities & 7 benchmark indices in ~180ms!
+      // Ensure initial 5m bar history is loaded on fresh scan / startup, then fetch fast L1 quotes (<300ms)
+      if (isNewDayFreshScan) {
+        await autonomousPriceService.ensureInitialBarsLoaded();
+      }
       const [allQuotes] = await Promise.all([
         upstoxService.fetchUnifiedMarketQuotes(
           NIFTY_200_STOCKS.map((s) => s.symbol),
@@ -1847,6 +1855,13 @@ export class ScannerService {
         lastScanTime: this.lastScanTimestamp,
         marketStatus: statusInfo.isOpen ? 'OPEN (LIVE NSE/BSE)' : `MARKET CLOSED (${statusInfo.statusLabel})`,
       };
+      if (statusInfo.isOpen && newResults.length > 0 && !isNewDayFreshScan) {
+        marketWebSocketServer.broadcastSystemEvent({
+          type: 'scan_update',
+          dateIST: ist.dateStr,
+          stocksCount: newResults.length,
+        });
+      }
       return this.stockScanResults;
     } finally {
       this.isScanning = false;

@@ -429,6 +429,11 @@ function buildWorkBars(
 /**
  * Evaluates all NSE F&O stocks against the Smart Money Flow + Supertrend(10,2) + Hull Suite(HMA 55) + BOS/CHoCH + Order Block formula.
  */
+let lastCachedMfReport: MoneyFlowScanReport | null = null;
+let lastCachedMfAt = 0;
+let lastCachedMfDate = '';
+const liveTriggerFirstSeenSec = new Map<string, number>();
+
 export function buildSmartMoneyFlowReport(
   stocks: ScannedStock[],
   getExtendedBarsFn: (sym: string) => IntradayCandleBar[] | undefined,
@@ -437,6 +442,12 @@ export function buildSmartMoneyFlowReport(
 ): MoneyFlowScanReport {
   const now = new Date();
   const ist = getISTDateParts(now);
+
+  if (lastCachedMfDate !== ist.dateStr) {
+    lastCachedMfDate = ist.dateStr;
+    liveTriggerFirstSeenSec.clear();
+    lastCachedMfReport = null;
+  }
 
   const indicatorSpecs = [
     { component: 'Money Flow Thickness', formula: 'Volume × HLC3  (HLC3 = (H+L+C)/3)', purpose: '₹ Trading Turnover' },
@@ -449,6 +460,8 @@ export function buildSmartMoneyFlowReport(
   ];
 
   if (isMidnightCleared) {
+    lastCachedMfReport = null;
+    liveTriggerFirstSeenSec.clear();
     return {
       status: 'ok',
       generatedAt: now.toISOString(),
@@ -461,6 +474,15 @@ export function buildSmartMoneyFlowReport(
       buySignals: [],
       sellSignals: [],
     };
+  }
+
+  if (
+    lastCachedMfReport &&
+    !lastCachedMfReport.isMidnightCleared &&
+    stocks.length > 0 &&
+    Date.now() - lastCachedMfAt < 2500
+  ) {
+    return lastCachedMfReport;
   }
 
   const equityStocks = stocks.filter(
@@ -803,7 +825,15 @@ export function buildSmartMoneyFlowReport(
       const nowParts = ist.timeStr.split(':').map((x) => parseInt(x, 10) || 0);
       const nowSec = (nowParts[0] || 0) * 3600 + (nowParts[1] || 0) * 60 + (nowParts[2] || 0);
       const isMarketToday = trig.dateIST === ist.dateStr && nowSec >= 9 * 3600 + 15 * 60 && nowSec <= 15 * 3600 + 30 * 60;
-      const cappedSec = isMarketToday ? Math.min(nowSec, exactSec) : exactSec;
+      let cappedSec = isMarketToday ? Math.min(nowSec, exactSec) : exactSec;
+      // For triggers firing on the live forming 5m bar, stamp the exact real-time discovery second (never lag 2m!)
+      if (isMarketToday && trigIdx === bars.length - 1 && nowSec - baseSec >= 0 && nowSec - baseSec < 360) {
+        const trigKey = `${ist.dateStr}:${direction}:${stock.symbol}:${trig.timeIST}`;
+        if (!liveTriggerFirstSeenSec.has(trigKey)) {
+          liveTriggerFirstSeenSec.set(trigKey, nowSec);
+        }
+        cappedSec = liveTriggerFirstSeenSec.get(trigKey)!;
+      }
       const listedAt = formatSecToHHMMSS(cappedSec);
 
       const livePrice = Number(stock.price) || trig.close;
@@ -920,7 +950,7 @@ export function buildSmartMoneyFlowReport(
     .slice(0, 10)
     .sort(sortNewestFirstAToZ);
 
-  return {
+  const builtReport: MoneyFlowScanReport = {
     status: 'ok',
     generatedAt: now.toISOString(),
     istTime: ist.timeStr,
@@ -932,4 +962,9 @@ export function buildSmartMoneyFlowReport(
     buySignals,
     sellSignals,
   };
+  if (equityStocks.length > 0) {
+    lastCachedMfReport = builtReport;
+    lastCachedMfAt = Date.now();
+  }
+  return builtReport;
 }

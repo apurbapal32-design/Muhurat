@@ -1015,7 +1015,7 @@ async function startServer() {
       const stocks = scannerService.getAllStocksDirect();
       const sessionState = scannerService.getSessionStatus();
       if (stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
-        await autonomousPriceService.fetchAllMarketQuotes(false).catch(() => {});
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
       }
       const report = buildSmartMoneyFlowReport(
         stocks,
