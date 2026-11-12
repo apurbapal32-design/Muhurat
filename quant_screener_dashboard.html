@@ -3789,6 +3789,7 @@
           <div class="flex items-center gap-2 flex-wrap shrink-0">
             <input id="mf-search-input" oninput="SmartMoneyFlowEngine.renderTables()" type="text" placeholder="Filter symbol/sector..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-44 focus:outline-none focus:border-cyan-400">
             <button id="mf-btn-mode" onclick="SmartMoneyFlowEngine.toggleStrictMode()" class="px-3 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-cyan-500/30 text-cyan-300 text-xs font-bold transition cursor-pointer">Mode: All Ranked (10-14/14)</button>
+            <button onclick="ClaudeNotificationEngine.triggerTestTripleBeepNotification('MONEY FLOW')" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 text-xs font-bold transition cursor-pointer" title="Test Notification + 3x Beep Alert for New Money Flow Candidate">🔔 Test 3x Beep</button>
             <button onclick="SmartMoneyFlowEngine.load(true)" class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs transition cursor-pointer">🔄 Scan Now</button>
           </div>
         </div>
@@ -4355,9 +4356,12 @@
               Ranked in real-time by absolute price change velocity, relative volume acceleration, and aggressive buy/sell ratio imbalance across all 218 NSE F&O contracts.
             </p>
           </div>
-          <div class="text-right font-mono text-xs text-slate-400">
-            <div>Update Frequency: <span class="text-cyan-400 font-bold">Tick-by-Tick</span></div>
-            <div>Universe: <span class="text-amber-400 font-bold">218 NSE F&O</span></div>
+          <div class="flex flex-col md:items-end gap-1.5 font-mono text-xs text-slate-400">
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="ClaudeNotificationEngine.triggerTestTripleBeepNotification('TOP MOMENTUM')" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 text-[11px] font-bold transition cursor-pointer" title="Test Notification + 3x Beep Alert for New Top Momentum Candidate">🔔 Test 3x Beep</button>
+              <button onclick="ClaudeNotificationEngine.requestPushPermission()" class="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 text-[11px] font-bold transition cursor-pointer" title="Enable Web & Mobile Push Alerts">📲 Enable Push</button>
+            </div>
+            <div>Update Frequency: <span class="text-cyan-400 font-bold">Tick-by-Tick</span> &bull; Universe: <span class="text-amber-400 font-bold">218 NSE F&amp;O</span></div>
           </div>
         </div>
 
@@ -9533,6 +9537,9 @@ function renderJournal() {
 
         this.emptyAllScannersInMemory();
         this.refreshAllRenderedViews();
+        if (typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.resetCandidateTrackers) {
+          ClaudeNotificationEngine.resetCandidateTrackers();
+        }
 
         if (syncServer) {
           fetch('/api/scan/reset-midnight', { method: 'POST' }).catch(() => {});
@@ -9718,6 +9725,9 @@ function renderJournal() {
               const freshPool = json.stocks.map(b => this.mapBackendStockToRow(b, baseMap.get(b.symbol)));
               this.rebuildScannersFromFreshStocks(freshPool);
               this.refreshAllRenderedViews();
+              if (typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.syncMomentumCandidates) {
+                ClaudeNotificationEngine.syncMomentumCandidates(DATA.best_momentum_upside, DATA.best_momentum_downside, true);
+              }
               if (showNotification && typeof showToast === 'function') {
                 showToast(`🌅 Fresh Trading Scan Synced (${freshPool.length} stocks evaluated)!`, 'success');
               }
@@ -9781,6 +9791,9 @@ function renderJournal() {
 
           this.rebuildScannersFromFreshStocks(freshPool);
           this.refreshAllRenderedViews();
+          if (typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.syncMomentumCandidates) {
+            ClaudeNotificationEngine.syncMomentumCandidates(DATA.best_momentum_upside, DATA.best_momentum_downside, true);
+          }
 
           if (typeof CyberAudioEngine !== 'undefined' && CyberAudioEngine && typeof CyberAudioEngine.playBeep === 'function') {
             CyberAudioEngine.playBeep(1200, 'sine', 0.2);
@@ -10231,6 +10244,12 @@ function renderJournal() {
         this.syncSectorStocksFromAllStocks();
         if (Date.now() - (window._lastScannersBuildAt || 0) >= 8000) {
           window._scannersDirty = true;
+          if (typeof MidnightSessionManager === 'undefined' || !MidnightSessionManager.isMidnightCleared()) {
+            if (typeof sanitizeDataScannersUniverse === 'function') sanitizeDataScannersUniverse();
+            if (typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.syncMomentumCandidates) {
+              ClaudeNotificationEngine.syncMomentumCandidates(DATA.best_momentum_upside, DATA.best_momentum_downside, false);
+            }
+          }
         }
       },
 
@@ -13098,12 +13117,13 @@ ${json.message || 'Unauthorized token.'}`);
       refreshTimer: null,
 
       init() {
+        setTimeout(() => {
+          this.load(false);
+        }, 1600);
         if (!this.refreshTimer) {
           this.refreshTimer = setInterval(() => {
-            const pane = document.getElementById('tab-money-flow');
-            if (pane && !pane.classList.contains('hidden')) {
-              this.load(false);
-            }
+            if (typeof document !== 'undefined' && document.hidden) return;
+            this.load(false);
           }, 15000);
         }
       },
@@ -13137,7 +13157,16 @@ ${json.message || 'Unauthorized token.'}`);
           report = this.buildClientReport();
         }
         this.lastReport = report;
-        this.renderTables();
+        const mfPane = document.getElementById('tab-money-flow');
+        if (mfPane && !mfPane.classList.contains('hidden')) {
+          this.renderTables();
+        } else if (!this._renderedOnce) {
+          this._renderedOnce = true;
+          this.renderTables();
+        }
+        if (typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.syncMoneyFlowCandidates) {
+          ClaudeNotificationEngine.syncMoneyFlowCandidates(report);
+        }
         if (showFeedback && typeof showToast === 'function') {
           showToast(`🌊 Money Flow Scan Complete (${report.buySignals.length} BUY • ${report.sellSignals.length} SELL)`, 'success');
         }
@@ -13407,15 +13436,57 @@ ${json.message || 'Unauthorized token.'}`);
       soundEnabled: true,
       pushEnabled: false,
       audioCtx: null,
+      _audioUnlocked: false,
       history: [],
       currentFilter: 'ALL',
+      seenMomentumSymbols: new Set(),
+      seenMoneyFlowSymbols: new Set(),
+      momentumBaselineReady: false,
+      moneyFlowBaselineReady: false,
+      _momentumBackendSyncSeen: false,
+      lastAlertedAt: new Map(),
 
       init() {
         if ('Notification' in window && Notification.permission === 'granted') {
           this.pushEnabled = true;
         }
+        this.bindAudioUnlock();
+        if (typeof DATA !== 'undefined' && (Array.isArray(DATA.best_momentum_upside) || Array.isArray(DATA.best_momentum_downside))) {
+          this.syncMomentumCandidates(DATA.best_momentum_upside, DATA.best_momentum_downside, false);
+        }
         this.seedInitialNotifications();
         this.updateNotificationUI();
+      },
+
+      bindAudioUnlock() {
+        if (this._audioUnlockBound || typeof window === 'undefined') return;
+        this._audioUnlockBound = true;
+        const unlock = () => {
+          try {
+            const ctx = this.getAudioContext();
+            if (ctx && ctx.state === 'running') {
+              this._audioUnlocked = true;
+            }
+          } catch (e) {}
+        };
+        ['pointerdown', 'touchstart', 'keydown'].forEach(evt => {
+          window.addEventListener(evt, unlock, { passive: true, once: true });
+        });
+      },
+
+      resetCandidateTrackers() {
+        this.seenMomentumSymbols.clear();
+        this.seenMoneyFlowSymbols.clear();
+        this.momentumBaselineReady = false;
+        this.moneyFlowBaselineReady = false;
+        this._momentumBackendSyncSeen = false;
+        this.lastAlertedAt.clear();
+      },
+
+      hasAndroidBridge() {
+        return typeof window !== 'undefined' &&
+          window.MuhuratAndroidBridge &&
+          typeof window.MuhuratAndroidBridge.notifyNewCandidate === 'function';
       },
 
       setFilter(filter) {
@@ -13481,7 +13552,45 @@ ${json.message || 'Unauthorized token.'}`);
         }
       },
 
+      playTripleBeep(direction = 'BUY', forcePlay = false) {
+        if (!forcePlay && !this.soundEnabled) return;
+        const isBear = String(direction || '').toUpperCase().includes('SELL') || String(direction || '').toUpperCase().includes('DOWN');
+        if (this.hasAndroidBridge() && typeof window.MuhuratAndroidBridge.playTripleBeep === 'function') {
+          try {
+            window.MuhuratAndroidBridge.playTripleBeep(isBear ? 'SELL' : 'BUY');
+            return;
+          } catch (e) {}
+        }
+        try {
+          const ctx = this.getAudioContext();
+          if (!ctx) return;
+          const base = ctx.currentTime + 0.02;
+          const freqs = isBear ? [784.0, 659.25, 523.25] : [880.0, 1046.5, 1318.5];
+          const oscType = isBear ? 'triangle' : 'sine';
+          for (let i = 0; i < 3; i++) {
+            const startAt = base + i * 0.22;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = oscType;
+            osc.frequency.setValueAtTime(freqs[i], startAt);
+            gain.gain.setValueAtTime(0.001, startAt);
+            gain.gain.exponentialRampToValueAtTime(0.22, startAt + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.001, startAt + 0.14);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startAt);
+            osc.stop(startAt + 0.15);
+          }
+        } catch (e) {
+          console.warn('Triple beep audio error:', e);
+        }
+      },
+
       requestPushPermission() {
+        if (this.hasAndroidBridge()) {
+          showToast('📱 Android Native Alerts & 3x Hardware Beep are active on this mobile app!', 'success');
+          return;
+        }
         if (!('Notification' in window)) {
           showToast('⚠️ Web Push Notifications not supported in this browser.', 'error');
           return;
@@ -13489,8 +13598,9 @@ ${json.message || 'Unauthorized token.'}`);
         Notification.requestPermission().then(perm => {
           if (perm === 'granted') {
             this.pushEnabled = true;
-            showToast('🔔 Web Notifications enabled! Live alerts will appear on your desktop & mobile.');
-            this.sendSystemPush('Muhurat Trading Screener Alerts Active', 'You will receive real-time notifications for Stock Triggers and News from Moneycontrol, ET Markets, Zee Business, StockEdge, and Trendlyne.');
+            showToast('🔔 Web Notifications enabled! Live alerts + 3x Beep will trigger on desktop & mobile.');
+            this.playTripleBeep('BUY', true);
+            this.sendSystemPush('Muhurat Trading Screener Alerts Active', 'Real-time notifications + 3x Beep enabled for Top Momentum & Money Flow new candidate stocks.');
           } else {
             showToast('Notifications permission was not granted.', 'error');
           }
@@ -13498,13 +13608,212 @@ ${json.message || 'Unauthorized token.'}`);
         });
       },
 
-      sendSystemPush(title, body) {
+      sendSystemPush(title, body, tag = undefined) {
+        if (this.hasAndroidBridge()) return;
         if (this.pushEnabled && 'Notification' in window && Notification.permission === 'granted') {
           try {
-            new Notification(title, { body });
+            new Notification(title, { body, icon: '/favicon.png', tag });
           } catch (e) {
             console.warn('System push error:', e);
           }
+        }
+      },
+
+      syncMomentumCandidates(upsideList, downsideList, fromBackendSync = false) {
+        if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) return [];
+        const up = Array.isArray(upsideList) ? upsideList : [];
+        const dn = Array.isArray(downsideList) ? downsideList : [];
+        if (up.length === 0 && dn.length === 0) return [];
+
+        const combined = [
+          ...up.map(s => ({ stock: s, isUpside: true, key: `UP:${s.symbol}` })),
+          ...dn.map(s => ({ stock: s, isUpside: false, key: `DOWN:${s.symbol}` }))
+        ];
+
+        // Seed silent baseline on first initialization or first live backend scan sync
+        if (!this.momentumBaselineReady || (fromBackendSync && !this._momentumBackendSyncSeen)) {
+          combined.forEach(item => this.seenMomentumSymbols.add(item.key));
+          this.momentumBaselineReady = true;
+          if (fromBackendSync) this._momentumBackendSyncSeen = true;
+          return [];
+        }
+
+        const nowMs = Date.now();
+        const cooldownMs = 10 * 60 * 1000;
+        const newlyListed = [];
+
+        combined.forEach(({ stock, isUpside, key }) => {
+          if (!stock || !stock.symbol) return;
+          if (!this.seenMomentumSymbols.has(key)) {
+            this.seenMomentumSymbols.add(key);
+            const prevTs = this.lastAlertedAt.get(`MOMENTUM:${key}`) || 0;
+            if (nowMs - prevTs >= cooldownMs) {
+              this.lastAlertedAt.set(`MOMENTUM:${key}`, nowMs);
+              newlyListed.push({
+                symbol: stock.symbol,
+                name: stock.name || stock.symbol,
+                isUpside,
+                direction: isUpside ? 'BUY' : 'SELL',
+                price: Number(stock.price || 0),
+                pct_change: Number(stock.pct_change || 0),
+                listed_at: stock.listed_at || new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }),
+                extraDetail: `RVol ${stock.rvol || 1.2}x • B/A ${stock.bid_ask_ratio || 1.0}x`
+              });
+            }
+          }
+        });
+
+        if (newlyListed.length > 0) {
+          this.notifyNewCandidateBatch(newlyListed, 'TOP MOMENTUM');
+        }
+        return newlyListed;
+      },
+
+      syncMoneyFlowCandidates(report) {
+        if (!report || report.isMidnightCleared) return [];
+        const buys = Array.isArray(report.buySignals) ? report.buySignals : [];
+        const sells = Array.isArray(report.sellSignals) ? report.sellSignals : [];
+        if (buys.length === 0 && sells.length === 0) return [];
+
+        const combined = [
+          ...buys.map(s => ({ stock: s, isUpside: true, key: `BUY:${s.symbol}` })),
+          ...sells.map(s => ({ stock: s, isUpside: false, key: `SELL:${s.symbol}` }))
+        ];
+
+        if (!this.moneyFlowBaselineReady) {
+          combined.forEach(item => this.seenMoneyFlowSymbols.add(item.key));
+          this.moneyFlowBaselineReady = true;
+          return [];
+        }
+
+        const nowMs = Date.now();
+        const cooldownMs = 10 * 60 * 1000;
+        const newlyListed = [];
+
+        combined.forEach(({ stock, isUpside, key }) => {
+          if (!stock || !stock.symbol) return;
+          if (!this.seenMoneyFlowSymbols.has(key)) {
+            this.seenMoneyFlowSymbols.add(key);
+            const prevTs = this.lastAlertedAt.get(`MONEYFLOW:${key}`) || 0;
+            if (nowMs - prevTs >= cooldownMs) {
+              this.lastAlertedAt.set(`MONEYFLOW:${key}`, nowMs);
+              newlyListed.push({
+                symbol: stock.symbol,
+                name: stock.name || stock.symbol,
+                isUpside,
+                direction: stock.direction || (isUpside ? 'BUY' : 'SELL'),
+                price: Number(stock.price || 0),
+                pct_change: Number(stock.changePercent ?? stock.pct_change ?? 0),
+                listed_at: stock.listedAt || report.istTime || new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }),
+                extraDetail: `${stock.conditionsMet || 14}/${stock.totalConditions || 14} ${stock.grade || 'STRICT'} • Surge ${stock.glowSurge || 1.5}x`
+              });
+            }
+          }
+        });
+
+        if (newlyListed.length > 0) {
+          this.notifyNewCandidateBatch(newlyListed, 'MONEY FLOW');
+        }
+        return newlyListed;
+      },
+
+      notifyNewCandidateBatch(items, sourceTab = 'TOP MOMENTUM') {
+        if (!Array.isArray(items) || items.length === 0) return;
+        const first = items[0];
+        const useBridge = this.hasAndroidBridge();
+
+        // Play triple beep once cleanly per batch on web browsers
+        if (!useBridge) {
+          this.playTripleBeep(first.direction);
+        }
+
+        items.forEach((cand, idx) => {
+          const timeStr = cand.listed_at || new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false });
+          const sign = cand.pct_change >= 0 ? '+' : '';
+          const tabIcon = sourceTab.includes('MONEY') ? '🌊' : '⚡';
+          const title = `${tabIcon} NEW ${sourceTab} CANDIDATE • ${cand.symbol} (${cand.direction})`;
+          const message = `${cand.symbol} listed on ${sourceTab} at ${timeStr} IST | Price: ₹${cand.price} (${sign}${cand.pct_change}%) | ${cand.extraDetail}`;
+
+          if (useBridge) {
+            try {
+              window.MuhuratAndroidBridge.notifyNewCandidate(
+                title,
+                message,
+                cand.symbol,
+                sourceTab,
+                cand.direction,
+                idx === 0 && this.soundEnabled
+              );
+            } catch (e) {}
+          } else {
+            this.sendSystemPush(title, message, `muhurat-${sourceTab}-${cand.symbol}`);
+          }
+
+          if (typeof showToast === 'function') {
+            showToast(`${tabIcon} NEW ${sourceTab}: ${cand.symbol} (${sign}${cand.pct_change}%) @ ${timeStr} IST`, cand.isUpside ? 'success' : 'error');
+          }
+
+          this.addHistory({
+            type: 'stock_listed',
+            sourceTab,
+            isUpside: cand.isUpside,
+            symbol: cand.symbol,
+            time: timeStr,
+            title,
+            message,
+            price: cand.price,
+            pct_change: cand.pct_change
+          });
+        });
+      },
+
+      triggerTestTripleBeepNotification(sourceTab = 'MONEY FLOW') {
+        const isMf = String(sourceTab).toUpperCase().includes('MONEY');
+        let sample = null;
+        if (isMf && typeof SmartMoneyFlowEngine !== 'undefined' && SmartMoneyFlowEngine.lastReport && Array.isArray(SmartMoneyFlowEngine.lastReport.buySignals) && SmartMoneyFlowEngine.lastReport.buySignals.length > 0) {
+          const s = SmartMoneyFlowEngine.lastReport.buySignals[0];
+          sample = {
+            symbol: s.symbol,
+            name: s.name,
+            isUpside: true,
+            direction: 'BUY',
+            price: s.price,
+            pct_change: s.changePercent,
+            listed_at: getISTDatePartsNow().timeStr,
+            extraDetail: `${s.conditionsMet}/${s.totalConditions} ${s.grade} • Test 3x Beep Alert`
+          };
+        } else if (typeof DATA !== 'undefined' && Array.isArray(DATA.best_momentum_upside) && DATA.best_momentum_upside.length > 0) {
+          const s = DATA.best_momentum_upside[0];
+          sample = {
+            symbol: s.symbol,
+            name: s.name,
+            isUpside: true,
+            direction: 'BUY',
+            price: s.price,
+            pct_change: s.pct_change,
+            listed_at: getISTDatePartsNow().timeStr,
+            extraDetail: `RVol ${s.rvol || 1.5}x • Test 3x Beep Alert`
+          };
+        } else {
+          sample = {
+            symbol: 'RELIANCE',
+            name: 'Reliance Industries',
+            isUpside: true,
+            direction: 'BUY',
+            price: 1340,
+            pct_change: 1.85,
+            listed_at: getISTDatePartsNow().timeStr,
+            extraDetail: 'Sample 14/14 Setup • Test 3x Beep Alert'
+          };
+        }
+
+        if (!this.hasAndroidBridge() && 'Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission().then(perm => {
+            this.pushEnabled = (perm === 'granted');
+            this.notifyNewCandidateBatch([sample], isMf ? 'MONEY FLOW' : 'TOP MOMENTUM');
+          });
+        } else {
+          this.notifyNewCandidateBatch([sample], isMf ? 'MONEY FLOW' : 'TOP MOMENTUM');
         }
       },
 
@@ -13652,10 +13961,14 @@ ${json.message || 'Unauthorized token.'}`);
           if (n.type === 'stock_listed') {
             const border = n.isUpside ? 'border-emerald-500/40 bg-[#0a141d]' : 'border-rose-500/40 bg-[#160b13]';
             const badgeColor = n.isUpside ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400';
+            const tabPill = n.sourceTab ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30 font-black text-[9px]">${n.sourceTab}</span>` : '';
             html += `
               <div class="p-3 rounded-xl border ${border} transition hover:scale-[1.01] cursor-pointer shadow-md" onclick="openTradingViewChart('${n.symbol}')">
-                <div class="flex items-center justify-between text-xs font-mono">
-                  <span class="font-bold px-2 py-0.5 rounded ${badgeColor}">${n.isUpside ? '📈 UPRISING LISTED' : '📉 BREAKDOWN LISTED'}</span>
+                <div class="flex items-center justify-between text-xs font-mono gap-1 flex-wrap">
+                  <div class="flex items-center gap-1 flex-wrap">
+                    ${tabPill}
+                    <span class="font-bold px-2 py-0.5 rounded ${badgeColor}">${n.isUpside ? '📈 UPRISING LISTED' : '📉 BREAKDOWN LISTED'}</span>
+                  </div>
                   <span class="text-cyan-300 font-bold">🕒 ${n.time} IST</span>
                 </div>
                 <div class="text-sm font-extrabold text-white mt-1.5 flex items-center justify-between">
@@ -15927,6 +16240,9 @@ generateOptionChain(symbol, spotPrice, strategy, isBull) {
         <span id="audio-icon">🔊</span>
         <span id="audio-label">Sound: ON</span>
       </button>
+
+      <!-- Test 3x Beep Alert -->
+      <button onclick="ClaudeNotificationEngine.triggerTestTripleBeepNotification('MONEY FLOW')" class="px-2 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold cursor-pointer" title="Test Web & Mobile Notification + 3x Beep">🔔 3x Beep</button>
 
       <!-- Clear Button -->
       <button onclick="ClaudeNotificationEngine.history = []; ClaudeNotificationEngine.updateNotificationUI(); showToast('Notifications cleared');" class="text-slate-400 hover:text-rose-400 text-[10.5px] font-mono cursor-pointer">
