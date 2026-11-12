@@ -318,7 +318,7 @@ export async function createAppServer(options: AppServerOptions = {}) {
       if (!apiKey.trim()) {
         return res.status(400).json({ status: 'error', message: 'Please provide your Upstox API Key first.' });
       }
-      const host = req.headers.host || 'muhuratscreener.onrender.com';
+      const host = req.headers.host || 'muhuratscreener.netlify.app';
       const proto = req.headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
       const redirectUri = (req.query.redirectUri as string) || `${proto}://${host}/api/upstox/callback`;
 
@@ -350,7 +350,7 @@ export async function createAppServer(options: AppServerOptions = {}) {
       const broker = scannerService.getBrokerConfig();
       const apiKey = broker.upstoxApiKey || broker.apiKey || process.env.UPSTOX_API_KEY || '';
       const apiSecret = broker.upstoxApiSecret || broker.apiSecret || process.env.UPSTOX_API_SECRET || '';
-      const host = req.headers.host || 'muhuratscreener.onrender.com';
+      const host = req.headers.host || 'muhuratscreener.netlify.app';
       const proto = req.headers['x-forwarded-proto'] || (host.includes('localhost') ? 'http' : 'https');
       const redirectUri = `${proto}://${host}/api/upstox/callback`;
 

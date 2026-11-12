@@ -3481,7 +3481,7 @@
               <li class="text-amber-300 font-bold">&check; UNLIMITED Upstox API v2/v3 WebSocket Streaming</li>
               <li class="text-amber-300 font-bold">&check; 1-Click Fyers Live Direct Order Execution</li>
               <li class="text-amber-300 font-bold">&check; 8 High-Conviction Claude AI Automated Setups</li>
-              <li class="text-amber-300 font-bold">&check; Live Render Cloud API Integration (onrender.com)</li>
+              <li class="text-amber-300 font-bold">&check; Live Netlify Cloud Server API Integration (netlify.app)</li>
               <li class="text-amber-300 font-bold">&check; Algorithmic Parameter &amp; Multiplier Overrides</li>
               <li class="text-amber-300 font-bold">&check; Multi-Tenant User Management &amp; Token Reset</li>
             </ul>
@@ -3514,8 +3514,8 @@
               <div class="text-[10px] text-cyan-400 mt-1">&bull; Expires: 18h Remaining</div>
             </div>
             <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
-              <div class="text-[10px] text-slate-400">Render Cloud Hosting</div>
-              <div class="font-extrabold text-white text-sm mt-0.5">LIVE (onrender.com)</div>
+              <div class="text-[10px] text-slate-400">Netlify Cloud Hosting</div>
+              <div class="font-extrabold text-white text-sm mt-0.5">LIVE (netlify.app)</div>
               <div class="text-[10px] text-purple-300 mt-1">&bull; srv-dbn07pu417fc739vb530</div>
             </div>
             <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
@@ -9999,7 +9999,7 @@ function renderJournal() {
         try {
           const isHttps = window.location.protocol === 'https:';
           const protocol = isHttps ? 'wss:' : 'ws:';
-          const host = window.location.host || 'muhuratscreener.onrender.com';
+          const host = window.location.host || 'muhuratscreener.netlify.app';
           const accessToken = localStorage.getItem('upstox_access_token') || '';
           const tokenParam = accessToken ? `?accessToken=${encodeURIComponent(accessToken)}` : '';
           const wsUrl = `${protocol}//${host}/ws/market${tokenParam}`;
