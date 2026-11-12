@@ -1017,11 +1017,20 @@ async function startServer() {
       if (stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
         await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
       }
+      const cachedQ = autonomousPriceService.getCachedQuotes();
+      const niftyQ = cachedQ['NIFTY 50'] || cachedQ['NIFTY'];
+      const niftyBars = autonomousPriceService.getExtendedBars('NIFTY 50');
       const report = buildSmartMoneyFlowReport(
         stocks,
         (sym: string) => autonomousPriceService.getExtendedBars(sym),
         scannerService.getAllCandlesMap(),
-        Boolean(sessionState?.isMidnightCleared)
+        Boolean(sessionState?.isMidnightCleared),
+        {
+          price: niftyQ?.lp,
+          vwap: niftyQ?.atp,
+          chp: niftyQ?.chp,
+          bars: niftyBars,
+        }
       );
       res.json(report);
     } catch (error: any) {
