@@ -5896,19 +5896,22 @@
         if (!lt) return true; // allow if no listed_at set yet
         return timeToSec(lt) >= SCAN_START_SEC;
       };
-      // Pick TOP 2 eligible stocks (formula score must pass minimum threshold)
-      const pickTop2 = (arr, scoreFn, minScore) => {
+      // pickEligible: returns ALL stocks that pass the formula minimum score
+      // AND were listed at or after 09:17:00 IST (scan start).
+      // NO artificial cap — if 5 pass, show 5; if 10 pass, show 10.
+      const pickEligible = (arr, scoreFn, minScore) => {
         const minSc = minScore || 0;
         return sortByListedAtNewestFirstAtoZ(
           [...arr]
             .map(s => ({ s, sc: scoreFn(s) }))
             .filter(({ s, sc }) => sc >= minSc && isAfterScanStart(s))
             .sort((a, b) => b.sc - a.sc)
-            .slice(0, 2)
+            // ← NO .slice() here: all eligible stocks shown
             .map(({ s }) => s)
         );
       };
-      // Legacy alias kept for backward compatibility (non-scanner tables)
+      // pickEligible replaces old pickTop10/pickTop2 — no artificial cap.
+      // Legacy alias for non-scanner tables (home top-traded, etc.)
       const pickTop10 = (arr, scoreFn) =>
         sortByListedAtNewestFirstAtoZ([...arr].sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, 10));
 
@@ -5997,27 +6000,27 @@
       const MIN_LIQUID   = 50;   // Institutional monetary turnover minimum
 
       return {
-        strong_bullish:         pickTop2(bull, scoreStrong(true),   MIN_STRONG),
-        strong_bearish:         pickTop2(bear, scoreStrong(false),  MIN_STRONG),
-        sonic_bullish:          pickTop2(bull, scorePulse(true),    MIN_SONIC),
-        sonic_bearish:          pickTop2(bear, scorePulse(false),   MIN_SONIC),
-        titan_bullish:          pickTop2(bull, scoreFlow(true),     MIN_TITAN),
-        titan_bearish:          pickTop2(bear, scoreFlow(false),    MIN_TITAN),
-        quant_elite_bullish:    pickTop2(bull, scoreElite(true),    MIN_ELITE),
-        quant_elite_bearish:    pickTop2(bear, scoreElite(false),   MIN_ELITE),
-        quant_elite_pro_bullish:pickTop2(bull, scoreElitePro(true), MIN_ELITE_PRO),
-        quant_elite_pro_bearish:pickTop2(bear, scoreElitePro(false),MIN_ELITE_PRO),
-        titan_cash_bullish:     pickTop2(bull, scoreFlowCash(),     MIN_CASH),
-        titan_cash_bearish:     pickTop2(bear, scoreFlowCash(),     MIN_CASH),
-        best_momentum_upside:   pickTop2(bull, scorePureMomentum(true),  MIN_MOMENTUM),
-        best_momentum_downside: pickTop2(bear, scorePureMomentum(false), MIN_MOMENTUM),
-        top_gainer:             pickTop2(bull, scorePureMomentum(true),  MIN_MOMENTUM),
-        top_loser:              pickTop2(bear, scorePureMomentum(false), MIN_MOMENTUM),
-        market_pulse:           pickTop2(bull, scorePulse(true),    MIN_SONIC),
-        top_traded_value:       pickTop2(pool, scorePureLiquidity,  MIN_LIQUID),
+        strong_bullish:         pickEligible(bull, scoreStrong(true),   MIN_STRONG),
+        strong_bearish:         pickEligible(bear, scoreStrong(false),  MIN_STRONG),
+        sonic_bullish:          pickEligible(bull, scorePulse(true),    MIN_SONIC),
+        sonic_bearish:          pickEligible(bear, scorePulse(false),   MIN_SONIC),
+        titan_bullish:          pickEligible(bull, scoreFlow(true),     MIN_TITAN),
+        titan_bearish:          pickEligible(bear, scoreFlow(false),    MIN_TITAN),
+        quant_elite_bullish:    pickEligible(bull, scoreElite(true),    MIN_ELITE),
+        quant_elite_bearish:    pickEligible(bear, scoreElite(false),   MIN_ELITE),
+        quant_elite_pro_bullish:pickEligible(bull, scoreElitePro(true), MIN_ELITE_PRO),
+        quant_elite_pro_bearish:pickEligible(bear, scoreElitePro(false),MIN_ELITE_PRO),
+        titan_cash_bullish:     pickEligible(bull, scoreFlowCash(),     MIN_CASH),
+        titan_cash_bearish:     pickEligible(bear, scoreFlowCash(),     MIN_CASH),
+        best_momentum_upside:   pickEligible(bull, scorePureMomentum(true),  MIN_MOMENTUM),
+        best_momentum_downside: pickEligible(bear, scorePureMomentum(false), MIN_MOMENTUM),
+        top_gainer:             pickEligible(bull, scorePureMomentum(true),  MIN_MOMENTUM),
+        top_loser:              pickEligible(bear, scorePureMomentum(false), MIN_MOMENTUM),
+        market_pulse:           pickEligible(bull, scorePulse(true),    MIN_SONIC),
+        top_traded_value:       pickEligible(pool, scorePureLiquidity,  MIN_LIQUID),
         most_active_volume: sortByListedAtNewestFirstAtoZ([
-          ...pickTop2(bull, (s) => Number(s.volume) || 0, 100000),
-          ...pickTop2(bear, (s) => Number(s.volume) || 0, 100000)
+          ...pickEligible(bull, (s) => Number(s.volume) || 0, 100000),
+          ...pickEligible(bear, (s) => Number(s.volume) || 0, 100000)
         ])
       };
     }
@@ -6676,27 +6679,8 @@
         return true;
       });
 
-      // ─ Max 2 stocks per scanner formula group ─
-      const _scannerCount = {};
-      const _getScannerKey = (stock) => {
-        const fc = (stock.formula_code || '').toUpperCase();
-        if (fc) return fc;
-        const fn = (stock.formula_name || stock.scanner_name || '').toUpperCase().slice(0, 12);
-        if (fn) return fn;
-        // Classify by dominant signal
-        const rvol = Number(stock.rvol) || 1;
-        const turn = Number(stock.turnover_cr) || 0;
-        const bar  = Number(stock.bid_ask_ratio) || 1;
-        if (turn > 300 && rvol > 2) return 'TITAN_WHALE';
-        if (rvol > 2.5) return 'SONIC_RVOL';
-        if (bar >= 1.25 || bar <= 0.80) return 'WHALE_DELTA';
-        return 'QUANT_ELITE';
-      };
-      eligibleFiltered = eligibleFiltered.filter(stock => {
-        const key = _getScannerKey(stock);
-        _scannerCount[key] = (_scannerCount[key] || 0) + 1;
-        return _scannerCount[key] <= 2;
-      });
+      // All eligible stocks shown — no per-scanner cap.
+      // If 5 pass the formula → show 5. If 10 pass → show 10. None pass → show none.
       return eligibleFiltered;
     }
 
@@ -6756,7 +6740,7 @@
 
       if (badge) {
         const total = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks) ? DATA.all_stocks.length : 218);
-        badge.textContent = `${filtered.length} Eligible (Scan from 09:17 IST • Formula Qualified)`;
+        badge.textContent = `${filtered.length} Formula-Eligible Stocks (Scan: 09:17 IST)`;
       }
 
       if (filtered.length === 0) {
@@ -11354,13 +11338,13 @@ ${json.message || 'Unauthorized token.'}`);
       }
 
       // Home Tab Previews (Strictly Pure Equity Top 10)
-      renderVisibleTable('table-home-sonic-bullish', (DATA.sonic_bullish || []).slice(0, 2), true);
-      renderVisibleTable('table-home-titan-bearish', (DATA.titan_bearish || []).slice(0, 2), false);
-      renderVisibleTable('table-home-elite-bearish', (DATA.quant_elite_bearish || []).slice(0, 2), false);
-      renderVisibleTable('table-home-elite-pro-bearish', (DATA.quant_elite_pro_bearish || []).slice(0, 2), false);
-      renderVisibleTable('table-home-titan-cash-bearish', (DATA.titan_cash_bearish || []).slice(0, 2), false);
-      renderVisibleTable('table-home-momentum-upside', (DATA.best_momentum_upside || []).slice(0, 2), true);
-      renderVisibleTable('table-home-momentum-downside', (DATA.best_momentum_downside || []).slice(0, 2), false);
+      renderVisibleTable('table-home-sonic-bullish', (DATA.sonic_bullish || []), true);
+      renderVisibleTable('table-home-titan-bearish', (DATA.titan_bearish || []), false);
+      renderVisibleTable('table-home-elite-bearish', (DATA.quant_elite_bearish || []), false);
+      renderVisibleTable('table-home-elite-pro-bearish', (DATA.quant_elite_pro_bearish || []), false);
+      renderVisibleTable('table-home-titan-cash-bearish', (DATA.titan_cash_bearish || []), false);
+      renderVisibleTable('table-home-momentum-upside', (DATA.best_momentum_upside || []), true);
+      renderVisibleTable('table-home-momentum-downside', (DATA.best_momentum_downside || []), false);
       // ============================================================
       // CLAUDE AI TRADE SKILL FORMULA: TOP 2 UPSIDE & DOWNSIDE (Scan 09:17 IST)
       // ============================================================
@@ -11430,18 +11414,18 @@ ${json.message || 'Unauthorized token.'}`);
         });
         downsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-        // Sanitize and validate LISTED AT time for Top 2 Downside Traded Candidates (Scan: 09:17 IST)
-        downsideTraded.slice(0, 2).forEach((s, idx) => {
-          sanitizeStockListedTime(s, idx, true, 2);
+        // Sanitize listed_at for all upside/downside candidates (Scan starts 09:17 IST)
+        downsideTraded.slice(0, 20).forEach((s, idx) => {
+          sanitizeStockListedTime(s, idx, true, 20);
         });
 
-        // Sanitize and validate LISTED AT time for Top 2 Upside Traded Candidates (Scan: 09:17 IST)
-        upsideTraded.slice(0, 2).forEach((s, idx) => {
-          sanitizeStockListedTime(s, idx, false, 2);
+        upsideTraded.slice(0, 20).forEach((s, idx) => {
+          sanitizeStockListedTime(s, idx, false, 20);
         });
 
-        window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(upsideTraded.filter(s => { const lt = s.listed_at || ''; const p = lt.split(':').map(Number); return !lt || (p[0]*3600+p[1]*60+(p[2]||0)) >= 9*3600+17*60; }).slice(0, 2));
-        window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(downsideTraded.filter(s => { const lt = s.listed_at || ''; const p = lt.split(':').map(Number); return !lt || (p[0]*3600+p[1]*60+(p[2]||0)) >= 9*3600+17*60; }).slice(0, 2));
+        // Show ALL eligible stocks (09:17+ IST), no artificial cap
+        window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(upsideTraded.filter(s => { const lt = s.listed_at || ''; const p = lt.split(':').map(Number); return !lt || (p[0]*3600+p[1]*60+(p[2]||0)) >= 9*3600+17*60; }));
+        window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(downsideTraded.filter(s => { const lt = s.listed_at || ''; const p = lt.split(':').map(Number); return !lt || (p[0]*3600+p[1]*60+(p[2]||0)) >= 9*3600+17*60; }));
 
         renderVisibleTable('table-home-top-traded', window.TOP_10_UPSIDE, true, activeAiStrategyFilter !== 'ALL');
         renderVisibleTable('table-home-top-traded-downside', window.TOP_10_DOWNSIDE, false, activeAiStrategyFilter !== 'ALL');
