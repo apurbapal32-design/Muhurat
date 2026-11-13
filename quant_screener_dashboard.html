@@ -2712,7 +2712,7 @@
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold">PRO QUANT WORKBENCH</span>
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span class="text-[10px] text-emerald-400 font-bold">218 F&amp;O Candidates Live</span>
+              <span class="text-[10px] text-emerald-400 font-bold">Formula Eligible Stocks Only (Max 2/Scanner)</span>
             </div>
             <h2 class="text-base md:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-amber-300 mt-1">
               Custom Tables &amp; Multi-Factor Screener
@@ -5847,8 +5847,8 @@
 
     function sortByListedAtNewestFirstAtoZ(arr) {
       return [...(arr || [])].sort((a, b) => {
-        const rawA = a.listed_at || a.listedAt || '09:15:00';
-        const rawB = b.listed_at || b.listedAt || '09:15:00';
+        const rawA = a.listed_at || a.listedAt || '09:17:00';
+        const rawB = b.listed_at || b.listedAt || '09:17:00';
         const secA = typeof timeStringToSec === 'function' ? timeStringToSec(rawA) : 0;
         const secB = typeof timeStringToSec === 'function' ? timeStringToSec(rawB) : 0;
         if (secB !== secA) return secB - secA; // Newest listed stock UP (top) -> oldest listed stock DOWN (bottom)
@@ -5883,6 +5883,32 @@
         return Math.max(0, Math.min(1, ((Number(s.price) || lo) - lo) / span));
       };
 
+      // SCAN_START_IST = 09:17:00 — stocks listed before this are excluded
+      const SCAN_START_SEC = 9 * 3600 + 17 * 60; // 09:17:00 IST
+      const timeToSec = (t) => {
+        if (!t) return 0;
+        const parts = String(t).split(':').map(Number);
+        return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+      };
+      // Filter: stock must have listed_at >= 09:17:00 IST
+      const isAfterScanStart = (s) => {
+        const lt = s.listed_at || s.listedAt || '';
+        if (!lt) return true; // allow if no listed_at set yet
+        return timeToSec(lt) >= SCAN_START_SEC;
+      };
+      // Pick TOP 2 eligible stocks (formula score must pass minimum threshold)
+      const pickTop2 = (arr, scoreFn, minScore) => {
+        const minSc = minScore || 0;
+        return sortByListedAtNewestFirstAtoZ(
+          [...arr]
+            .map(s => ({ s, sc: scoreFn(s) }))
+            .filter(({ s, sc }) => sc >= minSc && isAfterScanStart(s))
+            .sort((a, b) => b.sc - a.sc)
+            .slice(0, 2)
+            .map(({ s }) => s)
+        );
+      };
+      // Legacy alias kept for backward compatibility (non-scanner tables)
       const pickTop10 = (arr, scoreFn) =>
         sortByListedAtNewestFirstAtoZ([...arr].sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, 10));
 
@@ -5952,28 +5978,46 @@
       const scorePureLiquidity = (s) =>
         (Number(s.turnover_cr) || 0) * 1.0 + Math.abs(Number(s.pct_change) || 0) * 12;
 
+      // ── Formula Eligibility Minimum Scores (scanner must pass threshold) ──
+      // Scanner 1: Strong Bullish (ORB) — min score 60 (ADX≥25 baseline = 35, need momentum)
+      const MIN_STRONG   = 60;   // ORB breakout momentum minimum
+      // Scanner 2: Sonic RVOL — min score 55 (RVOL≥1.5 = baseline ~2.1, need OI spike)
+      const MIN_SONIC    = 55;   // RVOL + OI surge minimum
+      // Scanner 3: Titan Whale — min score 50 (bid/ask heavy + turnover)
+      const MIN_TITAN    = 50;   // Whale institutional flow minimum
+      // Scanner 4: Quant Elite — min score 100 (ADX≥25=65, need squeeze or RSI fit)
+      const MIN_ELITE    = 100;  // Volatility squeeze coil minimum
+      // Scanner 5: Quant Elite Pro — min score 85 (PCR≥1.2=55, need buildup)
+      const MIN_ELITE_PRO= 85;   // PCR floor/ceiling divergence minimum
+      // Scanner 6: Titan Cash — min score 60 (turnover≥25cr + low vol)
+      const MIN_CASH     = 60;   // Institutional delivery turnover minimum
+      // Scanner 7: Top Momentum — min score 20 (pct≥1% = 20pts)
+      const MIN_MOMENTUM = 20;   // Pure velocity minimum
+      // Scanner 8: Liquidity — min score 50
+      const MIN_LIQUID   = 50;   // Institutional monetary turnover minimum
+
       return {
-        strong_bullish: pickTop10(bull, scoreStrong(true)),
-        strong_bearish: pickTop10(bear, scoreStrong(false)),
-        sonic_bullish: pickTop10(bull, scorePulse(true)),
-        sonic_bearish: pickTop10(bear, scorePulse(false)),
-        titan_bullish: pickTop10(bull, scoreFlow(true)),
-        titan_bearish: pickTop10(bear, scoreFlow(false)),
-        quant_elite_bullish: pickTop10(bull, scoreElite(true)),
-        quant_elite_bearish: pickTop10(bear, scoreElite(false)),
-        quant_elite_pro_bullish: pickTop10(bull, scoreElitePro(true)),
-        quant_elite_pro_bearish: pickTop10(bear, scoreElitePro(false)),
-        titan_cash_bullish: pickTop10(bull, scoreFlowCash()),
-        titan_cash_bearish: pickTop10(bear, scoreFlowCash()),
-        best_momentum_upside: pickTop10(bull, scorePureMomentum(true)),
-        best_momentum_downside: pickTop10(bear, scorePureMomentum(false)),
-        top_gainer: pickTop10(bull, scorePureMomentum(true)),
-        top_loser: pickTop10(bear, scorePureMomentum(false)),
-        market_pulse: pickTop10(bull, scorePulse(true)),
-        top_traded_value: pickTop10(pool, scorePureLiquidity),
+        strong_bullish:         pickTop2(bull, scoreStrong(true),   MIN_STRONG),
+        strong_bearish:         pickTop2(bear, scoreStrong(false),  MIN_STRONG),
+        sonic_bullish:          pickTop2(bull, scorePulse(true),    MIN_SONIC),
+        sonic_bearish:          pickTop2(bear, scorePulse(false),   MIN_SONIC),
+        titan_bullish:          pickTop2(bull, scoreFlow(true),     MIN_TITAN),
+        titan_bearish:          pickTop2(bear, scoreFlow(false),    MIN_TITAN),
+        quant_elite_bullish:    pickTop2(bull, scoreElite(true),    MIN_ELITE),
+        quant_elite_bearish:    pickTop2(bear, scoreElite(false),   MIN_ELITE),
+        quant_elite_pro_bullish:pickTop2(bull, scoreElitePro(true), MIN_ELITE_PRO),
+        quant_elite_pro_bearish:pickTop2(bear, scoreElitePro(false),MIN_ELITE_PRO),
+        titan_cash_bullish:     pickTop2(bull, scoreFlowCash(),     MIN_CASH),
+        titan_cash_bearish:     pickTop2(bear, scoreFlowCash(),     MIN_CASH),
+        best_momentum_upside:   pickTop2(bull, scorePureMomentum(true),  MIN_MOMENTUM),
+        best_momentum_downside: pickTop2(bear, scorePureMomentum(false), MIN_MOMENTUM),
+        top_gainer:             pickTop2(bull, scorePureMomentum(true),  MIN_MOMENTUM),
+        top_loser:              pickTop2(bear, scorePureMomentum(false), MIN_MOMENTUM),
+        market_pulse:           pickTop2(bull, scorePulse(true),    MIN_SONIC),
+        top_traded_value:       pickTop2(pool, scorePureLiquidity,  MIN_LIQUID),
         most_active_volume: sortByListedAtNewestFirstAtoZ([
-          ...pickTop10(bull, (s) => Number(s.volume) || 0),
-          ...pickTop10(bear, (s) => Number(s.volume) || 0)
+          ...pickTop2(bull, (s) => Number(s.volume) || 0, 100000),
+          ...pickTop2(bear, (s) => Number(s.volume) || 0, 100000)
         ])
       };
     }
@@ -6528,7 +6572,7 @@
         `"${(s.buildup_type || s.buildup || '').replace(/"/g, '""')}"`,
         s.day_low || 0,
         s.day_high || 0,
-        '"' + (s.listed_at || s.listedAt || '09:15:00').replace(/"/g, '""') + '"',
+        '"' + (s.listed_at || s.listedAt || '09:17:00').replace(/"/g, '""') + '"',
         (s.bid_ask_ratio || 1.0).toFixed ? (s.bid_ask_ratio || 1.0).toFixed(2) : (s.bid_ask_ratio || 1.0),
         '"' + (s.formula_name || s.formula_code || s.scanner_name || 'Strong Bullish').replace(/"/g, '""') + '"'
       ]);
@@ -6546,8 +6590,36 @@
     function getFilteredCustomStocks() {
       if (typeof DATA === 'undefined' || !Array.isArray(DATA.all_stocks)) return [];
       const s = customTableState;
+      // Scanner eligibility: compute formula score for each stock and
+      // enforce scan start at 09:17:00 IST
+      const _SCAN_START = 9 * 3600 + 17 * 60; // 09:17:00
+      const _timeToSec = (t) => { if (!t) return 99999; const p = String(t).split(':').map(Number); return (p[0]||0)*3600+(p[1]||0)*60+(p[2]||0); };
+      const _hasValidScanTime = (stock) => {
+        const lt = stock.listed_at || stock.listedAt || '';
+        if (!lt) return true; // no listed_at = eligible
+        return _timeToSec(lt) >= _SCAN_START;
+      };
+      // Per-scanner formula eligibility
+      const _formulaEligible = (stock) => {
+        const pct = Number(stock.pct_change) || 0;
+        const rvol = Number(stock.rvol) || 1;
+        const bar = Number(stock.bid_ask_ratio) || 1;
+        const turn = Number(stock.turnover_cr) || 0;
+        const oiChg = Number(stock.oi_chg_pct) || 0;
+        const delta = Number(stock.delta) || 0;
+        const isBull = pct >= 0;
+        // Check formula_code first
+        const fc = (stock.formula_code || '').toUpperCase();
+        if (fc === 'STRONG_ORB')  return Math.abs(pct) >= 0.3 && rvol >= 1.1;
+        if (fc === 'SONIC_RVOL')  return rvol >= 1.5 && Math.abs(oiChg) >= 1.0;
+        if (fc === 'TITAN_WHALE') return (isBull ? bar >= 1.25 : bar <= 0.80) && turn >= 20;
+        // No formula_code: apply generic minimum qualification
+        // Stock must meet at least ONE of: rvol>=1.3, |pct|>=0.5, bar>=1.2 or <=0.8, oiChg>=2
+        return (rvol >= 1.3) || (Math.abs(pct) >= 0.5) || (bar >= 1.2 || bar <= 0.8) || (Math.abs(oiChg) >= 2);
+      };
 
-      return DATA.all_stocks.filter(stock => {
+
+      let eligibleFiltered = DATA.all_stocks.filter(stock => {
         // Search
         if (s.search) {
           const sym = (stock.symbol || '').toUpperCase();
@@ -6596,8 +6668,36 @@
         const turnover = Number(stock.turnover_cr) || 0;
         if (s.minTurnover > 0 && turnover < s.minTurnover) return false;
 
+        // ─ Scan time gate: must be listed at 09:17:00 IST or later ─
+        if (!_hasValidScanTime(stock)) return false;
+        // ─ Formula eligibility gate: must pass scanner formula ─
+        if (!_formulaEligible(stock)) return false;
+
         return true;
       });
+
+      // ─ Max 2 stocks per scanner formula group ─
+      const _scannerCount = {};
+      const _getScannerKey = (stock) => {
+        const fc = (stock.formula_code || '').toUpperCase();
+        if (fc) return fc;
+        const fn = (stock.formula_name || stock.scanner_name || '').toUpperCase().slice(0, 12);
+        if (fn) return fn;
+        // Classify by dominant signal
+        const rvol = Number(stock.rvol) || 1;
+        const turn = Number(stock.turnover_cr) || 0;
+        const bar  = Number(stock.bid_ask_ratio) || 1;
+        if (turn > 300 && rvol > 2) return 'TITAN_WHALE';
+        if (rvol > 2.5) return 'SONIC_RVOL';
+        if (bar >= 1.25 || bar <= 0.80) return 'WHALE_DELTA';
+        return 'QUANT_ELITE';
+      };
+      eligibleFiltered = eligibleFiltered.filter(stock => {
+        const key = _getScannerKey(stock);
+        _scannerCount[key] = (_scannerCount[key] || 0) + 1;
+        return _scannerCount[key] <= 2;
+      });
+      return eligibleFiltered;
     }
 
     function renderCustomTables() {
@@ -6656,7 +6756,7 @@
 
       if (badge) {
         const total = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks) ? DATA.all_stocks.length : 218);
-        badge.textContent = `Showing ${filtered.length} of ${total} Candidates`;
+        badge.textContent = `${filtered.length} Eligible (Scan from 09:17 IST • Formula Qualified)`;
       }
 
       if (filtered.length === 0) {
@@ -6797,7 +6897,7 @@
         }
 
         if (cols.listed_at) {
-          const listedTime = stock.listed_at || stock.listedAt || '09:15:00';
+          const listedTime = stock.listed_at || stock.listedAt || '09:17:00';
           rowsHTML += `
             <td class="p-2.5">
               <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 font-mono">🕒 ${listedTime} IST</span>
@@ -7800,7 +7900,9 @@
         if (existingSec >= preOpenStartSec && existingSec <= curTotalSec) {
           return stock.listed_at;
         }
-        const anchorStart = curTotalSec < marketOpenSec ? preOpenStartSec : marketOpenSec;
+        // Scan starts at 09:17:00 IST — no stock can appear before this time
+        const SCAN_START_MIN = 9 * 3600 + 17 * 60; // 09:17:00
+        const anchorStart = Math.max(SCAN_START_MIN, curTotalSec < marketOpenSec ? preOpenStartSec : marketOpenSec);
         const elapsedSec = Math.max(30, curTotalSec - anchorStart);
         const count = totalCount || 10;
         const step = elapsedSec / (count + 1);
@@ -7813,6 +7915,16 @@
       } else {
         if (existingSec >= preOpenStartSec && existingSec <= marketCloseSec) {
           return stock.listed_at;
+        }
+        // Scan start: 09:17:00 IST — reassign times before 09:17 to 09:17+
+        const SCAN_START_MIN2 = 9 * 3600 + 17 * 60;
+        if (existingSec < SCAN_START_MIN2) {
+          const symSeed2 = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0) * (c.charCodeAt(1) || 7), 0);
+          const jitter2 = (symSeed2 % 60);
+          const newSec2 = SCAN_START_MIN2 + jitter2 + (rankIdx || 0) * 45;
+          const newTime2 = formatSecToTime(Math.min(newSec2, marketCloseSec - 600));
+          stock.listed_at = newTime2;
+          return newTime2;
         }
         const totalSessionSec = marketCloseSec - marketOpenSec;
         const count = totalCount || 10;
@@ -11242,15 +11354,15 @@ ${json.message || 'Unauthorized token.'}`);
       }
 
       // Home Tab Previews (Strictly Pure Equity Top 10)
-      renderVisibleTable('table-home-sonic-bullish', (DATA.sonic_bullish || []).slice(0, 10), true);
-      renderVisibleTable('table-home-titan-bearish', (DATA.titan_bearish || []).slice(0, 10), false);
-      renderVisibleTable('table-home-elite-bearish', (DATA.quant_elite_bearish || []).slice(0, 10), false);
-      renderVisibleTable('table-home-elite-pro-bearish', (DATA.quant_elite_pro_bearish || []).slice(0, 10), false);
-      renderVisibleTable('table-home-titan-cash-bearish', (DATA.titan_cash_bearish || []).slice(0, 10), false);
-      renderVisibleTable('table-home-momentum-upside', (DATA.best_momentum_upside || []).slice(0, 10), true);
-      renderVisibleTable('table-home-momentum-downside', (DATA.best_momentum_downside || []).slice(0, 10), false);
+      renderVisibleTable('table-home-sonic-bullish', (DATA.sonic_bullish || []).slice(0, 2), true);
+      renderVisibleTable('table-home-titan-bearish', (DATA.titan_bearish || []).slice(0, 2), false);
+      renderVisibleTable('table-home-elite-bearish', (DATA.quant_elite_bearish || []).slice(0, 2), false);
+      renderVisibleTable('table-home-elite-pro-bearish', (DATA.quant_elite_pro_bearish || []).slice(0, 2), false);
+      renderVisibleTable('table-home-titan-cash-bearish', (DATA.titan_cash_bearish || []).slice(0, 2), false);
+      renderVisibleTable('table-home-momentum-upside', (DATA.best_momentum_upside || []).slice(0, 2), true);
+      renderVisibleTable('table-home-momentum-downside', (DATA.best_momentum_downside || []).slice(0, 2), false);
       // ============================================================
-      // CLAUDE AI TRADE SKILL FORMULA: TOP 10 UPSIDE & DOWNSIDE
+      // CLAUDE AI TRADE SKILL FORMULA: TOP 2 UPSIDE & DOWNSIDE (Scan 09:17 IST)
       // ============================================================
       function calcClaudeAiTradeSkillScore(stock, isUpside) {
         const turnover = Number(stock.turnover_cr) || 0;
@@ -11318,18 +11430,18 @@ ${json.message || 'Unauthorized token.'}`);
         });
         downsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-        // Sanitize and validate LISTED AT time for Top 10 Downside Traded Candidates (Heavy Selling)
-        downsideTraded.slice(0, 10).forEach((s, idx) => {
-          sanitizeStockListedTime(s, idx, true, 10);
+        // Sanitize and validate LISTED AT time for Top 2 Downside Traded Candidates (Scan: 09:17 IST)
+        downsideTraded.slice(0, 2).forEach((s, idx) => {
+          sanitizeStockListedTime(s, idx, true, 2);
         });
 
-        // Sanitize and validate LISTED AT time for Top 10 Upside Traded Candidates
-        upsideTraded.slice(0, 10).forEach((s, idx) => {
-          sanitizeStockListedTime(s, idx, false, 10);
+        // Sanitize and validate LISTED AT time for Top 2 Upside Traded Candidates (Scan: 09:17 IST)
+        upsideTraded.slice(0, 2).forEach((s, idx) => {
+          sanitizeStockListedTime(s, idx, false, 2);
         });
 
-        window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(upsideTraded.slice(0, 10));
-        window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(downsideTraded.slice(0, 10));
+        window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(upsideTraded.filter(s => { const lt = s.listed_at || ''; const p = lt.split(':').map(Number); return !lt || (p[0]*3600+p[1]*60+(p[2]||0)) >= 9*3600+17*60; }).slice(0, 2));
+        window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(downsideTraded.filter(s => { const lt = s.listed_at || ''; const p = lt.split(':').map(Number); return !lt || (p[0]*3600+p[1]*60+(p[2]||0)) >= 9*3600+17*60; }).slice(0, 2));
 
         renderVisibleTable('table-home-top-traded', window.TOP_10_UPSIDE, true, activeAiStrategyFilter !== 'ALL');
         renderVisibleTable('table-home-top-traded-downside', window.TOP_10_DOWNSIDE, false, activeAiStrategyFilter !== 'ALL');
