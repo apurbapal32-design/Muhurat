@@ -414,19 +414,6 @@ class MarketWebSocketServerManager {
     };
   }
 
-  public closeAll(code: number = 1012, reason: string = 'Server restarting') {
-    for (const [ws] of this.clients.entries()) {
-      try {
-        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
-          ws.close(code, reason);
-        }
-      } catch {
-        // Ignore close errors
-      }
-    }
-    this.destroy();
-  }
-
   public destroy() {
     if (this.tickIntervalId) clearInterval(this.tickIntervalId);
     if (this.pollIntervalId) clearInterval(this.pollIntervalId);

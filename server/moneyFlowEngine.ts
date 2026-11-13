@@ -1442,14 +1442,14 @@ export function buildSmartMoneyFlowReport(
     const isContraSellTrap =
       niftyRegime.trend === 'BEARISH' && greeksData.oiFlowDirection === 'POSITIVE' && greeksData.deltaFlowDirection === 'POSITIVE';
 
-    if ((stock.changePercent || 0) >= 0 || bestBuyCount >= 14) {
+    if ((stock.changePercent || 0) >= 0.2 && bestBuyCount >= 15) {
       if (isContraBuyTrap || !bothPositiveBuy) {
         if ((stock.changePercent || 0) >= 0) blockedContraBuys++;
       } else {
         allBuyCandidates.push(buildRow('BUY', bestBuyIdx, bestBuyCount, bestBuyScore, bestBuyChecks));
       }
     }
-    if ((stock.changePercent || 0) < 0 || bestSellCount >= 14) {
+    if ((stock.changePercent || 0) <= -0.2 && bestSellCount >= 15) {
       if (isContraSellTrap || !bothNegativeSell) {
         if ((stock.changePercent || 0) < 0) blockedContraSells++;
       } else {
@@ -1469,12 +1469,12 @@ export function buildSmartMoneyFlowReport(
 
   const buySignals = allBuyCandidates
     .sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score)
-    .slice(0, 10)
+    .slice(0, 15)
     .sort(sortNewestFirstAToZ);
 
   const sellSignals = allSellCandidates
     .sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score)
-    .slice(0, 10)
+    .slice(0, 15)
     .sort(sortNewestFirstAToZ);
 
   const builtReport: MoneyFlowScanReport = {

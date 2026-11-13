@@ -64,6 +64,13 @@ class UpstoxService {
     });
   }
 
+  public clearQuotesCache() {
+    this.lastUpstoxQuotes = {};
+    this.lastUpstoxQuotesAt = 0;
+    this.lastUpstoxTokenTag = '';
+    this.inFlightUpstoxBatch = null;
+  }
+
   private loadCachedMapFromDisk() {
     try {
       if (fs.existsSync(INSTRUMENTS_CACHE_FILE)) {
@@ -345,7 +352,7 @@ class UpstoxService {
     );
 
     // Layer Upstox Direct Live API v2 Full Market Quotes on top when authenticated (with 1s coalesced cache)
-    if (resolvedToken.length > 15 && this.eqInstrumentMap.size > 0) {
+    if (resolvedToken.length > 15) {
       try {
         const tokenTag = resolvedToken.slice(-16);
         const cacheFresh =
@@ -440,6 +447,26 @@ class UpstoxService {
                   const isIdx = instToken.includes('_INDEX|');
                   const exch: 'NSE' | 'BSE' = instToken.startsWith('BSE') ? 'BSE' : 'NSE';
 
+                  const openPx = Number((item.ohlc?.open || prevAuto?.open || lp).toFixed(2));
+                  const highPx = Number((item.ohlc?.high || prevAuto?.high || lp).toFixed(2));
+                  const lowPx = Number((item.ohlc?.low || prevAuto?.low || lp).toFixed(2));
+                  let bidQty = Number(item.total_buy_quantity || prevAuto?.bidQty || 0);
+                  let askQty = Number(item.total_sell_quantity || prevAuto?.askQty || 0);
+                  if (bidQty <= 0 || askQty <= 0) {
+                    const depthFb = deriveOrderBookDepth({
+                      volume: volume || 350000,
+                      lp,
+                      open: openPx,
+                      high: highPx,
+                      low: lowPx,
+                      chp,
+                      atp,
+                      isIdx,
+                    });
+                    if (bidQty <= 0) bidQty = depthFb.bidQty;
+                    if (askQty <= 0) askQty = depthFb.askQty;
+                  }
+
                   const quoteObj: UnifiedMarketQuote = {
                     symbol: mappedClean,
                     instrumentKey: instToken,
@@ -447,9 +474,9 @@ class UpstoxService {
                     exchange: exch,
                     type: isIdx ? 'INDEX' : 'EQUITY',
                     lp: Number(lp.toFixed(2)),
-                    open: Number((item.ohlc?.open || prevAuto?.open || lp).toFixed(2)),
-                    high: Number((item.ohlc?.high || prevAuto?.high || lp).toFixed(2)),
-                    low: Number((item.ohlc?.low || prevAuto?.low || lp).toFixed(2)),
+                    open: openPx,
+                    high: highPx,
+                    low: lowPx,
                     prevClose: Number(prevClose.toFixed(2)),
                     ch,
                     chp,
@@ -458,8 +485,8 @@ class UpstoxService {
                     atp: Number(atp.toFixed(2)),
                     bid: Number(topBuy),
                     ask: Number(topSell),
-                    bidQty: Number(item.total_buy_quantity || prevAuto?.bidQty || 0),
-                    askQty: Number(item.total_sell_quantity || prevAuto?.askQty || 0),
+                    bidQty,
+                    askQty,
                     oi: Number(item.oi || 0),
                     ltt: item.last_trade_time
                       ? new Date(Number(item.last_trade_time)).toLocaleTimeString('en-IN', {

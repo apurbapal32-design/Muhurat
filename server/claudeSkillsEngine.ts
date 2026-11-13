@@ -44,6 +44,14 @@ function getSecFromHHMMSS(t?: string): number {
   return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
 }
 
+function sortByListedAtAsc<T extends { listedAt?: string; triggerTime?: string; symbol?: string }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const secDiff = getSecFromHHMMSS(a.listedAt || a.triggerTime) - getSecFromHHMMSS(b.listedAt || b.triggerTime);
+    if (secDiff !== 0) return secDiff;
+    return (a.symbol || '').localeCompare(b.symbol || '');
+  });
+}
+
 /**
  * Generates unified intelligence across all 10 Claude AI Trading Skills,
  * Top Buy & Sell equity recommendations, Budget Sizing, Risk Guardrails,
@@ -91,10 +99,24 @@ export function buildClaude10SkillsReport(
     (s.indicators.price <= s.indicators.vwap ? 10 : -5);
 
   const bullPool = [...equityStocks]
-    .filter((s) => s.changePercent > 0.1 || s.signal === 'BUY')
+    .filter(
+      (s) =>
+        s.signal === 'BUY' &&
+        s.changePercent >= 0.45 &&
+        (s.indicators.rvol || 1) >= 1.15 &&
+        s.indicators.price >= (s.indicators.vwap || s.indicators.price) * 0.998 &&
+        s.aiScore >= 70
+    )
     .sort((a, b) => scoreBuy(b) - scoreBuy(a));
   const bearPool = [...equityStocks]
-    .filter((s) => s.changePercent < -0.1 || s.signal === 'SELL')
+    .filter(
+      (s) =>
+        s.signal === 'SELL' &&
+        s.changePercent <= -0.45 &&
+        (s.indicators.rvol || 1) >= 1.15 &&
+        s.indicators.price <= (s.indicators.vwap || s.indicators.price) * 1.002 &&
+        s.aiScore >= 70
+    )
     .sort((a, b) => scoreSell(b) - scoreSell(a));
 
   const detectPattern = (s: ScannedStock): string => {
@@ -178,7 +200,7 @@ export function buildClaude10SkillsReport(
       confidence: confluenceScore,
       confluenceScore,
       formulaName: s.formulaName || 'ORB / VWAP Trigger',
-      listedAt: s.listedAt || '09:30:00',
+      listedAt: s.listedAt || '09:20:05',
       entryPrice: entry,
       livePrice: s.price,
       stopLoss: sl,
@@ -202,20 +224,23 @@ export function buildClaude10SkillsReport(
     };
   };
 
-  const buyRecommendations = bullPool.slice(0, 10).map((s) => toRec(s, true));
-  const sellRecommendations = bearPool.slice(0, 10).map((s) => toRec(s, false));
+  const buyRecommendations = sortByListedAtAsc(bullPool.slice(0, 15).map((s) => toRec(s, true)));
+  const sellRecommendations = sortByListedAtAsc(bearPool.slice(0, 15).map((s) => toRec(s, false)));
 
   // Skill 1: Chart & Pattern Scanner
-  const chartPatternScanner = [...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map((r) => ({
-    symbol: r.symbol,
-    side: r.action.includes('BUY') ? 'BULLISH' : 'BEARISH',
-    pattern: r.pattern,
-    triggerTime: r.listedAt,
-    triggerLevel: r.entryPrice,
-    livePrice: r.livePrice,
-    rvol: r.rvol,
-    score: r.confluenceScore,
-  }));
+  const chartPatternScanner = sortByListedAtAsc(
+    [...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map((r) => ({
+      symbol: r.symbol,
+      side: r.action.includes('BUY') ? 'BULLISH' : 'BEARISH',
+      pattern: r.pattern,
+      triggerTime: r.listedAt,
+      listedAt: r.listedAt,
+      triggerLevel: r.entryPrice,
+      livePrice: r.livePrice,
+      rvol: r.rvol,
+      score: r.confluenceScore,
+    }))
+  );
 
   // Skill 2: News & Catalyst Monitor
   const newsCatalystMonitor = [
@@ -248,22 +273,25 @@ export function buildClaude10SkillsReport(
   ].slice(0, 8);
 
   // Skill 4: Exit & Target Planner
-  const exitTargetPlanner = [...buyRecommendations.slice(0, 4), ...sellRecommendations.slice(0, 4)].map((r) => ({
-    symbol: r.symbol,
-    action: r.action,
-    entryPrice: r.entryPrice,
-    livePrice: r.livePrice,
-    initialSL: r.stopLoss,
-    trailRule: 'Move SL to Cost after 50% booking at T1; trail 1.2x ATR toward T2/T3',
-    t1Book50Pct: r.target1,
-    t2Book30Pct: r.target2,
-    t3Trail20Pct: r.target3,
-    timeExitIST: '15:15:00 IST Intraday Square-Off',
-    liveStatus:
-      (r.action.includes('BUY') && r.livePrice >= r.target1) || (r.action.includes('SELL') && r.livePrice <= r.target1)
-        ? 'TARGET 1 ACHIEVED • TRAIL SL TO ENTRY'
-        : 'ACTIVE TRACKING',
-  }));
+  const exitTargetPlanner = sortByListedAtAsc(
+    [...buyRecommendations.slice(0, 4), ...sellRecommendations.slice(0, 4)].map((r) => ({
+      symbol: r.symbol,
+      action: r.action,
+      listedAt: r.listedAt,
+      entryPrice: r.entryPrice,
+      livePrice: r.livePrice,
+      initialSL: r.stopLoss,
+      trailRule: 'Move SL to Cost after 50% booking at T1; trail 1.2x ATR toward T2/T3',
+      t1Book50Pct: r.target1,
+      t2Book30Pct: r.target2,
+      t3Trail20Pct: r.target3,
+      timeExitIST: '15:15:00 IST Intraday Square-Off',
+      liveStatus:
+        (r.action.includes('BUY') && r.livePrice >= r.target1) || (r.action.includes('SELL') && r.livePrice <= r.target1)
+          ? 'TARGET 1 ACHIEVED • TRAIL SL TO ENTRY'
+          : 'ACTIVE TRACKING',
+    }))
+  );
 
   // Skill 5: Historical "Time Machine" Simulator (replay real 5m intraday state at target IST slice!)
   const requestedSlice = params.timeSlice && /^\d{2}:\d{2}/.test(params.timeSlice) ? params.timeSlice : '11:30';
@@ -318,11 +346,11 @@ export function buildClaude10SkillsReport(
       timeMachineSignals.length > 0
         ? Number((timeMachineSignals.reduce((a, b) => a + b.pnlNowPct, 0) / timeMachineSignals.length).toFixed(2))
         : 0,
-    replayRows: timeMachineSignals.slice(0, 12),
+    replayRows: sortByListedAtAsc(timeMachineSignals.slice(0, 12)),
   };
 
   // Skill 6: Budget & Position Sizing Manager
-  const combinedTopPicks = [...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)];
+  const combinedTopPicks = sortByListedAtAsc([...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)]);
   const totalDeployedMargin = Number(combinedTopPicks.reduce((a, b) => a + b.capitalRequired, 0).toFixed(2));
   const totalRiskRs = Number(combinedTopPicks.reduce((a, b) => a + b.maxRiskRs, 0).toFixed(2));
   const totalPotentialProfitT1 = Number(combinedTopPicks.reduce((a, b) => a + b.projectedProfitT1Rs, 0).toFixed(2));
@@ -342,6 +370,7 @@ export function buildClaude10SkillsReport(
     allocations: combinedTopPicks.map((p) => ({
       symbol: p.symbol,
       action: p.action,
+      listedAt: p.listedAt,
       qty: p.recommendedQty,
       entryPrice: p.entryPrice,
       stopLoss: p.stopLoss,
@@ -445,27 +474,29 @@ export function buildClaude10SkillsReport(
         : 'Choppy mean-reversion day; enforce tighter VWAP pullback entries.',
       `Order-book pressure spread across ${new Set(equityStocks.map((s) => s.bidAskRatio)).size} unique ratios confirmed clean accumulation vs distribution separation.`,
     ],
-    entries: [...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map((r) => {
-      const movePct = Number((((r.action.includes('BUY') ? r.livePrice - r.entryPrice : r.entryPrice - r.livePrice) / Math.max(1, r.entryPrice)) * 100).toFixed(2));
-      const outcome =
-        (r.action.includes('BUY') && r.livePrice >= r.target1) || (r.action.includes('SELL') && r.livePrice <= r.target1)
-          ? 'T1 HIT'
-          : (r.action.includes('BUY') && r.livePrice <= r.stopLoss) || (r.action.includes('SELL') && r.livePrice >= r.stopLoss)
-          ? 'SL HIT'
-          : movePct > 0
-          ? 'IN PROFIT'
-          : 'WATCH';
-      return {
-        symbol: r.symbol,
-        side: r.action,
-        formula: r.formulaName,
-        listedAt: r.listedAt,
-        entryPrice: r.entryPrice,
-        livePrice: r.livePrice,
-        returnPct: movePct,
-        outcome,
-      };
-    }),
+    entries: sortByListedAtAsc(
+      [...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map((r) => {
+        const movePct = Number((((r.action.includes('BUY') ? r.livePrice - r.entryPrice : r.entryPrice - r.livePrice) / Math.max(1, r.entryPrice)) * 100).toFixed(2));
+        const outcome =
+          (r.action.includes('BUY') && r.livePrice >= r.target1) || (r.action.includes('SELL') && r.livePrice <= r.target1)
+            ? 'T1 HIT'
+            : (r.action.includes('BUY') && r.livePrice <= r.stopLoss) || (r.action.includes('SELL') && r.livePrice >= r.stopLoss)
+            ? 'SL HIT'
+            : movePct > 0
+            ? 'IN PROFIT'
+            : 'WATCH';
+        return {
+          symbol: r.symbol,
+          side: r.action,
+          formula: r.formulaName,
+          listedAt: r.listedAt,
+          entryPrice: r.entryPrice,
+          livePrice: r.livePrice,
+          returnPct: movePct,
+          outcome,
+        };
+      })
+    ),
   };
 
   // Skill 10: Multi-Timeframe & Sentiment Synthesizer

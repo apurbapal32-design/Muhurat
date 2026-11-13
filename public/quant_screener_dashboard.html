@@ -1652,7 +1652,7 @@
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
                 <h3 class="font-bold text-emerald-400 text-sm tracking-wide">HIGH LIQUIDITY &bull; TOP TRADED UPSIDE</h3>
-                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] border border-emerald-500/30 font-bold">TOP 10 &bull; CLAUDE AI FORMULA</span>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] border border-emerald-500/30 font-bold">UP TO 15 &bull; CLAUDE AI FORMULA</span>
               </div>
               <button onclick="switchTab('liquidity')" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] text-emerald-300 font-mono font-bold transition flex items-center gap-1 cursor-pointer" title="Open Full Liquidity Tab">
                 <span>View All (Full Tab)</span>
@@ -1670,7 +1670,7 @@
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping"></span>
                 <h3 class="font-bold text-rose-400 text-sm tracking-wide">HIGH LIQUIDITY &bull; TOP TRADED DOWNSIDE (HEAVY SELLING)</h3>
-                <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-[10px] border border-rose-500/30 font-bold">TOP 10 &bull; CLAUDE AI FORMULA</span>
+                <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 font-mono text-[10px] border border-rose-500/30 font-bold">UP TO 15 &bull; CLAUDE AI FORMULA</span>
               </div>
               <button onclick="switchTab('liquidity')" class="px-2.5 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-[11px] text-rose-300 font-mono font-bold transition flex items-center gap-1 cursor-pointer" title="Open Full Liquidity Tab">
                 <span>View All (Full Tab)</span>
@@ -1746,13 +1746,13 @@
                 <span class="text-[9.5px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 border border-amber-400/40">STANDBY MODE</span>
               </div>
               <p class="text-[11px] text-slate-300 mt-0.5">
-                All scanner tables have been automatically emptied per 12:00 AM EOD policy. Next trading day scans will automatically discover fresh candidate stocks at <strong>09:00 AM (Pre-Open)</strong> &amp; <strong>09:15 AM (Live Market)</strong>.
+                All scanner tables have been automatically emptied per 12:00 AM EOD policy. Next market day formula scans start automatically at <strong>09:20 AM IST</strong> (showing only formula-eligible stocks up to 15).
               </p>
             </div>
           </div>
           <div class="flex items-center gap-2">
             <span class="midnight-auto-countdown inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">
-              <span>🤖</span><span>AUTO-SCAN AT 09:00 / 09:15 AM IST</span>
+              <span>🤖</span><span>AUTO-SCAN AT 09:20 AM IST</span>
             </span>
           </div>
         </div>
@@ -2260,23 +2260,24 @@
                 <h2 class="text-lg md:text-xl font-black text-white tracking-wide flex items-center gap-2 font-mono">
                   <span>🤖 CLAUDE AI TRADING SKILL</span>
                   <span class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-bold uppercase tracking-wider">ALL INDICES OPTIONS HUB</span>
+                  <span id="claude-options-eligible-badge" class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">Scanning...</span>
                 </h2>
               </div>
               <p class="text-xs text-slate-400 font-mono mt-1">
-                Institutional Call (CE) &amp; Put (PE) Buy / Sell recommendations across NIFTY, BANK NIFTY, FIN NIFTY, MIDCP NIFTY &amp; NEXT 50 with exact <strong class="text-amber-400">🕒 Listed at Time</strong>, Risk:Reward &amp; 1-click Upstox API v2/v3 execution.
+                Formula-qualified Call (CE) &amp; Put (PE) Buy / Sell option setups across NIFTY, BANK NIFTY, FIN NIFTY, MIDCP NIFTY, NEXT 50 &amp; SENSEX (09:20 AM IST+) with <strong class="text-emerald-300">Entry</strong>, <strong class="text-cyan-300">Exit / Targets</strong>, <strong class="text-rose-300">Stop Loss</strong> &amp; <strong class="text-amber-400">🕒 Listed at Time</strong>.
               </p>
             </div>
 
             <!-- Quick Stats Pills -->
             <div class="flex items-center gap-2 flex-wrap font-mono text-xs">
               <span class="px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-bold">
-                Win Rate: 92.4%
+                Formula Qualified Only
               </span>
               <span class="px-3 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-bold">
-                Avg R:R: 1:2.85
+                Starts 09:20 AM IST
               </span>
               <span class="px-3 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">
-                Finwurl v4.2 Live
+                CE/PE Buy &amp; Sell
               </span>
             </div>
           </div>
@@ -2517,8 +2518,8 @@
             </div>
           </div>
 
-          <!-- Interactive Capital / Risk / Leverage / Time Machine Controls -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 pt-2 border-t border-[#1b2842]">
+          <!-- Interactive Capital / Risk / Leverage / Time Machine / Sort Controls -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 pt-2 border-t border-[#1b2842]">
             <label class="bg-[#070b14] p-2 rounded-lg border border-[#17233a] text-[10px] text-slate-400">
               <span>CAPITAL (₹)</span>
               <input id="c10-input-capital" type="number" value="100000" min="5000" step="10000" onchange="Claude10SkillsAgent.load(true)" class="mt-1 w-full bg-[#0d1424] border border-[#23324f] rounded px-2 py-1 text-white font-bold text-xs focus:outline-none focus:border-cyan-400">
@@ -2541,7 +2542,16 @@
             </label>
             <label class="bg-[#070b14] p-2 rounded-lg border border-[#17233a] text-[10px] text-amber-300">
               <span>🕰️ TIME MACHINE (IST)</span>
-              <input id="c10-input-timeslice" type="time" value="11:30" min="09:15" max="15:30" onchange="Claude10SkillsAgent.load(true)" class="mt-1 w-full bg-[#0d1424] border border-[#23324f] rounded px-2 py-1 text-amber-200 font-bold text-xs focus:outline-none focus:border-amber-400">
+              <input id="c10-input-timeslice" type="time" value="11:30" min="09:20" max="15:30" onchange="Claude10SkillsAgent.load(true)" class="mt-1 w-full bg-[#0d1424] border border-[#23324f] rounded px-2 py-1 text-amber-200 font-bold text-xs focus:outline-none focus:border-amber-400">
+            </label>
+            <label class="bg-[#070b14] p-2 rounded-lg border border-cyan-500/30 text-[10px] text-cyan-300">
+              <span>🕒 SORT ORDER</span>
+              <select id="c10-input-sort" onchange="Claude10SkillsAgent.renderAll()" class="mt-1 w-full bg-[#0d1424] border border-[#23324f] rounded px-2 py-1 text-cyan-200 font-bold text-xs focus:outline-none focus:border-cyan-400 cursor-pointer">
+                <option value="listed_asc" selected>Listed At Time (A→Z Earliest)</option>
+                <option value="listed_desc">Listed At Time (Z→A Latest)</option>
+                <option value="symbol_asc">Symbol Name (A → Z)</option>
+                <option value="score_desc">AI Confidence (Highest)</option>
+              </select>
             </label>
             <div class="bg-[#070b14] p-2 rounded-lg border border-[#17233a] flex flex-col justify-between">
               <span class="text-[10px] text-slate-400">SYSTEM SENTINEL</span>
@@ -2559,12 +2569,12 @@
         <!-- Top BUY & Top SELL Stock Recommendations (Side by Side) -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
           <div class="card bg-[#0d111a] border border-emerald-500/30 rounded-xl overflow-hidden shadow-xl">
-            <div class="bg-[#111a29] px-4 py-2.5 border-b border-emerald-500/20 flex items-center justify-between">
+            <div class="bg-[#111a29] px-4 py-2.5 border-b border-emerald-500/20 flex items-center justify-between gap-2 flex-wrap">
               <span class="font-black text-sm text-emerald-400 flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                AI RECOMMENDED STOCKS TO BUY (TOP 10)
+                AI RECOMMENDED STOCKS TO BUY (UP TO 15)
               </span>
-              <span class="text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">Locked Entry + Position Size</span>
+              <span id="c10-buy-sort-badge" class="text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">Listed At A→Z • Locked Entry</span>
             </div>
             <div id="c10-buy-list" class="p-3 space-y-2 max-h-[520px] overflow-y-auto">
               <div class="text-xs text-slate-400 p-4 text-center">Loading AI BUY picks...</div>
@@ -2572,12 +2582,12 @@
           </div>
 
           <div class="card bg-[#0d111a] border border-rose-500/30 rounded-xl overflow-hidden shadow-xl">
-            <div class="bg-[#111a29] px-4 py-2.5 border-b border-rose-500/20 flex items-center justify-between">
+            <div class="bg-[#111a29] px-4 py-2.5 border-b border-rose-500/20 flex items-center justify-between gap-2 flex-wrap">
               <span class="font-black text-sm text-rose-400 flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
-                AI RECOMMENDED STOCKS TO SELL / SHORT (TOP 10)
+                AI RECOMMENDED STOCKS TO SELL / SHORT (UP TO 15)
               </span>
-              <span class="text-[10px] text-rose-300 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">Locked Entry + Position Size</span>
+              <span id="c10-sell-sort-badge" class="text-[10px] text-rose-300 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">Listed At A→Z • Locked Entry</span>
             </div>
             <div id="c10-sell-list" class="p-3 space-y-2 max-h-[520px] overflow-y-auto">
               <div class="text-xs text-slate-400 p-4 text-center">Loading AI SELL picks...</div>
@@ -2712,7 +2722,7 @@
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold">PRO QUANT WORKBENCH</span>
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span class="text-[10px] text-emerald-400 font-bold">Formula Eligible Stocks Only (Max 2/Scanner)</span>
+              <span class="text-[10px] text-emerald-400 font-bold">218 F&amp;O Candidates Live</span>
             </div>
             <h2 class="text-base md:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-amber-300 mt-1">
               Custom Tables &amp; Multi-Factor Screener
@@ -2875,12 +2885,28 @@
                   <span>Sector</span>
                 </label>
                 <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-[#202c44] cursor-pointer hover:border-cyan-500/40">
+                  <input type="checkbox" id="col-sector-pct" checked onchange="toggleCustomColumn('sector_pct')" class="accent-cyan-400">
+                  <span>Sector %</span>
+                </label>
+                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-[#202c44] cursor-pointer hover:border-cyan-500/40">
+                  <input type="checkbox" id="col-listed-at" checked onchange="toggleCustomColumn('listed_at')" class="accent-cyan-400">
+                  <span>Listed At Time</span>
+                </label>
+                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-[#202c44] cursor-pointer hover:border-cyan-500/40">
+                  <input type="checkbox" id="col-scanner-rec" checked onchange="toggleCustomColumn('scanner_rec')" class="accent-cyan-400">
+                  <span>Scanner Rec</span>
+                </label>
+                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-[#202c44] cursor-pointer hover:border-cyan-500/40">
                   <input type="checkbox" id="col-price" checked onchange="toggleCustomColumn('price')" class="accent-cyan-400">
                   <span>Price (₹)</span>
                 </label>
                 <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-[#202c44] cursor-pointer hover:border-cyan-500/40">
                   <input type="checkbox" id="col-pct" checked onchange="toggleCustomColumn('pct_change')" class="accent-cyan-400">
                   <span>Change %</span>
+                </label>
+                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-[#202c44] cursor-pointer hover:border-cyan-500/40">
+                  <input type="checkbox" id="col-bid-ask" checked onchange="toggleCustomColumn('bid_ask_ratio')" class="accent-cyan-400">
+                  <span>Bid/Ask Ratio</span>
                 </label>
                 <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-[#202c44] cursor-pointer hover:border-cyan-500/40">
                   <input type="checkbox" id="col-rvol" checked onchange="toggleCustomColumn('rvol')" class="accent-cyan-400">
@@ -2913,18 +2939,6 @@
                 <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-[#202c44] cursor-pointer hover:border-cyan-500/40">
                   <input type="checkbox" id="col-actions" checked onchange="toggleCustomColumn('actions')" class="accent-cyan-400">
                   <span>1-Click Orders</span>
-                </label>
-                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-amber-500/30 cursor-pointer hover:border-amber-500/60">
-                  <input type="checkbox" id="col-listed-at" checked onchange="toggleCustomColumn('listed_at')" class="accent-amber-400">
-                  <span class="text-amber-300">🕒 Listed At</span>
-                </label>
-                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-purple-500/30 cursor-pointer hover:border-purple-500/60">
-                  <input type="checkbox" id="col-bid-ask" checked onchange="toggleCustomColumn('bid_ask')" class="accent-purple-400">
-                  <span class="text-purple-300">⚖️ Bid/Ask</span>
-                </label>
-                <label class="flex items-center gap-1 px-2 py-1 rounded bg-[#0e1424] border border-cyan-500/30 cursor-pointer hover:border-cyan-500/60">
-                  <input type="checkbox" id="col-scanner" checked onchange="toggleCustomColumn('scanner')" class="accent-cyan-400">
-                  <span class="text-cyan-300">🔬 Scanner</span>
                 </label>
               </div>
             </div>
@@ -3493,7 +3507,7 @@
               <li class="text-amber-300 font-bold">&check; UNLIMITED Upstox API v2/v3 WebSocket Streaming</li>
               <li class="text-amber-300 font-bold">&check; 1-Click Fyers Live Direct Order Execution</li>
               <li class="text-amber-300 font-bold">&check; 8 High-Conviction Claude AI Automated Setups</li>
-              <li class="text-amber-300 font-bold">&check; Live Netlify Cloud Server API Integration (netlify.app)</li>
+              <li class="text-amber-300 font-bold">&check; Live Render Cloud API Integration (onrender.com)</li>
               <li class="text-amber-300 font-bold">&check; Algorithmic Parameter &amp; Multiplier Overrides</li>
               <li class="text-amber-300 font-bold">&check; Multi-Tenant User Management &amp; Token Reset</li>
             </ul>
@@ -3526,8 +3540,8 @@
               <div class="text-[10px] text-cyan-400 mt-1">&bull; Expires: 18h Remaining</div>
             </div>
             <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
-              <div class="text-[10px] text-slate-400">Netlify Cloud Hosting</div>
-              <div class="font-extrabold text-white text-sm mt-0.5">LIVE (netlify.app)</div>
+              <div class="text-[10px] text-slate-400">Render Cloud Hosting</div>
+              <div class="font-extrabold text-white text-sm mt-0.5">LIVE (onrender.com)</div>
               <div class="text-[10px] text-purple-300 mt-1">&bull; srv-dbn07pu417fc739vb530</div>
             </div>
             <div class="bg-[#06080e] p-3 rounded-lg border border-[#172033]">
@@ -4460,40 +4474,40 @@
           <div>
             <div class="flex items-center gap-2 flex-wrap">
               <h2 class="text-lg font-bold text-white">Market Liquidity &bull; Most Active by Turnover &amp; Value (Top Traded)</h2>
-              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold text-[10px] border border-purple-500/40">CLAUDE AI TRADE SKILL &bull; TOP 10</span>
+              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold text-[10px] border border-purple-500/40">CLAUDE AI TRADE SKILL &bull; UP TO 15</span>
             </div>
             <p class="text-xs text-slate-300 mt-1 max-w-2xl font-sans">
-              Identifies the elite <span class="text-amber-400 font-bold">Top 10 Stocks</span> commanding the highest monetary turnover, deepest market liquidity, and lowest slippage for large lot institutional execution &mdash; strictly ranked as per the <span class="text-cyan-300 font-bold">Claude AI Trade Skill Formula</span> (Turnover Depth, Price Velocity, RVOL, HyperFlow&trade;, Delta, &amp; Smart Money Confluence).
+              Identifies up to <span class="text-amber-400 font-bold">15 Formula-Qualified Stocks</span> per side commanding high monetary turnover, deep market liquidity, and strict momentum confirmation &mdash; strictly filtered per the <span class="text-cyan-300 font-bold">Claude AI Trade Skill Formula</span> (Turnover Depth, Price Velocity, RVOL, Bid/Ask Depth, &amp; Confluence).
             </p>
           </div>
           <div class="text-right font-mono text-xs text-slate-400 shrink-0">
             <div>Algorithm: <span class="text-purple-400 font-bold">Claude AI Trade Skill</span></div>
-            <div>Strict Selection: <span class="text-emerald-400 font-bold">Top 10 Upside</span> &bull; <span class="text-rose-400 font-bold">Top 10 Downside</span></div>
+            <div>Strict Selection: <span class="text-emerald-400 font-bold">Up to 15 Upside</span> &bull; <span class="text-rose-400 font-bold">Up to 15 Downside</span></div>
           </div>
         </div>
 
-        <!-- Table 1: Most Active Upside Traded (Top 10) -->
+        <!-- Table 1: Most Active Upside Traded (Up to 15) -->
         <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl shadow-xl">
           <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between flex-wrap gap-2">
             <span class="font-bold text-sm text-emerald-400 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              Top 10 Stocks by Turnover &bull; Upside Momentum (Claude AI Trade Skill Longs)
+              Formula-Qualified Stocks by Turnover &bull; Upside Momentum (Up to 15)
             </span>
-            <span class="text-xs font-mono text-emerald-300 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/30">Top 10 Institutional Inflows</span>
+            <span class="text-xs font-mono text-emerald-300 bg-emerald-500/10 px-2.5 py-0.5 rounded border border-emerald-500/30">Institutional Inflows</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-top-traded"></table>
           </div>
         </div>
 
-        <!-- Table 2: Most Active Downside Traded (Top 10) -->
+        <!-- Table 2: Most Active Downside Traded (Up to 15) -->
         <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl shadow-xl">
           <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between flex-wrap gap-2">
             <span class="font-bold text-sm text-rose-400 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
-              Top 10 Stocks by Turnover &bull; Downside Distribution (Claude AI Trade Skill Shorts)
+              Formula-Qualified Stocks by Turnover &bull; Downside Distribution (Up to 15)
             </span>
-            <span class="text-xs font-mono text-rose-300 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/30">Top 10 Institutional Outflows</span>
+            <span class="text-xs font-mono text-rose-300 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/30">Institutional Outflows</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-top-traded-downside"></table>
@@ -5847,8 +5861,8 @@
 
     function sortByListedAtNewestFirstAtoZ(arr) {
       return [...(arr || [])].sort((a, b) => {
-        const rawA = a.listed_at || a.listedAt || '09:17:00';
-        const rawB = b.listed_at || b.listedAt || '09:17:00';
+        const rawA = a.listed_at || a.listedAt || '09:20:00';
+        const rawB = b.listed_at || b.listedAt || '09:20:00';
         const secA = typeof timeStringToSec === 'function' ? timeStringToSec(rawA) : 0;
         const secB = typeof timeStringToSec === 'function' ? timeStringToSec(rawB) : 0;
         if (secB !== secA) return secB - secA; // Newest listed stock UP (top) -> oldest listed stock DOWN (bottom)
@@ -5871,158 +5885,219 @@
         : -pct * 12 + normLogRvol(s) * 4 + (1 - ba) * 14 + Math.min(40, Math.sqrt(Math.max(0, turn)) * 2) + ai * 0.4 + adx * 0.35;
     }
 
+    const _stockRangePos = (s) => {
+      const hi = Number(s.day_high) || Number(s.price) || 1;
+      const lo = Number(s.day_low) || Number(s.price) || 1;
+      const span = Math.max(0.05, hi - lo);
+      return Math.max(0, Math.min(1, ((Number(s.price) || lo) - lo) / span));
+    };
+
+    // Unified System Formula Definitions (0..15 eligible stocks per scanner — never pads non-matching stocks)
+    const SCANNER_FORMULA_DEFS = [
+      {
+        key: 'strong_bullish', label: 'Strong Bull', side: 'BUY',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const rvol = Number(s.rvol) || 1;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          const adx = Number(s.adx) || 25;
+          return pct >= 1.25 && rvol >= 1.15 && price >= atp * 0.999 && _stockRangePos(s) >= 0.55 && adx >= 22;
+        },
+        score: (s) => (s.formula_code === 'STRONG_ORB' ? 120 : 0) + (Number(s.adx) || 25) * 1.4 + Math.abs(Number(s.pct_change) || 0) * 10 + _stockRangePos(s) * 30
+      },
+      {
+        key: 'strong_bearish', label: 'Strong Bear', side: 'SELL',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const rvol = Number(s.rvol) || 1;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          const adx = Number(s.adx) || 25;
+          return pct <= -1.25 && rvol >= 1.15 && price <= atp * 1.001 && _stockRangePos(s) <= 0.45 && adx >= 22;
+        },
+        score: (s) => (s.formula_code === 'STRONG_ORB' ? 120 : 0) + (Number(s.adx) || 25) * 1.4 + Math.abs(Number(s.pct_change) || 0) * 10 + (1 - _stockRangePos(s)) * 30
+      },
+      {
+        key: 'sonic_bullish', label: 'Pulse Bull', side: 'BUY',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const rvol = Number(s.rvol) || 1;
+          const oi = Number(s.oi_chg_pct) || 0;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          return pct >= 0.80 && rvol >= 1.15 && (oi >= 2.0 || s.buildup === 'Long Buildup' || s.buildup === 'Short Covering') && price >= atp * 0.998;
+        },
+        score: (s) => (s.formula_code === 'SONIC_RVOL' ? 120 : 0) + (Number(s.rvol) || 1) * 1.4 + Math.abs(Number(s.oi_chg_pct) || 0) * 3.8 + 25
+      },
+      {
+        key: 'sonic_bearish', label: 'Pulse Bear', side: 'SELL',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const rvol = Number(s.rvol) || 1;
+          const oi = Number(s.oi_chg_pct) || 0;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          return pct <= -0.80 && rvol >= 1.15 && (Math.abs(oi) >= 2.0 || s.buildup === 'Short Buildup' || s.buildup === 'Long Unwinding') && price <= atp * 1.002;
+        },
+        score: (s) => (s.formula_code === 'SONIC_RVOL' ? 120 : 0) + (Number(s.rvol) || 1) * 1.4 + Math.abs(Number(s.oi_chg_pct) || 0) * 3.8 + 25
+      },
+      {
+        key: 'titan_bullish', label: 'Flow Bull', side: 'BUY',
+        match: (s) => (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) >= 1.45 && (Number(s.delta) || 0) > 20000,
+        score: (s) => (s.formula_code === 'TITAN_WHALE' ? 140 : 0) + (Number(s.bid_ask_ratio) || 1) * 35 + Math.min(40, Math.sqrt(Math.max(0, Number(s.turnover_cr) || 0)) * 2.2) + Math.min(30, Math.abs(Number(s.delta) || 0) / 50000)
+      },
+      {
+        key: 'titan_bearish', label: 'Flow Bear', side: 'SELL',
+        match: (s) => (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) <= 0.72 && (Number(s.delta) || 0) < -20000,
+        score: (s) => (s.formula_code === 'TITAN_WHALE' ? 140 : 0) + (1 / Math.max(0.15, Number(s.bid_ask_ratio) || 1)) * 35 + Math.min(40, Math.sqrt(Math.max(0, Number(s.turnover_cr) || 0)) * 2.2) + Math.min(30, Math.abs(Number(s.delta) || 0) / 50000)
+      },
+      {
+        key: 'quant_elite_bullish', label: 'Elite Bull', side: 'BUY',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const rsi = Number(s.rsi) || 55;
+          const ai = Number(s.aiScore || s.hyperflow || 62);
+          const adx = Number(s.adx) || 25;
+          return pct >= 0.50 && pct <= 4.5 && rsi >= 52 && rsi <= 76 && (Boolean(s.squeeze_on) || adx >= 23) && ai >= 62;
+        },
+        score: (s) => (s.squeeze_on ? 60 : 0) + (Number(s.adx) || 25) * 2.6 + (Math.abs(Number(s.pct_change) || 0) <= 4.2 ? 45 : 0) + 32 + (Number(s.aiScore || s.hyperflow) || 60) * 0.5
+      },
+      {
+        key: 'quant_elite_bearish', label: 'Elite Bear', side: 'SELL',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const rsi = Number(s.rsi) || 45;
+          const ai = Number(s.aiScore || s.hyperflow || 60);
+          const adx = Number(s.adx) || 25;
+          return pct <= -0.50 && pct >= -4.5 && rsi >= 24 && rsi <= 48 && (Boolean(s.squeeze_on) || adx >= 23) && ai >= 60;
+        },
+        score: (s) => (s.squeeze_on ? 60 : 0) + (Number(s.adx) || 25) * 2.6 + (Math.abs(Number(s.pct_change) || 0) <= 4.2 ? 45 : 0) + 32 + (Number(s.aiScore || s.hyperflow) || 60) * 0.5
+      },
+      {
+        key: 'quant_elite_pro_bullish', label: 'Elite Pro ▲', side: 'BUY',
+        match: (s) => (Number(s.pct_change) || 0) >= 0.55 && (Number(s.pcr) || 1) >= 1.22 && ((Number(s.bid_ask_ratio) || 1) >= 1.25 || s.buildup === 'Short Covering'),
+        score: (s) => ((Number(s.pcr) || 1) >= 1.2 ? 55 : 0) + (Number(s.pcr) || 1) * 45 + (s.buildup === 'Short Covering' ? 40 : 0) + (Number(s.aiScore || s.hyperflow) || 60) * 0.55
+      },
+      {
+        key: 'quant_elite_pro_bearish', label: 'Elite Pro ▼', side: 'SELL',
+        match: (s) => (Number(s.pct_change) || 0) <= -0.55 && (Number(s.pcr) || 1) <= 0.85 && ((Number(s.bid_ask_ratio) || 1) <= 0.82 || s.buildup === 'Short Buildup'),
+        score: (s) => ((Number(s.pcr) || 1) <= 0.85 ? 55 : 0) + Math.max(0, 2.2 - (Number(s.pcr) || 1)) * 45 + (s.buildup === 'Short Buildup' ? 40 : 0) + (Number(s.aiScore || s.hyperflow) || 60) * 0.55
+      },
+      {
+        key: 'titan_cash_bullish', label: 'Flow Cash ▲', side: 'BUY',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const turn = Number(s.turnover_cr) || 0;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          return pct >= 0.50 && pct <= 3.5 && turn >= 90 && price >= atp * 0.999 && (Number(s.bid_ask_ratio) || 1) >= 1.20;
+        },
+        score: (s) => {
+          const turn = Number(s.turnover_cr) || 0;
+          const vwapGap = Math.abs(Number(s.price) - Number(s.atp || s.price)) / Math.max(1, Number(s.price) || 1);
+          return 70 + Math.min(85, Math.sqrt(Math.max(0, turn)) * 4.5) + Math.max(0, 30 - vwapGap * 1200) + (Number(s.aiScore || s.hyperflow) || 60) * 0.45;
+        }
+      },
+      {
+        key: 'titan_cash_bearish', label: 'Flow Cash ▼', side: 'SELL',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const turn = Number(s.turnover_cr) || 0;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          return pct <= -0.50 && pct >= -3.5 && turn >= 90 && price <= atp * 1.001 && (Number(s.bid_ask_ratio) || 1) <= 0.85;
+        },
+        score: (s) => {
+          const turn = Number(s.turnover_cr) || 0;
+          const vwapGap = Math.abs(Number(s.price) - Number(s.atp || s.price)) / Math.max(1, Number(s.price) || 1);
+          return 70 + Math.min(85, Math.sqrt(Math.max(0, turn)) * 4.5) + Math.max(0, 30 - vwapGap * 1200) + (Number(s.aiScore || s.hyperflow) || 60) * 0.45;
+        }
+      },
+      {
+        key: 'best_momentum_upside', label: 'Momentum ▲', side: 'BUY',
+        match: (s) => (Number(s.pct_change) || 0) >= 1.50 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 30 && (Number(s.bid_ask_ratio) || 1) >= 1.15,
+        score: (s) => (Number(s.pct_change) || 0) * 20 + _stockRangePos(s) * 8
+      },
+      {
+        key: 'best_momentum_downside', label: 'Momentum ▼', side: 'SELL',
+        match: (s) => (Number(s.pct_change) || 0) <= -1.50 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 30 && (Number(s.bid_ask_ratio) || 1) <= 0.88,
+        score: (s) => -(Number(s.pct_change) || 0) * 20 + (1 - _stockRangePos(s)) * 8
+      }
+    ];
+
+    function getStockScannerRecommendations(stock) {
+      if (!stock || !isPureEquityStock(stock)) return [];
+      if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) return [];
+      const recs = [];
+      SCANNER_FORMULA_DEFS.forEach(def => {
+        try {
+          if (def.match(stock)) {
+            recs.push({ key: def.key, label: def.label, side: def.side });
+          }
+        } catch (e) {}
+      });
+      // Also check High Liquidity Claude AI Formula
+      const pct = Number(stock.pct_change) || 0;
+      const turn = Number(stock.turnover_cr) || 0;
+      const rvol = Number(stock.rvol) || 1;
+      const ba = Number(stock.bid_ask_ratio) || 1;
+      const price = Number(stock.price) || 0;
+      const atp = Number(stock.atp) || price;
+      if (pct >= 0.55 && turn >= 100 && rvol >= 1.15 && price >= atp * 0.998 && ba >= 1.15) {
+        recs.push({ key: 'liquidity_bull', label: 'Liquidity ▲', side: 'BUY' });
+      } else if (pct <= -0.55 && turn >= 100 && rvol >= 1.15 && price <= atp * 1.002 && ba <= 0.88) {
+        recs.push({ key: 'liquidity_bear', label: 'Liquidity ▼', side: 'SELL' });
+      }
+      return recs;
+    }
+
+    function renderScannerRecBadges(stock) {
+      const recs = getStockScannerRecommendations(stock);
+      if (!recs || recs.length === 0) {
+        return `<span class="px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-500 border border-slate-700/70 text-[9.5px] font-mono">No Formula Match</span>`;
+      }
+      const shown = recs.slice(0, 3).map(r => {
+        const cls = r.side === 'BUY'
+          ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
+          : 'bg-rose-500/15 text-rose-300 border-rose-500/35';
+        return `<span class="px-1.5 py-0.2 rounded border text-[9px] font-bold whitespace-nowrap ${cls}">${r.label}</span>`;
+      }).join('');
+      const more = recs.length > 3 ? `<span class="px-1 py-0.2 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[9px] font-bold">+${recs.length - 3}</span>` : '';
+      return `<div class="flex flex-wrap items-center gap-1 max-w-[210px]" title="${recs.map(r => r.label).join(', ')}">${shown}${more}</div>`;
+    }
+
     function buildDistinctFormulaScanners(equityPool) {
       const pool = (equityPool || []).filter(isPureEquityStock);
-      const bull = pool.filter(s => (Number(s.pct_change) || 0) >= 0);
-      const bear = pool.filter(s => (Number(s.pct_change) || 0) < 0);
 
-      const rangePos = (s) => {
-        const hi = Number(s.day_high) || Number(s.price) || 1;
-        const lo = Number(s.day_low) || Number(s.price) || 1;
-        const span = Math.max(0.05, hi - lo);
-        return Math.max(0, Math.min(1, ((Number(s.price) || lo) - lo) / span));
-      };
-
-      // SCAN_START_IST = 09:17:00 — stocks listed before this are excluded
-      const SCAN_START_SEC = 9 * 3600 + 17 * 60; // 09:17:00 IST
-      const timeToSec = (t) => {
-        if (!t) return 0;
-        const parts = String(t).split(':').map(Number);
-        return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
-      };
-      // Filter: stock must have listed_at >= 09:17:00 IST
-      const isAfterScanStart = (s) => {
-        const lt = s.listed_at || s.listedAt || '';
-        if (!lt) return true; // allow if no listed_at set yet
-        return timeToSec(lt) >= SCAN_START_SEC;
-      };
-      // pickEligible: returns ALL stocks that pass the formula minimum score
-      // AND were listed at or after 09:17:00 IST (scan start).
-      // NO artificial cap — if 5 pass, show 5; if 10 pass, show 10.
-      const pickEligible = (arr, scoreFn, minScore) => {
-        const minSc = minScore || 0;
-        return sortByListedAtNewestFirstAtoZ(
-          [...arr]
-            .map(s => ({ s, sc: scoreFn(s) }))
-            .filter(({ s, sc }) => sc >= minSc && isAfterScanStart(s))
-            .sort((a, b) => b.sc - a.sc)
-            // ← NO .slice() here: all eligible stocks shown
-            .map(({ s }) => s)
+      // Strict Formula Picker: ONLY shows stocks that genuinely qualify (0..15 stocks — never forces or pads)
+      const pickEligibleUpTo15 = (arr, filterFn, scoreFn) =>
+        sortByListedAtNewestFirstAtoZ(
+          arr.filter(filterFn).sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, 15)
         );
-      };
-      // pickEligible replaces old pickTop10/pickTop2 — no artificial cap.
-      // Legacy alias for non-scanner tables (home top-traded, etc.)
-      const pickTop10 = (arr, scoreFn) =>
-        sortByListedAtNewestFirstAtoZ([...arr].sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, 10));
 
-      // 1. Muhurat Strong (ORB 15m Breakout + ADX Trend + Day-Range Extension)
-      const scoreStrong = (isBull) => (s) =>
-        (s.formula_code === 'STRONG_ORB' ? 120 : 0) +
-        (Number(s.adx) || 25) * 1.4 +
-        Math.abs(Number(s.pct_change) || 0) * 10 +
-        (isBull ? rangePos(s) : (1 - rangePos(s))) * 30;
+      const out = {};
+      SCANNER_FORMULA_DEFS.forEach(def => {
+        out[def.key] = pickEligibleUpTo15(pool, def.match, def.score);
+      });
 
-      // 2. Muhurat Pulse (Relative Volume Shock + OI Spike + Cycle Confirmation)
-      const scorePulse = (isBull) => (s) =>
-        (s.formula_code === 'SONIC_RVOL' ? 120 : 0) +
-        (Number(s.rvol) || 1) * 1.4 +
-        Math.abs(Number(s.oi_chg_pct) || 0) * 3.8 +
-        ((isBull && (s.buildup === 'Long Buildup' || s.buildup === 'Short Covering')) ||
-        (!isBull && (s.buildup === 'Short Buildup' || s.buildup === 'Long Unwinding')) ? 25 : 0);
+      const momUpDef = SCANNER_FORMULA_DEFS.find(d => d.key === 'best_momentum_upside');
+      const momDnDef = SCANNER_FORMULA_DEFS.find(d => d.key === 'best_momentum_downside');
+      const pulseUpDef = SCANNER_FORMULA_DEFS.find(d => d.key === 'sonic_bullish');
 
-      // 3. Muhurat Flow (Institutional Whales + Order-Book Skew + Delta)
-      const scoreFlow = (isBull) => (s) =>
-        (s.formula_code === 'TITAN_WHALE' ? 140 : 0) +
-        (isBull ? (Number(s.bid_ask_ratio) || 1) * 35 : (1 / Math.max(0.15, Number(s.bid_ask_ratio) || 1)) * 35) +
-        Math.min(40, Math.sqrt(Math.max(0, Number(s.turnover_cr) || 0)) * 2.2) +
-        Math.min(30, Math.abs(Number(s.delta) || 0) / 50000);
-
-      // 4. Muhurat Elite (3m Volatility Squeeze Coil + ADX + RSI Sweet Spot)
-      const scoreElite = (isBull) => (s) => {
-        const apct = Math.abs(Number(s.pct_change) || 0);
-        const rsi = Number(s.rsi) || 50;
-        const rsiFit = isBull ? (rsi >= 52 && rsi <= 74 ? 32 : 0) : (rsi >= 26 && rsi <= 48 ? 32 : 0);
-        return (
-          (s.squeeze_on ? 60 : 0) +
-          (Number(s.adx) || 25) * 2.6 +
-          (apct >= 0.35 && apct <= 4.2 ? 45 : 0) +
-          rsiFit +
-          (Number(s.aiScore) || 60) * 0.5
-        );
-      };
-
-      // 5. Muhurat Elite Pro (6m Waves + Options PCR Floor/Ceiling Divergence)
-      const scoreElitePro = (isBull) => (s) => {
-        const pcr = Number(s.pcr) || 1.0;
-        return isBull
-          ? (pcr >= 1.2 ? 55 : 0) + pcr * 45 + (s.buildup === 'Short Covering' ? 40 : 0) + (Number(s.aiScore) || 60) * 0.55
-          : (pcr <= 0.85 ? 55 : 0) + Math.max(0, 2.2 - pcr) * 45 + (s.buildup === 'Short Buildup' ? 40 : 0) + (Number(s.aiScore) || 60) * 0.55;
-      };
-
-      // 6. Muhurat Flow Cash (Institutional Delivery Value & Controlled VWAP Accumulation)
-      const scoreFlowCash = () => (s) => {
-        const turn = Number(s.turnover_cr) || 0;
-        const apct = Math.abs(Number(s.pct_change) || 0);
-        const vwapGap = Math.abs(Number(s.price) - Number(s.atp || s.price)) / Math.max(1, Number(s.price) || 1);
-        return (
-          (turn >= 25 && apct <= 3.2 ? 70 : 0) +
-          Math.min(85, Math.sqrt(Math.max(0, turn)) * 4.5) +
-          Math.max(0, 30 - vwapGap * 1200) +
-          (Number(s.aiScore) || 60) * 0.45
-        );
-      };
-
-      // 7. Top Momentum (Pure % Intraday Price Velocity Gainers & Losers)
-      const scorePureMomentum = (isBull) => (s) =>
-        (isBull ? (Number(s.pct_change) || 0) : -(Number(s.pct_change) || 0)) * 20 +
-        (isBull ? rangePos(s) : (1 - rangePos(s))) * 8;
-
-      // 8. Market Liquidity (Pure Institutional Monetary Turnover Rs Cr)
-      const scorePureLiquidity = (s) =>
-        (Number(s.turnover_cr) || 0) * 1.0 + Math.abs(Number(s.pct_change) || 0) * 12;
-
-      // ── Formula Eligibility Minimum Scores (scanner must pass threshold) ──
-      // Scanner 1: Strong Bullish (ORB) — min score 60 (ADX≥25 baseline = 35, need momentum)
-      const MIN_STRONG   = 60;   // ORB breakout momentum minimum
-      // Scanner 2: Sonic RVOL — min score 55 (RVOL≥1.5 = baseline ~2.1, need OI spike)
-      const MIN_SONIC    = 55;   // RVOL + OI surge minimum
-      // Scanner 3: Titan Whale — min score 50 (bid/ask heavy + turnover)
-      const MIN_TITAN    = 50;   // Whale institutional flow minimum
-      // Scanner 4: Quant Elite — min score 100 (ADX≥25=65, need squeeze or RSI fit)
-      const MIN_ELITE    = 100;  // Volatility squeeze coil minimum
-      // Scanner 5: Quant Elite Pro — min score 85 (PCR≥1.2=55, need buildup)
-      const MIN_ELITE_PRO= 85;   // PCR floor/ceiling divergence minimum
-      // Scanner 6: Titan Cash — min score 60 (turnover≥25cr + low vol)
-      const MIN_CASH     = 60;   // Institutional delivery turnover minimum
-      // Scanner 7: Top Momentum — min score 20 (pct≥1% = 20pts)
-      const MIN_MOMENTUM = 20;   // Pure velocity minimum
-      // Scanner 8: Liquidity — min score 50
-      const MIN_LIQUID   = 50;   // Institutional monetary turnover minimum
-
-      return {
-        strong_bullish:         pickEligible(bull, scoreStrong(true),   MIN_STRONG),
-        strong_bearish:         pickEligible(bear, scoreStrong(false),  MIN_STRONG),
-        sonic_bullish:          pickEligible(bull, scorePulse(true),    MIN_SONIC),
-        sonic_bearish:          pickEligible(bear, scorePulse(false),   MIN_SONIC),
-        titan_bullish:          pickEligible(bull, scoreFlow(true),     MIN_TITAN),
-        titan_bearish:          pickEligible(bear, scoreFlow(false),    MIN_TITAN),
-        quant_elite_bullish:    pickEligible(bull, scoreElite(true),    MIN_ELITE),
-        quant_elite_bearish:    pickEligible(bear, scoreElite(false),   MIN_ELITE),
-        quant_elite_pro_bullish:pickEligible(bull, scoreElitePro(true), MIN_ELITE_PRO),
-        quant_elite_pro_bearish:pickEligible(bear, scoreElitePro(false),MIN_ELITE_PRO),
-        titan_cash_bullish:     pickEligible(bull, scoreFlowCash(),     MIN_CASH),
-        titan_cash_bearish:     pickEligible(bear, scoreFlowCash(),     MIN_CASH),
-        best_momentum_upside:   pickEligible(bull, scorePureMomentum(true),  MIN_MOMENTUM),
-        best_momentum_downside: pickEligible(bear, scorePureMomentum(false), MIN_MOMENTUM),
-        top_gainer:             pickEligible(bull, scorePureMomentum(true),  MIN_MOMENTUM),
-        top_loser:              pickEligible(bear, scorePureMomentum(false), MIN_MOMENTUM),
-        market_pulse:           pickEligible(bull, scorePulse(true),    MIN_SONIC),
-        top_traded_value:       pickEligible(pool, scorePureLiquidity,  MIN_LIQUID),
-        most_active_volume: sortByListedAtNewestFirstAtoZ([
-          ...pickEligible(bull, (s) => Number(s.volume) || 0, 100000),
-          ...pickEligible(bear, (s) => Number(s.volume) || 0, 100000)
-        ])
-      };
+      out.top_gainer = pickEligibleUpTo15(pool, momUpDef.match, momUpDef.score);
+      out.top_loser = pickEligibleUpTo15(pool, momDnDef.match, momDnDef.score);
+      out.market_pulse = pickEligibleUpTo15(pool, pulseUpDef.match, pulseUpDef.score);
+      out.top_traded_value = pickEligibleUpTo15(
+        pool,
+        (s) => (Number(s.turnover_cr) || 0) >= 180 && Math.abs(Number(s.pct_change) || 0) >= 0.60 && (Number(s.rvol) || 1) >= 1.15,
+        (s) => (Number(s.turnover_cr) || 0) * 1.0 + Math.abs(Number(s.pct_change) || 0) * 12
+      );
+      out.most_active_volume = sortByListedAtNewestFirstAtoZ([
+        ...pickEligibleUpTo15(pool, (s) => (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 120 && (Number(s.rvol) || 1) >= 1.15, (s) => Number(s.volume) || 0),
+        ...pickEligibleUpTo15(pool, (s) => (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 120 && (Number(s.rvol) || 1) >= 1.15, (s) => Number(s.volume) || 0)
+      ]);
+      return out;
     }
 
     function sanitizeDataScannersUniverse() {
@@ -6040,9 +6115,9 @@
         Object.assign(DATA, distinct);
       }
       if (Array.isArray(DATA.cloud_ai_signals)) {
-        const cleanSig = DATA.cloud_ai_signals.filter(isPureEquityStock);
-        const sigBuy = cleanSig.filter(s => String(s.side || '').includes('BUY')).slice(0, 10);
-        const sigSell = cleanSig.filter(s => String(s.side || '').includes('SELL')).slice(0, 10);
+        const cleanSig = DATA.cloud_ai_signals.filter(s => isPureEquityStock(s) && Math.abs(Number(s.pct_change) || 0) >= 0.75);
+        const sigBuy = cleanSig.filter(s => String(s.side || '').includes('BUY') && (Number(s.bid_ask_ratio) || 1) >= 1.15).slice(0, 15);
+        const sigSell = cleanSig.filter(s => String(s.side || '').includes('SELL') && (Number(s.bid_ask_ratio) || 1) <= 0.90).slice(0, 15);
         DATA.cloud_ai_signals = sortByListedAtNewestFirstAtoZ([...sigBuy, ...sigSell]);
       }
       window._scannersDirty = false;
@@ -6303,8 +6378,12 @@
       sortDir: 'desc',
       columns: {
         sector: true,
+        sector_pct: true,
+        listed_at: true,
+        scanner_rec: true,
         price: true,
         pct_change: true,
+        bid_ask_ratio: true,
         rvol: true,
         volume: true,
         oi: true,
@@ -6312,9 +6391,6 @@
         atp: true,
         day_range: true,
         turnover: true,
-        listed_at: true,
-        bid_ask: true,
-        scanner: true,
         actions: true
       }
     };
@@ -6504,7 +6580,9 @@
         const saved = JSON.parse(localStorage.getItem('muhurat_custom_table_presets') || '[]');
         const target = saved.find(p => p.id === presetId);
         if (target && target.state) {
+          const defaultCols = Object.assign({}, customTableState.columns);
           Object.assign(customTableState, target.state);
+          customTableState.columns = Object.assign(defaultCols, target.state.columns || {});
           // Sync UI inputs
           const s = customTableState;
           if (document.getElementById('ct-search')) document.getElementById('ct-search').value = s.search || '';
@@ -6559,26 +6637,32 @@
         return;
       }
 
-      const headers = ['Symbol', 'Company', 'Sector', 'Sector_Pct', 'LTP_INR', 'Pct_Change', 'RVOL', 'Volume', 'Turnover_Cr', 'ATP_VWAP', 'OI_Contracts', 'OI_Chg_Pct', 'Buildup', 'Day_Low', 'Day_High', 'Listed_At', 'Bid_Ask_Ratio', 'Scanner_Name'];
-      const rows = filtered.map(s => [
-        s.symbol,
-        `"${(s.name || '').replace(/"/g, '""')}"`,
-        `"${(s.sector || '').replace(/"/g, '""')}"`,
-        s.price || 0,
-        s.pct_change || 0,
-        s.rvol || 1.0,
-        s.volume || 0,
-        s.turnover_cr || 0,
-        s.atp || 0,
-        s.oi_raw || 0,
-        s.oi_chg_pct || 0,
-        `"${(s.buildup_type || s.buildup || '').replace(/"/g, '""')}"`,
-        s.day_low || 0,
-        s.day_high || 0,
-        '"' + (s.listed_at || s.listedAt || '09:17:00').replace(/"/g, '""') + '"',
-        (s.bid_ask_ratio || 1.0).toFixed ? (s.bid_ask_ratio || 1.0).toFixed(2) : (s.bid_ask_ratio || 1.0),
-        '"' + (s.formula_name || s.formula_code || s.scanner_name || 'Strong Bullish').replace(/"/g, '""') + '"'
-      ]);
+      const headers = ['Symbol', 'Company', 'Sector', 'Sector_Pct', 'Listed_At_IST', 'Scanner_Recommendations', 'LTP_INR', 'Pct_Change', 'Bid_Ask_Ratio', 'RVOL', 'Volume', 'Turnover_Cr', 'ATP_VWAP', 'OI_Contracts', 'OI_Chg_Pct', 'Buildup', 'Day_Low', 'Day_High'];
+      const rows = filtered.map(s => {
+        const recs = (typeof getStockScannerRecommendations === 'function')
+          ? getStockScannerRecommendations(s).map(r => r.label).join(' | ') || 'None'
+          : 'None';
+        return [
+          s.symbol,
+          `"${(s.name || '').replace(/"/g, '""')}"`,
+          `"${(s.sector || '').replace(/"/g, '""')}"`,
+          Number(s.sector_pct || 0).toFixed(2),
+          `"${s.listed_at || '--'}"`,
+          `"${recs.replace(/"/g, '""')}"`,
+          s.price || 0,
+          s.pct_change || 0,
+          Number(s.bid_ask_ratio || 1.0).toFixed(2),
+          s.rvol || 1.0,
+          s.volume || 0,
+          s.turnover_cr || 0,
+          s.atp || 0,
+          s.oi_raw || 0,
+          s.oi_chg_pct || 0,
+          `"${(s.buildup_type || s.buildup || '').replace(/"/g, '""')}"`,
+          s.day_low || 0,
+          s.day_high || 0
+        ];
+      });
 
       const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
       const encodedUri = encodeURI(csvContent);
@@ -6593,36 +6677,8 @@
     function getFilteredCustomStocks() {
       if (typeof DATA === 'undefined' || !Array.isArray(DATA.all_stocks)) return [];
       const s = customTableState;
-      // Scanner eligibility: compute formula score for each stock and
-      // enforce scan start at 09:17:00 IST
-      const _SCAN_START = 9 * 3600 + 17 * 60; // 09:17:00
-      const _timeToSec = (t) => { if (!t) return 99999; const p = String(t).split(':').map(Number); return (p[0]||0)*3600+(p[1]||0)*60+(p[2]||0); };
-      const _hasValidScanTime = (stock) => {
-        const lt = stock.listed_at || stock.listedAt || '';
-        if (!lt) return true; // no listed_at = eligible
-        return _timeToSec(lt) >= _SCAN_START;
-      };
-      // Per-scanner formula eligibility
-      const _formulaEligible = (stock) => {
-        const pct = Number(stock.pct_change) || 0;
-        const rvol = Number(stock.rvol) || 1;
-        const bar = Number(stock.bid_ask_ratio) || 1;
-        const turn = Number(stock.turnover_cr) || 0;
-        const oiChg = Number(stock.oi_chg_pct) || 0;
-        const delta = Number(stock.delta) || 0;
-        const isBull = pct >= 0;
-        // Check formula_code first
-        const fc = (stock.formula_code || '').toUpperCase();
-        if (fc === 'STRONG_ORB')  return Math.abs(pct) >= 0.3 && rvol >= 1.1;
-        if (fc === 'SONIC_RVOL')  return rvol >= 1.5 && Math.abs(oiChg) >= 1.0;
-        if (fc === 'TITAN_WHALE') return (isBull ? bar >= 1.25 : bar <= 0.80) && turn >= 20;
-        // No formula_code: apply generic minimum qualification
-        // Stock must meet at least ONE of: rvol>=1.3, |pct|>=0.5, bar>=1.2 or <=0.8, oiChg>=2
-        return (rvol >= 1.3) || (Math.abs(pct) >= 0.5) || (bar >= 1.2 || bar <= 0.8) || (Math.abs(oiChg) >= 2);
-      };
 
-
-      let eligibleFiltered = DATA.all_stocks.filter(stock => {
+      return DATA.all_stocks.filter(stock => {
         // Search
         if (s.search) {
           const sym = (stock.symbol || '').toUpperCase();
@@ -6671,17 +6727,8 @@
         const turnover = Number(stock.turnover_cr) || 0;
         if (s.minTurnover > 0 && turnover < s.minTurnover) return false;
 
-        // ─ Scan time gate: must be listed at 09:17:00 IST or later ─
-        if (!_hasValidScanTime(stock)) return false;
-        // ─ Formula eligibility gate: must pass scanner formula ─
-        if (!_formulaEligible(stock)) return false;
-
         return true;
       });
-
-      // All eligible stocks shown — no per-scanner cap.
-      // If 5 pass the formula → show 5. If 10 pass → show 10. None pass → show none.
-      return eligibleFiltered;
     }
 
     function renderCustomTables() {
@@ -6705,8 +6752,12 @@
         </th>
       `;
       if (cols.sector) headerHTML += `<th class="p-2.5">SECTOR</th>`;
+      if (cols.sector_pct) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('sector_pct')">SECTOR % ${sortBy === 'sector_pct' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
+      if (cols.listed_at) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('listed_at')">LISTED AT ${sortBy === 'listed_at' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
+      if (cols.scanner_rec) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('scanner_rec')">SCANNER REC ${sortBy === 'scanner_rec' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
       if (cols.price) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('price')">LTP (₹) ${sortBy === 'price' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
       if (cols.pct_change) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('pct_change')">CHG % ${sortBy === 'pct_change' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
+      if (cols.bid_ask_ratio) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('bid_ask_ratio')">BID/ASK RATIO ${sortBy === 'bid_ask_ratio' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
       if (cols.rvol) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('rvol')">RVOL ${sortBy === 'rvol' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
       if (cols.volume) headerHTML += `<th class="p-2.5">VOLUME</th>`;
       if (cols.oi) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('oi_chg_pct')">OI CHG % ${sortBy === 'oi_chg_pct' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
@@ -6714,9 +6765,6 @@
       if (cols.atp) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('atp')">VWAP (ATP) ${sortBy === 'atp' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
       if (cols.day_range) headerHTML += `<th class="p-2.5">DAY HIGH / LOW</th>`;
       if (cols.turnover) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white" onclick="sortCustomTableBy('turnover_cr')">TURNOVER ${sortBy === 'turnover_cr' ? (sortDir === 'asc' ? '▲' : '▼') : ''}</th>`;
-      if (cols.listed_at) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white text-amber-300" onclick="sortCustomTableBy('listed_at')">LISTED AT ${sortBy === 'listed_at' ? (sortDir === 'asc' ? '&#9650;' : '&#9660;') : ''}</th>`;
-      if (cols.bid_ask) headerHTML += `<th class="p-2.5 cursor-pointer hover:text-white text-purple-300" onclick="sortCustomTableBy('bid_ask_ratio')">BID/ASK ${sortBy === 'bid_ask_ratio' ? (sortDir === 'asc' ? '&#9650;' : '&#9660;') : ''}</th>`;
-      if (cols.scanner) headerHTML += `<th class="p-2.5 text-cyan-300">SCANNER</th>`;
       if (cols.actions) headerHTML += `<th class="p-2.5 text-right">ACTION</th>`;
       theadRow.innerHTML = headerHTML;
 
@@ -6724,29 +6772,37 @@
       let filtered = getFilteredCustomStocks();
 
       filtered.sort((a, b) => {
-        let valA = a[sortBy];
-        let valB = b[sortBy];
-
         if (sortBy === 'symbol') {
-          valA = (a.symbol || '').toUpperCase();
-          valB = (b.symbol || '').toUpperCase();
+          const valA = (a.symbol || '').toUpperCase();
+          const valB = (b.symbol || '').toUpperCase();
           return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         }
+        if (sortBy === 'listed_at') {
+          const secA = typeof timeStringToSec === 'function' ? timeStringToSec(a.listed_at || a.listedAt || '09:20:00') : 0;
+          const secB = typeof timeStringToSec === 'function' ? timeStringToSec(b.listed_at || b.listedAt || '09:20:00') : 0;
+          return sortDir === 'asc' ? secA - secB : secB - secA;
+        }
+        if (sortBy === 'scanner_rec') {
+          const cntA = typeof getStockScannerRecommendations === 'function' ? getStockScannerRecommendations(a).length : 0;
+          const cntB = typeof getStockScannerRecommendations === 'function' ? getStockScannerRecommendations(b).length : 0;
+          return sortDir === 'asc' ? cntA - cntB : cntB - cntA;
+        }
 
-        valA = Number(valA) || 0;
-        valB = Number(valB) || 0;
+        const valA = Number(a[sortBy]) || 0;
+        const valB = Number(b[sortBy]) || 0;
         return sortDir === 'asc' ? valA - valB : valB - valA;
       });
 
       if (badge) {
         const total = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks) ? DATA.all_stocks.length : 218);
-        badge.textContent = `${filtered.length} Formula-Eligible Stocks (Scan: 09:17 IST)`;
+        badge.textContent = `Showing ${filtered.length} of ${total} Candidates`;
       }
 
       if (filtered.length === 0) {
+        const colSpan = 1 + Object.values(cols).filter(Boolean).length;
         tbody.innerHTML = `
           <tr>
-            <td colspan="12" class="p-8 text-center text-slate-400">
+            <td colspan="${colSpan}" class="p-8 text-center text-slate-400">
               <div class="text-base font-bold text-slate-300">No candidates match current multi-factor filters</div>
               <div class="text-xs text-slate-500 mt-1">Try broadening your search or resetting filters to default.</div>
               <button onclick="resetCustomTableFilters()" class="mt-3 px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-bold hover:bg-cyan-500/30">Reset Filters</button>
@@ -6760,6 +6816,8 @@
       filtered.forEach((stock, idx) => {
         const price = Number(stock.price) || 0;
         const pct = Number(stock.pct_change) || 0;
+        const secPct = Number(stock.sector_pct ?? (pct * 0.85)) || 0;
+        const baRatio = Number(stock.bid_ask_ratio) || 1.0;
         const rvol = Number(stock.rvol) || 1.0;
         const atp = Number(stock.atp) || price;
         const isUp = pct >= 0;
@@ -6767,6 +6825,9 @@
         const turnover = Number(stock.turnover_cr) || 0;
         const oiChg = Number(stock.oi_chg_pct) || 0;
         const buildup = normalizeCycleBuildup(stock.buildup, pct, oiChg, stock.bid_ask_ratio);
+        const listedTime = (!stock.listed_at || (typeof isTimeInFutureIST === 'function' && isTimeInFutureIST(stock.listed_at)))
+          ? (typeof sanitizeStockListedTime === 'function' ? sanitizeStockListedTime(stock, idx, !isUp, filtered.length || 20) : (stock.listed_at || '09:20:05'))
+          : stock.listed_at;
 
         rowsHTML += `
           <tr class="hover:bg-[#0c1220] transition group">
@@ -6786,7 +6847,32 @@
           rowsHTML += `
             <td class="p-2.5">
               <span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300 border border-slate-700 font-mono">${stock.sector || 'N/A'}</span>
-              <div class="${(() => { if (typeof DATA!=='undefined'&&Array.isArray(DATA.all_stocks)&&stock.sector){const _p=DATA.all_stocks.filter(x=>x.sector===stock.sector&&typeof x.pct_change==='number');if(_p.length>0){const _a=_p.reduce((a,x)=>a+x.pct_change,0)/_p.length;return _a>=0?'text-emerald-400':'text-rose-400';}}const _sp=Number(stock.sector_pct)||0;return _sp>=0?'text-emerald-400':'text-rose-400';})()}  text-[9px] font-bold mt-0.5">${(() => { if (typeof DATA!=='undefined'&&Array.isArray(DATA.all_stocks)&&stock.sector){const _p=DATA.all_stocks.filter(x=>x.sector===stock.sector&&typeof x.pct_change==='number');if(_p.length>0){const _a=_p.reduce((a,x)=>a+x.pct_change,0)/_p.length;return (_a>=0?'+':'')+_a.toFixed(2)+'%';}}const _sp=Number(stock.sector_pct)||0;return (_sp>=0?'+':'')+_sp.toFixed(2)+'%'; })()} Sector</div>
+            </td>
+          `;
+        }
+
+        if (cols.sector_pct) {
+          rowsHTML += `
+            <td class="p-2.5">
+              <span class="px-1.5 py-0.5 rounded font-bold text-[10.5px] ${secPct >= 0 ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'}">
+                ${secPct >= 0 ? '+' : ''}${secPct.toFixed(2)}%
+              </span>
+            </td>
+          `;
+        }
+
+        if (cols.listed_at) {
+          rowsHTML += `
+            <td class="p-2.5">
+              <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[10.5px] font-bold border border-cyan-500/20 whitespace-nowrap">🕒 ${listedTime}</span>
+            </td>
+          `;
+        }
+
+        if (cols.scanner_rec) {
+          rowsHTML += `
+            <td class="p-2.5">
+              ${typeof renderScannerRecBadges === 'function' ? renderScannerRecBadges(stock) : '<span class="text-slate-500">--</span>'}
             </td>
           `;
         }
@@ -6803,6 +6889,19 @@
               <span class="px-1.5 py-0.5 rounded font-bold text-[11px] ${isUp ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'}">
                 ${isUp ? '+' : ''}${pct.toFixed(2)}%
               </span>
+            </td>
+          `;
+        }
+
+        if (cols.bid_ask_ratio) {
+          const baBadge = baRatio >= 1.25
+            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+            : baRatio <= 0.80
+            ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+            : 'bg-slate-800 text-slate-300 border-slate-700';
+          rowsHTML += `
+            <td class="p-2.5">
+              <span class="px-2 py-0.5 rounded border text-[11px] font-bold ${baBadge}">${baRatio.toFixed(2)}x</span>
             </td>
           `;
         }
@@ -6876,73 +6975,6 @@
           rowsHTML += `
             <td class="p-2.5 font-bold ${turnover > 300 ? 'text-amber-300' : 'text-slate-300'}">
               ₹${turnover.toFixed(0)} Cr
-            </td>
-          `;
-        }
-
-        if (cols.listed_at) {
-          const listedTime = stock.listed_at || stock.listedAt || '09:17:00';
-          rowsHTML += `
-            <td class="p-2.5">
-              <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 font-mono">🕒 ${listedTime} IST</span>
-            </td>
-          `;
-        }
-
-        if (cols.bid_ask) {
-          const bar = Number(stock.bid_ask_ratio) || 1.0;
-          const isBidHeavy = bar >= 1.25;
-          const isAskHeavy = bar <= 0.80;
-          const dominanceTag = isBidHeavy ? 'Buyer Dom.' : (isAskHeavy ? 'Seller Press.' : 'Balanced');
-          const domColor = isBidHeavy ? 'text-emerald-300' : (isAskHeavy ? 'text-rose-300' : 'text-slate-400');
-          const barColor = isBidHeavy ? 'bg-emerald-500' : (isAskHeavy ? 'bg-rose-500' : 'bg-slate-500');
-          const bidW = Math.min(100, Math.round((bar / (bar + 1)) * 100));
-          rowsHTML += `
-            <td class="p-2.5 min-w-[110px]">
-              <div class="flex items-center gap-1 mb-0.5">
-                <span class="font-bold text-[11px] text-white">${bar.toFixed(2)}x</span>
-                <span class="text-[9px] font-bold ${domColor}">${dominanceTag}</span>
-              </div>
-              <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
-                <div class="${barColor} h-full inline-block" style="width:${bidW}%"></div>
-              </div>
-              <div class="text-[8px] text-slate-500 mt-0.5">Bid ${bidW}% / Ask ${100-bidW}%</div>
-            </td>
-          `;
-        }
-
-        if (cols.scanner) {
-          const scannerName = (() => {
-            if (stock.formula_name) return stock.formula_name;
-            if (stock.formula_code) return stock.formula_code;
-            if (stock.scanner_name) return stock.scanner_name;
-            if (typeof getClaudeAiTraderSkillStrategy === 'function') {
-              try { const _st = getClaudeAiTraderSkillStrategy(stock, (Number(stock.pct_change)||0) >= 0); if (_st && _st.tag) return _st.tag; } catch(e) {}
-            }
-            const _pct = Number(stock.pct_change) || 0;
-            const _rv = Number(stock.rvol) || 1;
-            const _to = Number(stock.turnover_cr) || 0;
-            if (_to > 300 && _rv > 2) return 'Titan Whale';
-            if (_rv > 2.5) return 'Sonic RVOL';
-            if (stock.buildup && stock.buildup.toString().toLowerCase().includes('long')) return 'Strong Bullish (ORB)';
-            if (stock.buildup && stock.buildup.toString().toLowerCase().includes('short')) return 'Short Buildup';
-            return 'Quant Elite Pro';
-          })();
-          const _scanColors = {
-            'TITAN_WHALE':'bg-amber-500/15 text-amber-300 border-amber-500/30',
-            'SONIC_RVOL':'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
-            'STRONG_BULLISH':'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-            'SHORT_BUILDUP':'bg-rose-500/15 text-rose-300 border-rose-500/30',
-            'QUANT_ELITE':'bg-purple-500/15 text-purple-300 border-purple-500/30',
-            'TOP_MOMENTUM':'bg-pink-500/15 text-pink-300 border-pink-500/30',
-            'SMART_MONEY':'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
-          };
-          const _scanKey = scannerName.toUpperCase().replace(/[^A-Z]/g,'_');
-          const _scanMatch = Object.keys(_scanColors).find(k => _scanKey.includes(k));
-          const _scanCls = _scanMatch ? _scanColors[_scanMatch] : 'bg-slate-800 text-slate-300 border-slate-600';
-          rowsHTML += `
-            <td class="p-2.5">
-              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${_scanCls} max-w-[110px] inline-block truncate" title="${scannerName}">🔎 ${scannerName}</span>
             </td>
           `;
         }
@@ -7849,15 +7881,15 @@
       const curS = istDate.getSeconds();
       const curTotalSec = curH * 3600 + curM * 60 + curS;
 
-      const preOpenStartSec = 9 * 3600; // 09:00:00 Pre-Open & Formula Window
+      const scanStartSec = 9 * 3600 + 20 * 60; // Every market day scan starts at 09:20:00 IST
       const marketCloseSec = 15 * 3600 + 30 * 60; // 15:30:00
 
-      // During Pre-Open / Live Market (09:00 - 15:30), listed time cannot precede 09:00 or exceed current IST clock
-      if (curTotalSec >= preOpenStartSec && curTotalSec <= marketCloseSec) {
-        return targetSec < preOpenStartSec || targetSec > curTotalSec;
+      // During Live Market Scan Window (09:20 - 15:30), listed time cannot precede 09:20 or exceed current IST clock
+      if (curTotalSec >= scanStartSec && curTotalSec <= marketCloseSec) {
+        return targetSec < scanStartSec || targetSec > curTotalSec;
       }
-      // Outside market hours, valid timestamps belong to 09:00 - 15:30
-      if (targetSec < preOpenStartSec || targetSec > marketCloseSec) {
+      // Outside market hours, valid timestamps belong to 09:20 - 15:30
+      if (targetSec < scanStartSec || targetSec > marketCloseSec) {
         return true;
       }
       return false;
@@ -7872,50 +7904,36 @@
       const curS = istDate.getSeconds();
       const curTotalSec = curH * 3600 + curM * 60 + curS;
 
-      const preOpenStartSec = 9 * 3600; // 09:00:00
-      const marketOpenSec = 9 * 3600 + 15 * 60; // 09:15:00
+      const scanStartSec = 9 * 3600 + 20 * 60; // Every market day scan starts at 09:20:00 IST
       const marketCloseSec = 15 * 3600 + 30 * 60; // 15:30:00
 
       const existingSec = timeStringToSec(stock.listed_at);
-      const isSessionActiveNow = (curTotalSec >= preOpenStartSec && curTotalSec <= marketCloseSec);
+      const isSessionActiveNow = (curTotalSec >= scanStartSec && curTotalSec <= marketCloseSec);
 
       if (isSessionActiveNow) {
-        // Keep genuine formula / Pre-Open / real-time discovery timestamp <= current clock
-        if (existingSec >= preOpenStartSec && existingSec <= curTotalSec) {
+        // Keep genuine formula / real-time discovery timestamp >= 09:20:00 and <= current clock
+        if (existingSec >= scanStartSec && existingSec <= curTotalSec) {
           return stock.listed_at;
         }
-        // Scan starts at 09:17:00 IST — no stock can appear before this time
-        const SCAN_START_MIN = 9 * 3600 + 17 * 60; // 09:17:00
-        const anchorStart = Math.max(SCAN_START_MIN, curTotalSec < marketOpenSec ? preOpenStartSec : marketOpenSec);
-        const elapsedSec = Math.max(30, curTotalSec - anchorStart);
-        const count = totalCount || 10;
+        const elapsedSec = Math.max(30, curTotalSec - scanStartSec);
+        const count = totalCount || 15;
         const step = elapsedSec / (count + 1);
         const symSeed = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0) * (c.charCodeAt(1) || 7), 0);
         const jitter = (symSeed % 40) - 20;
-        const assignedSec = Math.min(curTotalSec - 2, Math.max(anchorStart + 3, Math.round(anchorStart + ((rankIdx || 0) + 1) * step + jitter)));
+        const assignedSec = Math.min(curTotalSec - 2, Math.max(scanStartSec + 3, Math.round(scanStartSec + ((rankIdx || 0) + 1) * step + jitter)));
         const newTime = formatSecToTime(assignedSec);
         stock.listed_at = newTime;
         return newTime;
       } else {
-        if (existingSec >= preOpenStartSec && existingSec <= marketCloseSec) {
+        if (existingSec >= scanStartSec && existingSec <= marketCloseSec) {
           return stock.listed_at;
         }
-        // Scan start: 09:17:00 IST — reassign times before 09:17 to 09:17+
-        const SCAN_START_MIN2 = 9 * 3600 + 17 * 60;
-        if (existingSec < SCAN_START_MIN2) {
-          const symSeed2 = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0) * (c.charCodeAt(1) || 7), 0);
-          const jitter2 = (symSeed2 % 60);
-          const newSec2 = SCAN_START_MIN2 + jitter2 + (rankIdx || 0) * 45;
-          const newTime2 = formatSecToTime(Math.min(newSec2, marketCloseSec - 600));
-          stock.listed_at = newTime2;
-          return newTime2;
-        }
-        const totalSessionSec = marketCloseSec - marketOpenSec;
-        const count = totalCount || 10;
+        const totalSessionSec = marketCloseSec - scanStartSec;
+        const count = totalCount || 15;
         const step = totalSessionSec / (count + 1);
         const symSeed = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0) * (c.charCodeAt(1) || 7), 0);
         const jitter = (symSeed % 90) - 45;
-        const assignedSec = Math.min(marketCloseSec - 600, Math.max(marketOpenSec + 120, Math.round(marketOpenSec + ((rankIdx || 0) + 1) * step + jitter)));
+        const assignedSec = Math.min(marketCloseSec - 600, Math.max(scanStartSec + 60, Math.round(scanStartSec + ((rankIdx || 0) + 1) * step + jitter)));
         const newTime = formatSecToTime(assignedSec);
         stock.listed_at = newTime;
         return newTime;
@@ -8005,23 +8023,32 @@
         return prob * 2 + scoreEquityFormulaMove(s, isUp);
       };
 
-      const top10Up = candidates
-        .filter(s => (Number(s.pct_change) || 0) >= 0)
+      const isWorldEligible = (s, isUp) => {
+        const pct = Number(s.pct_change) || 0;
+        const rvol = Number(s.rvol) || 1;
+        const ba = Number(s.bid_ask_ratio) || 1;
+        return isUp
+          ? pct >= 0.65 && rvol >= 1.15 && ba >= 1.15
+          : pct <= -0.65 && rvol >= 1.15 && ba <= 0.88;
+      };
+
+      const topEligibleUp = candidates
+        .filter(s => isWorldEligible(s, true))
         .sort((a, b) => rankOmni(b, true) - rankOmni(a, true))
-        .slice(0, 10);
-      const top10Down = candidates
-        .filter(s => (Number(s.pct_change) || 0) < 0)
+        .slice(0, 15);
+      const topEligibleDown = candidates
+        .filter(s => isWorldEligible(s, false))
         .sort((a, b) => rankOmni(b, false) - rankOmni(a, false))
-        .slice(0, 10);
-      const balancedTop20 = sortByListedAtNewestFirstAtoZ([...top10Up, ...top10Down]);
+        .slice(0, 15);
+      const combinedEligible = sortByListedAtNewestFirstAtoZ([...topEligibleUp, ...topEligibleDown]);
 
       const countElem = document.getElementById('world-strat-count');
       if (countElem) {
-        countElem.innerText = `(${top10Up.length} Up + ${top10Down.length} Down Pure Equity Stocks • ${activeAiStrategyFilter === 'ALL' ? 'All Quantum Suite' : activeAiStrategyFilter})`;
+        countElem.innerText = `(${topEligibleUp.length} Up + ${topEligibleDown.length} Down Formula-Eligible Stocks • ${activeAiStrategyFilter === 'ALL' ? 'All Quantum Suite' : activeAiStrategyFilter})`;
       }
 
-      // Render Top 10 Up + Top 10 Down pure equity stocks into table-world-strategy
-      renderTable('table-world-strategy', balancedTop20, true, false);
+      // Render formula-eligible stocks (up to 15 per side) into table-world-strategy
+      renderTable('table-world-strategy', combinedEligible, true, false);
     }
 
     function getClaudeAiTraderSkillStrategy(s, isBullish) {
@@ -8121,7 +8148,7 @@
       }
     }
 
-    function buildEngineRow(s, isBullish, shouldFilter = false, rankIdx = 0, totalCount = 10) {
+    function buildEngineRow(s, isBullish, shouldFilter = false, rankIdx = 0, totalCount = 15, showScannerRec = false) {
       if (!s.listed_at || isTimeInFutureIST(s.listed_at)) {
         s.listed_at = sanitizeStockListedTime(s, rankIdx, !isBullish, totalCount);
       }
@@ -8196,6 +8223,10 @@
       const pcrColor = s.pcr >= 1.0 ? 'text-emerald-400' : (s.pcr <= 0.8 ? 'text-rose-400' : 'text-slate-300');
       const ratioBadge = s.bid_ask_ratio >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (s.bid_ask_ratio <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
 
+      const scannerRecCell = showScannerRec
+        ? `<td class="p-3">${typeof renderScannerRecBadges === 'function' ? renderScannerRecBadges(s) : '--'}</td>`
+        : '';
+
       return `
         <tr class="border-b border-[#172033] hover:bg-[#0f1524] transition font-mono cursor-pointer" onclick="openTradingViewChart('${s.symbol}')">
           <td class="p-3" onclick="event.stopPropagation()">
@@ -8219,6 +8250,7 @@
             <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/20 whitespace-nowrap" title="Formula Trigger (${formulaLabel}): ${s.listed_at || ''} IST">🕒 ${s.listed_at || '--'}</span>
             <div class="text-[9px] text-amber-300/90 font-bold mt-0.5 truncate max-w-[125px]" title="${formulaLabel}">${formulaLabel}</div>
           </td>
+          ${scannerRecCell}
           <!-- ENTRY PRICE & BEST STRATEGY (CLAUDE AI TRADER SKILL) -->
           <td class="p-3 min-w-[175px]" onclick="event.stopPropagation(); openClaudeAiStockSignalModal('${s.symbol}')">
             <div class="flex items-center gap-1.5 font-bold font-mono">
@@ -8305,7 +8337,7 @@
       if (!Array.isArray(dataList)) dataList = [];
       const isCombinedDualTable = (tableId === 'table-world-strategy' || tableId === 'table-most-active');
       dataList = sortByListedAtNewestFirstAtoZ(
-        dataList.filter(isPureEquityStock).slice(0, isCombinedDualTable ? 20 : 10)
+        dataList.filter(isPureEquityStock).slice(0, isCombinedDualTable ? 30 : 15)
       );
 
       let html = `
@@ -8333,7 +8365,7 @@
         <tbody>
       `;
       let count = 0;
-      const listLen = dataList.length || 10;
+      const listLen = dataList.length || 15;
       dataList.forEach((s, idx) => {
         const rowBull = isCombinedDualTable ? ((Number(s.pct_change) || 0) >= 0) : isBullish;
         const row = buildEngineRow(s, rowBull, shouldFilter, idx, listLen);
@@ -8356,11 +8388,11 @@
                   </div>
                   <p class="text-xs text-slate-400 leading-relaxed">
                     All previous trading session scan candidates have been automatically cleared at 12:00 AM IST per exchange rollover policy.
-                    The next trading day will automatically scan and populate fresh candidate stocks at <strong>09:00 AM (Pre-Open)</strong> &amp; <strong>09:15 AM (Live Market)</strong>.
+                    The next market day automatically scans and populates formula-eligible stocks at <strong>09:20 AM IST</strong>.
                   </p>
                   <div class="flex items-center gap-2 pt-1">
                     <span class="midnight-auto-countdown px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">
-                      🤖 100% AUTOMATIC • AUTO-LISTING AT 09:00 AM / 09:15 AM IST
+                      🤖 100% AUTOMATIC • MARKET SCAN STARTS 09:20 AM IST
                     </span>
                   </div>
                 </div>
@@ -8373,8 +8405,8 @@
               <td colspan="17" class="p-8 text-center text-slate-400 font-mono text-xs">
                 <div class="flex flex-col items-center justify-center gap-2">
                   <span class="text-amber-400 text-lg">⚡</span>
-                  <span>No candidate stocks currently match this engine criteria.</span>
-                  <span class="text-[10px] text-slate-500">Live quantitative scanning active across 218 NSE F&amp;O contracts.</span>
+                  <span>No candidate stocks currently meet this scanner's formula criteria (0 eligible).</span>
+                  <span class="text-[10px] text-slate-500">Live formula scanning active across 218 NSE F&amp;O contracts (displays exact count up to 15).</span>
                 </div>
               </td>
             </tr>
@@ -8860,6 +8892,7 @@
             <th class="p-3">SYMBOL</th>
             <th class="p-3">SECTOR</th>
             <th class="p-3">LISTED AT</th>
+            <th class="p-3">SCANNER REC</th>
             <th class="p-3">ENTRY PRICE &amp; STRATEGY</th>
             <th class="p-3">LIVE PRICE</th>
             <th class="p-3">% CHG</th>
@@ -8881,7 +8914,7 @@
       if (filtered.length === 0) {
         html += `
           <tr>
-            <td colspan="17" class="p-8 text-center text-slate-500 font-mono">
+            <td colspan="18" class="p-8 text-center text-slate-500 font-mono">
               <div class="text-sm font-bold text-slate-400 mb-1">No stocks match your active filter.</div>
               <div class="text-xs">${watchlistViewMode === 'starred' ? 'You have not starred any stocks yet. Click the ⭐ icon on any stock row to add it!' : 'Try clearing your search query or selecting "All 12 Sectors".'}</div>
             </td>
@@ -8891,13 +8924,13 @@
         const isDefaultAll = !q && secFilter === 'ALL' && watchlistViewMode === 'all';
         const limit = (isDefaultAll && !window._watchlistShowAll) ? 50 : filtered.length;
         const visibleRows = filtered.slice(0, limit);
-        visibleRows.forEach(s => {
-          html += buildEngineRow(s, s.pct_change >= 0);
+        visibleRows.forEach((s, idx) => {
+          html += buildEngineRow(s, s.pct_change >= 0, false, idx, visibleRows.length, true);
         });
         if (filtered.length > visibleRows.length) {
           html += `
             <tr>
-              <td colspan="17" class="p-4 text-center bg-[#090d16]">
+              <td colspan="18" class="p-4 text-center bg-[#090d16]">
                 <button onclick="window._watchlistShowAll = true; renderWatchlistTable();" class="px-5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border border-cyan-500/40 font-mono font-bold text-xs transition cursor-pointer">
                   ⚡ Showing ${visibleRows.length} of ${filtered.length} Stocks (Fast Mode) &bull; Click to Show All ${filtered.length}
                 </button>
@@ -9670,19 +9703,19 @@ function renderJournal() {
 
       evaluateLocalSessionState() {
         const ist = getISTDatePartsNow();
+        const DAILY_SCAN_START_MIN = 9 * 60 + 20; // 09:20 AM IST every market day
         const storedPurge = localStorage.getItem('midnight_scanner_purged');
         const storedPurgeDate = localStorage.getItem('midnight_purge_date_ist');
-        const storedPreOpenDate = localStorage.getItem('midnight_preopen_scan_date_ist');
         const storedScanDate = localStorage.getItem('midnight_scan_date_ist');
 
-        // Fresh visitor opening at/after 09:00 AM IST: seed purge date cleanly without falsely resetting server scanners
-        if (!storedPurgeDate && ist.totalMinutes >= (9 * 60)) {
+        // Fresh visitor opening at/after 09:20 AM IST: seed purge date cleanly without falsely resetting server scanners
+        if (!storedPurgeDate && ist.totalMinutes >= DAILY_SCAN_START_MIN) {
           localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
           return;
         }
 
-        // Between 00:00:00 and 08:59:59 IST: automatically stay 100% midnight-cleared awaiting 09:00 / 09:15 IST
-        if (storedPurgeDate !== ist.dateStr && ist.totalMinutes < (9 * 60)) {
+        // Between 00:00:00 and 09:19:59 IST: automatically stay 100% midnight-cleared awaiting 09:20 AM IST
+        if (ist.totalMinutes < DAILY_SCAN_START_MIN) {
           this.isPurged = true;
           this.manualOverride = false;
           localStorage.setItem('midnight_scanner_purged', 'true');
@@ -9693,11 +9726,11 @@ function renderJournal() {
           return;
         }
 
-        if (storedPurge === 'true' && storedPurgeDate === ist.dateStr && storedScanDate !== ist.dateStr && storedPreOpenDate !== ist.dateStr) {
+        if (storedPurge === 'true' && storedPurgeDate === ist.dateStr && storedScanDate !== ist.dateStr) {
           this.isPurged = true;
           this.manualOverride = false;
           this.emptyAllScannersInMemory();
-        } else if ((storedScanDate === ist.dateStr || storedPreOpenDate === ist.dateStr) && storedPurge === 'false') {
+        } else if (storedScanDate === ist.dateStr && storedPurge === 'false') {
           this.isPurged = false;
           this.manualOverride = false;
         }
@@ -9714,10 +9747,9 @@ function renderJournal() {
             localStorage.setItem('midnight_purge_date_ist', sess.currentDateIST || getISTDatePartsNow().dateStr);
             this.emptyAllScannersInMemory();
             this.refreshAllRenderedViews();
-          } else if (sess.isMidnightCleared === false && (sess.stocksCount > 0 || sess.lastScanDateIST === getISTDatePartsNow().dateStr || sess.lastPreOpenScanDateIST === getISTDatePartsNow().dateStr)) {
+          } else if (sess.isMidnightCleared === false && (sess.stocksCount > 0 || sess.lastScanDateIST === getISTDatePartsNow().dateStr)) {
             this.isPurged = false;
             localStorage.setItem('midnight_scanner_purged', 'false');
-            if (sess.lastPreOpenScanDateIST) localStorage.setItem('midnight_preopen_scan_date_ist', sess.lastPreOpenScanDateIST);
             if (sess.lastScanDateIST) localStorage.setItem('midnight_scan_date_ist', sess.lastScanDateIST);
             this.pullFreshBackendScan(false);
           }
@@ -9726,13 +9758,12 @@ function renderJournal() {
 
       checkMidnightAndOpenTransitions() {
         const ist = getISTDatePartsNow();
+        const DAILY_SCAN_START_MIN = 9 * 60 + 20; // 09:20 AM IST every market day
         const storedPurgeDate = localStorage.getItem('midnight_purge_date_ist');
-        const storedPreOpenDate = localStorage.getItem('midnight_preopen_scan_date_ist');
         const storedScanDate = localStorage.getItem('midnight_scan_date_ist');
 
         // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH (00:00:00 IST):
-        // Automatically purges ALL scanner tables when IST calendar date rolls over
-        if (!storedPurgeDate && ist.totalMinutes >= (9 * 60)) {
+        if (!storedPurgeDate && ist.totalMinutes >= DAILY_SCAN_START_MIN) {
           localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
         } else if (storedPurgeDate !== ist.dateStr) {
           console.log('[MidnightSessionManager] 🕛 New IST Day Detected (' + ist.dateStr + '). Executing 12:00 AM Auto-Flush!');
@@ -9740,18 +9771,22 @@ function renderJournal() {
           return;
         }
 
-        const mkt = getIndianMarketStatus(new Date(), true);
-
-        // 2. NEXT TRADING DAY PRE-OPEN AUTO-SCAN (09:00 AM IST) — ZERO MANUAL ACTION REQUIRED:
-        if (mkt.status === 'PRE-OPEN' && (this.isPurged || storedPreOpenDate !== ist.dateStr) && !this.isScanningNow) {
-          console.log('[MidnightSessionManager] 🌅 09:00 AM IST Pre-Open Detected (' + ist.dateStr + '). Auto-populating scanners...');
-          this.generateNewTradingDayStocks(true, 'PRE_OPEN');
+        // Stay midnight-cleared strictly before 09:20 AM IST every market day
+        if (ist.totalMinutes < DAILY_SCAN_START_MIN) {
+          if (!this.isPurged && !this.manualOverride) {
+            this.isPurged = true;
+            this.emptyAllScannersInMemory();
+            this.refreshAllRenderedViews();
+          }
+          this.renderSessionPill();
           return;
         }
 
-        // 3. NEXT TRADING DAY MARKET-OPEN AUTO-SCAN (09:15 AM IST) — ZERO MANUAL ACTION REQUIRED:
-        if (mkt.status === 'OPEN' && (this.isPurged || storedScanDate !== ist.dateStr) && !this.isScanningNow) {
-          console.log('[MidnightSessionManager] 🚀 09:15 AM IST Market Open Detected (' + ist.dateStr + '). Auto-discovering live stocks...');
+        const mkt = getIndianMarketStatus(new Date(), true);
+
+        // 2. NEXT TRADING DAY FORMULA AUTO-SCAN AT 09:20 AM IST — ZERO MANUAL ACTION REQUIRED:
+        if (mkt.status === 'OPEN' && ist.totalMinutes >= DAILY_SCAN_START_MIN && (this.isPurged || storedScanDate !== ist.dateStr) && !this.isScanningNow) {
+          console.log('[MidnightSessionManager] 🚀 09:20 AM IST Market Formula Scan Triggered (' + ist.dateStr + '). Auto-discovering eligible stocks...');
           this.generateNewTradingDayStocks(true, 'REGULAR');
           return;
         }
@@ -9909,18 +9944,18 @@ function renderJournal() {
         DATA.all_stocks = equityPool;
         this.universeCache = equityPool;
 
-        // Assign distinct, formula-specific Top 10 Up + Top 10 Down per scanner (ordered Newest Listed At first, A-Z tie-break)
+        // Assign distinct, strictly eligible (0..15) per scanner (ordered Newest Listed At first, A-Z tie-break)
         const distinct = buildDistinctFormulaScanners(equityPool);
         Object.assign(DATA, distinct);
 
         const bullTop = equityPool
-          .filter(s => (Number(s.pct_change) || 0) >= 0)
+          .filter(s => (Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) >= (Number(s.atp) || Number(s.price) || 0) * 0.998)
           .sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true))
-          .slice(0, 10);
+          .slice(0, 15);
         const bearTop = equityPool
-          .filter(s => (Number(s.pct_change) || 0) < 0)
+          .filter(s => (Number(s.pct_change) || 0) <= -0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) <= (Number(s.atp) || Number(s.price) || 0) * 1.002)
           .sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false))
-          .slice(0, 10);
+          .slice(0, 15);
 
         const topSignals = sortByListedAtNewestFirstAtoZ([...bullTop, ...bearTop]);
         DATA.cloud_ai_signals = topSignals.map(s => {
@@ -10037,10 +10072,7 @@ function renderJournal() {
             CyberAudioEngine.playBeep(1200, 'sine', 0.2);
           }
           if (typeof showToast === 'function') {
-            const msg = phase === 'PRE_OPEN'
-              ? '🌅 09:00 AM PRE-OPEN AUTO-SCAN COMPLETE! Fresh Pre-Open stocks listed automatically.'
-              : '🚀 09:15 AM MARKET OPEN AUTO-SCAN COMPLETE! Fresh momentum & breakout stocks listed across all scanners.';
-            showToast(msg, 'success');
+            showToast('🚀 09:20 AM IST MARKET FORMULA AUTO-SCAN COMPLETE! Eligible stocks (0–15) listed per scanner.', 'success');
           }
         } catch (e) {
           console.warn('[MidnightSessionManager] Fresh scan error:', e);
@@ -10054,20 +10086,20 @@ function renderJournal() {
         if (typeof ClaudeSrHunterEngine !== 'undefined') ClaudeSrHunterEngine.renderAll();
         if (typeof PreOpenEngine !== 'undefined') PreOpenEngine.renderAll();
         if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
+        if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
         this.renderSessionPill();
       },
 
       getNextAutoScanCountdown() {
         const ist = getISTDatePartsNow();
         const curSec = ist.hours * 3600 + ist.minutes * 60 + ist.seconds;
-        const preSec = 9 * 3600;
-        const openSec = 9 * 3600 + 15 * 60;
+        const scanSec = 9 * 3600 + 20 * 60;
         const midnightSec = 24 * 3600;
-        let diff = curSec < preSec ? (preSec - curSec) : (curSec < openSec ? (openSec - curSec) : (midnightSec - curSec));
+        let diff = curSec < scanSec ? (scanSec - curSec) : (midnightSec - curSec);
         const h = String(Math.floor(diff / 3600)).padStart(2, '0');
         const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
         const s = String(diff % 60).padStart(2, '0');
-        const label = curSec < preSec ? 'Pre-Open 09:00' : (curSec < openSec ? 'Live Open 09:15' : '12 AM Flush');
+        const label = curSec < scanSec ? '09:20 AM Scan' : '12 AM Flush';
         return { h, m, s, text: `${label} in ${h}:${m}:${s}` };
       },
 
@@ -10083,10 +10115,10 @@ function renderJournal() {
         if (this.isMidnightCleared()) {
           if (pill) {
             pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono shadow-sm select-none';
-            pill.title = '12:00 AM Midnight Auto-Purge Active: Scanners auto-empty at 00:00 IST and auto-populate at 09:00 AM / 09:15 AM IST (No manual button required).';
+            pill.title = '12:00 AM Midnight Auto-Purge Active: Scanners auto-empty at 00:00 IST and auto-scan strictly at 09:20 AM IST every market day.';
             pill.innerHTML = `
               <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
-              <span>12 AM Emptied &bull; Auto Standby</span>
+              <span>12 AM Emptied &bull; Standby 09:20 IST</span>
               <span class="text-[9.5px] px-1.5 py-0.2 bg-amber-500/30 rounded text-amber-200">${cd.h}:${cd.m}:${cd.s}</span>
             `;
           }
@@ -10094,10 +10126,10 @@ function renderJournal() {
         } else {
           if (pill) {
             pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm select-none';
-            pill.title = 'Fully Automated Cycle: Scanners auto-empty at 12:00 AM IST and auto-scan at 09:00 AM Pre-Open & 09:15 AM Market Open.';
+            pill.title = 'Fully Automated Cycle: Scanners auto-empty at 12:00 AM IST and auto-scan at 09:20 AM IST every market day.';
             pill.innerHTML = `
               <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
-              <span>Auto-Listed &bull; 12 AM Flush</span>
+              <span>09:20 Formula Scan &bull; 12 AM Flush</span>
               <span class="text-[9.5px] px-1.5 py-0.2 bg-cyan-500/30 rounded text-cyan-200">${cd.h}:${cd.m}:${cd.s}</span>
             `;
           }
@@ -10169,6 +10201,7 @@ function renderJournal() {
         this.connectWebSocket();
         this.startPolling();
         this.startTpsMeter();
+        if (typeof checkUpstoxStatus === 'function') checkUpstoxStatus();
 
         setTimeout(() => {
           this.fetchBatchQuotes();
@@ -10184,7 +10217,7 @@ function renderJournal() {
         try {
           const isHttps = window.location.protocol === 'https:';
           const protocol = isHttps ? 'wss:' : 'ws:';
-          const host = window.location.host || 'muhuratscreener.netlify.app';
+          const host = window.location.host || 'muhuratscreener.onrender.com';
           const accessToken = localStorage.getItem('upstox_access_token') || '';
           const tokenParam = accessToken ? `?accessToken=${encodeURIComponent(accessToken)}` : '';
           const wsUrl = `${protocol}//${host}/ws/market${tokenParam}`;
@@ -10351,7 +10384,7 @@ function renderJournal() {
           const json = await res.json();
           if (json.status === 'ok') {
             const isUpstox = json.source === 'UPSTOX_API_V2_LIVE';
-            this.updateStatusBadge(this.wsConnected, isUpstox ? 'UPSTOX API v2/v3 LIVE' : 'AUTONOMOUS LIVE ENGINE');
+            this.updateStatusBadge(this.wsConnected, isUpstox ? 'UPSTOX API V2 LIVE' : 'AUTONOMOUS LIVE ENGINE');
             if (json.quotes) {
               this.applyBatchQuotes(json.quotes);
             }
@@ -10392,7 +10425,13 @@ function renderJournal() {
               cnt++;
             }
           });
-          if (cnt > 0) sec.change = Number((sumChg / cnt).toFixed(2));
+          if (cnt > 0) {
+            sec.change = Number((sumChg / cnt).toFixed(2));
+            sec.stocks.forEach(st => {
+              const live = stockMap.get(st.symbol);
+              if (live) live.sector_pct = sec.change;
+            });
+          }
         });
       },
 
@@ -10796,6 +10835,7 @@ function renderJournal() {
         const latencyEl = document.getElementById('upstox-modal-latency');
         const userEl = document.getElementById('upstox-modal-user');
         const srcTextEl = document.getElementById('cockpit-feed-source-text');
+        const inputTokenEl = document.getElementById('upstox-input-token');
 
         if (data.connected) {
           if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px]';
@@ -10803,12 +10843,18 @@ function renderJournal() {
           if (userEl) userEl.innerText = data.profileName || 'Upstox Direct Broker';
           if (latencyEl) latencyEl.innerText = `${data.ticksPerSecond || 12} tps • Direct Upstox + Autonomous Relay`;
           if (srcTextEl) srcTextEl.innerText = 'UPSTOX API V2 LIVE';
+          if (inputTokenEl && !localStorage.getItem('upstox_access_token')) {
+            inputTokenEl.placeholder = `Server Upstox session active (${data.profileName || 'Authenticated'}). Paste a replacement token here only to override.`;
+          }
         } else {
           if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px]';
           if (badgeText) badgeText.innerText = 'AUTONOMOUS ENGINE ACTIVE';
           if (userEl) userEl.innerText = 'Zero-Token Autonomous Real-Time Feed';
           if (latencyEl) latencyEl.innerText = '180ms • All 225 NSE Stocks & Indices Live';
           if (srcTextEl) srcTextEl.innerText = 'AUTONOMOUS + UPSTOX';
+          if (inputTokenEl) {
+            inputTokenEl.placeholder = 'Paste your Upstox Access Token or 1-Year Read-Only Analytics Token (optional — live prices already work automatically via Autonomous Engine)...';
+          }
         }
       } catch (e) {}
     }
@@ -11242,15 +11288,15 @@ ${json.message || 'Unauthorized token.'}`);
           <div class="col-span-full p-6 rounded-2xl border border-amber-500/35 bg-[#0c0818]/90 text-center font-mono text-xs space-y-2.5">
             <div class="text-2xl">🕛</div>
             <div class="text-amber-300 font-black tracking-wide">12:00 AM MIDNIGHT FLUSH &bull; AI SIGNALS STANDBY</div>
-            <p class="text-slate-400 max-w-lg mx-auto">Previous day AI signal cards cleared. Fresh institutional AI signals auto-populate once market opens at 09:15 AM IST.</p>
-            <span class="midnight-auto-countdown inline-block px-4 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">🤖 AUTO-POPULATES AT 09:00 AM / 09:15 AM IST</span>
+            <p class="text-slate-400 max-w-lg mx-auto">Previous day AI signal cards cleared. Fresh institutional AI signals auto-populate every market day at <strong>09:20 AM IST</strong>.</p>
+            <span class="midnight-auto-countdown inline-block px-4 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">🤖 AUTO-SCANS AT 09:20 AM IST EVERY MARKET DAY</span>
           </div>`;
         return;
       }
       if (!DATA.cloud_ai_signals) return;
       const pureSignals = (DATA.cloud_ai_signals || []).filter(isPureEquityStock);
-      const buySigs = pureSignals.filter(s => String(s.side || '').includes('BUY')).slice(0, 10);
-      const sellSigs = pureSignals.filter(s => String(s.side || '').includes('SELL')).slice(0, 10);
+      const buySigs = pureSignals.filter(s => String(s.side || '').includes('BUY')).slice(0, 15);
+      const sellSigs = pureSignals.filter(s => String(s.side || '').includes('SELL')).slice(0, 15);
       const displaySignals = sortByListedAtNewestFirstAtoZ([...buySigs, ...sellSigs]);
 
       let html = '';
@@ -11337,16 +11383,16 @@ ${json.message || 'Unauthorized token.'}`);
         renderCloudAISignals();
       }
 
-      // Home Tab Previews (Strictly Pure Equity Top 10)
-      renderVisibleTable('table-home-sonic-bullish', (DATA.sonic_bullish || []), true);
-      renderVisibleTable('table-home-titan-bearish', (DATA.titan_bearish || []), false);
-      renderVisibleTable('table-home-elite-bearish', (DATA.quant_elite_bearish || []), false);
-      renderVisibleTable('table-home-elite-pro-bearish', (DATA.quant_elite_pro_bearish || []), false);
-      renderVisibleTable('table-home-titan-cash-bearish', (DATA.titan_cash_bearish || []), false);
-      renderVisibleTable('table-home-momentum-upside', (DATA.best_momentum_upside || []), true);
-      renderVisibleTable('table-home-momentum-downside', (DATA.best_momentum_downside || []), false);
+      // Home Tab Previews (Strictly Formula-Qualified Pure Equity Up to 15)
+      renderVisibleTable('table-home-sonic-bullish', (DATA.sonic_bullish || []).slice(0, 15), true);
+      renderVisibleTable('table-home-titan-bearish', (DATA.titan_bearish || []).slice(0, 15), false);
+      renderVisibleTable('table-home-elite-bearish', (DATA.quant_elite_bearish || []).slice(0, 15), false);
+      renderVisibleTable('table-home-elite-pro-bearish', (DATA.quant_elite_pro_bearish || []).slice(0, 15), false);
+      renderVisibleTable('table-home-titan-cash-bearish', (DATA.titan_cash_bearish || []).slice(0, 15), false);
+      renderVisibleTable('table-home-momentum-upside', (DATA.best_momentum_upside || []).slice(0, 15), true);
+      renderVisibleTable('table-home-momentum-downside', (DATA.best_momentum_downside || []).slice(0, 15), false);
       // ============================================================
-      // CLAUDE AI TRADE SKILL FORMULA: TOP 2 UPSIDE & DOWNSIDE (Scan 09:17 IST)
+      // CLAUDE AI TRADE SKILL FORMULA: TOP 10 UPSIDE & DOWNSIDE
       // ============================================================
       function calcClaudeAiTradeSkillScore(stock, isUpside) {
         const turnover = Number(stock.turnover_cr) || 0;
@@ -11394,38 +11440,42 @@ ${json.message || 'Unauthorized token.'}`);
         isElementVisiblePane(document.getElementById('table-home-top-traded-downside'));
 
       if (needTopTradedHome || !window.TOP_10_UPSIDE) {
-        // Rank Upside Candidates by Claude AI Trade Skill Formula
-        let upsideTraded = allStocks.filter(s => s.pct_change >= 0);
-        if (upsideTraded.length === 0 && DATA.top_traded_value) {
-          upsideTraded = [...DATA.top_traded_value];
-        }
+        // Rank Upside Candidates by Claude AI Trade Skill Formula (strict qualification, never pad)
+        let upsideTraded = allStocks.filter(s =>
+          (Number(s.pct_change) || 0) >= 0.45 &&
+          (Number(s.rvol) || 1) >= 1.15 &&
+          (Number(s.turnover_cr) || 0) >= 50 &&
+          (Number(s.bid_ask_ratio) || 1) >= 1.05
+        );
         upsideTraded.forEach(s => {
           s.claude_ai_score = calcClaudeAiTradeSkillScore(s, true);
         });
         upsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-        // Rank Downside Candidates by Claude AI Trade Skill Formula
-        let downsideTraded = allStocks.filter(s => s.pct_change < 0);
-        if (downsideTraded.length === 0) {
-          downsideTraded = [...allStocks].sort((a, b) => (a.pct_change || 0) - (b.pct_change || 0));
-        }
+        // Rank Downside Candidates by Claude AI Trade Skill Formula (strict qualification, never pad)
+        let downsideTraded = allStocks.filter(s =>
+          (Number(s.pct_change) || 0) <= -0.45 &&
+          (Number(s.rvol) || 1) >= 1.15 &&
+          (Number(s.turnover_cr) || 0) >= 50 &&
+          (Number(s.bid_ask_ratio) || 1) <= 0.95
+        );
         downsideTraded.forEach(s => {
           s.claude_ai_score = calcClaudeAiTradeSkillScore(s, false);
         });
         downsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-        // Sanitize listed_at for all upside/downside candidates (Scan starts 09:17 IST)
-        downsideTraded.slice(0, 20).forEach((s, idx) => {
-          sanitizeStockListedTime(s, idx, true, 20);
+        const topUp = upsideTraded.slice(0, 15);
+        const topDn = downsideTraded.slice(0, 15);
+
+        topDn.forEach((s, idx) => {
+          sanitizeStockListedTime(s, idx, true, Math.max(1, topDn.length));
+        });
+        topUp.forEach((s, idx) => {
+          sanitizeStockListedTime(s, idx, false, Math.max(1, topUp.length));
         });
 
-        upsideTraded.slice(0, 20).forEach((s, idx) => {
-          sanitizeStockListedTime(s, idx, false, 20);
-        });
-
-        // Show ALL eligible stocks (09:17+ IST), no artificial cap
-        window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(upsideTraded.filter(s => { const lt = s.listed_at || ''; const p = lt.split(':').map(Number); return !lt || (p[0]*3600+p[1]*60+(p[2]||0)) >= 9*3600+17*60; }));
-        window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(downsideTraded.filter(s => { const lt = s.listed_at || ''; const p = lt.split(':').map(Number); return !lt || (p[0]*3600+p[1]*60+(p[2]||0)) >= 9*3600+17*60; }));
+        window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(topUp);
+        window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(topDn);
 
         renderVisibleTable('table-home-top-traded', window.TOP_10_UPSIDE, true, activeAiStrategyFilter !== 'ALL');
         renderVisibleTable('table-home-top-traded-downside', window.TOP_10_DOWNSIDE, false, activeAiStrategyFilter !== 'ALL');
@@ -11452,13 +11502,19 @@ ${json.message || 'Unauthorized token.'}`);
       // New Momentum & Liquidity Tables
       renderVisibleTable('table-momentum-upside', DATA.best_momentum_upside, true);
       renderVisibleTable('table-momentum-downside', DATA.best_momentum_downside, false);
-      // Market Liquidity Dedicated Tab: Strictly Top 10 Upside & Top 10 Downside by Monetary Turnover (Rs Cr), newest Listed At on top
+      // Market Liquidity Dedicated Tab: Strictly Formula-Qualified Up to 15 Upside & Downside by Monetary Turnover (Rs Cr)
       if (isElementVisiblePane(document.getElementById('table-top-traded')) || isElementVisiblePane(document.getElementById('table-top-traded-downside'))) {
         const liqUp = sortByListedAtNewestFirstAtoZ(
-          [...allStocks].filter(s => (Number(s.pct_change) || 0) >= 0).sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0)).slice(0, 10)
+          [...allStocks]
+            .filter(s => (Number(s.pct_change) || 0) >= 0.45 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.rvol) || 1) >= 1.1)
+            .sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0))
+            .slice(0, 15)
         );
         const liqDn = sortByListedAtNewestFirstAtoZ(
-          [...allStocks].filter(s => (Number(s.pct_change) || 0) < 0).sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0)).slice(0, 10)
+          [...allStocks]
+            .filter(s => (Number(s.pct_change) || 0) <= -0.45 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.rvol) || 1) >= 1.1)
+            .sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0))
+            .slice(0, 15)
         );
         renderVisibleTable('table-top-traded', liqUp, true);
         renderVisibleTable('table-top-traded-downside', liqDn, false);
@@ -12077,137 +12133,167 @@ ${json.message || 'Unauthorized token.'}`);
     }
 
     function buildLiveClaudeIndicesOptions() {
+      if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+        return [];
+      }
       const indicesMap = (typeof DATA !== 'undefined' && DATA.indices) ? DATA.indices : {};
-      const vixSpot = Number(indicesMap['INDIAVIX']?.price || indicesMap['INDIA VIX']?.price || 17.42);
+      const vixRaw = indicesMap['NSE:INDIAVIX-INDEX'] || indicesMap['INDIAVIX'] || indicesMap['INDIA VIX'] || {};
+      const vixSpot = Number(vixRaw.lp || vixRaw.price || 17.42);
+      const vixChgPct = Number(vixRaw.chp ?? vixRaw.changePercent ?? vixRaw.pct ?? 0);
+
       const specs = [
-        { key: 'NIFTY 50', altKey: 'NIFTY', tvSym: 'NSE:NIFTY', label: 'NIFTY 50', step: 50, lot: 75, expiry: 'Weekly Expiry (Thu)' },
-        { key: 'BANKNIFTY', altKey: 'BANK NIFTY', tvSym: 'NSE:BANKNIFTY', label: 'BANK NIFTY', step: 100, lot: 30, expiry: 'Weekly / Monthly' },
-        { key: 'FINNIFTY', altKey: 'FIN NIFTY', tvSym: 'NSE:FINNIFTY', label: 'FIN NIFTY', step: 50, lot: 65, expiry: 'Monthly Expiry' },
-        { key: 'MIDCPNIFTY', altKey: 'MIDCP NIFTY', tvSym: 'NSE:MIDCPNIFTY', label: 'MIDCP NIFTY', step: 25, lot: 120, expiry: 'Monthly Expiry' },
-        { key: 'NIFTYNXT50', altKey: 'NIFTY NEXT 50', tvSym: 'NSE:NIFTYNXT50', label: 'NIFTY NEXT 50', step: 100, lot: 25, expiry: 'Monthly Expiry' },
-        { key: 'SENSEX', altKey: 'BSE SENSEX', tvSym: 'BSE:SENSEX', label: 'SENSEX', step: 100, lot: 20, expiry: 'Weekly Expiry (Tue/Fri)' }
+        { idxKey: 'NSE:NIFTY50-INDEX', key: 'NIFTY 50', altKey: 'NIFTY', tvSym: 'NSE:NIFTY', label: 'NIFTY 50', step: 50, lot: 75, expiry: 'Weekly Expiry (Thu)' },
+        { idxKey: 'NSE:NIFTYBANK-INDEX', key: 'BANKNIFTY', altKey: 'BANK NIFTY', tvSym: 'NSE:BANKNIFTY', label: 'BANK NIFTY', step: 100, lot: 30, expiry: 'Weekly / Monthly' },
+        { idxKey: 'NSE:FINNIFTY-INDEX', key: 'FINNIFTY', altKey: 'FIN NIFTY', tvSym: 'NSE:FINNIFTY', label: 'FIN NIFTY', step: 50, lot: 65, expiry: 'Monthly Expiry' },
+        { idxKey: 'NSE:MIDCPNIFTY-INDEX', key: 'MIDCPNIFTY', altKey: 'MIDCP NIFTY', tvSym: 'NSE:MIDCPNIFTY', label: 'MIDCP NIFTY', step: 25, lot: 120, expiry: 'Monthly Expiry' },
+        { idxKey: 'NSE:NIFTYNXT50-INDEX', key: 'NIFTYNXT50', altKey: 'NIFTY NEXT 50', tvSym: 'NSE:NIFTYNXT50', label: 'NIFTY NEXT 50', step: 100, lot: 25, expiry: 'Monthly Expiry' },
+        { idxKey: 'BSE:SENSEX-INDEX', key: 'SENSEX', altKey: 'BSE SENSEX', tvSym: 'BSE:SENSEX', label: 'SENSEX', step: 100, lot: 20, expiry: 'Weekly Expiry (Tue/Fri)' }
       ];
 
       const nowIst = (typeof getCurrentISTSeconds === 'function')
         ? getCurrentISTSeconds()
         : (10 * 3600 + 30 * 60);
-      const safeSec = Math.min(Math.max(9 * 3600 + 20 * 60, nowIst - 1800), 15 * 3600 + 15 * 60);
+      const minScanSec = 9 * 3600 + 20 * 60;
+      const safeSec = Math.min(Math.max(minScanSec, nowIst), 15 * 3600 + 25 * 60);
       const fmtSec = (sec) => {
-        const s = Math.max(9 * 3600 + 16 * 60, Math.min(15 * 3600 + 25 * 60, Math.round(sec)));
+        const s = Math.max(minScanSec, Math.min(safeSec, Math.round(sec)));
         return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
       };
 
       const cards = [];
       specs.forEach((sp, i) => {
-        const raw = indicesMap[sp.key] || indicesMap[sp.altKey] || {};
-        const spot = Number(raw.price || raw.lp || 0);
+        const raw = indicesMap[sp.idxKey] || indicesMap[sp.key] || indicesMap[sp.altKey] || {};
+        const spot = Number(raw.lp || raw.price || 0);
         if (!spot || spot <= 0) return;
 
-        const chgPct = Number(raw.changePercent ?? raw.pct ?? 0);
-        const dayHigh = Number(raw.high || spot * 1.006);
-        const dayLow = Number(raw.low || spot * 0.994);
-        const prevClose = Number(raw.prevClose || (spot / (1 + chgPct / 100)));
+        const chgPct = Number(raw.chp ?? raw.changePercent ?? raw.pct ?? 0);
+        const dayHigh = Number(raw.high_price || raw.high || spot * 1.006);
+        const dayLow = Number(raw.low_price || raw.low || spot * 0.994);
+        const prevClose = Number(raw.prev_close_price || raw.prevClose || (spot / (1 + chgPct / 100)));
         const pivot = Number(((dayHigh + dayLow + spot) / 3).toFixed(2));
         const r1 = Number((2 * pivot - dayLow).toFixed(2));
         const s1 = Number((2 * pivot - dayHigh).toFixed(2));
 
         const atmStrike = Math.round(spot / sp.step) * sp.step;
-        const isBull = chgPct >= -0.05;
-        const optType = isBull ? 'CE' : 'PE';
-        const directionalStrike = isBull ? atmStrike : atmStrike;
-        const hedgeStrike = isBull ? atmStrike - sp.step * 2 : atmStrike + sp.step * 2;
+        const callBuyQualifies = chgPct >= 0.15 && spot >= pivot;
+        const putBuyQualifies = chgPct <= -0.15 && spot <= pivot;
+        const putWriteQualifies = chgPct >= 0.12 && spot >= s1 && vixSpot < 22;
+        const callWriteQualifies = chgPct <= -0.12 && spot <= r1 && vixSpot < 22;
 
-        // Calibrated option premium from spot & VIX volatility
+        // If spot hasn't triggered any index option formula yet, omit cleanly (never force)
         const sigma = Math.max(11, vixSpot) / 100;
         const theoPrem = Math.max(45, Number((spot * sigma * 0.048).toFixed(2)));
         const moveBoost = 1 + Math.min(0.45, Math.abs(chgPct) * 0.14);
         const entryPrem = Number((theoPrem / Math.max(1.0, moveBoost * 0.92)).toFixed(2));
         const livePrem = Number((entryPrem * (1 + Math.max(-0.18, Math.min(0.65, Math.abs(chgPct) * 0.12)))).toFixed(2));
         const pnlPct = (((livePrem - entryPrem) / Math.max(1, entryPrem)) * 100).toFixed(1);
+        const triggerBaseSec = Math.max(minScanSec, Math.min(safeSec, minScanSec + 35 + i * 317));
+        const writePrem = Number((theoPrem * 0.62).toFixed(2));
 
-        const triggerBaseSec = Math.max(9 * 3600 + 22 * 60, Math.min(safeSec, 9 * 3600 + 24 * 60 + i * 743));
-        const listTimeStr = fmtSec(triggerBaseSec);
-        const bullWritePrem = Number((theoPrem * 0.62).toFixed(2));
+        // 1. Directional Option BUY (CE or PE)
+        if (callBuyQualifies || putBuyQualifies) {
+          const isBull = callBuyQualifies;
+          const optType = isBull ? 'CE' : 'PE';
+          const directionalStrike = atmStrike;
+          cards.push({
+            index: sp.label,
+            symbol: sp.tvSym,
+            strike: `${directionalStrike} ${optType}`,
+            expiry: `${sp.expiry} • Spot ₹${spot.toLocaleString('en-IN')}`,
+            action: 'BUY',
+            signal_badge: isBull ? 'CALL BUY (CE) • FORMULA BREAKOUT' : 'PUT BUY (PE) • FORMULA BREAKDOWN',
+            badge_class: isBull ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40',
+            listed_time: fmtSec(triggerBaseSec),
+            listed_status: 'Formula Spot Trigger',
+            entry: entryPrem,
+            sl: Number((entryPrem * 0.78).toFixed(2)),
+            target1: Number((entryPrem * 1.32).toFixed(2)),
+            target2: Number((entryPrem * 1.68).toFixed(2)),
+            skill_strategy: isBull ? 'Pivot + Gamma CE Breakout' : 'Pivot S1 Distribution PE Breakdown',
+            confidence: Math.min(96, Math.round(79 + Math.abs(chgPct) * 8)),
+            skill_logic: `${sp.label} spot @ ₹${spot.toLocaleString('en-IN')} (${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(2)}%) vs Pivot ₹${pivot.toLocaleString('en-IN')}. ${isBull ? `Holding above Pivot toward R1 ₹${r1.toLocaleString('en-IN')}` : `Trading below Pivot toward S1 ₹${s1.toLocaleString('en-IN')}`}. Exit/Book at T1/T2; SL ₹${(entryPrem * 0.78).toFixed(2)}.`,
+            status: livePrem >= entryPrem ? 'IN PROFIT / ACTIVE' : 'MONITORING',
+            status_class: livePrem >= entryPrem ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300',
+            pnl: `${Number(pnlPct) >= 0 ? '+' : ''}${pnlPct}% (Prem ₹${livePrem.toFixed(1)})`,
+            lot_size: sp.lot
+          });
+        }
 
-        // 1. Directional Option Buy Setup
-        cards.push({
-          index: sp.label,
-          symbol: sp.tvSym,
-          strike: `${directionalStrike} ${optType}`,
-          expiry: `${sp.expiry} • Spot ₹${spot.toLocaleString('en-IN')}`,
-          action: 'BUY',
-          signal_badge: isBull ? 'MOMENTUM CE BUY' : 'BREAKDOWN PE BUY',
-          badge_class: isBull ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border border-rose-500/40',
-          listed_time: listTimeStr,
-          listed_status: 'Formula Spot Trigger',
-          entry: entryPrem,
-          sl: Number((entryPrem * 0.78).toFixed(2)),
-          target1: Number((entryPrem * 1.32).toFixed(2)),
-          target2: Number((entryPrem * 1.68).toFixed(2)),
-          skill_strategy: isBull ? 'Pivot + ORB Gamma Breakout' : 'Pivot S1 Distribution Breakdown',
-          confidence: Math.min(96, Math.round(78 + Math.abs(chgPct) * 8)),
-          skill_logic: `${sp.label} spot @ ₹${spot.toLocaleString('en-IN')} (${chgPct >= 0 ? '+' : ''}${chgPct.toFixed(2)}%) vs Pivot ₹${pivot.toLocaleString('en-IN')}. ${isBull ? `Breaking above S1 ₹${s1.toLocaleString('en-IN')} toward R1 ₹${r1.toLocaleString('en-IN')}` : `Trading below Pivot toward S1 ₹${s1.toLocaleString('en-IN')}`}. Live Prem ~₹${livePrem.toFixed(2)}.`,
-          status: livePrem >= entryPrem ? 'IN PROFIT / ACTIVE' : 'MONITORING',
-          status_class: livePrem >= entryPrem ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300',
-          pnl: `${Number(pnlPct) >= 0 ? '+' : ''}${pnlPct}% (Prem ₹${livePrem.toFixed(1)})`,
-          lot_size: sp.lot
-        });
-
-        // 2. Institutional Option Writing Setup (Theta Decay Hedge)
-        cards.push({
-          index: sp.label,
-          symbol: sp.tvSym,
-          strike: `${hedgeStrike} ${isBull ? 'PE' : 'CE'}`,
-          expiry: `${sp.expiry} • Writer Wall`,
-          action: 'SELL',
-          signal_badge: isBull ? 'PUT WRITE FLOOR' : 'CALL WRITE CEILING',
-          badge_class: 'bg-amber-500/20 text-amber-300 border border-amber-500/40',
-          listed_time: fmtSec(triggerBaseSec + 420),
-          listed_status: 'OI Theta Formula',
-          entry: bullWritePrem,
-          sl: Number((bullWritePrem * 1.35).toFixed(2)),
-          target1: Number((bullWritePrem * 0.62).toFixed(2)),
-          target2: Number((bullWritePrem * 0.28).toFixed(2)),
-          skill_strategy: isBull ? 'Support S1 Put-Writing Shield' : 'Resistance R1 Call-Writing Cap',
-          confidence: Math.min(94, Math.round(76 + (22 - Math.min(20, vixSpot)) * 1.2)),
-          skill_logic: `Live VIX ${vixSpot.toFixed(2)} supports systematic short ${isBull ? 'PE' : 'CE'} collection at ₹${(isBull ? s1 : r1).toLocaleString('en-IN')} zone (PrevClose ₹${prevClose.toFixed(1)}).`,
-          status: 'THETA DECAY ACTIVE',
-          status_class: 'bg-cyan-500/20 text-cyan-300',
-          pnl: `+${(Math.min(28, 8.5 + Math.abs(chgPct) * 4)).toFixed(1)}% Decay Edge`,
-          lot_size: sp.lot
-        });
+        // 2. Institutional Option SELL / WRITE (PE floor or CE ceiling)
+        if (putWriteQualifies || callWriteQualifies) {
+          const isPutWrite = putWriteQualifies;
+          const hedgeStrike = isPutWrite ? atmStrike - sp.step * 2 : atmStrike + sp.step * 2;
+          cards.push({
+            index: sp.label,
+            symbol: sp.tvSym,
+            strike: `${hedgeStrike} ${isPutWrite ? 'PE' : 'CE'}`,
+            expiry: `${sp.expiry} • Option Seller Wall`,
+            action: 'SELL',
+            signal_badge: isPutWrite ? 'PUT SELL (WRITE) • FLOOR SHIELD' : 'CALL SELL (WRITE) • CEILING CAP',
+            badge_class: 'bg-amber-500/20 text-amber-300 border border-amber-500/40',
+            listed_time: fmtSec(triggerBaseSec + 185),
+            listed_status: 'OI Theta Formula',
+            entry: writePrem,
+            sl: Number((writePrem * 1.35).toFixed(2)),
+            target1: Number((writePrem * 0.62).toFixed(2)),
+            target2: Number((writePrem * 0.28).toFixed(2)),
+            skill_strategy: isPutWrite ? 'Support S1 Put-Writing Floor' : 'Resistance R1 Call-Writing Cap',
+            confidence: Math.min(94, Math.round(77 + (22 - Math.min(20, vixSpot)) * 1.2)),
+            skill_logic: `VIX ${vixSpot.toFixed(2)} (<22) & Spot ${isPutWrite ? '>= S1' : '<= R1'} ₹${(isPutWrite ? s1 : r1).toLocaleString('en-IN')} confirms systematic ${isPutWrite ? 'PE' : 'CE'} Option Write (PrevClose ₹${prevClose.toFixed(1)}). Exit/Cover at T1/T2.`,
+            status: 'THETA DECAY ACTIVE',
+            status_class: 'bg-cyan-500/20 text-cyan-300',
+            pnl: `+${(Math.min(28, 8.5 + Math.abs(chgPct) * 4)).toFixed(1)}% Decay Edge`,
+            lot_size: sp.lot
+          });
+        }
       });
 
-      // India VIX Regime Advisory Card
-      cards.push({
-        index: 'INDIA VIX',
-        symbol: 'NSE:INDIAVIX',
-        strike: `VIX ${vixSpot.toFixed(2)} REGIME`,
-        expiry: 'Volatility Gauge',
-        action: vixSpot < 19 ? 'BUY' : 'SELL',
-        signal_badge: vixSpot < 19 ? 'TRENDING OPTIONS REGIME' : 'HIGH VOL WRITE REGIME',
-        badge_class: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
-        listed_time: fmtSec(safeSec - 900),
-        listed_status: 'Live VIX Feed',
-        entry: Number(vixSpot.toFixed(2)),
-        sl: Number((vixSpot * 1.15).toFixed(2)),
-        target1: Number((vixSpot * 0.90).toFixed(2)),
-        target2: Number((vixSpot * 0.82).toFixed(2)),
-        skill_strategy: 'Claude Volatility Regime Calibration',
-        confidence: 92,
-        skill_logic: `India VIX currently at ${vixSpot.toFixed(2)}. ${vixSpot < 18.5 ? 'Controlled IV favors directional CE/PE breakout debit trades.' : 'Elevated IV expands option premiums — tighten position sizes & prioritize spread hedges.'}`,
-        status: 'ACTIVE REGIME',
-        status_class: 'bg-emerald-500/20 text-emerald-300',
-        pnl: vixSpot < 19 ? '+RISK-ON' : 'CAUTION HIGH IV',
-        lot_size: 1
-      });
+      // India VIX Regime Advisory Card (strictly formula-qualified)
+      if (vixSpot > 0 && (Math.abs(vixChgPct) >= 0.5 || vixSpot >= 15)) {
+        cards.push({
+          index: 'INDIA VIX',
+          symbol: 'NSE:INDIAVIX',
+          strike: `VIX ${vixSpot.toFixed(2)} REGIME`,
+          expiry: 'Volatility Gauge',
+          action: vixSpot < 19 ? 'BUY' : 'SELL',
+          signal_badge: vixSpot < 19 ? 'TRENDING OPTIONS REGIME' : 'HIGH VOL WRITE REGIME',
+          badge_class: 'bg-purple-500/20 text-purple-300 border border-purple-500/40',
+          listed_time: fmtSec(minScanSec + 120),
+          listed_status: 'Live VIX Feed',
+          entry: Number(vixSpot.toFixed(2)),
+          sl: Number((vixSpot * 1.15).toFixed(2)),
+          target1: Number((vixSpot * 0.90).toFixed(2)),
+          target2: Number((vixSpot * 0.82).toFixed(2)),
+          skill_strategy: 'Claude Volatility Regime Calibration',
+          confidence: 92,
+          skill_logic: `India VIX at ${vixSpot.toFixed(2)} (${vixChgPct >= 0 ? '+' : ''}${vixChgPct.toFixed(2)}%). ${vixSpot < 18.5 ? 'Controlled IV favors directional CE/PE breakout debit trades.' : 'Elevated IV expands option premiums — prioritize defined-risk spreads.'}`,
+          status: 'ACTIVE REGIME',
+          status_class: 'bg-emerald-500/20 text-emerald-300',
+          pnl: vixSpot < 19 ? '+RISK-ON' : 'CAUTION HIGH IV',
+          lot_size: 1
+        });
+      }
 
-      return cards;
+      return cards.slice(0, 15);
     }
 
     function renderClaudeIndicesOptions() {
       const container = document.getElementById('claude-options-grid');
+      const countBadge = document.getElementById('claude-options-eligible-badge');
       if (!container) return;
+
+      if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+        if (countBadge) countBadge.innerText = '0 Eligible (Standby 09:20 IST)';
+        container.innerHTML = `
+          <div class="col-span-full p-6 rounded-2xl border border-amber-500/35 bg-[#0c0818]/90 text-center font-mono text-xs space-y-2.5">
+            <div class="text-2xl">🕛</div>
+            <div class="text-amber-300 font-black tracking-wide">12:00 AM MIDNIGHT FLUSH &bull; INDICES OPTIONS HUB STANDBY</div>
+            <p class="text-slate-400 max-w-lg mx-auto">Previous day index option signals cleared. Live CE/PE Buy &amp; Sell formulas auto-scan every market day at <strong>09:20 AM IST</strong>.</p>
+            <span class="midnight-auto-countdown inline-block px-4 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">🤖 AUTO-SCANS AT 09:20 AM IST EVERY MARKET DAY</span>
+          </div>
+        `;
+        return;
+      }
 
       let filtered = buildLiveClaudeIndicesOptions();
       if (currentIndexFilter !== 'ALL') {
@@ -12222,10 +12308,13 @@ ${json.message || 'Unauthorized token.'}`);
         filtered = filtered.filter(item => item.action === 'SELL');
       }
 
+      filtered = filtered.slice(0, 15);
+      if (countBadge) countBadge.innerText = `${filtered.length} Formula Qualified`;
+
       if (filtered.length === 0) {
         container.innerHTML = `
-          <div class="col-span-full py-8 text-center text-slate-500 font-mono text-sm">
-            No active Claude AI option recommendations matching the selected filters.
+          <div class="col-span-full py-8 text-center text-slate-400 font-mono text-sm">
+            0 Index Option contracts currently meet the strict Claude AI Hub formula criteria for the selected filter.
           </div>
         `;
         return;
@@ -12235,7 +12324,6 @@ ${json.message || 'Unauthorized token.'}`);
       filtered.forEach(item => {
         const isBuy = item.action === 'BUY';
         const isCall = item.strike.includes('CE');
-        const actionColor = isBuy ? (isCall ? 'text-emerald-400' : 'text-rose-400') : 'text-amber-400';
         const cardBorder = isBuy ? (isCall ? 'border-emerald-500/30 hover:border-emerald-500/60' : 'border-rose-500/30 hover:border-rose-500/60') : 'border-amber-500/30 hover:border-amber-500/60';
 
         html += `
@@ -12244,7 +12332,7 @@ ${json.message || 'Unauthorized token.'}`);
             <!-- Top Card Header: Index, Strike & Listed At Time -->
             <div class="flex items-start justify-between gap-2 border-b border-[#1c273c] pb-2.5">
               <div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span class="text-xs font-black text-white tracking-wider">${item.index}</span>
                   <span class="text-[10px] px-2 py-0.5 rounded ${item.badge_class} font-bold">${item.signal_badge}</span>
                 </div>
@@ -12255,7 +12343,7 @@ ${json.message || 'Unauthorized token.'}`);
               </div>
 
               <!-- Prominent Listed At Time Badge -->
-              <div class="text-right">
+              <div class="text-right shrink-0">
                 <div class="flex items-center gap-1 justify-end">
                   <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                   <span class="text-xs font-black text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded shadow-sm">
@@ -12266,7 +12354,7 @@ ${json.message || 'Unauthorized token.'}`);
               </div>
             </div>
 
-            <!-- Trade Execution Levels (Entry, SL, Targets, R:R) -->
+            <!-- Trade Execution Levels (Entry, SL, Exit / Targets) -->
             <div class="grid grid-cols-4 gap-1.5 bg-[#070b14] p-2.5 rounded-lg border border-[#162033] text-center text-xs">
               <div>
                 <div class="text-[9.5px] text-slate-500 font-bold">ENTRY</div>
@@ -12277,23 +12365,23 @@ ${json.message || 'Unauthorized token.'}`);
                 <div class="font-black text-rose-400 mt-0.5">₹${item.sl.toFixed(2)}</div>
               </div>
               <div>
-                <div class="text-[9.5px] text-emerald-400 font-bold">TARGET 1</div>
+                <div class="text-[9.5px] text-emerald-400 font-bold">EXIT / T1</div>
                 <div class="font-black text-emerald-400 mt-0.5">₹${item.target1.toFixed(2)}</div>
               </div>
               <div>
-                <div class="text-[9.5px] text-cyan-400 font-bold">TARGET 2</div>
+                <div class="text-[9.5px] text-cyan-400 font-bold">EXIT / T2</div>
                 <div class="font-black text-cyan-400 mt-0.5">₹${item.target2.toFixed(2)}</div>
               </div>
             </div>
 
             <!-- Claude AI Trading Skill Strategy & Institutional Logic -->
             <div class="space-y-1.5 text-[11px] bg-[#0d1424] p-2.5 rounded-lg border border-[#1c2a44]">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between gap-2">
                 <span class="text-[10px] text-cyan-400 font-bold flex items-center gap-1">
                   <span>🧠 Claude AI Strategy:</span>
                   <span class="text-white">${item.skill_strategy}</span>
                 </span>
-                <span class="text-[9.5px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">
+                <span class="text-[9.5px] px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold shrink-0">
                   ${item.confidence}% Confidence
                 </span>
               </div>
@@ -12302,7 +12390,7 @@ ${json.message || 'Unauthorized token.'}`);
               </p>
             </div>
 
-            <!-- Performance Status & Fyers Fast Order Buttons -->
+            <!-- Performance Status & Fast Order Buttons -->
             <div class="flex items-center justify-between gap-2 pt-1 border-t border-[#182236]">
               <div class="flex items-center gap-2">
                 <span class="text-[10px] px-2 py-0.5 rounded font-black ${item.status_class}">${item.status}</span>
@@ -12799,7 +12887,7 @@ ${json.message || 'Unauthorized token.'}`);
           window.DATA.all_stocks.forEach((s, idx) => {
             if (!s.listed_at || isTimeInFutureIST(s.listed_at)) {
               const isDown = (s.pct_change || 0) < 0;
-              sanitizeStockListedTime(s, idx % 10, isDown, 10);
+              sanitizeStockListedTime(s, idx % 15, isDown, 15);
               fixesApplied++;
             }
           });
@@ -12815,11 +12903,11 @@ ${json.message || 'Unauthorized token.'}`);
           });
         }
 
-        // Rule 3: Enforce Stock-Only Isolation (zero benchmark indices inside equity scanners) + Top 10 cap
+        // Rule 3: Enforce Stock-Only Isolation (zero benchmark indices inside equity scanners) + Max 15 cap
         if (window.DATA && typeof isPureEquityStock === 'function' && typeof sanitizeDataScannersUniverse === 'function') {
           const beforeLen = Array.isArray(window.DATA.all_stocks) ? window.DATA.all_stocks.length : 0;
           const hadIndices = Array.isArray(window.DATA.all_stocks) && window.DATA.all_stocks.some(s => !isPureEquityStock(s));
-          if (hadIndices || (Array.isArray(window.DATA.strong_bullish) && window.DATA.strong_bullish.length > 10)) {
+          if (hadIndices || (Array.isArray(window.DATA.strong_bullish) && window.DATA.strong_bullish.length > 15)) {
             sanitizeDataScannersUniverse();
             renderAllTables();
             fixesApplied++;
@@ -12997,10 +13085,57 @@ ${json.message || 'Unauthorized token.'}`);
         }
       },
 
+      parseListedSec(t) {
+        if (!t) return 0;
+        const m = String(t).match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+        if (!m) return 0;
+        return (parseInt(m[1], 10) || 0) * 3600 + (parseInt(m[2], 10) || 0) * 60 + (parseInt(m[3], 10) || 0);
+      },
+
+      sortListByMode(items, mode = 'listed_asc') {
+        if (!Array.isArray(items)) return [];
+        const arr = [...items];
+        const byTimeAsc = (a, b) => {
+          const tA = this.parseListedSec(a.listedAt || a.triggerTime || a.timestampIST || a.time);
+          const tB = this.parseListedSec(b.listedAt || b.triggerTime || b.timestampIST || b.time);
+          if (tA !== tB) return tA - tB;
+          return String(a.symbol || a.name || '').localeCompare(String(b.symbol || b.name || ''));
+        };
+        if (mode === 'listed_desc') {
+          return arr.sort((a, b) => {
+            const tA = this.parseListedSec(a.listedAt || a.triggerTime || a.timestampIST || a.time);
+            const tB = this.parseListedSec(b.listedAt || b.triggerTime || b.timestampIST || b.time);
+            if (tB !== tA) return tB - tA;
+            return String(a.symbol || a.name || '').localeCompare(String(b.symbol || b.name || ''));
+          });
+        }
+        if (mode === 'symbol_asc') {
+          return arr.sort((a, b) => {
+            const symCmp = String(a.symbol || a.name || '').localeCompare(String(b.symbol || b.name || ''));
+            return symCmp !== 0 ? symCmp : byTimeAsc(a, b);
+          });
+        }
+        if (mode === 'score_desc') {
+          return arr.sort((a, b) => {
+            const scA = Number(a.confidence ?? a.confluenceScore ?? a.score ?? Math.abs(Number(a.changePercent ?? a.pnlNowPct ?? a.returnPct ?? 0)));
+            const scB = Number(b.confidence ?? b.confluenceScore ?? b.score ?? Math.abs(Number(b.changePercent ?? b.pnlNowPct ?? b.returnPct ?? 0)));
+            return scB !== scA ? scB - scA : byTimeAsc(a, b);
+          });
+        }
+        return arr.sort(byTimeAsc);
+      },
+
       buildClientFallbackReport(params) {
+        if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+          return { status: 'ok', istTime: '00:00-09:19 IST Standby', buyRecommendations: [], sellRecommendations: [], skills: {} };
+        }
         const pool = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) ? DATA.all_stocks.filter(isPureEquityStock) : [];
-        const bull = [...pool].filter(s => (Number(s.pct_change) || 0) >= 0).sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true));
-        const bear = [...pool].filter(s => (Number(s.pct_change) || 0) < 0).sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false));
+        const bull = [...pool]
+          .filter(s => (Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) >= (Number(s.atp) || Number(s.price) || 0) * 0.998)
+          .sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true));
+        const bear = [...pool]
+          .filter(s => (Number(s.pct_change) || 0) <= -0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) <= (Number(s.atp) || Number(s.price) || 0) * 1.002)
+          .sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false));
         const riskPerTradeRs = (params.capital * params.riskPct) / 100;
         const maxSlot = (params.capital * params.leverage) / params.maxPositions;
 
@@ -13019,7 +13154,7 @@ ${json.message || 'Unauthorized token.'}`);
             action: (isBuy && (s.pct_change || 0) >= 2.0) ? 'STRONG BUY' : isBuy ? 'BUY' : Math.abs(s.pct_change || 0) >= 2.0 ? 'STRONG SELL' : 'SELL',
             confidence: Math.min(97, Math.max(76, Math.round(74 + Math.abs(s.pct_change || 0) * 6 + ((s.rvol || 1) - 1) * 10))),
             formulaName: (typeof getClaudeAiTraderSkillStrategy === 'function' ? getClaudeAiTraderSkillStrategy(s, isBuy).name : 'ORB + RVOL Formula'),
-            listedAt: s.listed_at || '09:30:00',
+            listedAt: s.listed_at || '09:20:05',
             entryPrice: Number(entry.toFixed(2)),
             livePrice: Number(lp.toFixed(2)),
             stopLoss: Number(sl.toFixed(2)),
@@ -13036,32 +13171,34 @@ ${json.message || 'Unauthorized token.'}`);
             projectedProfitT1Rs: Number((qty * Math.abs(t1 - entry)).toFixed(2)),
             guardrailStatus: 'APPROVED',
             guardrailNote: 'Within Risk Cap',
-            reason: `${s.listed_at || '09:30'} IST trigger | ${(s.bid_ask_ratio || 1).toFixed(2)}x B/A | ${(s.rvol || 1).toFixed(2)}x RVol`
+            reason: `${s.listed_at || '09:20:05'} IST trigger | ${(s.bid_ask_ratio || 1).toFixed(2)}x B/A | ${(s.rvol || 1).toFixed(2)}x RVol`
           };
         };
 
-        const buyRecommendations = bull.slice(0, 10).map(s => mapRec(s, true));
-        const sellRecommendations = bear.slice(0, 10).map(s => mapRec(s, false));
+        const buyRecommendations = this.sortListByMode(bull.slice(0, 15).map(s => mapRec(s, true)), 'listed_asc');
+        const sellRecommendations = this.sortListByMode(bear.slice(0, 15).map(s => mapRec(s, false)), 'listed_asc');
         const adv = bull.length;
         const dec = bear.length;
         const vix = Number(DATA?.indices?.['INDIAVIX']?.price || 17.42);
+        const topCombined3 = this.sortListByMode([...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)], 'listed_asc');
         return {
           status: 'ok',
           istTime: new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }) + ' IST',
           buyRecommendations,
           sellRecommendations,
           skills: {
-            chartPatternScanner: [...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map(r => ({
+            chartPatternScanner: this.sortListByMode([...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map(r => ({
               symbol: r.symbol, side: r.action.includes('BUY') ? 'BULLISH' : 'BEARISH', pattern: r.pattern,
-              triggerTime: r.listedAt, triggerLevel: r.entryPrice, livePrice: r.livePrice, rvol: r.rvol, score: r.confidence
-            })),
+              triggerTime: r.listedAt, listedAt: r.listedAt, triggerLevel: r.entryPrice, livePrice: r.livePrice, rvol: r.rvol, score: r.confidence
+            })), 'listed_asc'),
             newsCatalystMonitor: (DATA.news || []).slice(0, 6).map(n => ({
               symbol: n.symbol || 'MARKET', headline: n.title, source: n.source || 'NSE Feed',
               sentiment: n.sentiment || 'NEUTRAL', impact: 'HIGH', livePrice: 0, changePercent: 0,
               actionBias: n.sentiment === 'POSITIVE' ? 'MOMENTUM BUY' : 'WATCH'
             })),
-            exitTargetPlanner: [...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)].map(r => ({
-              symbol: r.symbol, action: r.action, entryPrice: r.entryPrice, livePrice: r.livePrice,
+            entrySignalIdentifier: { buy: buyRecommendations, sell: sellRecommendations },
+            exitTargetPlanner: topCombined3.map(r => ({
+              symbol: r.symbol, action: r.action, listedAt: r.listedAt, entryPrice: r.entryPrice, livePrice: r.livePrice,
               initialSL: r.stopLoss, t1Book50Pct: r.target1, t2Book30Pct: r.target2, t3Trail20Pct: r.target3,
               trailRule: 'Move SL to Cost after 50% booking at T1; trail 1.2x ATR', liveStatus: 'ACTIVE TRACKING'
             })),
@@ -13071,21 +13208,21 @@ ${json.message || 'Unauthorized token.'}`);
               triggeredBySliceCount: buyRecommendations.length + sellRecommendations.length,
               avgSliceReturnPct: 1.42,
               avgCurrentReturnPct: 2.18,
-              replayRows: [...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map(r => ({
+              replayRows: this.sortListByMode([...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map(r => ({
                 symbol: r.symbol, side: r.action.includes('BUY') ? 'BUY' : 'SELL', listedAt: r.listedAt,
                 entryPrice: r.entryPrice, priceAtSlice: r.entryPrice, currentPrice: r.livePrice,
                 pnlAtSlicePct: Number((r.changePercent * 0.65).toFixed(2)), pnlNowPct: r.changePercent, formulaName: r.formulaName
-              }))
+              })), 'listed_asc')
             },
             budgetPositionManager: {
               capital: params.capital, riskPct: params.riskPct, leverage: params.leverage, maxPositions: params.maxPositions,
               riskPerTradeRs, maxBuyingPower: params.capital * params.leverage, maxSlotCapital: maxSlot,
-              totalDeployedMargin: [...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)].reduce((a, b) => a + b.capitalRequired, 0),
-              totalPortfolioRiskRs: [...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)].reduce((a, b) => a + b.maxRiskRs, 0),
+              totalDeployedMargin: topCombined3.reduce((a, b) => a + b.capitalRequired, 0),
+              totalPortfolioRiskRs: topCombined3.reduce((a, b) => a + b.maxRiskRs, 0),
               totalPortfolioRiskPct: params.riskPct * 2,
-              totalPotentialProfitT1: [...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)].reduce((a, b) => a + b.projectedProfitT1Rs, 0),
-              allocations: [...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)].map(r => ({
-                symbol: r.symbol, action: r.action, qty: r.recommendedQty, entryPrice: r.entryPrice,
+              totalPotentialProfitT1: topCombined3.reduce((a, b) => a + b.projectedProfitT1Rs, 0),
+              allocations: topCombined3.map(r => ({
+                symbol: r.symbol, action: r.action, listedAt: r.listedAt, qty: r.recommendedQty, entryPrice: r.entryPrice,
                 stopLoss: r.stopLoss, target1: r.target1, marginNeeded: r.capitalRequired,
                 maxRiskRs: r.maxRiskRs, targetProfitRs: r.projectedProfitT1Rs
               }))
@@ -13110,10 +13247,10 @@ ${json.message || 'Unauthorized token.'}`);
               stopLossesHit: Math.round(pool.length * 0.08), activeTrades: Math.round(pool.length * 0.5),
               auditAccuracyPct: 84.0,
               auditNotes: ['Live fallback audit computed directly from active pure-equity scanner tape.'],
-              entries: [...buyRecommendations.slice(0, 4), ...sellRecommendations.slice(0, 4)].map(r => ({
+              entries: this.sortListByMode([...buyRecommendations.slice(0, 4), ...sellRecommendations.slice(0, 4)].map(r => ({
                 symbol: r.symbol, side: r.action, formula: r.formulaName, listedAt: r.listedAt,
                 entryPrice: r.entryPrice, livePrice: r.livePrice, returnPct: r.changePercent, outcome: 'ACTIVE'
-              }))
+              })), 'listed_asc')
             },
             multiTimeframeSynthesizer: {
               marketBias: adv >= dec ? 'BULLISH EXPANSION' : 'BEARISH LIQUIDATION',
@@ -13136,6 +13273,18 @@ ${json.message || 'Unauthorized token.'}`);
         const sen = this.lastSentinel;
         if (!rep || !rep.skills) return;
         const sk = rep.skills;
+        const sortMode = document.getElementById('c10-input-sort')?.value || 'listed_asc';
+        const sortLabelMap = {
+          listed_asc: 'Listed At A→Z • Locked Entry',
+          listed_desc: 'Listed At Z→A • Locked Entry',
+          symbol_asc: 'Symbol A→Z • Locked Entry',
+          score_desc: 'AI Score High→Low • Locked Entry'
+        };
+        const activeSortBadge = sortLabelMap[sortMode] || sortLabelMap.listed_asc;
+        const bBadge = document.getElementById('c10-buy-sort-badge');
+        const sBadge = document.getElementById('c10-sell-sort-badge');
+        if (bBadge) bBadge.innerText = activeSortBadge;
+        if (sBadge) sBadge.innerText = activeSortBadge;
 
         const syncEl = document.getElementById('c10-last-sync');
         if (syncEl) syncEl.innerText = `Synced ${rep.istTime || 'LIVE IST'}`;
@@ -13208,13 +13357,16 @@ ${json.message || 'Unauthorized token.'}`);
               </div>
             </div>`).join('');
         };
-        renderRecList('c10-buy-list', rep.buyRecommendations, true);
-        renderRecList('c10-sell-list', rep.sellRecommendations, false);
+        const sortedBuys = this.sortListByMode(rep.buyRecommendations, sortMode);
+        const sortedSells = this.sortListByMode(rep.sellRecommendations, sortMode);
+        renderRecList('c10-buy-list', sortedBuys, true);
+        renderRecList('c10-sell-list', sortedSells, false);
 
         // Skill 1: Chart & Pattern Scanner
         const s1 = document.getElementById('c10-skill-1');
         if (s1) {
-          s1.innerHTML = (sk.chartPatternScanner || []).map(x => `
+          const s1Rows = this.sortListByMode(sk.chartPatternScanner || [], sortMode);
+          s1.innerHTML = s1Rows.map(x => `
             <div class="flex items-center justify-between p-2 rounded bg-[#070b14] border border-[#162136]">
               <div><strong class="text-white cursor-pointer hover:text-cyan-400" onclick="openTradingViewChart('${x.symbol}')">${x.symbol}</strong> <span class="text-[10px] ${x.side === 'BULLISH' ? 'text-emerald-400' : 'text-rose-400'}">${x.pattern}</span></div>
               <div class="text-right text-[10px]"><span class="text-amber-300">🕒 ${x.triggerTime}</span> &bull; <span class="text-slate-300">Trg ₹${x.triggerLevel} → ₹${x.livePrice}</span></div>
@@ -13237,10 +13389,12 @@ ${json.message || 'Unauthorized token.'}`);
         // Skill 3: Entry Signal Identifier
         const s3 = document.getElementById('c10-skill-3');
         if (s3) {
-          const comb = [...(sk.entrySignalIdentifier?.buy || []).slice(0, 4), ...(sk.entrySignalIdentifier?.sell || []).slice(0, 4)];
+          const buyRaw = sk.entrySignalIdentifier?.buy || sortedBuys;
+          const sellRaw = sk.entrySignalIdentifier?.sell || sortedSells;
+          const comb = this.sortListByMode([...buyRaw.slice(0, 5), ...sellRaw.slice(0, 5)], sortMode);
           s3.innerHTML = comb.map(x => `
-            <div class="flex items-center justify-between p-2 rounded bg-[#070b14] border border-[#162136] text-[10.5px]">
-              <span><strong class="text-white">${x.symbol}</strong> <span class="${x.action.includes('BUY') ? 'text-emerald-400' : 'text-rose-400'}">(${x.action})</span></span>
+            <div class="flex items-center justify-between gap-2 p-2 rounded bg-[#070b14] border border-[#162136] text-[10.5px]">
+              <span><strong class="text-white cursor-pointer hover:text-cyan-400" onclick="openTradingViewChart('${x.symbol}')">${x.symbol}</strong> <span class="${x.action.includes('BUY') ? 'text-emerald-400' : 'text-rose-400'}">(${x.action})</span> <span class="text-amber-300 text-[9.5px]">🕒 ${x.listedAt || '09:20:05'}</span></span>
               <span class="text-slate-300">Entry ₹${x.entryPrice} | T1 ₹${x.target1} | SL ₹${x.stopLoss}</span>
             </div>`).join('');
         }
@@ -13248,9 +13402,10 @@ ${json.message || 'Unauthorized token.'}`);
         // Skill 4: Exit & Target Planner
         const s4 = document.getElementById('c10-skill-4');
         if (s4) {
-          s4.innerHTML = (sk.exitTargetPlanner || []).map(x => `
+          const s4Rows = this.sortListByMode(sk.exitTargetPlanner || [], sortMode);
+          s4.innerHTML = s4Rows.map(x => `
             <div class="p-2 rounded bg-[#070b14] border border-[#162136] text-[10px] space-y-0.5">
-              <div class="flex justify-between"><strong class="text-white">${x.symbol} (${x.action})</strong><span class="text-emerald-300">${x.liveStatus}</span></div>
+              <div class="flex justify-between gap-2"><strong class="text-white">${x.symbol} (${x.action}) <span class="text-amber-300 font-normal">${x.listedAt ? '🕒 ' + x.listedAt : ''}</span></strong><span class="text-emerald-300">${x.liveStatus}</span></div>
               <div class="text-slate-300">50% @ T1 ₹${x.t1Book50Pct} &bull; 30% @ T2 ₹${x.t2Book30Pct} &bull; 20% @ T3 ₹${x.t3Trail20Pct} &bull; SL ₹${x.initialSL}</div>
             </div>`).join('');
         }
@@ -13261,14 +13416,15 @@ ${json.message || 'Unauthorized token.'}`);
         const tmLbl = document.getElementById('c10-tm-label');
         if (tm && tmLbl) tmLbl.innerText = `Snapshot @ ${tm.selectedTimeIST} IST (${tm.triggeredBySliceCount} Signals)`;
         if (s5 && tm) {
+          const tmRows = this.sortListByMode(tm.replayRows || [], sortMode);
           s5.innerHTML = `
             <div class="p-2 rounded bg-amber-500/10 border border-amber-500/30 flex justify-between text-[10.5px]">
               <span class="text-amber-200">Replay @ <strong>${tm.selectedTimeIST} IST</strong> Avg P&amp;L: <strong>${tm.avgSliceReturnPct >= 0 ? '+' : ''}${tm.avgSliceReturnPct}%</strong></span>
               <span class="text-emerald-300">Held till Now: <strong>${tm.avgCurrentReturnPct >= 0 ? '+' : ''}${tm.avgCurrentReturnPct}%</strong></span>
             </div>
-            ${(tm.replayRows || []).map(r => `
+            ${tmRows.map(r => `
               <div class="flex justify-between p-1.5 rounded bg-[#070b14] border border-[#162136] text-[10px]">
-                <span><strong class="text-white">${r.symbol}</strong> (${r.side} @ ${r.listedAt})</span>
+                <span><strong class="text-white">${r.symbol}</strong> (${r.side} <span class="text-amber-300">🕒 ${r.listedAt}</span>)</span>
                 <span>Slice ₹${r.priceAtSlice} (<strong class="${r.pnlAtSlicePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${r.pnlAtSlicePct >= 0 ? '+' : ''}${r.pnlAtSlicePct}%</strong>) → Now ₹${r.currentPrice}</span>
               </div>`).join('')}`;
         }
@@ -13277,15 +13433,16 @@ ${json.message || 'Unauthorized token.'}`);
         const bp = sk.budgetPositionManager;
         const s6 = document.getElementById('c10-skill-6');
         if (s6 && bp) {
+          const allocRows = this.sortListByMode(bp.allocations || [], sortMode);
           s6.innerHTML = `
             <div class="grid grid-cols-3 gap-1.5 text-center p-2 rounded bg-emerald-500/10 border border-emerald-500/30 text-[10px]">
               <div><div class="text-slate-400">BUYING POWER</div><div class="font-bold text-white">₹${Number(bp.maxBuyingPower || 0).toLocaleString('en-IN')}</div></div>
               <div><div class="text-slate-400">RISK / TRADE</div><div class="font-bold text-amber-300">₹${Number(bp.riskPerTradeRs || 0).toLocaleString('en-IN')}</div></div>
               <div><div class="text-slate-400">EST T1 PROFIT</div><div class="font-bold text-emerald-400">+₹${Number(bp.totalPotentialProfitT1 || 0).toLocaleString('en-IN')}</div></div>
             </div>
-            ${(bp.allocations || []).map(a => `
+            ${allocRows.map(a => `
               <div class="flex justify-between p-1.5 rounded bg-[#070b14] border border-[#162136] text-[10px]">
-                <span><strong class="text-white">${a.symbol}</strong> &bull; ${a.qty} sh (${a.action})</span>
+                <span><strong class="text-white">${a.symbol}</strong> &bull; ${a.qty} sh (${a.action}) ${a.listedAt ? `<span class="text-amber-300">🕒 ${a.listedAt}</span>` : ''}</span>
                 <span class="text-slate-300">Margin ₹${Number(a.marginNeeded).toLocaleString('en-IN')} | Risk ₹${a.maxRiskRs}</span>
               </div>`).join('')}`;
         }
@@ -13326,14 +13483,15 @@ ${json.message || 'Unauthorized token.'}`);
         const ej = sk.eodJournalAuditor;
         const s9 = document.getElementById('c10-skill-9');
         if (s9 && ej) {
+          const ejRows = this.sortListByMode(ej.entries || [], sortMode);
           s9.innerHTML = `
             <div class="p-2 rounded bg-[#070b14] border border-[#162136] flex justify-between text-[10px]">
               <span class="text-emerald-300">T1 Hits: ${ej.targetsAchieved} | SL Hits: <span class="text-rose-400">${ej.stopLossesHit}</span></span>
               <span class="text-cyan-300">Audit Win Rate: <strong>${ej.auditAccuracyPct}%</strong></span>
             </div>
-            ${(ej.entries || []).map(e => `
+            ${ejRows.map(e => `
               <div class="flex justify-between p-1.5 rounded bg-[#070b14] border border-[#162136] text-[10px]">
-                <span><strong class="text-white">${e.symbol}</strong> (${e.listedAt})</span>
+                <span><strong class="text-white">${e.symbol}</strong> (<span class="text-amber-300">🕒 ${e.listedAt}</span>)</span>
                 <span class="${e.returnPct >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${e.returnPct >= 0 ? '+' : ''}${e.returnPct}% • ${e.outcome}</span>
               </div>`).join('')}`;
         }
@@ -13623,23 +13781,23 @@ ${json.message || 'Unauthorized token.'}`);
         };
 
         const buyRows = [];
-        pool.filter(s => (Number(s.pct_change) || 0) >= 0).forEach(s => {
+        pool.filter(s => (Number(s.pct_change) || 0) >= 0.2).forEach(s => {
           const r = evalSide(s, true);
-          if (r.smartMoneyFilters.dualFlowAligned) buyRows.push(r);
+          if (r.smartMoneyFilters.dualFlowAligned && r.conditionsMet >= 15) buyRows.push(r);
           else blockedContraBuys++;
         });
         const sellRows = [];
-        pool.filter(s => (Number(s.pct_change) || 0) < 0).forEach(s => {
+        pool.filter(s => (Number(s.pct_change) || 0) <= -0.2).forEach(s => {
           const r = evalSide(s, false);
-          if (r.smartMoneyFilters.dualFlowAligned) sellRows.push(r);
+          if (r.smartMoneyFilters.dualFlowAligned && r.conditionsMet >= 15) sellRows.push(r);
           else blockedContraSells++;
         });
 
         const buySignals = sortByListedAtNewestFirstAtoZ(
-          buyRows.sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score).slice(0, 10)
+          buyRows.sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score).slice(0, 15)
         );
         const sellSignals = sortByListedAtNewestFirstAtoZ(
-          sellRows.sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score).slice(0, 10)
+          sellRows.sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score).slice(0, 15)
         );
 
         return {
@@ -13687,7 +13845,7 @@ ${json.message || 'Unauthorized token.'}`);
         if (kpiTime) kpiTime.innerText = `${rpt.istTime || '--:--:--'} IST`;
 
         if (rpt.isMidnightCleared) {
-          const clearedHtml = `<tbody><tr><td class="p-8 text-center text-amber-300 font-bold">🕛 12:00 AM Midnight Flush Active &bull; Money Flow Surge auto-populates at next NSE Open (09:15 AM IST).</td></tr></tbody>`;
+          const clearedHtml = `<tbody><tr><td class="p-8 text-center text-amber-300 font-bold">🕛 12:00 AM Midnight Flush Active &bull; Money Flow Surge auto-scans at <strong>09:20 AM IST</strong> every market day.</td></tr></tbody>`;
           buyTbl.innerHTML = clearedHtml;
           sellTbl.innerHTML = clearedHtml;
           return;
@@ -13865,8 +14023,8 @@ ${json.message || 'Unauthorized token.'}`);
         const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
         if (!ist) return true;
         const nowSec = ist.hours * 3600 + ist.minutes * 60 + (ist.seconds || 0);
-        // Outside market session (before 09:00 or after 15:35 IST), never emit stale historical alerts
-        if (nowSec < 9 * 3600 || nowSec > 15 * 3600 + 35 * 60) return false;
+        // Outside market scan session (before 09:20 or after 15:35 IST), never emit stale alerts
+        if (nowSec < 9 * 3600 + 20 * 60 || nowSec > 15 * 3600 + 35 * 60) return false;
         const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(new Date(), true) : null;
         if (mkt && mkt.status === 'CLOSED') return false;
         const listedSec = this.parseTimeToSec(listedTimeStr);
@@ -13891,7 +14049,7 @@ ${json.message || 'Unauthorized token.'}`);
           const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
           if (!ist) return;
           const nowMin = ist.hours * 60 + ist.minutes;
-          const afterClose = nowMin >= 15 * 60 + 35 || nowMin < 9 * 60;
+          const afterClose = nowMin >= 15 * 60 + 35 || nowMin < 9 * 60 + 20;
           if (afterClose || (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared())) {
             this.clearAllNotifications(true);
             return;
@@ -13907,10 +14065,10 @@ ${json.message || 'Unauthorized token.'}`);
             return;
           }
           const nowSec = ist.hours * 3600 + ist.minutes * 60 + (ist.seconds || 0);
-          // Only retain today's active-session notifications whose timestamps are valid for today (strictly >= 09:00 and <= nowSec)
+          // Only retain today's active-session notifications whose timestamps are valid for today (strictly >= 09:20 and <= nowSec)
           this.history = parsed.items.filter(it => {
             const sec = this.parseTimeToSec(it && it.time);
-            return sec >= 9 * 3600 && sec <= nowSec + 30;
+            return sec >= 9 * 3600 + 20 * 60 && sec <= nowSec + 30;
           });
           this.history.forEach(it => {
             if (it && it.symbol && it.type === 'stock_listed') {
@@ -13943,7 +14101,7 @@ ${json.message || 'Unauthorized token.'}`);
         if (!ist) return;
         const nowMin = ist.hours * 60 + ist.minutes;
         const isAfterMarketClose = nowMin >= 15 * 60 + 35; // 15:35 IST onwards after NSE close
-        const isPreMarket = nowMin < 9 * 60;
+        const isPreMarket = nowMin < 9 * 60 + 20;
         const mktCleared = (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared());
 
         let savedDate = '';
@@ -13959,7 +14117,7 @@ ${json.message || 'Unauthorized token.'}`);
           return;
         }
 
-        // 2. Every day after market close (>= 15:35 IST) or during midnight-cleared pre-open wait: remove old notifications
+        // 2. Every day after market close (>= 15:35 IST) or during midnight-cleared pre-09:20 wait: remove old notifications
         if (isAfterMarketClose || isPreMarket || mktCleared) {
           if (this.history.length > 0) {
             this.resetCandidateTrackers();
@@ -13969,10 +14127,10 @@ ${json.message || 'Unauthorized token.'}`);
           return;
         }
 
-        // 3. New trading session morning reset (once per new trading date between 09:00-15:34 IST)
+        // 3. New trading session morning reset (once per new trading date between 09:20-15:34 IST)
         try {
           const openedDate = localStorage.getItem('muhurat_notif_opened_date') || '';
-          if (openedDate !== ist.dateStr && nowMin >= 9 * 60 && nowMin <= 15 * 60 + 34) {
+          if (openedDate !== ist.dateStr && nowMin >= 9 * 60 + 20 && nowMin <= 15 * 60 + 34) {
             localStorage.setItem('muhurat_notif_opened_date', ist.dateStr);
             this.resetCandidateTrackers();
             this.clearAllNotifications(true);
@@ -15093,8 +15251,8 @@ ${json.message || 'Unauthorized token.'}`);
             list.push(this.formatItem(s));
           });
         }
-        const gapUp = list.filter(x => (x.gapPct || 0) >= 0).sort((a, b) => (b.gapPct || 0) - (a.gapPct || 0)).slice(0, 10);
-        const gapDown = list.filter(x => (x.gapPct || 0) < 0).sort((a, b) => (a.gapPct || 0) - (b.gapPct || 0)).slice(0, 10);
+        const gapUp = list.filter(x => (x.gapPct || 0) >= 0.5).sort((a, b) => (b.gapPct || 0) - (a.gapPct || 0)).slice(0, 15);
+        const gapDown = list.filter(x => (x.gapPct || 0) <= -0.5).sort((a, b) => (a.gapPct || 0) - (b.gapPct || 0)).slice(0, 15);
         return [...gapUp, ...gapDown];
       },
 
@@ -15213,12 +15371,12 @@ ${json.message || 'Unauthorized token.'}`);
                     12:00 AM MIDNIGHT PURGE &bull; PRE-OPEN BOOK CLEARED FOR NEXT SESSION
                   </div>
                   <p class="text-xs text-slate-400 leading-relaxed">
-                    All previous day pre-open order imbalances and equilibrium prices have been purged.
-                    Phase 1 Order Collection for the new trading day begins at <strong>09:00 AM IST</strong>.
+                    All previous day order imbalances and equilibrium prices have been purged.
+                    Every market day formula scan starts automatically at <strong>09:20 AM IST</strong>.
                   </p>
                   <div class="flex items-center gap-2 pt-1">
                     <span class="midnight-auto-countdown px-4 py-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-amber-200 font-black text-xs">
-                      🤖 100% AUTOMATIC • PRE-OPEN AUTO-SCAN AT 09:00 AM IST
+                      🤖 100% AUTOMATIC • FORMULA SCAN AT 09:20 AM IST
                     </span>
                   </div>
                 </div>
@@ -15523,9 +15681,13 @@ ${json.message || 'Unauthorized token.'}`);
           const itm = this.getItem(idx.symbol);
           if (itm) list.push(itm);
         });
-        // 2. Add F&O Stocks from DATA.all_stocks
+        // 2. Add strictly formula-eligible F&O Stocks from DATA.all_stocks (0..15)
         if (window.DATA && window.DATA.all_stocks) {
-          window.DATA.all_stocks.forEach(s => {
+          const eligibleStocks = window.DATA.all_stocks
+            .filter(s => isPureEquityStock(s) && Math.abs(Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15)
+            .sort((a, b) => (Math.abs(Number(b.pct_change) || 0) * (Number(b.rvol) || 1)) - (Math.abs(Number(a.pct_change) || 0) * (Number(a.rvol) || 1)))
+            .slice(0, 15);
+          eligibleStocks.forEach(s => {
             const itm = this.getItem(s.symbol);
             if (itm) list.push(itm);
           });
@@ -15787,11 +15949,11 @@ ${json.message || 'Unauthorized token.'}`);
                   </div>
                   <p class="text-xs text-slate-400 leading-relaxed">
                     Previous session S&amp;R breakout, liquidity trap, and reversal candidates have been automatically flushed at 12:00 AM IST.
-                    The next trading day scan automatically discovers fresh candidate stocks after market opens at <strong>09:15 AM IST</strong>.
+                    The next trading day formula scan runs automatically every market day at <strong>09:20 AM IST</strong>.
                   </p>
                   <div class="flex items-center gap-2 pt-1">
                     <span class="midnight-auto-countdown px-4 py-2 rounded-xl bg-cyan-500/20 border border-cyan-400/50 text-cyan-200 font-black text-xs">
-                      🤖 100% AUTOMATIC • AUTO-POPULATES AT 09:00 / 09:15 AM IST
+                      🤖 100% AUTOMATIC • FORMULA SCAN AT 09:20 AM IST
                     </span>
                   </div>
                 </div>

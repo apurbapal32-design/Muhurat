@@ -185,13 +185,7 @@ export class ScannerService {
         };
       },
     });
-    marketWebSocketServer.setAccessTokenResolver(
-      () =>
-        this.brokerConfig.upstoxAccessToken ||
-        this.brokerConfig.accessToken ||
-        process.env.UPSTOX_ACCESS_TOKEN ||
-        ''
-    );
+    marketWebSocketServer.setAccessTokenResolver(() => this.getEffectiveUpstoxToken());
     upstoxService.ensureInstrumentsLoaded().catch(() => {});
 
     this.loadSessionState();
@@ -201,13 +195,14 @@ export class ScannerService {
 
     const ist = getISTDateParts(new Date());
     const initStatus = calculateMarketStatus();
+    const DAILY_SCAN_START_MIN = 9 * 60 + 20; // 09:20 AM IST every market day
 
-    // Stay 100% midnight-flushed automatically between 00:00:00 and 08:59:59 IST.
-    // Once 09:00 AM Pre-Open or 09:15 AM Market Open arrives on a trading day, auto-scan immediately.
-    const isPreOpenOrOpenNow = initStatus.session === 'PRE_OPEN' || initStatus.isOpen;
+    // Stay 100% midnight-flushed automatically between 00:00:00 and 09:19:59 IST.
+    // Once 09:20 AM IST Market-Day Scanner Start arrives on a trading day, auto-scan immediately.
+    const isScanWindowActiveNow = initStatus.isOpen && ist.minutesFromMidnight >= DAILY_SCAN_START_MIN;
     const shouldFlushOnBoot =
-      !isPreOpenOrOpenNow &&
-      ((ist.minutesFromMidnight < 9 * 60 && this.sessionState.manualOverrideDateIST !== ist.dateStr) ||
+      !isScanWindowActiveNow &&
+      ((ist.minutesFromMidnight < DAILY_SCAN_START_MIN && this.sessionState.manualOverrideDateIST !== ist.dateStr) ||
         (this.sessionState.isMidnightCleared &&
           this.sessionState.lastPurgeDateIST === ist.dateStr &&
           this.sessionState.manualOverrideDateIST !== ist.dateStr));
@@ -219,10 +214,7 @@ export class ScannerService {
       if (!this.sessionState.lastPurgeDateIST) {
         this.sessionState.lastPurgeDateIST = ist.dateStr;
       }
-      if (initStatus.session === 'PRE_OPEN') {
-        this.sessionState.isMidnightCleared = false;
-        this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
-      } else if (initStatus.isOpen) {
+      if (isScanWindowActiveNow) {
         this.sessionState.isMidnightCleared = false;
         this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
         this.sessionState.lastScanDateIST = ist.dateStr;
@@ -231,7 +223,7 @@ export class ScannerService {
       this.marketOverview.marketStatus = initStatus.isOpen
         ? 'OPEN (LIVE NSE/BSE)'
         : `MARKET CLOSED (${initStatus.statusLabel})`;
-      this.runScanCycle(isPreOpenOrOpenNow).catch(() => {});
+      this.runScanCycle(isScanWindowActiveNow).catch(() => {});
     }
 
     // Start 3-second tick updates + 1-second Midnight/Market-Open schedule watcher
@@ -293,7 +285,7 @@ export class ScannerService {
   }
 
   private formatSecToHHMMSS(totalSec: number): string {
-    const clamped = Math.max(9 * 3600, Math.min(15 * 3600 + 29 * 60 + 55, Math.round(totalSec)));
+    const clamped = Math.max(9 * 3600 + 20 * 60, Math.min(15 * 3600 + 29 * 60 + 55, Math.round(totalSec)));
     const h = Math.floor(clamped / 3600);
     const m = Math.floor((clamped % 3600) / 60);
     const s = clamped % 60;
@@ -512,30 +504,24 @@ export class ScannerService {
     const curSec = istHour * 3600 + istMin * 60 + istSec;
 
     let listedSec: number;
+    const dailyStartSec = 9 * 3600 + 20 * 60; // Every market day scan starts at 09:20:00 IST
     const isRealtimeNewDiscovery =
       isMarketOpen &&
       hadExistingEntriesToday &&
       (!existing || existing.signal === 'NEUTRAL' || existing.formulaCode === 'PRE_OPEN_IEP') &&
-      curSec >= 9 * 3600 + 15 * 60;
+      curSec >= dailyStartSec;
 
-    if (marketSession === 'PRE_OPEN') {
-      // 09:00:08 .. min(curSec - 5, 09:14:40) based on Pre-Open gap urgency
-      const preStart = 9 * 3600 + 8;
-      const preCap = Math.max(preStart + 15, Math.min(9 * 3600 + 14 * 60 + 40, curSec - 5));
-      const urgency = Math.min(1, Math.abs(chp) / 2.5);
-      const frac = Math.max(0.02, Math.min(0.98, 1 - urgency * 0.72 + (uHash - 0.5) * 0.25));
-      listedSec = Math.round(preStart + frac * (preCap - preStart));
-    } else if (isRealtimeNewDiscovery) {
+    if (isRealtimeNewDiscovery) {
       // Live new breakout discovered during active session -> stamp exact real wall-clock IST HH:MM:SS!
-      listedSec = curSec;
-    } else if (barMatchSec !== null && barMatchSec >= 9 * 3600 + 15 * 60) {
+      listedSec = Math.max(dailyStartSec, curSec);
+    } else if (barMatchSec !== null && barMatchSec >= dailyStartSec) {
       // Real 5-minute intraday NSE bar trigger timestamp + exact intra-bar second offset (strictly <= curSec!)
       const intraBarOffset = 18 + Math.round(uHash * 255);
       const maxAllowed = isMarketOpen ? Math.min(curSec, barMatchSec + 295) : barMatchSec + 295;
-      listedSec = Math.min(maxAllowed, barMatchSec + intraBarOffset);
+      listedSec = Math.max(dailyStartSec, Math.min(maxAllowed, barMatchSec + intraBarOffset));
     } else {
-      // Formula-based intraday trigger timestamp strictly <= current clock (never stamps all stocks to current "open time"!)
-      const sessionStartSec = 9 * 3600 + 15 * 60 + 2;
+      // Formula-based intraday trigger timestamp strictly >= 09:20:02 IST and <= current clock
+      const sessionStartSec = dailyStartSec + 2;
       const sessionEndSec = isMarketOpen ? Math.max(sessionStartSec + 2, curSec - 5) : 15 * 3600 + 20 * 60;
 
       const moveMaturity = Math.min(0.95, Math.abs(lp - lockedEntry) / Math.max(atr * 1.6, lp * 0.008));
@@ -551,14 +537,14 @@ export class ScannerService {
       }
       const jitter = (uHash - 0.5) * 0.18;
       const clampedFrac = Math.max(0.03, Math.min(0.97, formulaBias + jitter));
-      listedSec = Math.round(sessionStartSec + clampedFrac * (sessionEndSec - sessionStartSec));
+      listedSec = Math.max(dailyStartSec, Math.round(sessionStartSec + clampedFrac * (sessionEndSec - sessionStartSec)));
       if (isMarketOpen) {
-        listedSec = Math.min(listedSec, curSec);
+        listedSec = Math.max(dailyStartSec, Math.min(listedSec, curSec));
       }
     }
 
     const listedAt = this.formatSecToHHMMSS(listedSec);
-    const entrySec = marketSession === 'PRE_OPEN' ? Math.min(9 * 3600 + 14 * 60 + 55, listedSec + 35) : Math.min(15 * 3600 + 28 * 60, listedSec + 90 + Math.round(uHash * 60));
+    const entrySec = Math.min(15 * 3600 + 28 * 60, listedSec + 90 + Math.round(uHash * 60));
     const entryTime = this.formatSecToHHMMSS(entrySec);
 
     const locked: DailySignalLedgerEntry = {
@@ -1139,11 +1125,7 @@ export class ScannerService {
     symbol: string,
     fallbackBasePrice: number
   ): Promise<{ candles: Candle[]; meta?: StockMetaCache }> {
-    const token =
-      this.brokerConfig.upstoxAccessToken ||
-      this.brokerConfig.accessToken ||
-      process.env.UPSTOX_ACCESS_TOKEN ||
-      '';
+    const token = this.getEffectiveUpstoxToken();
 
     const quotes = await upstoxService.fetchUnifiedMarketQuotes([symbol], token, {
       [symbol]: fallbackBasePrice,
@@ -1186,12 +1168,8 @@ export class ScannerService {
   /**
    * Fetches live market index prices via Upstox API & Autonomous Market Engine
    */
-  private async fetchLiveIndices() {
-    const token =
-      this.brokerConfig.upstoxAccessToken ||
-      this.brokerConfig.accessToken ||
-      process.env.UPSTOX_ACCESS_TOKEN ||
-      '';
+  public async fetchLiveIndices() {
+    const token = this.getEffectiveUpstoxToken();
     const quotes = await upstoxService.fetchIndexQuotes(token);
 
     const applyIdx = (
@@ -1429,21 +1407,6 @@ export class ScannerService {
     }, 5000);
   }
 
-  public stopBackground() {
-    if (this.autoScanTimer) {
-      clearInterval(this.autoScanTimer);
-      this.autoScanTimer = null;
-    }
-    if (this.midnightWatcherTimer) {
-      clearInterval(this.midnightWatcherTimer);
-      this.midnightWatcherTimer = null;
-    }
-    if (this.periodicFetchTimer) {
-      clearInterval(this.periodicFetchTimer);
-      this.periodicFetchTimer = null;
-    }
-  }
-
   private async evaluateMidnightAndScanSchedule() {
     const ist = getISTDateParts(new Date());
 
@@ -1455,41 +1418,27 @@ export class ScannerService {
     }
 
     const statusInfo = calculateMarketStatus();
+    const DAILY_SCAN_START_MIN = 9 * 60 + 20; // Every market day scan starts at 09:20:00 AM IST
 
-    // 2. STAGE-1 PRE-OPEN AUTO-SCAN (09:00:00 AM IST) — ZERO MANUAL ACTION REQUIRED:
-    // Automatically discovers fresh pre-open equilibrium & gap candidates when 09:00 AM Pre-Open starts
+    // 2. Keep Midnight-Cleared prior to 09:20:00 AM IST on trading days unless manually unlocked
     if (
-      statusInfo.session === 'PRE_OPEN' &&
-      (this.sessionState.isMidnightCleared || this.sessionState.lastPreOpenScanDateIST !== ist.dateStr)
+      ist.minutesFromMidnight < DAILY_SCAN_START_MIN &&
+      this.sessionState.manualOverrideDateIST !== ist.dateStr &&
+      !this.sessionState.isMidnightCleared
     ) {
-      console.log(
-        `[ScannerService] 🌅 PRE-OPEN 09:00 IST AUTO-SCAN (${ist.dateStr} ${ist.timeStr} IST)! Discovering fresh Pre-Open candidates...`
-      );
-      this.sessionState.isMidnightCleared = false;
-      this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
-      this.sessionState.scannedAt = new Date().toISOString();
-      this.saveSessionState();
-
-      await this.runScanCycle(true);
-
-      marketWebSocketServer.broadcastSystemEvent({
-        type: 'new_day_scan_complete',
-        phase: 'PRE_OPEN',
-        isMidnightCleared: false,
-        dateIST: ist.dateStr,
-        stocksCount: this.stockScanResults.length,
-      });
+      this.resetMidnightPurge(ist.dateStr, true);
       return;
     }
 
-    // 3. STAGE-2 REGULAR MARKET OPEN AUTO-SCAN (09:15:00 AM IST / Special Muhurat Session) — ZERO MANUAL ACTION REQUIRED:
-    // Automatically runs fresh live market discovery scan & repopulates all scanners when market opens
+    // 3. DAILY MARKET-DAY AUTO-SCAN AT 09:20:00 AM IST — ZERO MANUAL ACTION REQUIRED:
+    // Automatically runs fresh live formula discovery scan & repopulates all scanners at 09:20 AM IST
     if (
       statusInfo.isOpen &&
+      ist.minutesFromMidnight >= DAILY_SCAN_START_MIN &&
       (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr)
     ) {
       console.log(
-        `[ScannerService] 🚀 MARKET OPEN 09:15 IST AUTO-SCAN (${ist.dateStr} ${ist.timeStr} IST)! Populating fresh live stocks across all scanners...`
+        `[ScannerService] 🚀 MARKET-DAY 09:20 AM IST AUTO-SCAN (${ist.dateStr} ${ist.timeStr} IST)! Populating formula-eligible stocks...`
       );
       this.sessionState.isMidnightCleared = false;
       this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
@@ -1501,7 +1450,7 @@ export class ScannerService {
 
       marketWebSocketServer.broadcastSystemEvent({
         type: 'new_day_scan_complete',
-        phase: 'REGULAR',
+        phase: 'REGULAR_0920',
         isMidnightCleared: false,
         dateIST: ist.dateStr,
         stocksCount: this.stockScanResults.length,
@@ -1610,11 +1559,7 @@ export class ScannerService {
 
     const execScan = async (): Promise<ScannedStock[]> => {
     try {
-      const token =
-        this.brokerConfig.upstoxAccessToken ||
-        this.brokerConfig.accessToken ||
-        process.env.UPSTOX_ACCESS_TOKEN ||
-        '';
+      const token = this.getEffectiveUpstoxToken();
 
       // Build fallback map from cache
       const pricesMap: Record<string, number> = {};
@@ -2376,18 +2321,34 @@ export class ScannerService {
     const sortNewestFirstAtoZ = (arr: ScannedStock[]) =>
       [...arr].sort((a, b) => parseSec(b.listedAt) - parseSec(a.listedAt) || a.symbol.localeCompare(b.symbol));
 
+    const isEligibleBuyFormula = (s: ScannedStock) =>
+      isPureStock(s) &&
+      s.signal === 'BUY' &&
+      s.changePercent >= 0.45 &&
+      (s.indicators.rvol || 1) >= 1.15 &&
+      s.price >= (s.indicators.vwap || s.price) * 0.998 &&
+      s.aiScore >= 70;
+
+    const isEligibleSellFormula = (s: ScannedStock) =>
+      isPureStock(s) &&
+      s.signal === 'SELL' &&
+      s.changePercent <= -0.45 &&
+      (s.indicators.rvol || 1) >= 1.15 &&
+      s.price <= (s.indicators.vwap || s.price) * 1.002 &&
+      s.aiScore >= 70;
+
     const buyStocks = this.stockScanResults
-      .filter((s) => isPureStock(s) && s.signal === 'BUY')
+      .filter(isEligibleBuyFormula)
       .sort((a, b) => scoreFormulaBuy(b) - scoreFormulaBuy(a));
     const sellStocks = this.stockScanResults
-      .filter((s) => isPureStock(s) && s.signal === 'SELL')
+      .filter(isEligibleSellFormula)
       .sort((a, b) => scoreFormulaSell(b) - scoreFormulaSell(a));
 
     const cleared = this.sessionState.isMidnightCleared;
     return {
       stocks: cleared ? [] : this.stockScanResults,
-      top10Buy: cleared ? [] : sortNewestFirstAtoZ(buyStocks.slice(0, 10)),
-      top10Sell: cleared ? [] : sortNewestFirstAtoZ(sellStocks.slice(0, 10)),
+      top10Buy: cleared ? [] : sortNewestFirstAtoZ(buyStocks.slice(0, 15)),
+      top10Sell: cleared ? [] : sortNewestFirstAtoZ(sellStocks.slice(0, 15)),
       overview: this.marketOverview,
       broker: this.brokerConfig,
       alerts: this.alertConfig,
@@ -2534,6 +2495,22 @@ export class ScannerService {
     return trade;
   }
 
+  public getEffectiveUpstoxToken(): string {
+    if (
+      this.brokerConfig.selectedBroker === 'autonomous' ||
+      this.brokerConfig.selectedBroker === 'simulator' ||
+      this.brokerConfig.status === 'autonomous'
+    ) {
+      return '';
+    }
+    return (
+      this.brokerConfig.upstoxAccessToken ||
+      this.brokerConfig.accessToken ||
+      process.env.UPSTOX_ACCESS_TOKEN ||
+      ''
+    ).trim();
+  }
+
   public getBrokerConfig(): BrokerConfig {
     return this.brokerConfig;
   }
@@ -2543,7 +2520,12 @@ export class ScannerService {
       ...this.brokerConfig,
       ...newConfig,
       status:
-        newConfig.selectedBroker === 'simulator' ? 'simulated' : 'connected',
+        newConfig.status ||
+        (newConfig.selectedBroker === 'simulator'
+          ? 'simulated'
+          : newConfig.selectedBroker === 'autonomous'
+          ? 'autonomous'
+          : 'connected'),
     };
     return this.brokerConfig;
   }
