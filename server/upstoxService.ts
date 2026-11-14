@@ -3,7 +3,11 @@ import os from 'os';
 import path from 'path';
 import zlib from 'zlib';
 import { NIFTY_200_STOCKS } from '../src/data/nifty200';
-import { calculateMarketStatus } from '../src/data/marketSchedule';
+import {
+  calculateMarketStatus,
+  getISTDateParts,
+  INITIAL_MARKET_HOLIDAYS,
+} from '../src/data/marketSchedule';
 import {
   autonomousPriceService,
   deriveOrderBookDepth,
@@ -19,6 +23,60 @@ export interface UpstoxProfile {
   products?: string[];
   broker?: string;
   is_active?: boolean;
+}
+
+export interface UpstoxBrokerHoliday {
+  date: string;
+  description: string;
+  holiday_type: 'TRADING_HOLIDAY' | 'SETTLEMENT_HOLIDAY' | 'SPECIAL_TIMING' | string;
+  closed_exchanges: string[];
+  open_exchanges?: Array<{ exchange: string; start_time: number; end_time: number }>;
+  source?: 'UPSTOX_API_V2' | 'NSE_EXCHANGE_CALENDAR';
+}
+
+export interface UpstoxMarketTiming {
+  exchange: string;
+  start_time: number;
+  end_time: number;
+}
+
+export interface SpecialEventOffDay {
+  date: string;
+  name: string;
+  type: 'SPECIAL_EVENT_OFF_DAY' | 'TRADING_HOLIDAY' | 'WEEKEND_OFF_DAY';
+  exchange: string;
+  description?: string;
+  source?: string;
+  createdAt: string;
+}
+
+export type BrokerDayCategory =
+  | 'TRADING_DAY'
+  | 'WEEKEND_OFF_DAY'
+  | 'HOLIDAY_OFF_DAY'
+  | 'SPECIAL_EVENT_OFF_DAY'
+  | 'SPECIAL_SESSION';
+
+export interface BrokerMarketScheduleStatus {
+  dateIST: string;
+  weekday: string;
+  dayCategory: BrokerDayCategory;
+  isTradingDay: boolean;
+  isMarketOffDay: boolean;
+  isWeekendOffDay: boolean;
+  isHolidayOffDay: boolean;
+  isSpecialEventOffDay: boolean;
+  isSpecialSession: boolean;
+  eventName: string | null;
+  description: string;
+  exchangeStatus: string;
+  brokerApiSource: 'UPSTOX_MARKET_INFO_V2' | 'CACHED_BROKER_SCHEDULE';
+  isBrokerOffDayScanEnabled: boolean;
+  timings: UpstoxMarketTiming[];
+  holidays: UpstoxBrokerHoliday[];
+  specialEventOffDays: SpecialEventOffDay[];
+  nextTradingDay: string;
+  fetchedAt: string;
 }
 
 const INDEX_UPSTOX_KEYS: Record<string, { key: string; name: string; exchange: 'NSE' | 'BSE' }> = {
@@ -40,6 +98,7 @@ const INDEX_UPSTOX_KEYS: Record<string, { key: string; name: string; exchange: '
 };
 
 const INSTRUMENTS_CACHE_FILE = path.join(os.tmpdir(), 'upstox_nse_eq_map.json');
+const SPECIAL_OFF_DAYS_FILE = path.join(os.tmpdir(), 'muhurat_special_off_days.json');
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 class UpstoxService {
@@ -54,8 +113,23 @@ class UpstoxService {
   private lastUpstoxTokenTag = '';
   private inFlightUpstoxBatch: Promise<Record<string, UnifiedMarketQuote>> | null = null;
 
+  // Broker API v2 Market Info caches & Special Event Market Off Days
+  private brokerHolidaysCache: UpstoxBrokerHoliday[] = [];
+  private brokerHolidaysFetchedAt = 0;
+  private brokerHolidaysFromApi = false;
+  private marketTimingsCache: Map<string, { timings: UpstoxMarketTiming[]; fetchedAt: number; fromApi: boolean }> =
+    new Map();
+  private exchangeStatusCache: { status: string; fetchedAt: number; fromApi: boolean } = {
+    status: 'UNKNOWN',
+    fetchedAt: 0,
+    fromApi: false,
+  };
+  private specialEventOffDays: SpecialEventOffDay[] = [];
+  private lastResolvedSchedule: BrokerMarketScheduleStatus | null = null;
+
   constructor() {
     this.loadCachedMapFromDisk();
+    this.loadSpecialOffDaysFromDisk();
     // Pre-warm reverse index map for indices immediately
     Object.entries(INDEX_UPSTOX_KEYS).forEach(([sym, info]) => {
       if (!this.reverseKeyMap.has(info.key)) {
@@ -661,6 +735,497 @@ class UpstoxService {
     }
 
     return { source: 'CALCULATED', instrumentKey: instKey, data: null };
+  }
+
+  // =====================================================================
+  // BROKER API v2 MARKET HOLIDAYS, TIMINGS, EXCHANGE STATUS & SPECIAL OFF DAYS
+  // =====================================================================
+
+  private loadSpecialOffDaysFromDisk() {
+    try {
+      if (fs.existsSync(SPECIAL_OFF_DAYS_FILE)) {
+        const raw = JSON.parse(fs.readFileSync(SPECIAL_OFF_DAYS_FILE, 'utf-8'));
+        if (Array.isArray(raw)) {
+          this.specialEventOffDays = raw.filter(
+            (x) => x && typeof x.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x.date)
+          );
+        }
+      }
+    } catch {
+      this.specialEventOffDays = [];
+    }
+  }
+
+  private saveSpecialOffDaysToDisk() {
+    try {
+      fs.writeFileSync(SPECIAL_OFF_DAYS_FILE, JSON.stringify(this.specialEventOffDays));
+    } catch {
+      // Non-fatal
+    }
+  }
+
+  public getSpecialEventOffDays(): SpecialEventOffDay[] {
+    return [...this.specialEventOffDays].sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  public addSpecialEventOffDay(input: {
+    date: string;
+    name: string;
+    type?: 'SPECIAL_EVENT_OFF_DAY' | 'TRADING_HOLIDAY' | 'WEEKEND_OFF_DAY';
+    exchange?: string;
+    description?: string;
+    source?: string;
+  }): SpecialEventOffDay {
+    const cleanDate = String(input.date || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+      throw new Error('Invalid date format. Expected YYYY-MM-DD');
+    }
+    const cleanName = String(input.name || 'Special Event Market Off Day').trim() || 'Special Event Market Off Day';
+    const entry: SpecialEventOffDay = {
+      date: cleanDate,
+      name: cleanName,
+      type: input.type || 'SPECIAL_EVENT_OFF_DAY',
+      exchange: (input.exchange || 'BOTH').toUpperCase(),
+      description: input.description?.trim() || `${cleanName} • Broker API Off-Day Scanner Active`,
+      source: input.source || 'USER_SPECIAL_EVENT_CONFIG',
+      createdAt: new Date().toISOString(),
+    };
+    this.specialEventOffDays = [
+      ...this.specialEventOffDays.filter((x) => x.date !== cleanDate),
+      entry,
+    ].sort((a, b) => a.date.localeCompare(b.date));
+    this.saveSpecialOffDaysToDisk();
+    this.lastResolvedSchedule = null;
+    return entry;
+  }
+
+  public removeSpecialEventOffDay(dateIST: string): boolean {
+    const cleanDate = String(dateIST || '').trim();
+    const before = this.specialEventOffDays.length;
+    this.specialEventOffDays = this.specialEventOffDays.filter((x) => x.date !== cleanDate);
+    if (this.specialEventOffDays.length !== before) {
+      this.saveSpecialOffDaysToDisk();
+      this.lastResolvedSchedule = null;
+      return true;
+    }
+    return false;
+  }
+
+  private getStaticMergedHolidays(apiHolidays: UpstoxBrokerHoliday[]): UpstoxBrokerHoliday[] {
+    const byDate = new Map<string, UpstoxBrokerHoliday>();
+    for (const h of INITIAL_MARKET_HOLIDAYS) {
+      byDate.set(h.date, {
+        date: h.date,
+        description: h.name,
+        holiday_type: h.type === 'SPECIAL_SESSION' ? 'SPECIAL_TIMING' : 'TRADING_HOLIDAY',
+        closed_exchanges:
+          h.type === 'SPECIAL_SESSION'
+            ? []
+            : h.exchange === 'NSE'
+            ? ['NSE', 'NFO']
+            : h.exchange === 'BSE'
+            ? ['BSE', 'BFO']
+            : ['NSE', 'NFO', 'BSE', 'BFO'],
+        open_exchanges:
+          h.type === 'SPECIAL_SESSION'
+            ? [
+                {
+                  exchange: 'NSE',
+                  start_time: Date.parse(`${h.date}T18:15:00+05:30`),
+                  end_time: Date.parse(`${h.date}T19:15:00+05:30`),
+                },
+              ]
+            : [],
+        source: 'NSE_EXCHANGE_CALENDAR',
+      });
+    }
+    for (const ah of apiHolidays) {
+      if (ah?.date) {
+        byDate.set(ah.date, { ...ah, source: 'UPSTOX_API_V2' });
+      }
+    }
+    return Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /**
+   * Fetches NSE/BSE Market Holidays via Upstox Broker API v2 (/v2/market/holidays).
+   */
+  public async fetchUpstoxHolidays(
+    accessToken?: string,
+    forceRefresh: boolean = false
+  ): Promise<{ holidays: UpstoxBrokerHoliday[]; fromApi: boolean }> {
+    const now = Date.now();
+    if (!forceRefresh && this.brokerHolidaysCache.length > 0 && now - this.brokerHolidaysFetchedAt < 15 * 60 * 1000) {
+      return { holidays: this.brokerHolidaysCache, fromApi: this.brokerHolidaysFromApi };
+    }
+
+    const token = (accessToken || process.env.UPSTOX_ACCESS_TOKEN || '').trim();
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token.length >= 15) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    let apiHolidays: UpstoxBrokerHoliday[] = [];
+    let fromApi = false;
+
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch('https://api.upstox.com/v2/market/holidays', {
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(tid);
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.status === 'success' && Array.isArray(json?.data)) {
+          apiHolidays = json.data.map((d: any) => ({
+            date: String(d.date || ''),
+            description: String(d.description || 'Exchange Holiday'),
+            holiday_type: String(d.holiday_type || 'TRADING_HOLIDAY'),
+            closed_exchanges: Array.isArray(d.closed_exchanges) ? d.closed_exchanges : [],
+            open_exchanges: Array.isArray(d.open_exchanges) ? d.open_exchanges : [],
+            source: 'UPSTOX_API_V2' as const,
+          }));
+          fromApi = true;
+        }
+      }
+    } catch {
+      // Fall back cleanly to merged NSE/BSE calendar
+    }
+
+    const merged = this.getStaticMergedHolidays(apiHolidays);
+    this.brokerHolidaysCache = merged;
+    this.brokerHolidaysFetchedAt = now;
+    this.brokerHolidaysFromApi = fromApi;
+    return { holidays: merged, fromApi };
+  }
+
+  /**
+   * Fetches Market Timings for a specific IST date via Upstox Broker API v2 (/v2/market/timings/:date).
+   */
+  public async fetchUpstoxMarketTimings(
+    dateIST: string,
+    accessToken?: string,
+    forceRefresh: boolean = false
+  ): Promise<{ timings: UpstoxMarketTiming[]; fromApi: boolean }> {
+    const now = Date.now();
+    const cached = this.marketTimingsCache.get(dateIST);
+    if (!forceRefresh && cached && now - cached.fetchedAt < 5 * 60 * 1000) {
+      return { timings: cached.timings, fromApi: cached.fromApi };
+    }
+
+    const token = (accessToken || process.env.UPSTOX_ACCESS_TOKEN || '').trim();
+    const headers: Record<string, string> = { Accept: 'application/json' };
+    if (token.length >= 15) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    let timings: UpstoxMarketTiming[] = [];
+    let fromApi = false;
+
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`https://api.upstox.com/v2/market/timings/${encodeURIComponent(dateIST)}`, {
+        headers,
+        signal: controller.signal,
+      });
+      clearTimeout(tid);
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.status === 'success' && Array.isArray(json?.data)) {
+          timings = json.data
+            .filter((x: any) => x && x.exchange && x.start_time && x.end_time)
+            .map((x: any) => ({
+              exchange: String(x.exchange),
+              start_time: Number(x.start_time),
+              end_time: Number(x.end_time),
+            }));
+          fromApi = true;
+        }
+      }
+    } catch {
+      // Safe fallback
+    }
+
+    this.marketTimingsCache.set(dateIST, { timings, fetchedAt: now, fromApi });
+    return { timings, fromApi };
+  }
+
+  /**
+   * Fetches Live Exchange Status via Upstox Broker API v2 (/v2/market/status/:exchange).
+   */
+  public async fetchUpstoxExchangeStatus(
+    exchange: 'NSE' | 'BSE' = 'NSE',
+    accessToken?: string,
+    forceRefresh: boolean = false
+  ): Promise<{ status: string; fromApi: boolean }> {
+    const now = Date.now();
+    if (!forceRefresh && now - this.exchangeStatusCache.fetchedAt < 60 * 1000 && this.exchangeStatusCache.status !== 'UNKNOWN') {
+      return { status: this.exchangeStatusCache.status, fromApi: this.exchangeStatusCache.fromApi };
+    }
+
+    const token = (accessToken || process.env.UPSTOX_ACCESS_TOKEN || '').trim();
+    if (token.length < 15) {
+      return { status: 'UNKNOWN', fromApi: false };
+    }
+
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 4500);
+      const res = await fetch(`https://api.upstox.com/v2/market/status/${exchange}`, {
+        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(tid);
+      if (res.ok) {
+        const json = await res.json();
+        const st = String(json?.data?.status || 'UNKNOWN').toUpperCase();
+        this.exchangeStatusCache = { status: st, fetchedAt: now, fromApi: true };
+        return { status: st, fromApi: true };
+      }
+    } catch {
+      // Non-fatal
+    }
+
+    return { status: this.exchangeStatusCache.status, fromApi: false };
+  }
+
+  private getWeekdayForDateIST(dateIST: string): string {
+    const parsed = new Date(`${dateIST}T12:00:00+05:30`);
+    if (isNaN(parsed.getTime())) {
+      return getISTDateParts(new Date()).weekday;
+    }
+    return parsed.toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata', weekday: 'long' });
+  }
+
+  private computeNextTradingDay(
+    fromDateIST: string,
+    holidays: UpstoxBrokerHoliday[],
+    specialOffDays: SpecialEventOffDay[]
+  ): string {
+    const holSet = new Set(
+      holidays
+        .filter((h) => h.holiday_type !== 'SPECIAL_TIMING' && (h.closed_exchanges.length === 0 || h.closed_exchanges.includes('NSE')))
+        .map((h) => h.date)
+    );
+    const spSet = new Set(specialOffDays.map((s) => s.date));
+
+    let cur = new Date(`${fromDateIST}T12:00:00+05:30`);
+    if (isNaN(cur.getTime())) cur = new Date();
+
+    for (let i = 1; i <= 15; i++) {
+      const probe = new Date(cur.getTime() + i * 86400000);
+      const ist = getISTDateParts(probe);
+      const isWknd = ist.weekday === 'Saturday' || ist.weekday === 'Sunday';
+      if (!isWknd && !holSet.has(ist.dateStr) && !spSet.has(ist.dateStr)) {
+        return `${ist.dateStr} (${ist.weekday})`;
+      }
+    }
+    return fromDateIST;
+  }
+
+  private buildScheduleStatus(params: {
+    dateIST: string;
+    weekday: string;
+    holidays: UpstoxBrokerHoliday[];
+    timings: UpstoxMarketTiming[];
+    exchangeStatus: string;
+    fromApi: boolean;
+    minutesFromMidnight?: number;
+  }): BrokerMarketScheduleStatus {
+    const { dateIST, weekday, holidays, timings, exchangeStatus, fromApi } = params;
+    const istNow = getISTDateParts(new Date());
+    const minsNow = params.minutesFromMidnight ?? istNow.minutesFromMidnight;
+
+    const specialMatch = this.specialEventOffDays.find((s) => s.date === dateIST) || null;
+    const holidayMatch = holidays.find((h) => h.date === dateIST) || null;
+    const hasNseTiming = timings.some((t) => ['NSE', 'NFO', 'BSE', 'BFO'].includes(t.exchange.toUpperCase()));
+    const isWeekend = weekday === 'Saturday' || weekday === 'Sunday';
+
+    let dayCategory: BrokerDayCategory = 'TRADING_DAY';
+    let isTradingDay = !isWeekend;
+    let isMarketOffDay = false;
+    let isWeekendOffDay = false;
+    let isHolidayOffDay = false;
+    let isSpecialEventOffDay = false;
+    let isSpecialSession = false;
+    let eventName: string | null = null;
+    let description = 'Regular NSE/BSE Equity & F&O Trading Session (09:15 - 15:30 IST)';
+
+    const nseClosedInHoliday = Boolean(
+      holidayMatch &&
+        (holidayMatch.closed_exchanges.length === 0 ||
+          holidayMatch.closed_exchanges.includes('NSE') ||
+          holidayMatch.closed_exchanges.includes('NFO'))
+    );
+    const holidayHasOpenTiming = Boolean(
+      holidayMatch && Array.isArray(holidayMatch.open_exchanges) && holidayMatch.open_exchanges.length > 0
+    );
+
+    if (specialMatch && specialMatch.type === 'SPECIAL_EVENT_OFF_DAY') {
+      dayCategory = 'SPECIAL_EVENT_OFF_DAY';
+      isTradingDay = false;
+      isSpecialEventOffDay = true;
+      isMarketOffDay = true;
+      eventName = specialMatch.name;
+      description =
+        specialMatch.description ||
+        `Special Event Market Off Day (${specialMatch.name}) • Scanners running via Broker API`;
+    } else if (holidayMatch && (holidayMatch.holiday_type === 'SPECIAL_TIMING' || holidayHasOpenTiming)) {
+      dayCategory = 'SPECIAL_SESSION';
+      isSpecialSession = true;
+      eventName = holidayMatch.description || 'Special Trading Session';
+      // Outside the special session live window, treat as Off-Day Broker Scan active
+      const nowMs = Date.now();
+      const inSpecialLive = (holidayMatch.open_exchanges || []).some(
+        (ox) => nowMs >= ox.start_time && nowMs <= ox.end_time
+      );
+      isTradingDay = true;
+      isMarketOffDay = !inSpecialLive;
+      description = inSpecialLive
+        ? `${eventName} LIVE • Continuous Session`
+        : `${eventName} • Off-Hours Broker API Scan Active`;
+    } else if (hasNseTiming && isWeekend) {
+      // Special weekend session reported by Upstox /v2/market/timings/:date (e.g. Budget Day)
+      dayCategory = 'SPECIAL_SESSION';
+      isSpecialSession = true;
+      isTradingDay = true;
+      isMarketOffDay = false;
+      eventName = 'Special Weekend Exchange Session (Upstox Timings Active)';
+      description = `Exchange open on ${weekday} per Upstox Broker Timings API`;
+    } else if (holidayMatch && nseClosedInHoliday) {
+      dayCategory = 'HOLIDAY_OFF_DAY';
+      isTradingDay = false;
+      isHolidayOffDay = true;
+      isMarketOffDay = true;
+      eventName = holidayMatch.description || 'Exchange Holiday';
+      description = `Exchange Closed (${eventName}) • All Scanners Active via Broker API Off-Day Engine`;
+    } else if (isWeekend) {
+      dayCategory = 'WEEKEND_OFF_DAY';
+      isTradingDay = false;
+      isWeekendOffDay = true;
+      isMarketOffDay = true;
+      eventName = `Weekend Market Off Day (${weekday})`;
+      description = `${weekday} Market Off Day • Scanners Active via Broker API (Upstox v2 + Option Chain + Completed Session 5m Bars)`;
+    } else if (
+      dateIST === istNow.dateStr &&
+      minsNow >= 9 * 60 + 20 &&
+      minsNow <= 15 * 60 + 25 &&
+      (exchangeStatus === 'CLOSED' || exchangeStatus === 'CLOSING_END') &&
+      !hasNseTiming
+    ) {
+      // Unscheduled weekday closure / Special Event Off Day detected dynamically by Broker API status
+      dayCategory = 'SPECIAL_EVENT_OFF_DAY';
+      isTradingDay = false;
+      isSpecialEventOffDay = true;
+      isMarketOffDay = true;
+      eventName = 'Special Event Market Off Day (Broker Exchange Closed)';
+      description = `NSE status "${exchangeStatus}" detected via Upstox Broker API during weekday hours • Scanners Active via Broker API`;
+    }
+
+    const nextTradingDay = this.computeNextTradingDay(dateIST, holidays, this.specialEventOffDays);
+
+    return {
+      dateIST,
+      weekday,
+      dayCategory,
+      isTradingDay,
+      isMarketOffDay,
+      isWeekendOffDay,
+      isHolidayOffDay,
+      isSpecialEventOffDay,
+      isSpecialSession,
+      eventName,
+      description,
+      exchangeStatus,
+      brokerApiSource: fromApi ? 'UPSTOX_MARKET_INFO_V2' : 'CACHED_BROKER_SCHEDULE',
+      isBrokerOffDayScanEnabled: isMarketOffDay,
+      timings,
+      holidays,
+      specialEventOffDays: this.getSpecialEventOffDays(),
+      nextTradingDay,
+      fetchedAt: new Date().toISOString(),
+    };
+  }
+
+  /**
+   * Synchronous fast accessor for constructor boot & 1s schedule loops.
+   */
+  public getSyncBrokerSchedule(dateISTOverride?: string): BrokerMarketScheduleStatus {
+    const ist = getISTDateParts(new Date());
+    const dateIST = dateISTOverride || ist.dateStr;
+    const weekday = dateISTOverride ? this.getWeekdayForDateIST(dateIST) : ist.weekday;
+
+    if (
+      !dateISTOverride &&
+      this.lastResolvedSchedule &&
+      this.lastResolvedSchedule.dateIST === dateIST &&
+      Date.now() - Date.parse(this.lastResolvedSchedule.fetchedAt) < 15000
+    ) {
+      // Still reflect newly added special events right away
+      const spMatch = this.specialEventOffDays.find((s) => s.date === dateIST);
+      if (Boolean(spMatch) === this.lastResolvedSchedule.isSpecialEventOffDay) {
+        return this.lastResolvedSchedule;
+      }
+    }
+
+    const holidays =
+      this.brokerHolidaysCache.length > 0
+        ? this.brokerHolidaysCache
+        : this.getStaticMergedHolidays([]);
+    const cachedTimings = this.marketTimingsCache.get(dateIST)?.timings || [];
+
+    return this.buildScheduleStatus({
+      dateIST,
+      weekday,
+      holidays,
+      timings: cachedTimings,
+      exchangeStatus: this.exchangeStatusCache.status,
+      fromApi: this.brokerHolidaysFromApi,
+      minutesFromMidnight: dateIST === ist.dateStr ? ist.minutesFromMidnight : 12 * 60,
+    });
+  }
+
+  /**
+   * Full asynchronous Broker API schedule resolution:
+   * Fetches Upstox /v2/market/holidays, /v2/market/timings/:date, and /v2/market/status/NSE,
+   * and merges Special Event Market Off Days & Weekend rules.
+   */
+  public async resolveBrokerMarketSchedule(options?: {
+    dateIST?: string;
+    accessToken?: string;
+    forceRefresh?: boolean;
+  }): Promise<BrokerMarketScheduleStatus> {
+    const ist = getISTDateParts(new Date());
+    const dateIST = options?.dateIST || ist.dateStr;
+    const weekday = options?.dateIST ? this.getWeekdayForDateIST(dateIST) : ist.weekday;
+    const token = options?.accessToken || process.env.UPSTOX_ACCESS_TOKEN || '';
+    const force = Boolean(options?.forceRefresh);
+
+    const [holRes, timRes, stRes] = await Promise.all([
+      this.fetchUpstoxHolidays(token, force),
+      this.fetchUpstoxMarketTimings(dateIST, token, force),
+      dateIST === ist.dateStr
+        ? this.fetchUpstoxExchangeStatus('NSE', token, force)
+        : Promise.resolve({ status: 'UNKNOWN', fromApi: false }),
+    ]);
+
+    const resolved = this.buildScheduleStatus({
+      dateIST,
+      weekday,
+      holidays: holRes.holidays,
+      timings: timRes.timings,
+      exchangeStatus: stRes.status,
+      fromApi: holRes.fromApi || timRes.fromApi || stRes.fromApi,
+      minutesFromMidnight: dateIST === ist.dateStr ? ist.minutesFromMidnight : 12 * 60,
+    });
+
+    if (!options?.dateIST) {
+      this.lastResolvedSchedule = resolved;
+    }
+    return resolved;
   }
 }
 

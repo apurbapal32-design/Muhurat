@@ -1458,10 +1458,10 @@ export function buildSmartMoneyFlowReport(
     }
   }
 
-  const sortNewestFirstAToZ = (a: MoneyFlowSignalRow, b: MoneyFlowSignalRow) => {
+  const sortNewestFirstZToA = (a: MoneyFlowSignalRow, b: MoneyFlowSignalRow) => {
     const tDiff = parseTimeToSec(b.listedAt) - parseTimeToSec(a.listedAt);
     if (tDiff !== 0) return tDiff;
-    return a.symbol.localeCompare(b.symbol);
+    return b.symbol.localeCompare(a.symbol);
   };
 
   const strictBuyCount = allBuyCandidates.filter((x) => x.conditionsMet === 22).length;
@@ -1470,12 +1470,12 @@ export function buildSmartMoneyFlowReport(
   const buySignals = allBuyCandidates
     .sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score)
     .slice(0, 15)
-    .sort(sortNewestFirstAToZ);
+    .sort(sortNewestFirstZToA);
 
   const sellSignals = allSellCandidates
     .sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score)
     .slice(0, 15)
-    .sort(sortNewestFirstAToZ);
+    .sort(sortNewestFirstZToA);
 
   const builtReport: MoneyFlowScanReport = {
     status: 'ok',

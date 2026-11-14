@@ -13,6 +13,7 @@ import { upstoxService } from './server/upstoxService';
 import { marketWebSocketServer } from './server/marketWebSocketServer';
 import { buildClaude10SkillsReport } from './server/claudeSkillsEngine';
 import { buildSmartMoneyFlowReport } from './server/moneyFlowEngine';
+import { buildMostActiveFnoReport } from './server/mostActiveFnoEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
@@ -709,15 +710,20 @@ async function startServer() {
     }
   });
 
-  // Scanner Session Status Endpoint (synced with persisted Midnight Flush & Next-Day Scan state)
+  // Scanner Session Status Endpoint (synced with persisted Midnight Flush, Broker API Off-Day Schedule & Next-Day Scan state)
   app.get('/api/scan/session-status', (req, res) => {
     try {
       const sess = scannerService.getSessionStatus();
+      const isOffDay = Boolean(sess.brokerSchedule?.isMarketOffDay);
       res.json({
         status: 'ok',
         ...sess,
-        isMidnightPeriod: sess.isMidnightCleared || (sess.hours * 60 + sess.minutes) < (9 * 60 + 20),
-        nextTradingSession: '09:20 AM IST (Every Market Day Formula Scan)',
+        isMarketOffDay: isOffDay,
+        isMidnightPeriod:
+          !isOffDay && (sess.isMidnightCleared || sess.hours * 60 + sess.minutes < 9 * 60 + 20),
+        nextTradingSession: isOffDay
+          ? `Broker API Off-Day Scanner Active (${sess.brokerSchedule?.eventName || sess.brokerSchedule?.dayCategory})`
+          : '09:20 AM IST (Every Market Day Formula Scan)',
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message || 'Failed to get session status' });
@@ -874,9 +880,24 @@ async function startServer() {
     }
   });
 
-  // Market Schedule & Holiday Status Endpoint
-  app.get('/api/market-schedule', (req, res) => {
+  // Broker API Market Schedule, Holidays, Exchange Status & Special Event Market Off Days Endpoint
+  app.get('/api/market-schedule', async (req, res) => {
     try {
+      const dateIST = typeof req.query.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+        ? req.query.date
+        : undefined;
+      const forceRefresh = req.query.refresh === '1' || req.query.refresh === 'true';
+      const token =
+        (req.headers['x-upstox-access-token'] as string) ||
+        scannerService.getEffectiveUpstoxToken();
+
+      const brokerSchedule = await upstoxService.resolveBrokerMarketSchedule({
+        dateIST,
+        accessToken: token,
+        forceRefresh,
+      });
+      const sess = scannerService.getSessionStatus();
+
       res.json({
         standardHours: {
           preOpenStart: '09:00',
@@ -888,9 +909,57 @@ async function startServer() {
         },
         exchanges: ['NSE', 'BSE'],
         status: 'Active',
+        ...brokerSchedule,
+        isScannerActiveToday: !sess.isMidnightCleared,
+        stocksCount: sess.stocksCount,
+        quoteSource: sess.quoteSource,
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message || 'Failed to fetch market schedule' });
+    }
+  });
+
+  // Register a Special Event Market Off Day (runs Broker API Off-Day Scanner automatically on that date)
+  app.post('/api/market/special-off-days', async (req, res) => {
+    try {
+      const { date, name, type, exchange, description } = req.body || {};
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(String(date).trim())) {
+        return res.status(400).json({ error: 'Valid YYYY-MM-DD date is required' });
+      }
+      const added = upstoxService.addSpecialEventOffDay({
+        date: String(date).trim(),
+        name: String(name || 'Special Event Market Off Day').trim(),
+        type: type || 'SPECIAL_EVENT_OFF_DAY',
+        exchange: exchange || 'BOTH',
+        description,
+      });
+      const updatedSchedule = await scannerService.refreshBrokerSchedule(true);
+      res.json({
+        status: 'success',
+        added,
+        schedule: updatedSchedule,
+        specialEventOffDays: upstoxService.getSpecialEventOffDays(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to add Special Event Market Off Day' });
+    }
+  });
+
+  // Remove a registered Special Event Market Off Day
+  app.delete('/api/market/special-off-days/:date', async (req, res) => {
+    try {
+      const dateParam = String(req.params.date || '').trim();
+      const removed = upstoxService.removeSpecialEventOffDay(dateParam);
+      const updatedSchedule = await scannerService.refreshBrokerSchedule(true);
+      res.json({
+        status: 'success',
+        removed,
+        date: dateParam,
+        schedule: updatedSchedule,
+        specialEventOffDays: upstoxService.getSpecialEventOffDays(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to remove Special Event Market Off Day' });
     }
   });
 
@@ -1079,6 +1148,67 @@ async function startServer() {
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Money Flow Surge scan' });
+    }
+  });
+
+  // Most Active FNO & (Index Options) Scanner with cached Upstox Option Chain v2 + 7-Pillar Formula
+  let cachedMostActiveOc: Record<string, { source: string; expiryDate?: string; data: any[] | null }> = {};
+  let lastMostActiveOcAt = 0;
+
+  app.get('/api/most-active-fno/scan', async (req, res) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const accessToken =
+        (req.headers['x-upstox-access-token'] as string) ||
+        scannerService.getEffectiveUpstoxToken();
+
+      const indexSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'INDIAVIX'];
+      const cachedQ = autonomousPriceService.getCachedQuotes();
+      const indexQuotes =
+        cachedQ['NIFTY 50'] && cachedQ['BANKNIFTY']
+          ? cachedQ
+          : await upstoxService.fetchUnifiedMarketQuotes(indexSyms, accessToken).catch(() => cachedQ);
+
+      if (!isCleared && accessToken && accessToken.length > 15 && Date.now() - lastMostActiveOcAt > 25000) {
+        const ocSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX'];
+        const ocResults = await Promise.allSettled(
+          ocSyms.map((sym) => upstoxService.fetchLiveOptionChain(sym, accessToken))
+        );
+        const nextOc: Record<string, { source: string; expiryDate?: string; data: any[] | null }> = {};
+        ocSyms.forEach((sym, i) => {
+          const r = ocResults[i];
+          if (r.status === 'fulfilled' && r.value) {
+            nextOc[sym] = r.value;
+          }
+        });
+        cachedMostActiveOc = nextOc;
+        lastMostActiveOcAt = Date.now();
+      }
+
+      const timeframe = typeof req.query.timeframe === 'string' ? req.query.timeframe : '5m';
+
+      const report = buildMostActiveFnoReport({
+        stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        indexQuotes,
+        optionChainsByIndex: cachedMostActiveOc,
+        indiaVix: scannerService.getIndiaVixPrice(),
+        isMidnightCleared: isCleared,
+        isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
+        dayCategory: sessionState?.brokerSchedule?.dayCategory,
+        timeframe,
+      });
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Most Active FNO & (Index Options) scan' });
     }
   });
 

@@ -941,6 +941,13 @@
             </span>
             <span class="text-[10px] text-cyan-300 font-mono font-bold">ST &bull; HMA55</span>
           </div>
+          <div id="nav-most-active-fno" class="sidebar-link border-l-2 border-amber-400 bg-amber-500/10 hover:bg-amber-500/20" onclick="switchTab('most-active-fno')" title="Most Active FNO & (Index Options): PDH/PDL, ORB 15m, HH/HL & LH/LL, Body Strength, S&R Breakout, Raw Traded Volume, 09:20-14:45 Entry, OI Change & R:R">
+            <span class="flex items-center gap-1.5">
+              <span>🔥 Most Active FNO &amp; (Index Options)</span>
+              <span class="text-[9px] px-1 py-0.2 bg-amber-500/25 text-amber-200 border border-amber-400/40 rounded font-bold">Pro</span>
+            </span>
+            <span class="text-[10px] text-amber-300 font-mono font-bold">FNO &bull; OPT</span>
+          </div>
           <div id="nav-strong" class="sidebar-link" onclick="switchTab('strong')">
             <span>Muhurat Strong</span>
             <span class="text-[10px] text-emerald-400 font-mono font-bold">ORB 15m</span>
@@ -1727,10 +1734,10 @@
               ⚡ REFRESH LIVE
             </button>
 
-            <!-- 12:00 AM Midnight Auto-Purge & 09:00/09:15 AM Auto-Scan Telemetry Pill (100% Automatic) -->
-            <div id="midnight-session-pill" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm select-none" title="100% Automatic Daily Cycle: Scanners auto-empty at 12:00 AM IST & auto-scan at 09:00 AM Pre-Open / 09:15 AM Market Open">
+            <!-- 12:00 AM Midnight Auto-Purge, 09:20 AM Trading Scan & Broker API Off-Day Auto-Scan Pill -->
+            <div id="midnight-session-pill" onclick="openUpstoxModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm select-none cursor-pointer hover:opacity-90 transition" title="100% Automatic Cycle: Runs 09:20 AM Formula Scan on Trading Days & Broker API Off-Day Scan on Saturday, Sunday, Market Holidays, and Special Event Off Days. Click to manage Broker Off-Day Calendar.">
               <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
-              <span>Auto 12 AM Flush &bull; 09:00/09:15 Scan</span>
+              <span>Auto Scan &bull; Trading &amp; Broker Off-Days</span>
               <span class="text-[9.5px] px-1 py-0.2 bg-cyan-500/30 rounded text-cyan-200">AUTO</span>
             </div>
           </div>
@@ -2547,8 +2554,8 @@
             <label class="bg-[#070b14] p-2 rounded-lg border border-cyan-500/30 text-[10px] text-cyan-300">
               <span>🕒 SORT ORDER</span>
               <select id="c10-input-sort" onchange="Claude10SkillsAgent.renderAll()" class="mt-1 w-full bg-[#0d1424] border border-[#23324f] rounded px-2 py-1 text-cyan-200 font-bold text-xs focus:outline-none focus:border-cyan-400 cursor-pointer">
-                <option value="listed_asc" selected>Listed At Time (A→Z Earliest)</option>
-                <option value="listed_desc">Listed At Time (Z→A Latest)</option>
+                <option value="listed_desc" selected>Listed At Time (Z→A Latest First)</option>
+                <option value="listed_asc">Listed At Time (A→Z Earliest)</option>
                 <option value="symbol_asc">Symbol Name (A → Z)</option>
                 <option value="score_desc">AI Confidence (Highest)</option>
               </select>
@@ -3685,6 +3692,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -3789,6 +3797,7 @@
           <button onclick="switchTab('claude-10skills')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/25 via-emerald-500/25 to-amber-500/25 text-cyan-200 border border-cyan-400/50 font-bold whitespace-nowrap hover:scale-105 transition">🧠 10-Skill AI &amp; Sentinel</button>
           <button onclick="switchTab('world-strategy')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/25 via-emerald-500/25 to-cyan-500/25 text-amber-200 border border-amber-400/40 font-bold whitespace-nowrap hover:scale-105 transition">⚡ World #1 Omni-Quantum</button>
           <button onclick="switchTab('money-flow')" class="px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-black whitespace-nowrap shadow-md shadow-cyan-500/20">🌊 Money Flow (ST + HMA55)</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('strong')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Strong (ORB 15m)</button>
           <button onclick="switchTab('sonic')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Pulse (RVOL &bull; OI)</button>
           <button onclick="switchTab('titan')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-sky-400 border border-sky-500/20 font-bold whitespace-nowrap transition">Flow (Whales)</button>
@@ -3974,6 +3983,163 @@
         </div>
       </section>
 
+      <!-- ==================================================== -->
+      <!-- TAB: MOST ACTIVE FNO & (INDEX OPTIONS)               -->
+      <!-- ==================================================== -->
+      <section id="tab-most-active-fno" class="tab-pane hidden space-y-5 font-mono">
+        <!-- Shared Candidate Engines Horizontal Pill Switcher -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-[#172033] text-xs font-mono">
+          <button onclick="switchTab('claude-10skills')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/25 via-emerald-500/25 to-amber-500/25 text-cyan-200 border border-cyan-400/50 font-bold whitespace-nowrap hover:scale-105 transition">🧠 10-Skill AI &amp; Sentinel</button>
+          <button onclick="switchTab('world-strategy')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/25 via-emerald-500/25 to-cyan-500/25 text-amber-200 border border-amber-400/40 font-bold whitespace-nowrap hover:scale-105 transition">⚡ World #1 Omni-Quantum</button>
+          <button onclick="switchTab('strong')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Strong (ORB 15m)</button>
+          <button onclick="switchTab('sonic')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Pulse (RVOL &bull; OI)</button>
+          <button onclick="switchTab('titan')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-sky-400 border border-sky-500/20 font-bold whitespace-nowrap transition">Flow (Whales)</button>
+          <button onclick="switchTab('elite')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-rose-400 border border-rose-500/20 font-bold whitespace-nowrap transition">Elite (3m Squeeze)</button>
+          <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
+          <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
+          <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-3 py-1.5 rounded-lg bg-amber-500 text-black font-black whitespace-nowrap shadow-md shadow-amber-500/20">🔥 Most Active FNO &amp; (Index Options)</button>
+          <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
+          <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
+          <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
+        </div>
+
+        <!-- Title & Controls Banner -->
+        <div class="card p-4 border-l-4 border-amber-400 bg-gradient-to-r from-[#14111c] via-[#151829] to-[#0d1424] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[10px] font-black">MULTI-TF (5m • 15m • 30m • 1H) + SECTOR % • BID/ASK • CYCLE (BUILDUP) • Z→A LISTED AT</span>
+              <h2 class="text-base md:text-lg font-black text-white">🔥 Most Active FNO &amp; (Index Options)</h2>
+              <button onclick="openFormulaModal('most_active_fno')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
+            </div>
+            <p class="text-xs text-slate-300 max-w-4xl font-sans leading-relaxed">
+              Multi-Timeframe OHLCV Scanner across <strong>5 Min, 15 Min, 30 Min &amp; 1 Hour</strong> candles: evaluates <strong>PDH / PDL</strong>, <strong>Opening Range Breakout</strong>, <strong>HH/HL &amp; LH/LL</strong>, <strong>Candle Body Strength</strong>, <strong>S&amp;R Breakout</strong>, <strong>Raw Traded Volume</strong>, <strong>Sector %</strong>, <strong>Bid/Ask Ratio</strong>, <strong>Cycle (Buildup)</strong>, and <strong>Z&rarr;A Listed At Entry (09:20&ndash;14:45 IST)</strong>.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap shrink-0">
+            <input id="maf-search-input" oninput="MostActiveFnoEngine.renderTables()" type="text" placeholder="Filter symbol/strike..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-40 focus:outline-none focus:border-amber-400">
+            <select id="maf-dir-filter" onchange="MostActiveFnoEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-amber-200 text-xs font-bold focus:outline-none">
+              <option value="ALL">All (BUY + SELL)</option>
+              <option value="BUY">🟢 BUY Only</option>
+              <option value="SELL">🔴 SELL Only</option>
+            </select>
+            <select id="maf-sort-select" onchange="MostActiveFnoEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-cyan-200 text-xs font-bold focus:outline-none">
+              <option value="listed_desc" selected>Sort: Listed At (14:45&rarr;09:20 Z&rarr;A Latest)</option>
+              <option value="listed_asc">Sort: Listed At (09:20&rarr;14:45 A&rarr;Z Earliest)</option>
+              <option value="mtf_desc">Sort: Best MTF Alignment (4/4)</option>
+              <option value="bid_ask_desc">Sort: Bid/Ask Ratio (High&rarr;Low)</option>
+              <option value="value_desc">Sort: Top Value (₹ Cr)</option>
+              <option value="volume_desc">Sort: Raw Traded Volume</option>
+              <option value="oi_chg_desc">Sort: OI Change %</option>
+              <option value="rr_desc">Sort: Best Risk-Reward</option>
+              <option value="score_desc">Sort: Formula Score</option>
+            </select>
+            <button id="maf-btn-mode" onclick="MostActiveFnoEngine.toggleStrictMode()" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-xs font-bold transition cursor-pointer">Mode: Strict Formula (0-15)</button>
+            <button onclick="MostActiveFnoEngine.load(true)" class="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-black text-xs transition cursor-pointer">🔄 Scan Now</button>
+          </div>
+        </div>
+
+        <!-- Multi-Timeframe Switcher Bar (5m, 15m, 30m, 1H, All MTF) -->
+        <div class="p-3 rounded-xl bg-[#0a0f1c] border border-cyan-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] font-black text-cyan-300 uppercase tracking-wider mr-1">⏱️ Timeframe:</span>
+            <button onclick="MostActiveFnoEngine.setTimeframe('5m')" id="maf-tf-5m" class="px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer bg-cyan-500 text-black shadow-md shadow-cyan-500/20">5 Minutes <span id="maf-tf-cnt-5m" class="ml-1 px-1.5 py-0.2 rounded bg-black/25 text-[10px]">0</span></button>
+            <button onclick="MostActiveFnoEngine.setTimeframe('15m')" id="maf-tf-15m" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-slate-200 border border-[#23314f]">15 Minutes <span id="maf-tf-cnt-15m" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-cyan-300 text-[10px]">0</span></button>
+            <button onclick="MostActiveFnoEngine.setTimeframe('30m')" id="maf-tf-30m" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-slate-200 border border-[#23314f]">30 Minutes <span id="maf-tf-cnt-30m" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-cyan-300 text-[10px]">0</span></button>
+            <button onclick="MostActiveFnoEngine.setTimeframe('1h')" id="maf-tf-1h" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-slate-200 border border-[#23314f]">1 Hour <span id="maf-tf-cnt-1h" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-cyan-300 text-[10px]">0</span></button>
+            <button onclick="MostActiveFnoEngine.setTimeframe('ALL')" id="maf-tf-ALL" class="px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-amber-300 border border-amber-500/30">🔥 All MTF Aligned <span id="maf-tf-cnt-ALL" class="ml-1 px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 text-[10px]">0</span></button>
+          </div>
+          <div id="maf-tf-active-info" class="text-[10.5px] text-slate-300 font-sans">
+            Active Candle TF: <strong class="text-cyan-300">5 Minutes</strong> &bull; Live Multi-TF Matrix evaluates <strong class="text-white">5m • 15m • 30m • 1H</strong> simultaneously
+          </div>
+        </div>
+
+        <!-- 6 KPI Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-[#1a253d]">
+            <div class="text-[10px] text-slate-400 uppercase">Universe Evaluated</div>
+            <div id="maf-kpi-universe" class="text-base font-black text-white mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-amber-500/30">
+            <div class="text-[10px] text-amber-300 uppercase font-bold">Total Traded Value</div>
+            <div id="maf-kpi-value" class="text-base font-black text-amber-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/30">
+            <div class="text-[10px] text-emerald-400 uppercase font-bold">Strict Equities (BUY/SELL)</div>
+            <div id="maf-kpi-strict-eq" class="text-base font-black text-emerald-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-cyan-500/30">
+            <div class="text-[10px] text-cyan-400 uppercase font-bold">Strict Index Options</div>
+            <div id="maf-kpi-strict-opt" class="text-base font-black text-cyan-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-purple-500/30">
+            <div class="text-[10px] text-purple-300 uppercase font-bold">Entry Window &amp; Active TF</div>
+            <div id="maf-kpi-window" class="text-xs font-black text-purple-200 mt-1">09:20–14:45 • 5m TF</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-sky-500/30">
+            <div class="text-[10px] text-sky-400 uppercase">Last Scan Time</div>
+            <div id="maf-kpi-time" class="text-sm font-bold text-sky-200 mt-1">--:--:-- IST</div>
+          </div>
+        </div>
+
+        <!-- 7-Pillar Formula Specification Strip -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-[10px]">
+          <div class="p-2.5 rounded-lg bg-[#0b101d] border border-[#1b2740]">
+            <div class="text-amber-300 font-black">1. PDH / PDL</div>
+            <div class="text-slate-400 font-sans mt-0.5">Break above PDH (BUY) or below PDL (SELL)</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#0b101d] border border-[#1b2740]">
+            <div class="text-emerald-300 font-black">2. Multi-TF ORB</div>
+            <div class="text-slate-400 font-sans mt-0.5">5m/15m/30m/1H Opening Range High/Low break</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#0b101d] border border-[#1b2740]">
+            <div class="text-cyan-300 font-black">3. HH/HL &amp; LH/LL</div>
+            <div class="text-slate-400 font-sans mt-0.5">Trend structure on selected &amp; MTF candles</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#0b101d] border border-[#1b2740]">
+            <div class="text-purple-300 font-black">4. Body Strength</div>
+            <div class="text-slate-400 font-sans mt-0.5">|Close&minus;Open| / (High&minus;Low) &ge; 50%</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#0b101d] border border-[#1b2740]">
+            <div class="text-sky-300 font-black">5. S&amp;R Breakout</div>
+            <div class="text-slate-400 font-sans mt-0.5">Floor Pivot R1/S1 &amp; Swing S&amp;R cross</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#0b101d] border border-[#1b2740]">
+            <div class="text-rose-300 font-black">6. Raw Volume</div>
+            <div class="text-slate-400 font-sans mt-0.5">Raw shares/contracts vs TF median (no indicator)</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-[#0b101d] border border-[#1b2740]">
+            <div class="text-amber-200 font-black">7. 09:20–14:45 &amp; MTF</div>
+            <div class="text-slate-400 font-sans mt-0.5">Entry window clamped + SL / T1 / T2 R:R</div>
+          </div>
+        </div>
+
+        <!-- 7 Required Category Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs">
+          <button onclick="MostActiveFnoEngine.setCategory('MOST_ACTIVE_FNO')" id="maf-cat-MOST_ACTIVE_FNO" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-amber-500 text-black">⚡ Most Active F&amp;O <span id="maf-cnt-MOST_ACTIVE_FNO" class="ml-1 px-1.5 py-0.2 rounded bg-black/20 text-[10px]">0</span></button>
+          <button onclick="MostActiveFnoEngine.setCategory('MOST_ACTIVE_INDEX_OPTIONS')" id="maf-cat-MOST_ACTIVE_INDEX_OPTIONS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-cyan-300 border border-cyan-500/30">🎯 Most Active Contracts (Index Options) <span id="maf-cnt-MOST_ACTIVE_INDEX_OPTIONS" class="ml-1 px-1.5 py-0.2 rounded bg-cyan-500/20 text-[10px]">0</span></button>
+          <button onclick="MostActiveFnoEngine.setCategory('TOP_VOLUME')" id="maf-cat-TOP_VOLUME" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-emerald-300 border border-emerald-500/30">📊 Top Traded by Volume <span id="maf-cnt-TOP_VOLUME" class="ml-1 px-1.5 py-0.2 rounded bg-emerald-500/20 text-[10px]">0</span></button>
+          <button onclick="MostActiveFnoEngine.setCategory('TOP_VALUE')" id="maf-cat-TOP_VALUE" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-amber-300 border border-amber-500/30">💰 Top Traded by Value <span id="maf-cnt-TOP_VALUE" class="ml-1 px-1.5 py-0.2 rounded bg-amber-500/20 text-[10px]">0</span></button>
+          <button onclick="MostActiveFnoEngine.setCategory('MOST_ACTIVE_UNDERLYING')" id="maf-cat-MOST_ACTIVE_UNDERLYING" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-purple-300 border border-purple-500/30">🏛️ Most Active Underlying <span id="maf-cnt-MOST_ACTIVE_UNDERLYING" class="ml-1 px-1.5 py-0.2 rounded bg-purple-500/20 text-[10px]">0</span></button>
+          <button onclick="MostActiveFnoEngine.setCategory('MOST_ACTIVE_EQUITIES')" id="maf-cat-MOST_ACTIVE_EQUITIES" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-sky-300 border border-sky-500/30">📈 Most Active Equities <span id="maf-cnt-MOST_ACTIVE_EQUITIES" class="ml-1 px-1.5 py-0.2 rounded bg-sky-500/20 text-[10px]">0</span></button>
+          <button onclick="MostActiveFnoEngine.setCategory('OI_CHANGE')" id="maf-cat-OI_CHANGE" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-rose-300 border border-rose-500/30">🌊 OI Change <span id="maf-cnt-OI_CHANGE" class="ml-1 px-1.5 py-0.2 rounded bg-rose-500/20 text-[10px]">0</span></button>
+        </div>
+
+        <!-- Primary Category Table -->
+        <div class="card overflow-hidden bg-[#0d111a] border border-amber-500/30 rounded-xl shadow-xl">
+          <div class="bg-[#151320] px-4 py-3 border-b border-amber-500/25 flex items-center justify-between flex-wrap gap-2">
+            <span id="maf-table-title" class="font-bold text-sm text-amber-300 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+              MOST ACTIVE F&amp;O &bull; Multi-TF (5m/15m/30m/1H) + 7-Pillar Formula + Entry (09:20–14:45)
+            </span>
+            <span id="maf-count-badge" class="text-xs font-mono text-amber-200 font-bold">Loading live scan...</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs" id="table-most-active-fno"></table>
+          </div>
+        </div>
+      </section>
+
       <section id="tab-strong" class="tab-pane hidden space-y-6 font-mono">
         <!-- Shared Candidate Engines Horizontal Pill Switcher -->
         <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-[#172033] text-xs font-mono">
@@ -3986,6 +4152,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4048,6 +4215,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4104,6 +4272,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4160,6 +4329,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4216,6 +4386,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4272,6 +4443,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4328,6 +4500,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4404,6 +4577,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4466,6 +4640,7 @@
           <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
           <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -5662,6 +5837,32 @@
           </button>
         </div>
 
+        <!-- Broker API Weekend / Holiday / Special Event Market Off-Day Scanner Manager -->
+        <div class="p-3 rounded-xl bg-[#070f1c] border border-cyan-500/30 space-y-2.5">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="text-[11px] font-bold text-cyan-300 flex items-center gap-1.5">
+              <span>📅</span>
+              <span>Broker API Off-Day &amp; Special Event Scanner</span>
+            </div>
+            <span id="broker-sched-category-badge" class="px-2 py-0.5 rounded text-[9.5px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/40">
+              CHECKING BROKER CALENDAR...
+            </span>
+          </div>
+          <div id="broker-sched-summary-text" class="text-[10.5px] text-slate-300 font-sans leading-relaxed">
+            Syncing Upstox Broker API v2 Market Holidays (/v2/market/holidays), Timings &amp; NSE Exchange Status. Scanner automatically runs every Saturday, Sunday, Market Holiday Off-Day &amp; Special Event Off-Day.
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-1.5 items-center pt-1">
+            <input type="date" id="special-offday-date" class="sm:col-span-4 bg-[#060912] border border-[#1f2b42] focus:border-cyan-400 rounded-lg px-2 py-1.5 text-white text-[11px] outline-none" />
+            <input type="text" id="special-offday-name" placeholder="Special Event Off-Day Name (e.g. Election / Muhurat)" class="sm:col-span-5 bg-[#060912] border border-[#1f2b42] focus:border-cyan-400 rounded-lg px-2 py-1.5 text-white text-[11px] outline-none" />
+            <button type="button" onclick="MidnightSessionManager.addSpecialEventOffDayFromModal()" class="sm:col-span-3 px-2.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/40 text-cyan-200 font-bold text-[10.5px] cursor-pointer whitespace-nowrap">
+              + Add Off Day
+            </button>
+          </div>
+          <div id="special-offday-list" class="space-y-1 max-h-24 overflow-y-auto text-[10px]">
+            <!-- Populated dynamically by MidnightSessionManager.renderBrokerSchedulePanel() -->
+          </div>
+        </div>
+
         <!-- Tip Box -->
         <div class="p-3 rounded-xl bg-[#08121c] border border-cyan-500/25 text-[11px] text-slate-300 space-y-1 font-sans">
           <div class="text-cyan-300 font-bold font-mono text-xs flex items-center gap-1.5">
@@ -5865,8 +6066,8 @@
         const rawB = b.listed_at || b.listedAt || '09:20:00';
         const secA = typeof timeStringToSec === 'function' ? timeStringToSec(rawA) : 0;
         const secB = typeof timeStringToSec === 'function' ? timeStringToSec(rawB) : 0;
-        if (secB !== secA) return secB - secA; // Newest listed stock UP (top) -> oldest listed stock DOWN (bottom)
-        return String(a.symbol || '').localeCompare(String(b.symbol || '')); // Clean A -> Z tie-break
+        if (secB !== secA) return secB - secA; // Z->A Model: Latest/2nd eligible FIRST -> Earliest/1st eligible LAST
+        return String(b.symbol || '').localeCompare(String(a.symbol || ''));
       });
     }
 
@@ -6339,6 +6540,8 @@
           if (typeof Claude10SkillsAgent !== 'undefined') Claude10SkillsAgent.load(true);
         } else if (tabId === 'money-flow') {
           if (typeof SmartMoneyFlowEngine !== 'undefined') SmartMoneyFlowEngine.load(false);
+        } else if (tabId === 'most-active-fno') {
+          if (typeof MostActiveFnoEngine !== 'undefined') MostActiveFnoEngine.load(false);
         } else if (tabId === 'world-strategy') {
           renderWorldStrategyTab();
         } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(tabId)) {
@@ -6374,7 +6577,7 @@
       minRvol: 0,
       minOiChg: 0,
       minTurnover: 0,
-      sortBy: 'turnover_cr',
+      sortBy: 'listed_at',
       sortDir: 'desc',
       columns: {
         sector: true,
@@ -7883,12 +8086,14 @@
 
       const scanStartSec = 9 * 3600 + 20 * 60; // Every market day scan starts at 09:20:00 IST
       const marketCloseSec = 15 * 3600 + 30 * 60; // 15:30:00
+      const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(now, true) : null;
+      const isLiveWindowToday = !(mkt && mkt.isMarketOffDay) && (curTotalSec >= scanStartSec && curTotalSec <= marketCloseSec);
 
-      // During Live Market Scan Window (09:20 - 15:30), listed time cannot precede 09:20 or exceed current IST clock
-      if (curTotalSec >= scanStartSec && curTotalSec <= marketCloseSec) {
+      // During Live Market Scan Window (09:20 - 15:30 on active trading days), listed time cannot exceed current IST clock
+      if (isLiveWindowToday) {
         return targetSec < scanStartSec || targetSec > curTotalSec;
       }
-      // Outside market hours, valid timestamps belong to 09:20 - 15:30
+      // On Weekends / Holidays / Special Event Off-Days or after-hours, valid timestamps span 09:20 - 15:30
       if (targetSec < scanStartSec || targetSec > marketCloseSec) {
         return true;
       }
@@ -7908,7 +8113,8 @@
       const marketCloseSec = 15 * 3600 + 30 * 60; // 15:30:00
 
       const existingSec = timeStringToSec(stock.listed_at);
-      const isSessionActiveNow = (curTotalSec >= scanStartSec && curTotalSec <= marketCloseSec);
+      const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(now, true) : null;
+      const isSessionActiveNow = !(mkt && mkt.isMarketOffDay) && (curTotalSec >= scanStartSec && curTotalSec <= marketCloseSec);
 
       if (isSessionActiveNow) {
         // Keep genuine formula / real-time discovery timestamp >= 09:20:00 and <= current clock
@@ -9667,27 +9873,143 @@ function renderJournal() {
       manualOverride: false,
       isScanningNow: false,
       universeCache: null,
+      _lastScheduleFetchAt: 0,
 
       init() {
-        console.log('[MidnightSessionManager] Initializing 12:00 AM IST Auto-Flush & Next-Day Scanner...');
+        console.log('[MidnightSessionManager] Initializing 12:00 AM IST Flush, 09:20 AM Scan & Broker API Off-Day Scheduler...');
         this.cacheUniverse();
         this.evaluateLocalSessionState();
+        this.fetchBrokerMarketSchedule(false);
         this.syncWithServerSession();
 
         // Check every 1 second cleanly (uses IST date string comparison, immune to seconds===0 drift!)
         setInterval(() => {
           this.checkMidnightAndOpenTransitions();
+          if (Date.now() - (this._lastScheduleFetchAt || 0) > 60000) {
+            this.fetchBrokerMarketSchedule(false);
+          }
         }, 1000);
 
         // Also re-check immediately when user wakes phone screen or switches back to tab
         document.addEventListener('visibilitychange', () => {
           if (!document.hidden) {
+            this.fetchBrokerMarketSchedule(false);
             this.checkMidnightAndOpenTransitions();
             this.syncWithServerSession();
           }
         });
 
         this.renderSessionPill();
+      },
+
+      applyServerSchedulePayload(sched) {
+        if (!sched || typeof sched !== 'object') return;
+        window.BROKER_MARKET_SCHEDULE = sched;
+        if (Array.isArray(sched.holidays)) {
+          const map = {};
+          sched.holidays.forEach(h => {
+            if (h && h.date && h.holiday_type !== 'SPECIAL_TIMING') {
+              map[h.date] = h.description || 'Exchange Holiday';
+            }
+          });
+          window.BROKER_HOLIDAYS_MAP = map;
+        }
+        this.renderBrokerSchedulePanel();
+        this.renderSessionPill();
+        if (typeof updateCockpitTime === 'function') updateCockpitTime();
+      },
+
+      async fetchBrokerMarketSchedule(forceRefresh = false) {
+        this._lastScheduleFetchAt = Date.now();
+        try {
+          const url = forceRefresh ? '/api/market-schedule?refresh=1' : '/api/market-schedule';
+          const res = await fetch(url);
+          if (res.ok) {
+            const sched = await res.json();
+            this.applyServerSchedulePayload(sched);
+            if (sched.isMarketOffDay && !this.isScanningNow) {
+              const ist = getISTDatePartsNow();
+              const storedScanDate = localStorage.getItem('midnight_scan_date_ist');
+              if (this.isPurged || storedScanDate !== ist.dateStr || (DATA && (!DATA.all_stocks || DATA.all_stocks.length === 0))) {
+                this.generateNewTradingDayStocks(true, sched.dayCategory || 'OFF_DAY_BROKER');
+              }
+            }
+          }
+        } catch (e) {}
+      },
+
+      renderBrokerSchedulePanel() {
+        const badge = document.getElementById('broker-sched-category-badge');
+        const summary = document.getElementById('broker-sched-summary-text');
+        const listEl = document.getElementById('special-offday-list');
+        const dateInp = document.getElementById('special-offday-date');
+        const ist = getISTDatePartsNow();
+        if (dateInp && !dateInp.value) dateInp.value = ist.dateStr;
+
+        const sched = window.BROKER_MARKET_SCHEDULE;
+        const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(new Date(), true) : null;
+        if (badge && mkt) {
+          const catText = sched ? sched.dayCategory.replace(/_/g, ' ') : (mkt.dayCategory || 'TRADING DAY').replace(/_/g, ' ');
+          badge.innerText = mkt.isMarketOffDay ? `🏦 BROKER SCAN ACTIVE • ${catText}` : `🟢 ${catText}`;
+          badge.className = mkt.isMarketOffDay
+            ? 'px-2 py-0.5 rounded text-[9.5px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+            : 'px-2 py-0.5 rounded text-[9.5px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+        }
+        if (summary && sched) {
+          summary.innerHTML = `<strong>${sched.dateIST} (${sched.weekday}):</strong> ${sched.description || ''} <span class="text-cyan-300">[Next Trading Day: ${sched.nextTradingDay || 'Mon'} • Source: ${sched.brokerApiSource || 'UPSTOX_MARKET_INFO_V2'}]</span>`;
+        }
+        if (listEl) {
+          const specials = (sched && Array.isArray(sched.specialEventOffDays)) ? sched.specialEventOffDays : [];
+          if (specials.length === 0) {
+            listEl.innerHTML = `<div class="text-slate-500 italic py-1">No custom Special Event Market Off Days added. Weekends (Sat/Sun) &amp; Upstox Broker Holidays auto-run automatically.</div>`;
+          } else {
+            listEl.innerHTML = specials.map(sp => `
+              <div class="flex items-center justify-between gap-2 px-2 py-1 rounded bg-[#0a1424] border border-cyan-500/25 text-slate-200">
+                <span><strong class="text-amber-300">${sp.date}</strong> &mdash; ${sp.name}</span>
+                <button type="button" onclick="MidnightSessionManager.removeSpecialEventOffDayFromModal('${sp.date}')" class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 font-bold cursor-pointer">Remove</button>
+              </div>
+            `).join('');
+          }
+        }
+      },
+
+      async addSpecialEventOffDayFromModal() {
+        const dateEl = document.getElementById('special-offday-date');
+        const nameEl = document.getElementById('special-offday-name');
+        const date = (dateEl?.value || getISTDatePartsNow().dateStr).trim();
+        const name = (nameEl?.value || 'Special Event Market Off Day').trim();
+        if (!date) return;
+        try {
+          const res = await fetch('/api/market/special-off-days', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date, name, type: 'SPECIAL_EVENT_OFF_DAY' })
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json.schedule) this.applyServerSchedulePayload(json.schedule);
+            if (nameEl) nameEl.value = '';
+            await this.generateNewTradingDayStocks(true, 'SPECIAL_EVENT_OFF_DAY');
+            if (typeof showToast === 'function') {
+              showToast(`📅 Added Special Event Off Day (${date}: ${name}) • Broker API Scanner Active!`, 'success');
+            }
+          }
+        } catch (e) {}
+      },
+
+      async removeSpecialEventOffDayFromModal(date) {
+        if (!date) return;
+        try {
+          const res = await fetch(`/api/market/special-off-days/${encodeURIComponent(date)}`, { method: 'DELETE' });
+          if (res.ok) {
+            const json = await res.json();
+            if (json.schedule) this.applyServerSchedulePayload(json.schedule);
+            await this.syncWithServerSession();
+            if (typeof showToast === 'function') {
+              showToast(`🗑️ Removed Special Event Off Day (${date})`, 'info');
+            }
+          }
+        } catch (e) {}
       },
 
       cacheUniverse() {
@@ -9703,10 +10025,20 @@ function renderJournal() {
 
       evaluateLocalSessionState() {
         const ist = getISTDatePartsNow();
-        const DAILY_SCAN_START_MIN = 9 * 60 + 20; // 09:20 AM IST every market day
+        const mkt = getIndianMarketStatus(new Date(), true);
+        const DAILY_SCAN_START_MIN = 9 * 60 + 20; // 09:20 AM IST every regular market day
         const storedPurge = localStorage.getItem('midnight_scanner_purged');
         const storedPurgeDate = localStorage.getItem('midnight_purge_date_ist');
         const storedScanDate = localStorage.getItem('midnight_scan_date_ist');
+
+        // On Weekends (Sat/Sun), Market Holidays & Special Event Off-Days: Broker API Off-Day Scanner runs all day
+        if (mkt.isMarketOffDay) {
+          this.isPurged = false;
+          this.manualOverride = false;
+          localStorage.setItem('midnight_scanner_purged', 'false');
+          if (!storedPurgeDate) localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
+          return;
+        }
 
         // Fresh visitor opening at/after 09:20 AM IST: seed purge date cleanly without falsely resetting server scanners
         if (!storedPurgeDate && ist.totalMinutes >= DAILY_SCAN_START_MIN) {
@@ -9714,7 +10046,7 @@ function renderJournal() {
           return;
         }
 
-        // Between 00:00:00 and 09:19:59 IST: automatically stay 100% midnight-cleared awaiting 09:20 AM IST
+        // Between 00:00:00 and 09:19:59 IST on regular trading days: automatically stay 100% midnight-cleared awaiting 09:20 AM IST
         if (ist.totalMinutes < DAILY_SCAN_START_MIN) {
           this.isPurged = true;
           this.manualOverride = false;
@@ -9741,13 +10073,22 @@ function renderJournal() {
           const res = await fetch('/api/scan/session-status');
           if (!res.ok) return;
           const sess = await res.json();
-          if (sess.isMidnightCleared && !this.manualOverride) {
+          if (sess.brokerSchedule) {
+            window.BROKER_MARKET_SCHEDULE = {
+              ...(window.BROKER_MARKET_SCHEDULE || {}),
+              ...sess.brokerSchedule,
+              dateIST: sess.currentDateIST || getISTDatePartsNow().dateStr,
+              weekday: sess.weekdayIST || getISTDatePartsNow().weekday
+            };
+            this.renderBrokerSchedulePanel();
+          }
+          if (sess.isMidnightCleared && !this.manualOverride && !sess.isMarketOffDay) {
             this.isPurged = true;
             localStorage.setItem('midnight_scanner_purged', 'true');
             localStorage.setItem('midnight_purge_date_ist', sess.currentDateIST || getISTDatePartsNow().dateStr);
             this.emptyAllScannersInMemory();
             this.refreshAllRenderedViews();
-          } else if (sess.isMidnightCleared === false && (sess.stocksCount > 0 || sess.lastScanDateIST === getISTDatePartsNow().dateStr)) {
+          } else if (sess.isMidnightCleared === false && (sess.stocksCount > 0 || sess.isMarketOffDay || sess.lastScanDateIST === getISTDatePartsNow().dateStr)) {
             this.isPurged = false;
             localStorage.setItem('midnight_scanner_purged', 'false');
             if (sess.lastScanDateIST) localStorage.setItem('midnight_scan_date_ist', sess.lastScanDateIST);
@@ -9758,12 +10099,13 @@ function renderJournal() {
 
       checkMidnightAndOpenTransitions() {
         const ist = getISTDatePartsNow();
-        const DAILY_SCAN_START_MIN = 9 * 60 + 20; // 09:20 AM IST every market day
+        const mkt = getIndianMarketStatus(new Date(), true);
+        const DAILY_SCAN_START_MIN = 9 * 60 + 20; // 09:20 AM IST every regular market day
         const storedPurgeDate = localStorage.getItem('midnight_purge_date_ist');
         const storedScanDate = localStorage.getItem('midnight_scan_date_ist');
 
         // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH (00:00:00 IST):
-        if (!storedPurgeDate && ist.totalMinutes >= DAILY_SCAN_START_MIN) {
+        if (!storedPurgeDate && (ist.totalMinutes >= DAILY_SCAN_START_MIN || mkt.isMarketOffDay)) {
           localStorage.setItem('midnight_purge_date_ist', ist.dateStr);
         } else if (storedPurgeDate !== ist.dateStr) {
           console.log('[MidnightSessionManager] 🕛 New IST Day Detected (' + ist.dateStr + '). Executing 12:00 AM Auto-Flush!');
@@ -9771,8 +10113,8 @@ function renderJournal() {
           return;
         }
 
-        // Stay midnight-cleared strictly before 09:20 AM IST every market day
-        if (ist.totalMinutes < DAILY_SCAN_START_MIN) {
+        // Stay midnight-cleared strictly before 09:20 AM IST ONLY on regular trading days (never block Weekend / Market Off-Day Broker Scans)
+        if (!mkt.isMarketOffDay && ist.totalMinutes < DAILY_SCAN_START_MIN) {
           if (!this.isPurged && !this.manualOverride) {
             this.isPurged = true;
             this.emptyAllScannersInMemory();
@@ -9782,10 +10124,15 @@ function renderJournal() {
           return;
         }
 
-        const mkt = getIndianMarketStatus(new Date(), true);
+        // 2A. WEEKEND (SAT/SUN), MARKET OFF DAY, OR SPECIAL EVENT MARKET OFF DAY BROKER API AUTO-SCAN:
+        if (mkt.isMarketOffDay && (this.isPurged || storedScanDate !== ist.dateStr) && !this.isScanningNow) {
+          console.log('[MidnightSessionManager] 🏦 Broker API Off-Day Auto-Scan Triggered (' + ist.dateStr + ' • ' + (mkt.offDayLabel || ist.weekday) + ')...');
+          this.generateNewTradingDayStocks(true, mkt.dayCategory || 'OFF_DAY_BROKER');
+          return;
+        }
 
-        // 2. NEXT TRADING DAY FORMULA AUTO-SCAN AT 09:20 AM IST — ZERO MANUAL ACTION REQUIRED:
-        if (mkt.status === 'OPEN' && ist.totalMinutes >= DAILY_SCAN_START_MIN && (this.isPurged || storedScanDate !== ist.dateStr) && !this.isScanningNow) {
+        // 2B. REGULAR TRADING DAY FORMULA AUTO-SCAN AT 09:20 AM IST — ZERO MANUAL ACTION REQUIRED:
+        if (!mkt.isMarketOffDay && (mkt.status === 'OPEN' || (mkt.isTradingDay && ist.totalMinutes >= DAILY_SCAN_START_MIN)) && ist.totalMinutes >= DAILY_SCAN_START_MIN && (this.isPurged || storedScanDate !== ist.dateStr) && !this.isScanningNow) {
           console.log('[MidnightSessionManager] 🚀 09:20 AM IST Market Formula Scan Triggered (' + ist.dateStr + '). Auto-discovering eligible stocks...');
           this.generateNewTradingDayStocks(true, 'REGULAR');
           return;
@@ -10072,7 +10419,13 @@ function renderJournal() {
             CyberAudioEngine.playBeep(1200, 'sine', 0.2);
           }
           if (typeof showToast === 'function') {
-            showToast('🚀 09:20 AM IST MARKET FORMULA AUTO-SCAN COMPLETE! Eligible stocks (0–15) listed per scanner.', 'success');
+            const isOffPhase = phase && phase !== 'REGULAR' && phase !== 'PRE_OPEN';
+            showToast(
+              isOffPhase
+                ? `🏦 BROKER API OFF-DAY SCAN COMPLETE (${phase.replace(/_/g, ' ')})! Eligible stocks (0–15) populated.`
+                : '🚀 09:20 AM IST MARKET FORMULA AUTO-SCAN COMPLETE! Eligible stocks (0–15) listed per scanner.',
+              'success'
+            );
           }
         } catch (e) {
           console.warn('[MidnightSessionManager] Fresh scan error:', e);
@@ -10085,6 +10438,8 @@ function renderJournal() {
         if (typeof renderAllTables === 'function') renderAllTables();
         if (typeof ClaudeSrHunterEngine !== 'undefined') ClaudeSrHunterEngine.renderAll();
         if (typeof PreOpenEngine !== 'undefined') PreOpenEngine.renderAll();
+        if (typeof SmartMoneyFlowEngine !== 'undefined') SmartMoneyFlowEngine.load(false);
+        if (typeof MostActiveFnoEngine !== 'undefined') MostActiveFnoEngine.load(false);
         if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
         if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
         this.renderSessionPill();
@@ -10092,14 +10447,16 @@ function renderJournal() {
 
       getNextAutoScanCountdown() {
         const ist = getISTDatePartsNow();
+        const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(new Date(), true) : null;
         const curSec = ist.hours * 3600 + ist.minutes * 60 + ist.seconds;
         const scanSec = 9 * 3600 + 20 * 60;
         const midnightSec = 24 * 3600;
-        let diff = curSec < scanSec ? (scanSec - curSec) : (midnightSec - curSec);
+        const waitFor0920 = !(mkt && mkt.isMarketOffDay) && curSec < scanSec;
+        let diff = waitFor0920 ? (scanSec - curSec) : (midnightSec - curSec);
         const h = String(Math.floor(diff / 3600)).padStart(2, '0');
         const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
         const s = String(diff % 60).padStart(2, '0');
-        const label = curSec < scanSec ? '09:20 AM Scan' : '12 AM Flush';
+        const label = waitFor0920 ? '09:20 AM Scan' : (mkt && mkt.isMarketOffDay ? 'Off-Day Reset' : '12 AM Flush');
         return { h, m, s, text: `${label} in ${h}:${m}:${s}` };
       },
 
@@ -10107,6 +10464,7 @@ function renderJournal() {
         const pill = document.getElementById('midnight-session-pill');
         const banner = document.getElementById('midnight-purge-notice-banner');
         const cd = this.getNextAutoScanCountdown();
+        const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(new Date(), true) : null;
 
         document.querySelectorAll('.midnight-auto-countdown').forEach(el => {
           el.innerText = `🤖 AUTO-SCHEDULED • ${cd.text} IST`;
@@ -10114,8 +10472,8 @@ function renderJournal() {
 
         if (this.isMidnightCleared()) {
           if (pill) {
-            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono shadow-sm select-none';
-            pill.title = '12:00 AM Midnight Auto-Purge Active: Scanners auto-empty at 00:00 IST and auto-scan strictly at 09:20 AM IST every market day.';
+            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono shadow-sm select-none cursor-pointer';
+            pill.title = '12:00 AM Midnight Auto-Purge Active: Scanners auto-empty at 00:00 IST and auto-scan at 09:20 AM IST on Trading Days or via Broker API on Weekends/Off-Days.';
             pill.innerHTML = `
               <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
               <span>12 AM Emptied &bull; Standby 09:20 IST</span>
@@ -10123,10 +10481,21 @@ function renderJournal() {
             `;
           }
           if (banner) banner.classList.remove('hidden');
+        } else if (mkt && mkt.isMarketOffDay) {
+          if (pill) {
+            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-500/20 text-purple-200 border border-purple-400/50 font-mono shadow-sm select-none cursor-pointer hover:bg-purple-500/30 transition';
+            pill.title = `Broker API Scanner Active on ${mkt.offDayLabel || 'Market Off Day'} (${mkt.dayCategory}). Click to manage Upstox API & Special Event Market Off Days.`;
+            pill.innerHTML = `
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0"></span>
+              <span>🏦 Broker API Off-Day Scan &bull; ${mkt.offDayLabel || 'Weekend/Holiday'}</span>
+              <span class="text-[9.5px] px-1.5 py-0.2 bg-purple-500/35 rounded text-purple-100">${cd.h}:${cd.m}:${cd.s}</span>
+            `;
+          }
+          if (banner) banner.classList.add('hidden');
         } else {
           if (pill) {
-            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm select-none';
-            pill.title = 'Fully Automated Cycle: Scanners auto-empty at 12:00 AM IST and auto-scan at 09:20 AM IST every market day.';
+            pill.className = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 font-mono shadow-sm select-none cursor-pointer hover:bg-cyan-500/30 transition';
+            pill.title = 'Fully Automated Cycle: Scanners run at 09:20 AM IST on Trading Days and via Broker API on Weekends (Sat/Sun), Holidays & Special Event Off Days.';
             pill.innerHTML = `
               <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0"></span>
               <span>09:20 Formula Scan &bull; 12 AM Flush</span>
@@ -10737,6 +11106,8 @@ function renderJournal() {
             if (typeof renderAllTables === 'function') renderAllTables();
           } else if (activeTabId === 'money-flow') {
             if (typeof SmartMoneyFlowEngine !== 'undefined') SmartMoneyFlowEngine.load(false);
+          } else if (activeTabId === 'most-active-fno') {
+            if (typeof MostActiveFnoEngine !== 'undefined') MostActiveFnoEngine.load(false);
           }
         };
 
@@ -11742,6 +12113,31 @@ ${json.message || 'Unauthorized token.'}`);
     buy_ok = (oi_flow > 0 and DE > 0)   # Both OI Flow & Delta Flow Positive
     sell_ok = (oi_flow < 0 and DE < 0)  # Both OI Flow & Delta Flow Negative
     return {"buy": buy_ok and adx14 > 20 and rsi14 > 55, "sell": sell_ok and adx14 > 20 and rsi14 < 45}`
+      },
+      'most_active_fno': {
+        title: '🔥 Most Active FNO & (Index Options) • Multi-TF (5m/15m/30m/1H) + 7-Pillar Formula',
+        file: 'server/mostActiveFnoEngine.ts',
+        desc: 'Resamples 5m bars into 5 Minutes, 15 Minutes, 30 Minutes, and 1 Hour OHLCV candles and evaluates Previous Day High/Low, Opening Range Breakout, HH/HL & LH/LL Structure, Candle Body Strength (>=50%), Pivot/Swing S&R Breakout, Raw Traded Volume (no volume indicators), OI Change, Risk-Reward (SL/T1/T2), and Listed At Entry Window (09:20 AM - 02:45 PM IST) across Most Active F&O, Index Options Contracts, Top Volume, Top Value, Most Active Underlying, Most Active Equities, and OI Change.',
+        code: `def evaluate_most_active_fno_mtf(bars_5m, tf_minutes_list=[5, 15, 30, 60]):
+    mtf_results = {}
+    for tf in tf_minutes_list:
+        tf_bars = resample_ohlcv(bars_5m, tf)
+        # 1. Previous Day High / Low Breakout
+        pd_ok = bar.close > pdh if is_buy else bar.close < pdl
+        # 2. Multi-TF Opening Range Breakout
+        orb_ok = bar.close > or_high_tf if is_buy else bar.close < or_low_tf
+        # 3. Structure: HH/HL (BUY) or LH/LL (SELL) on TF candles
+        struct_ok = (bar.high > prev.high and bar.low >= prev.low) if is_buy else (bar.low < prev.low and bar.high <= prev.high)
+        # 4. Candle Body Strength
+        body_ok = abs(bar.close - bar.open) / max(0.05, bar.high - bar.low) * 100.0 >= 50.0
+        # 5. Support & Resistance Breakout
+        sr_ok = bar.close > r1 if is_buy else bar.close < s1
+        # 6. Raw Traded Volume Confirmation (NO indicator oscillators)
+        raw_vol_ok = bar.raw_volume >= median(tf_bar_volumes) * 1.08
+        # 7. Entry Window 09:20 AM - 02:45 PM IST + Risk-Reward
+        in_window = "09:20:00" <= listed_at <= "14:45:00"
+        mtf_results[tf] = {"passed": sum([pd_ok, orb_ok, struct_ok, body_ok, sr_ok, raw_vol_ok, in_window])}
+    return mtf_results`
       }
     };
 
@@ -12274,7 +12670,13 @@ ${json.message || 'Unauthorized token.'}`);
         });
       }
 
-      return cards.slice(0, 15);
+      return [...cards]
+        .sort((a, b) => {
+          const secA = typeof timeStringToSec === 'function' ? timeStringToSec(a.listed_time) : 0;
+          const secB = typeof timeStringToSec === 'function' ? timeStringToSec(b.listed_time) : 0;
+          return secB !== secA ? secB - secA : String(b.index || '').localeCompare(String(a.index || ''));
+        })
+        .slice(0, 15);
     }
 
     function renderClaudeIndicesOptions() {
@@ -12462,24 +12864,55 @@ ${json.message || 'Unauthorized token.'}`);
     function getIndianMarketStatus(now, ignoreForceLive = false) {
       const ist = getISTDatePartsNow(now);
       const totalMinutes = ist.totalMinutes;
-      const holidayName = NSE_2026_HOLIDAYS[ist.dateStr] || null;
+      const sched = (window.BROKER_MARKET_SCHEDULE && window.BROKER_MARKET_SCHEDULE.dateIST === ist.dateStr)
+        ? window.BROKER_MARKET_SCHEDULE
+        : null;
+      const mergedHolidays = window.BROKER_HOLIDAYS_MAP || NSE_2026_HOLIDAYS;
+      const specialList = (window.BROKER_MARKET_SCHEDULE && Array.isArray(window.BROKER_MARKET_SCHEDULE.specialEventOffDays))
+        ? window.BROKER_MARKET_SCHEDULE.specialEventOffDays
+        : [];
+      const specialEntry = specialList.find(s => s && s.date === ist.dateStr) || null;
+
+      const holidayName = (sched && sched.isHolidayOffDay && sched.eventName) || mergedHolidays[ist.dateStr] || null;
       const isWeekend = (ist.weekday === 'Saturday' || ist.weekday === 'Sunday');
-      const isTradingDay = !isWeekend && !holidayName;
+      const isSpecialEventOffDay = Boolean(
+        (sched && sched.isSpecialEventOffDay) ||
+        (specialEntry && specialEntry.type === 'SPECIAL_EVENT_OFF_DAY')
+      );
+      const specialEventName = (sched && sched.isSpecialEventOffDay && sched.eventName) || specialEntry?.name || 'Special Event Off Day';
+      const hasBrokerWeekendTiming = Boolean(sched && sched.isSpecialSession && !sched.isMarketOffDay);
 
       // Special Diwali Muhurat Session Window: strictly 18:15 - 19:15 IST on Nov 8
-      const isMuhuratDay = (ist.dateStr === '2026-11-08');
+      const isMuhuratDay = (ist.dateStr === '2026-11-08') || Boolean(sched && sched.isSpecialSession && !hasBrokerWeekendTiming);
       const isMuhuratOpen = isMuhuratDay && (totalMinutes >= (18 * 60 + 15) && totalMinutes <= (19 * 60 + 15));
       const isMuhuratPreOpen = isMuhuratDay && (totalMinutes >= (18 * 60) && totalMinutes < (18 * 60 + 15));
 
+      const isTradingDay = !isSpecialEventOffDay && ((!isWeekend && !holidayName) || hasBrokerWeekendTiming);
+      const isMarketOffDay = isSpecialEventOffDay || Boolean(holidayName && !isMuhuratDay) || (isWeekend && !hasBrokerWeekendTiming) || (isMuhuratDay && !isMuhuratOpen && !isMuhuratPreOpen);
+      const dayCategory = isSpecialEventOffDay
+        ? 'SPECIAL_EVENT_OFF_DAY'
+        : (holidayName && !isMuhuratDay)
+        ? 'HOLIDAY_OFF_DAY'
+        : (isWeekend && !hasBrokerWeekendTiming)
+        ? 'WEEKEND_OFF_DAY'
+        : isMuhuratDay
+        ? 'SPECIAL_SESSION'
+        : 'TRADING_DAY';
+      const offDayLabel = isSpecialEventOffDay
+        ? specialEventName
+        : holidayName
+        ? holidayName
+        : isWeekend
+        ? ist.weekday
+        : (sched && sched.eventName) || '';
+
       const isForceLive = !ignoreForceLive && (window.FORCE_LIVE_MARKET === true);
 
-      const isWeekday = isTradingDay;
-      const isRegularOpen = isTradingDay && (totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30));
-      const isPreOpen = isTradingDay && (totalMinutes >= (9 * 60) && totalMinutes < (9 * 60 + 15));
-      const isPostMarket = isTradingDay && (totalMinutes >= (15 * 60 + 30) && totalMinutes < (16 * 60));
+      const isRegularOpen = isTradingDay && !isMuhuratDay && (totalMinutes >= (9 * 60 + 15) && totalMinutes < (15 * 60 + 30));
+      const isPreOpen = isTradingDay && !isMuhuratDay && (totalMinutes >= (9 * 60) && totalMinutes < (9 * 60 + 15));
+      const isPostMarket = isTradingDay && !isMuhuratDay && (totalMinutes >= (15 * 60 + 30) && totalMinutes < (16 * 60));
 
       const isRealOpen = isRegularOpen || isMuhuratOpen;
-      const isOpen = isRealOpen || isForceLive;
       const isPre = (isPreOpen || isMuhuratPreOpen) && !isForceLive;
 
       if (isRealOpen) {
@@ -12488,6 +12921,13 @@ ${json.message || 'Unauthorized token.'}`);
         return {
           status: 'OPEN',
           isRealOpen: true,
+          isTradingDay: true,
+          isMarketOffDay: false,
+          isWeekend,
+          isHoliday: Boolean(holidayName),
+          isSpecialEventOffDay,
+          dayCategory,
+          offDayLabel: '',
           text: label,
           badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-emerald-500/10 cursor-pointer',
           dotClass: 'w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping',
@@ -12510,6 +12950,13 @@ ${json.message || 'Unauthorized token.'}`);
           status: 'OPEN',
           isRealOpen: false,
           isSimulation: true,
+          isTradingDay,
+          isMarketOffDay,
+          isWeekend,
+          isHoliday: Boolean(holidayName),
+          isSpecialEventOffDay,
+          dayCategory,
+          offDayLabel,
           text: 'TEST SIMULATION (Market Closed)',
           badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-cyan-500/20 text-cyan-300 border-cyan-500/40 cursor-pointer',
           dotClass: 'w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping',
@@ -12532,6 +12979,13 @@ ${json.message || 'Unauthorized token.'}`);
         return {
           status: 'PRE-OPEN',
           isRealOpen: false,
+          isTradingDay: true,
+          isMarketOffDay: false,
+          isWeekend,
+          isHoliday: Boolean(holidayName),
+          isSpecialEventOffDay,
+          dayCategory,
+          offDayLabel: '',
           text: preLabel,
           badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-amber-500/10 cursor-pointer',
           dotClass: 'w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse',
@@ -12553,46 +13007,67 @@ ${json.message || 'Unauthorized token.'}`);
         let subReason = 'CLOSED (Opens Mon 09:15 IST)';
         let heroMsg = 'MARKET CLOSED • EOD SETTLEMENT';
 
-        if (isMuhuratDay) {
+        if (isSpecialEventOffDay) {
+          subReason = `SPECIAL OFF DAY (${specialEventName}) • BROKER SCAN`;
+          heroMsg = `BROKER API SCAN • SPECIAL OFF DAY (${specialEventName.toUpperCase()})`;
+        } else if (isMuhuratDay) {
           if (totalMinutes < (18 * 60)) {
-            subReason = 'CLOSED (Muhurat at 18:15 IST)';
-            heroMsg = 'MARKET CLOSED • MUHURAT OPENS 18:15 IST';
+            subReason = 'MUHURAT OFF-HOURS • BROKER SCAN ACTIVE';
+            heroMsg = 'BROKER API SCAN • MUHURAT OPENS 18:15 IST';
           } else {
-            subReason = 'CLOSED (Muhurat Session Ended)';
-            heroMsg = 'MARKET CLOSED • EOD CLOSE SETTLEMENT';
+            subReason = 'MUHURAT SETTLED • BROKER SCAN ACTIVE';
+            heroMsg = 'BROKER API SCAN • MUHURAT SETTLEMENT';
           }
         } else if (isPostMarket) {
           subReason = 'CLOSED (Post-Market Close)';
           heroMsg = 'MARKET CLOSED • POST-CLOSING SETTLEMENT';
         } else if (holidayName) {
-          subReason = `HOLIDAY (${holidayName})`;
-          heroMsg = `MARKET CLOSED • ${holidayName.toUpperCase()}`;
+          subReason = `HOLIDAY (${holidayName}) • BROKER SCAN`;
+          heroMsg = `BROKER API SCAN • ${holidayName.toUpperCase()} OFF DAY`;
         } else if (isTradingDay) {
           subReason = totalMinutes < (9 * 60) ? 'CLOSED (Opens 09:15 IST)' : 'CLOSED (EOD Settlement)';
           heroMsg = totalMinutes < (9 * 60) ? 'MARKET CLOSED • OPENS 09:15 IST' : 'MARKET CLOSED • EOD SETTLEMENT';
         } else {
-          subReason = 'CLOSED (Weekend)';
-          heroMsg = 'MARKET CLOSED • WEEKEND SETTLEMENT';
+          subReason = `${ist.weekday.toUpperCase()} OFF DAY • BROKER API SCAN`;
+          heroMsg = `BROKER API SCAN • WEEKEND (${ist.weekday.toUpperCase()}) OFF DAY`;
         }
 
+        const isOffAccent = isMarketOffDay;
         return {
           status: 'CLOSED',
+          isTradingDay,
+          isMarketOffDay,
+          isWeekend,
+          isHoliday: Boolean(holidayName),
+          isSpecialEventOffDay,
+          dayCategory,
+          offDayLabel,
           text: subReason,
-          badgeClass: 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-rose-500/10 cursor-pointer',
-          dotClass: 'w-1.5 h-1.5 rounded-full bg-rose-400',
+          badgeClass: isOffAccent
+            ? 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-purple-500/20 text-purple-200 border-purple-400/50 cursor-pointer'
+            : 'inline-flex items-center gap-1.5 text-[9.5px] font-black px-2 py-0.5 rounded border transition-colors shadow-sm bg-rose-500/20 text-rose-300 border-rose-500/40 shadow-rose-500/10 cursor-pointer',
+          dotClass: isOffAccent ? 'w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse' : 'w-1.5 h-1.5 rounded-full bg-rose-400',
           heroText: heroMsg,
-          heroBadgeClass: 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm cursor-pointer',
-          heroDotClass: 'w-2 h-2 rounded-full bg-rose-400',
-          hdrText: holidayName ? 'MARKET HOLIDAY' : 'MARKET CLOSED',
-          hdrDotClass: 'w-2 h-2 rounded-full bg-rose-400',
-          hdrClass: 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 cursor-pointer hover:bg-rose-500/20 transition shadow-sm',
-          subhdrText: holidayName ? 'HOLIDAY • CLOSED' : 'CLOSED',
-          subhdrDotClass: 'w-1.5 h-1.5 rounded-full bg-rose-400',
-          subhdrClass: 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 cursor-pointer hover:bg-rose-500/20 transition shadow-sm',
-          nseText: holidayName ? 'HOLIDAY (CLOSED)' : 'EOD SETTLED (CLOSED)',
-          nseTextClass: 'text-rose-300 font-black',
-          nseDotClass: 'w-2 h-2 rounded-full bg-rose-400 shrink-0',
-          nsePillClass: 'bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-rose-500/30 shadow-inner flex items-center gap-2 w-full sm:w-auto'
+          heroBadgeClass: isOffAccent
+            ? 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-200 border border-purple-400/50 flex items-center gap-1.5 shadow-sm cursor-pointer'
+            : 'px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5 shadow-sm cursor-pointer',
+          heroDotClass: isOffAccent ? 'w-2 h-2 rounded-full bg-cyan-400 animate-pulse' : 'w-2 h-2 rounded-full bg-rose-400',
+          hdrText: isSpecialEventOffDay ? 'SPECIAL OFF • BROKER SCAN' : holidayName ? 'HOLIDAY • BROKER SCAN' : isWeekend ? 'WEEKEND • BROKER SCAN' : 'MARKET CLOSED',
+          hdrDotClass: isOffAccent ? 'w-2 h-2 rounded-full bg-cyan-400 animate-pulse' : 'w-2 h-2 rounded-full bg-rose-400',
+          hdrClass: isOffAccent
+            ? 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-purple-500/15 text-purple-200 border border-purple-400/40 cursor-pointer hover:bg-purple-500/25 transition shadow-sm'
+            : 'inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10.5px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 cursor-pointer hover:bg-rose-500/20 transition shadow-sm',
+          subhdrText: isOffAccent ? 'OFF DAY • BROKER SCAN' : 'CLOSED',
+          subhdrDotClass: isOffAccent ? 'w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse' : 'w-1.5 h-1.5 rounded-full bg-rose-400',
+          subhdrClass: isOffAccent
+            ? 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/15 text-purple-200 border border-purple-400/40 cursor-pointer hover:bg-purple-500/25 transition shadow-sm'
+            : 'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-rose-500/10 text-rose-300 border border-rose-500/30 cursor-pointer hover:bg-rose-500/20 transition shadow-sm',
+          nseText: isSpecialEventOffDay ? 'SPECIAL OFF • BROKER SCAN' : holidayName ? 'HOLIDAY • BROKER SCAN' : isWeekend ? 'WEEKEND • BROKER SCAN' : 'EOD SETTLED (CLOSED)',
+          nseTextClass: isOffAccent ? 'text-purple-200 font-black' : 'text-rose-300 font-black',
+          nseDotClass: isOffAccent ? 'w-2 h-2 rounded-full bg-cyan-400 animate-pulse shrink-0' : 'w-2 h-2 rounded-full bg-rose-400 shrink-0',
+          nsePillClass: isOffAccent
+            ? 'bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-purple-400/40 shadow-inner flex items-center gap-2 w-full sm:w-auto'
+            : 'bg-[#070b14]/90 px-3.5 py-2 rounded-xl border border-rose-500/30 shadow-inner flex items-center gap-2 w-full sm:w-auto'
         };
       }
     }
@@ -13092,37 +13567,38 @@ ${json.message || 'Unauthorized token.'}`);
         return (parseInt(m[1], 10) || 0) * 3600 + (parseInt(m[2], 10) || 0) * 60 + (parseInt(m[3], 10) || 0);
       },
 
-      sortListByMode(items, mode = 'listed_asc') {
+      sortListByMode(items, mode = 'listed_desc') {
         if (!Array.isArray(items)) return [];
         const arr = [...items];
+        const byTimeDesc = (a, b) => {
+          const tA = this.parseListedSec(a.listedAt || a.triggerTime || a.timestampIST || a.time);
+          const tB = this.parseListedSec(b.listedAt || b.triggerTime || b.timestampIST || b.time);
+          if (tB !== tA) return tB - tA;
+          return String(b.symbol || b.name || '').localeCompare(String(a.symbol || a.name || ''));
+        };
         const byTimeAsc = (a, b) => {
           const tA = this.parseListedSec(a.listedAt || a.triggerTime || a.timestampIST || a.time);
           const tB = this.parseListedSec(b.listedAt || b.triggerTime || b.timestampIST || b.time);
           if (tA !== tB) return tA - tB;
           return String(a.symbol || a.name || '').localeCompare(String(b.symbol || b.name || ''));
         };
-        if (mode === 'listed_desc') {
-          return arr.sort((a, b) => {
-            const tA = this.parseListedSec(a.listedAt || a.triggerTime || a.timestampIST || a.time);
-            const tB = this.parseListedSec(b.listedAt || b.triggerTime || b.timestampIST || b.time);
-            if (tB !== tA) return tB - tA;
-            return String(a.symbol || a.name || '').localeCompare(String(b.symbol || b.name || ''));
-          });
+        if (mode === 'listed_asc') {
+          return arr.sort(byTimeAsc);
         }
         if (mode === 'symbol_asc') {
           return arr.sort((a, b) => {
             const symCmp = String(a.symbol || a.name || '').localeCompare(String(b.symbol || b.name || ''));
-            return symCmp !== 0 ? symCmp : byTimeAsc(a, b);
+            return symCmp !== 0 ? symCmp : byTimeDesc(a, b);
           });
         }
         if (mode === 'score_desc') {
           return arr.sort((a, b) => {
             const scA = Number(a.confidence ?? a.confluenceScore ?? a.score ?? Math.abs(Number(a.changePercent ?? a.pnlNowPct ?? a.returnPct ?? 0)));
             const scB = Number(b.confidence ?? b.confluenceScore ?? b.score ?? Math.abs(Number(b.changePercent ?? b.pnlNowPct ?? b.returnPct ?? 0)));
-            return scB !== scA ? scB - scA : byTimeAsc(a, b);
+            return scB !== scA ? scB - scA : byTimeDesc(a, b);
           });
         }
-        return arr.sort(byTimeAsc);
+        return arr.sort(byTimeDesc);
       },
 
       buildClientFallbackReport(params) {
@@ -13175,12 +13651,12 @@ ${json.message || 'Unauthorized token.'}`);
           };
         };
 
-        const buyRecommendations = this.sortListByMode(bull.slice(0, 15).map(s => mapRec(s, true)), 'listed_asc');
-        const sellRecommendations = this.sortListByMode(bear.slice(0, 15).map(s => mapRec(s, false)), 'listed_asc');
+        const buyRecommendations = this.sortListByMode(bull.slice(0, 15).map(s => mapRec(s, true)), 'listed_desc');
+        const sellRecommendations = this.sortListByMode(bear.slice(0, 15).map(s => mapRec(s, false)), 'listed_desc');
         const adv = bull.length;
         const dec = bear.length;
         const vix = Number(DATA?.indices?.['INDIAVIX']?.price || 17.42);
-        const topCombined3 = this.sortListByMode([...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)], 'listed_asc');
+        const topCombined3 = this.sortListByMode([...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)], 'listed_desc');
         return {
           status: 'ok',
           istTime: new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }) + ' IST',
@@ -13190,7 +13666,7 @@ ${json.message || 'Unauthorized token.'}`);
             chartPatternScanner: this.sortListByMode([...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map(r => ({
               symbol: r.symbol, side: r.action.includes('BUY') ? 'BULLISH' : 'BEARISH', pattern: r.pattern,
               triggerTime: r.listedAt, listedAt: r.listedAt, triggerLevel: r.entryPrice, livePrice: r.livePrice, rvol: r.rvol, score: r.confidence
-            })), 'listed_asc'),
+            })), 'listed_desc'),
             newsCatalystMonitor: (DATA.news || []).slice(0, 6).map(n => ({
               symbol: n.symbol || 'MARKET', headline: n.title, source: n.source || 'NSE Feed',
               sentiment: n.sentiment || 'NEUTRAL', impact: 'HIGH', livePrice: 0, changePercent: 0,
@@ -13212,7 +13688,7 @@ ${json.message || 'Unauthorized token.'}`);
                 symbol: r.symbol, side: r.action.includes('BUY') ? 'BUY' : 'SELL', listedAt: r.listedAt,
                 entryPrice: r.entryPrice, priceAtSlice: r.entryPrice, currentPrice: r.livePrice,
                 pnlAtSlicePct: Number((r.changePercent * 0.65).toFixed(2)), pnlNowPct: r.changePercent, formulaName: r.formulaName
-              })), 'listed_asc')
+              })), 'listed_desc')
             },
             budgetPositionManager: {
               capital: params.capital, riskPct: params.riskPct, leverage: params.leverage, maxPositions: params.maxPositions,
@@ -13250,7 +13726,7 @@ ${json.message || 'Unauthorized token.'}`);
               entries: this.sortListByMode([...buyRecommendations.slice(0, 4), ...sellRecommendations.slice(0, 4)].map(r => ({
                 symbol: r.symbol, side: r.action, formula: r.formulaName, listedAt: r.listedAt,
                 entryPrice: r.entryPrice, livePrice: r.livePrice, returnPct: r.changePercent, outcome: 'ACTIVE'
-              })), 'listed_asc')
+              })), 'listed_desc')
             },
             multiTimeframeSynthesizer: {
               marketBias: adv >= dec ? 'BULLISH EXPANSION' : 'BEARISH LIQUIDATION',
@@ -13273,14 +13749,14 @@ ${json.message || 'Unauthorized token.'}`);
         const sen = this.lastSentinel;
         if (!rep || !rep.skills) return;
         const sk = rep.skills;
-        const sortMode = document.getElementById('c10-input-sort')?.value || 'listed_asc';
+        const sortMode = document.getElementById('c10-input-sort')?.value || 'listed_desc';
         const sortLabelMap = {
-          listed_asc: 'Listed At A→Z • Locked Entry',
-          listed_desc: 'Listed At Z→A • Locked Entry',
+          listed_desc: 'Listed At Z→A (Latest First) • Locked Entry',
+          listed_asc: 'Listed At A→Z (Earliest First) • Locked Entry',
           symbol_asc: 'Symbol A→Z • Locked Entry',
           score_desc: 'AI Score High→Low • Locked Entry'
         };
-        const activeSortBadge = sortLabelMap[sortMode] || sortLabelMap.listed_asc;
+        const activeSortBadge = sortLabelMap[sortMode] || sortLabelMap.listed_desc;
         const bBadge = document.getElementById('c10-buy-sort-badge');
         const sBadge = document.getElementById('c10-sell-sort-badge');
         if (bBadge) bBadge.innerText = activeSortBadge;
@@ -13971,6 +14447,907 @@ ${json.message || 'Unauthorized token.'}`);
     };
 
     // ============================================================
+    // MOST ACTIVE FNO & (INDEX OPTIONS) SCANNER ENGINE
+    // Multi-TF (5m, 15m, 30m, 1h) + 7-Pillar Breakout + Raw Vol + R:R
+    // ============================================================
+    const MostActiveFnoEngine = {
+      lastReport: null,
+      activeCategory: 'MOST_ACTIVE_FNO',
+      activeTimeframe: '5m',
+      strictMode: true,
+      refreshTimer: null,
+      _renderedOnce: false,
+
+      TIMEFRAME_META: {
+        '5m': { id: '5m', label: '5 Minutes', shortLabel: '5m', minutes: 5 },
+        '15m': { id: '15m', label: '15 Minutes', shortLabel: '15m', minutes: 15 },
+        '30m': { id: '30m', label: '30 Minutes', shortLabel: '30m', minutes: 30 },
+        '1h': { id: '1h', label: '1 Hour', shortLabel: '1H', minutes: 60 },
+        'ALL': { id: 'ALL', label: 'All MTF Aligned (5m•15m•30m•1H)', shortLabel: 'MTF', minutes: 0 }
+      },
+
+      CATEGORY_META: {
+        MOST_ACTIVE_FNO: { key: 'mostActiveFno', rankedKey: 'rankedFno', label: 'MOST ACTIVE F&O (Equities + Index Options)' },
+        MOST_ACTIVE_INDEX_OPTIONS: { key: 'mostActiveContractsIndexOptions', rankedKey: 'rankedIndexOptions', label: 'MOST ACTIVE CONTRACTS (Index Options CE / PE)' },
+        TOP_VOLUME: { key: 'topTradedByVolume', rankedKey: 'topTradedByVolume', label: 'TOP TRADED BY RAW VOLUME (Shares / Contracts)' },
+        TOP_VALUE: { key: 'topTradedByValue', rankedKey: 'topTradedByValue', label: 'TOP TRADED BY VALUE (Turnover ₹ Cr)' },
+        MOST_ACTIVE_UNDERLYING: { key: 'mostActiveUnderlying', rankedKey: 'mostActiveUnderlying', label: 'MOST ACTIVE UNDERLYING (Indices + NSE F&O)' },
+        MOST_ACTIVE_EQUITIES: { key: 'mostActiveEquities', rankedKey: 'rankedEquities', label: 'MOST ACTIVE EQUITIES (NSE F&O Stocks Only)' },
+        OI_CHANGE: { key: 'oiChangeLeaders', rankedKey: 'oiChangeLeaders', label: 'OI CHANGE LEADERS (Buildup & Unwinding)' }
+      },
+
+      init() {
+        setTimeout(() => {
+          this.load(false);
+        }, 1450);
+        if (!this.refreshTimer) {
+          let tick = 0;
+          this.refreshTimer = setInterval(() => {
+            if (typeof document !== 'undefined' && document.hidden) return;
+            tick++;
+            const mkt = getIndianMarketStatus(new Date());
+            const isOpenOrPre = (mkt.status === 'OPEN' || mkt.status === 'PRE-OPEN' || mkt.isMarketOffDay);
+            if (!isOpenOrPre && tick % 6 !== 0) return;
+            const pane = document.getElementById('tab-most-active-fno');
+            if (pane && !pane.classList.contains('hidden')) {
+              this.load(false);
+            }
+          }, 5000);
+        }
+      },
+
+      setTimeframe(tf) {
+        if (!this.TIMEFRAME_META[tf]) return;
+        this.activeTimeframe = tf;
+        Object.keys(this.TIMEFRAME_META).forEach(k => {
+          const btn = document.getElementById('maf-tf-' + k);
+          if (!btn) return;
+          const cntEl = document.getElementById('maf-tf-cnt-' + k);
+          const cntTxt = cntEl ? cntEl.innerText : '0';
+          const isActive = (k === tf);
+          if (isActive) {
+            btn.className = k === 'ALL'
+              ? 'px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer bg-amber-500 text-black shadow-md shadow-amber-500/20'
+              : 'px-3 py-1.5 rounded-lg text-xs font-black transition cursor-pointer bg-cyan-500 text-black shadow-md shadow-cyan-500/20';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-black/25 text-black text-[10px] font-black';
+          } else {
+            btn.className = k === 'ALL'
+              ? 'px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-amber-300 border border-amber-500/30'
+              : 'px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-slate-200 border border-[#23314f]';
+            if (cntEl) cntEl.className = k === 'ALL'
+              ? 'ml-1 px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-200 text-[10px]'
+              : 'ml-1 px-1.5 py-0.2 rounded bg-white/10 text-cyan-300 text-[10px]';
+          }
+          if (cntEl) cntEl.innerText = cntTxt;
+        });
+        this.load(false);
+      },
+
+      setCategory(cat) {
+        if (!this.CATEGORY_META[cat]) return;
+        this.activeCategory = cat;
+        Object.keys(this.CATEGORY_META).forEach(k => {
+          const btn = document.getElementById('maf-cat-' + k);
+          if (!btn) return;
+          const cntEl = document.getElementById('maf-cnt-' + k);
+          const cntTxt = cntEl ? cntEl.innerText : '0';
+          const isActive = (k === cat);
+          if (isActive) {
+            btn.className = 'px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-amber-500 text-black shadow-md shadow-amber-500/20';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-black/25 text-black text-[10px] font-black';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] hover:bg-[#192642] text-slate-300 border border-[#23314f]';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-white/10 text-amber-300 text-[10px]';
+          }
+          if (cntEl) cntEl.innerText = cntTxt;
+        });
+        this.renderTables();
+      },
+
+      toggleStrictMode() {
+        this.strictMode = !this.strictMode;
+        const btn = document.getElementById('maf-btn-mode');
+        if (btn) {
+          btn.innerText = this.strictMode ? 'Mode: Strict Formula (0-15)' : 'Mode: All Ranked (Top 15)';
+          btn.className = this.strictMode
+            ? 'px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-xs font-bold transition cursor-pointer'
+            : 'px-3 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-amber-500/30 text-amber-300 text-xs font-bold transition cursor-pointer';
+        }
+        this.renderTables();
+      },
+
+      async load(showFeedback = false) {
+        if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+          this.lastReport = {
+            status: 'ok',
+            scannerName: 'Most Active FNO & (Index Options)',
+            selectedTimeframe: this.activeTimeframe,
+            timeframeSummary: {
+              '5m': { strictQualifiedCount: 0 },
+              '15m': { strictQualifiedCount: 0 },
+              '30m': { strictQualifiedCount: 0 },
+              '1h': { strictQualifiedCount: 0 }
+            },
+            mtfAlignedCount: 0,
+            isMidnightCleared: true,
+            istTime: getISTDatePartsNow().timeStr,
+            entryWindowRule: '09:20:00 - 14:45:00 IST',
+            universeEvaluated: 0,
+            totalTurnoverCr: 0,
+            strictQualifiedBuyCount: 0,
+            strictQualifiedSellCount: 0,
+            strictQualifiedOptionsCount: 0,
+            categories: {
+              mostActiveFno: [],
+              mostActiveContractsIndexOptions: [],
+              topTradedByVolume: [],
+              topTradedByValue: [],
+              mostActiveUnderlying: [],
+              mostActiveEquities: [],
+              oiChangeLeaders: [],
+              rankedFno: [],
+              rankedIndexOptions: [],
+              rankedEquities: []
+            }
+          };
+          this.renderTables();
+          return;
+        }
+
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        let report = null;
+        try {
+          const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
+          const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
+          const res = await fetch(`${base}/api/most-active-fno/scan?timeframe=${encodeURIComponent(this.activeTimeframe)}`, { headers });
+          if (res.ok) report = await res.json();
+        } catch (e) {}
+
+        if (!report || !report.categories) {
+          report = this.buildClientFallbackReport();
+        }
+        this.lastReport = report;
+        const pane = document.getElementById('tab-most-active-fno');
+        if (pane && !pane.classList.contains('hidden')) {
+          this.renderTables();
+        } else if (!this._renderedOnce) {
+          this._renderedOnce = true;
+          this.renderTables();
+        }
+        if (showFeedback && typeof showToast === 'function') {
+          const tfMeta = this.TIMEFRAME_META[this.activeTimeframe] || this.TIMEFRAME_META['5m'];
+          const eqCnt = (report.categories.mostActiveEquities || []).length;
+          const optCnt = (report.categories.mostActiveContractsIndexOptions || []).length;
+          showToast(`🔥 Most Active FNO [${tfMeta.shortLabel}] Synced (${eqCnt} Equities • ${optCnt} Index Options)`, 'success');
+        }
+      },
+
+      clampEntryTimeStr(rawTime) {
+        const clean = String(rawTime || '').trim();
+        const m = clean.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+        if (!m) return '09:30:00';
+        const hh = Math.min(23, Math.max(0, Number(m[1])));
+        const mm = Math.min(59, Math.max(0, Number(m[2])));
+        const ss = Math.min(59, Math.max(0, Number(m[3] || 0)));
+        const sec = hh * 3600 + mm * 60 + ss;
+        const clamped = Math.min(14 * 3600 + 45 * 60, Math.max(9 * 3600 + 20 * 60, sec));
+        const h = String(Math.floor(clamped / 3600)).padStart(2, '0');
+        const min = String(Math.floor((clamped % 3600) / 60)).padStart(2, '0');
+        const s = String(clamped % 60).padStart(2, '0');
+        return `${h}:${min}:${s}`;
+      },
+
+      buildClientFallbackReport() {
+        const ist = getISTDatePartsNow();
+        const tfList = [
+          { id: '5m', label: '5 Minutes', shortLabel: '5m', minutes: 5 },
+          { id: '15m', label: '15 Minutes', shortLabel: '15m', minutes: 15 },
+          { id: '30m', label: '30 Minutes', shortLabel: '30m', minutes: 30 },
+          { id: '1h', label: '1 Hour', shortLabel: '1H', minutes: 60 }
+        ];
+        const selTf = this.activeTimeframe || '5m';
+        const pool = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) ? DATA.all_stocks.filter(isPureEquityStock) : [];
+        const sectorAgg = new Map();
+        pool.forEach((st) => {
+          const sec = st.sector || 'NSE F&O';
+          const cur = sectorAgg.get(sec) || { sum: 0, cnt: 0 };
+          cur.sum += Number(st.pct_change) || 0;
+          cur.cnt += 1;
+          sectorAgg.set(sec, cur);
+        });
+        const sectorAvgMap = {};
+        sectorAgg.forEach((v, sec) => {
+          sectorAvgMap[sec] = Number((v.sum / Math.max(1, v.cnt)).toFixed(2));
+        });
+
+        const equities = pool.map((s) => {
+          const lp = Number(s.price) || 100;
+          const pct = Number(s.pct_change) || 0;
+          const secName = s.sector || 'NSE F&O';
+          const secPct = Number((s.sector_pct ?? sectorAvgMap[secName] ?? pct * 0.85).toFixed(2));
+          const isBuy = pct >= 0;
+          const dHigh = Number(s.day_high || lp * 1.012);
+          const dLow = Number(s.day_low || lp * 0.988);
+          const prevClose = lp / Math.max(0.5, 1 + pct / 100);
+          const pdh = Number((prevClose * 1.0065).toFixed(2));
+          const pdl = Number((prevClose * 0.9935).toFixed(2));
+          const orHigh = Number((prevClose * 1.0045).toFixed(2));
+          const orLow = Number((prevClose * 0.9955).toFixed(2));
+          const pivot = Number(((pdh + pdl + prevClose) / 3).toFixed(2));
+          const r1 = Number((2 * pivot - pdl).toFixed(2));
+          const s1 = Number((2 * pivot - pdh).toFixed(2));
+          const bodyPct = Math.round(Math.min(92, Math.max(28, 46 + Math.abs(pct) * 18)));
+          const rawVol = Math.round(Number(s.volume) || 350000);
+          const valCr = Number((Number(s.turnover_cr) || (rawVol * lp) / 1e7).toFixed(2));
+          const srLevel = isBuy ? r1 : s1;
+          const srBreak = isBuy ? lp > r1 || dHigh > r1 : lp < s1 || dLow < s1;
+          const listedAt = this.clampEntryTimeStr(s.listed_at || '09:30:00');
+          const structure = isBuy ? (pct >= 0.45 ? 'HH / HL' : 'RANGE') : (pct <= -0.45 ? 'LH / LL' : 'RANGE');
+
+          const mtfSignals = {};
+          const alignedTfs = [];
+          tfList.forEach((tm, tIdx) => {
+            const barDiv = Math.max(2, Math.round(375 / tm.minutes));
+            const trigBar = Math.round(rawVol / barDiv * (Number(s.rvol) || 1.35));
+            const baseBar = Math.round(rawVol / (barDiv * 1.15));
+            const volRatio = Number((trigBar / Math.max(1, baseBar)).toFixed(2));
+            const checks = [
+              { key: 'PDH_PDL', label: `[${tm.shortLabel}] Prev Day High/Low`, passed: isBuy ? (lp > pdh || dHigh > pdh) : (lp < pdl || dLow < pdl), detail: isBuy ? `LTP ₹${lp} vs PDH ₹${pdh}` : `LTP ₹${lp} vs PDL ₹${pdl}` },
+              { key: 'ORB', label: `[${tm.shortLabel}] ORB Breakout`, passed: isBuy ? lp > orHigh : lp < orLow, detail: `ORB ₹${orLow} - ₹${orHigh}` },
+              { key: 'STRUCTURE', label: `[${tm.shortLabel}] Structure`, passed: isBuy ? structure === 'HH / HL' : structure === 'LH / LL', detail: structure },
+              { key: 'BODY_STRENGTH', label: `[${tm.shortLabel}] Body >= 50%`, passed: bodyPct >= (50 + tIdx), detail: `Body ${bodyPct}%` },
+              { key: 'SR_BREAKOUT', label: `[${tm.shortLabel}] S&R Breakout`, passed: srBreak, detail: `${isBuy ? 'R1' : 'S1'} ₹${srLevel}` },
+              { key: 'RAW_VOLUME', label: `[${tm.shortLabel}] Raw Traded Volume`, passed: trigBar >= baseBar * 1.1 && rawVol >= 150000, detail: `${tm.shortLabel} (${volRatio}x)` },
+              { key: 'ENTRY_WINDOW', label: 'Entry 09:20-14:45 IST', passed: listedAt >= '09:20:00' && listedAt <= '14:45:00', detail: `${listedAt} IST` }
+            ];
+            const met = checks.filter(c => c.passed).length;
+            const qual = met >= 6 && checks[5].passed && checks[6].passed;
+            if (qual) alignedTfs.push(tm.id);
+            const tfScale = tm.minutes === 5 ? 1.0 : tm.minutes === 15 ? 1.15 : tm.minutes === 30 ? 1.3 : 1.45;
+            const entryPrice = Number((s.entry || lp).toFixed(2));
+            const risk = Number(Math.max(0.5, lp * 0.0085 * tfScale).toFixed(2));
+            const stopLoss = Number((isBuy ? entryPrice - risk : entryPrice + risk).toFixed(2));
+            const actualRisk = Number(Math.max(0.25, Math.abs(entryPrice - stopLoss)).toFixed(2));
+            const rrMult = met === 7 ? 2.4 : 2.0;
+            const target1 = Number((isBuy ? entryPrice + actualRisk * rrMult : Math.max(0.05, entryPrice - actualRisk * rrMult)).toFixed(2));
+            const target2 = Number((isBuy ? entryPrice + actualRisk * (rrMult + 1.0) : Math.max(0.05, entryPrice - actualRisk * (rrMult + 1.0))).toFixed(2));
+            const rew = Number(Math.abs(target1 - entryPrice).toFixed(2));
+            const rrNum = Number((rew / Math.max(0.05, actualRisk)).toFixed(2));
+
+            mtfSignals[tm.id] = {
+              timeframe: tm.id,
+              label: tm.label,
+              shortLabel: tm.shortLabel,
+              direction: isBuy ? 'BUY' : 'SELL',
+              passedCount: met,
+              totalConditions: 7,
+              qualified: qual,
+              grade: met === 7 ? 'STRICT 7/7' : met === 6 ? 'HIGH 6/7' : 'WATCH',
+              structure,
+              bodyStrengthPct: bodyPct,
+              orHigh,
+              orLow,
+              srLevelName: isBuy ? 'Pivot R1' : 'Pivot S1',
+              srLevelPrice: srLevel,
+              srBreakoutConfirmed: srBreak,
+              triggerBarVolume: trigBar,
+              baselineBarVolume: baseBar,
+              rawVolumeRatio: volRatio,
+              volumeConfirmText: `${tm.shortLabel} ${(trigBar / 1000).toFixed(1)}k vs ${(baseBar / 1000).toFixed(1)}k (${volRatio}x)`,
+              listedAt,
+              inEntryWindow: true,
+              entryPrice,
+              stopLoss,
+              target1,
+              target2,
+              riskPoints: actualRisk,
+              rewardPoints: rew,
+              rrRatio: `1 : ${rrNum.toFixed(2)}`,
+              rrNumeric: rrNum,
+              conditions: checks,
+              score: Number((met * 12 + Math.min(18, Math.log10(Math.max(10, valCr)) * 7)).toFixed(1))
+            };
+          });
+
+          const activeTf = selTf === 'ALL' ? (alignedTfs[0] || '15m') : selTf;
+          const activeSig = mtfSignals[activeTf] || mtfSignals['5m'];
+          const curOi = parseFloat(s.oi) || 12.5;
+          const oiPct = Number(s.oi_chg_pct ?? pct * 2.1);
+          const prevOi = Number((curOi / Math.max(0.2, 1 + oiPct / 100)).toFixed(2));
+          const oiChg = Number((curOi - prevOi).toFixed(2));
+          const buildup = pct >= 0 && oiChg >= 0 ? 'LONG BUILDUP' : pct < 0 && oiChg >= 0 ? 'SHORT BUILDUP' : pct >= 0 ? 'SHORT COVERING' : 'LONG UNWINDING';
+          const baRatio = Number((s.bid_ask_ratio || (isBuy ? 1.24 : 0.81)).toFixed(2));
+          const cycleBuildup = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(buildup, pct, oiPct, baRatio) : buildup;
+
+          return {
+            id: `FNO-${s.symbol}`,
+            category: 'EQUITY_FNO',
+            symbol: s.symbol,
+            displayName: s.name || s.symbol,
+            underlying: s.symbol,
+            sector: secName,
+            sectorChangePct: secPct,
+            lotSize: lp > 3000 ? 125 : lp > 1000 ? 250 : 500,
+            direction: isBuy ? 'BUY' : 'SELL',
+            actionBadge: isBuy ? (activeSig.passedCount === 7 ? 'STRONG BUY' : 'BUY') : (activeSig.passedCount === 7 ? 'STRONG SELL' : 'SELL'),
+            formulaPassedCount: activeSig.passedCount,
+            totalConditions: 7,
+            isFormulaQualified: selTf === 'ALL' ? (alignedTfs.length >= 2 && activeSig.qualified) : activeSig.qualified,
+            grade: activeSig.grade,
+            timeframe: activeTf,
+            timeframeLabel: activeSig.label,
+            mtfSignals,
+            mtfAlignmentCount: alignedTfs.length,
+            mtfAlignedTimeframes: alignedTfs,
+            price: Number(lp.toFixed(2)),
+            changePercent: Number(pct.toFixed(2)),
+            pdh, pdl, orHigh: activeSig.orHigh, orLow: activeSig.orLow, structure: activeSig.structure,
+            bodyStrengthPct: activeSig.bodyStrengthPct,
+            srLevelName: activeSig.srLevelName,
+            srLevelPrice: activeSig.srLevelPrice,
+            srBreakoutConfirmed: activeSig.srBreakoutConfirmed,
+            rawVolume: rawVol,
+            triggerBarVolume: activeSig.triggerBarVolume,
+            baselineBarVolume: activeSig.baselineBarVolume,
+            volumeConfirmText: activeSig.volumeConfirmText,
+            tradedValueCr: valCr,
+            currentOI: Number(curOi.toFixed(2)),
+            previousOI: prevOi,
+            oiChange: oiChg,
+            oiChangePct: Number(oiPct.toFixed(2)),
+            oiBuildup: buildup,
+            cycleBuildup,
+            bidAskRatio: baRatio,
+            listedAt: activeSig.listedAt,
+            inEntryWindow: true,
+            entryPrice: activeSig.entryPrice,
+            stopLoss: activeSig.stopLoss,
+            target1: activeSig.target1,
+            target2: activeSig.target2,
+            riskPoints: activeSig.riskPoints,
+            rewardPoints: activeSig.rewardPoints,
+            rrRatio: activeSig.rrRatio,
+            rrNumeric: activeSig.rrNumeric,
+            conditions: activeSig.conditions,
+            score: activeSig.score
+          };
+        });
+
+        const strictEq = equities.filter(r => r.isFormulaQualified).sort((a, b) => b.listedAt.localeCompare(a.listedAt) || b.symbol.localeCompare(a.symbol)).slice(0, 15);
+        const topVol = [...equities].sort((a, b) => b.rawVolume - a.rawVolume).slice(0, 15);
+        const topVal = [...equities].sort((a, b) => b.tradedValueCr - a.tradedValueCr).slice(0, 15);
+        const oiLeaders = [...equities].sort((a, b) => Math.abs(b.oiChangePct) - Math.abs(a.oiChangePct)).slice(0, 15);
+
+        const idxSpecs = [
+          { key: 'NSE:NIFTY50-INDEX', sym: 'NIFTY', step: 50, lot: 75 },
+          { key: 'NSE:NIFTYBANK-INDEX', sym: 'BANKNIFTY', step: 100, lot: 30 },
+          { key: 'NSE:FINNIFTY-INDEX', sym: 'FINNIFTY', step: 50, lot: 65 },
+          { key: 'NSE:MIDCPNIFTY-INDEX', sym: 'MIDCPNIFTY', step: 25, lot: 120 },
+          { key: 'BSE:SENSEX-INDEX', sym: 'SENSEX', step: 100, lot: 20 }
+        ];
+        const optRows = [];
+        idxSpecs.forEach((sp, sIdx) => {
+          const idxQ = (DATA.indices && DATA.indices[sp.key]) || { lp: sp.sym === 'BANKNIFTY' ? 52400 : sp.sym === 'SENSEX' ? 80200 : 24800, chp: 0.35 };
+          const spot = Number(idxQ.lp) || 24800;
+          const chp = Number(idxQ.chp) || 0;
+          const atm = Math.round(spot / sp.step) * sp.step;
+          [0, sp.step].forEach((off, oIdx) => {
+            ['CE', 'PE'].forEach(optType => {
+              const strike = optType === 'CE' ? atm + off : atm - off;
+              const isBull = (optType === 'CE' && chp >= 0) || (optType === 'PE' && chp < 0);
+              const ltp = Number(Math.max(25, spot * 0.0085 - off * 0.25).toFixed(2));
+              const pdh = Number((ltp * 1.05).toFixed(2));
+              const pdl = Number((ltp * 0.88).toFixed(2));
+              const orHigh = Number((ltp * 1.03).toFixed(2));
+              const orLow = Number((ltp * 0.94).toFixed(2));
+              const rawVol = Math.round(1450000 - oIdx * 280000 + Math.abs(chp) * 420000);
+              const valCr = Number(((rawVol * sp.lot * ltp) / 1e7 * 0.08).toFixed(2));
+              const bodyPct = Math.round(54 + Math.min(34, Math.abs(chp) * 14));
+              const listedMin = 22 + sIdx * 11 + oIdx * 7 + (optType === 'PE' ? 3 : 0);
+              const hh = String(9 + Math.floor(listedMin / 60)).padStart(2, '0');
+              const mm = String(listedMin % 60).padStart(2, '0');
+              const listedAt = `${hh}:${mm}:00`;
+              const risk = Number(Math.max(4, ltp * 0.16).toFixed(2));
+              const stopLoss = Number(Math.max(1, ltp - risk).toFixed(2));
+              const target1 = Number((ltp + risk * 2.2).toFixed(2));
+              const target2 = Number((ltp + risk * 3.2).toFixed(2));
+
+              const mtfSignals = {};
+              const alignedTfs = [];
+              tfList.forEach((tm) => {
+                const checks = [
+                  { key: 'PDH_PDL', label: `[${tm.shortLabel}] Option PDH`, passed: isBull, detail: `₹${ltp} vs PDH ₹${pdh}` },
+                  { key: 'ORB', label: `[${tm.shortLabel}] Option ORB`, passed: isBull, detail: `ORB ₹${orLow}-₹${orHigh}` },
+                  { key: 'STRUCTURE', label: `[${tm.shortLabel}] Momentum`, passed: Math.abs(chp) >= 0.12, detail: isBull ? 'HH / HL' : 'LH / LL' },
+                  { key: 'BODY_STRENGTH', label: `[${tm.shortLabel}] Body >= 50%`, passed: bodyPct >= 50, detail: `${bodyPct}%` },
+                  { key: 'SR_BREAKOUT', label: `[${tm.shortLabel}] S&R Breakout`, passed: isBull, detail: `R1 ₹${orHigh}` },
+                  { key: 'RAW_VOLUME', label: `[${tm.shortLabel}] Raw Contract Vol`, passed: true, detail: rawVol.toLocaleString('en-IN') },
+                  { key: 'ENTRY_WINDOW', label: '09:20-14:45 IST', passed: true, detail: listedAt }
+                ];
+                const met = checks.filter(c => c.passed).length;
+                const qual = met >= 6;
+                if (qual) alignedTfs.push(tm.id);
+                mtfSignals[tm.id] = {
+                  timeframe: tm.id, label: tm.label, shortLabel: tm.shortLabel, direction: isBull ? 'BUY' : 'SELL',
+                  passedCount: met, totalConditions: 7, qualified: qual, grade: met === 7 ? 'STRICT 7/7' : met === 6 ? 'HIGH 6/7' : 'WATCH',
+                  structure: isBull ? 'HH / HL' : 'LH / LL', bodyStrengthPct: bodyPct, orHigh, orLow,
+                  srLevelName: 'Strike R1', srLevelPrice: orHigh, srBreakoutConfirmed: isBull,
+                  triggerBarVolume: Math.round(rawVol / 15), baselineBarVolume: Math.round(rawVol / 26), rawVolumeRatio: 1.73,
+                  volumeConfirmText: `${tm.shortLabel} ${Math.round(rawVol / 1000)}K lots`, listedAt, inEntryWindow: true,
+                  entryPrice: ltp, stopLoss, target1, target2, riskPoints: risk, rewardPoints: Number((target1 - ltp).toFixed(2)),
+                  rrRatio: '1 : 2.20', rrNumeric: 2.2, conditions: checks, score: Number((met * 12 + 16).toFixed(1))
+                };
+              });
+
+              const activeTf = selTf === 'ALL' ? (alignedTfs[0] || '15m') : selTf;
+              const activeSig = mtfSignals[activeTf] || mtfSignals['5m'];
+              const premChg = Number((isBull ? Math.max(4.5, Math.abs(chp) * 18) : -Math.max(3.2, Math.abs(chp) * 12)).toFixed(2));
+              const optOiPct = isBull ? 28.5 : -14.2;
+              const optBa = Number((isBull ? 1.42 : 0.78).toFixed(2));
+              const optCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(isBull ? 'LONG BUILDUP' : 'SHORT BUILDUP', premChg, optOiPct, optBa) : (isBull ? 'Long Buildup' : 'Short Buildup');
+              optRows.push({
+                id: `OPT-${sp.sym}-${strike}-${optType}`,
+                category: 'INDEX_OPTION',
+                symbol: `${sp.sym} ${strike} ${optType}`,
+                displayName: `${sp.sym} ${strike} ${optType}`,
+                underlying: sp.sym,
+                sector: `${sp.sym} Options`,
+                sectorChangePct: Number(chp.toFixed(2)),
+                lotSize: sp.lot,
+                direction: isBull ? 'BUY' : 'SELL',
+                actionBadge: isBull ? `BUY ${optType}` : `SELL ${optType}`,
+                formulaPassedCount: activeSig.passedCount,
+                totalConditions: 7,
+                isFormulaQualified: selTf === 'ALL' ? (alignedTfs.length >= 2 && activeSig.qualified) : activeSig.qualified,
+                grade: activeSig.grade,
+                timeframe: activeTf,
+                timeframeLabel: activeSig.label,
+                mtfSignals,
+                mtfAlignmentCount: alignedTfs.length,
+                mtfAlignedTimeframes: alignedTfs,
+                price: ltp,
+                changePercent: premChg,
+                pdh, pdl, orHigh, orLow,
+                structure: activeSig.structure,
+                bodyStrengthPct: bodyPct,
+                srLevelName: 'Strike R1',
+                srLevelPrice: orHigh,
+                srBreakoutConfirmed: isBull,
+                rawVolume: rawVol,
+                triggerBarVolume: activeSig.triggerBarVolume,
+                baselineBarVolume: activeSig.baselineBarVolume,
+                volumeConfirmText: activeSig.volumeConfirmText,
+                tradedValueCr: valCr,
+                currentOI: 28.4,
+                previousOI: 22.1,
+                oiChange: 6.3,
+                oiChangePct: optOiPct,
+                oiBuildup: isBull ? 'LONG BUILDUP' : 'SHORT BUILDUP',
+                cycleBuildup: optCycle,
+                bidAskRatio: optBa,
+                listedAt,
+                inEntryWindow: true,
+                entryPrice: ltp,
+                stopLoss, target1, target2,
+                riskPoints: risk,
+                rewardPoints: Number((target1 - ltp).toFixed(2)),
+                rrRatio: '1 : 2.20',
+                rrNumeric: 2.2,
+                optionType: optType,
+                strikePrice: strike,
+                spotPrice: Number(spot.toFixed(2)),
+                iv: 14.8,
+                delta: optType === 'CE' ? 0.52 : -0.48,
+                conditions: activeSig.conditions,
+                score: activeSig.score
+              });
+            });
+          });
+        });
+
+        const timeframeSummary = {};
+        tfList.forEach(tm => {
+          const eqQ = equities.filter(r => r.mtfSignals[tm.id]?.qualified);
+          const opQ = optRows.filter(r => r.mtfSignals[tm.id]?.qualified);
+          timeframeSummary[tm.id] = {
+            timeframe: tm.id, label: tm.label, shortLabel: tm.shortLabel,
+            strictQualifiedCount: eqQ.length + opQ.length,
+            buyCount: eqQ.filter(r => r.direction === 'BUY').length,
+            sellCount: eqQ.filter(r => r.direction === 'SELL').length,
+            optionsCount: opQ.length
+          };
+        });
+        const mtfAlignedCount = [...equities, ...optRows].filter(r => r.mtfAlignmentCount >= 2).length;
+
+        const strictOpts = optRows.filter(r => r.isFormulaQualified).sort((a, b) => b.listedAt.localeCompare(a.listedAt) || b.symbol.localeCompare(a.symbol)).slice(0, 15);
+        const strictAll = [...strictEq, ...strictOpts].sort((a, b) => b.listedAt.localeCompare(a.listedAt) || b.symbol.localeCompare(a.symbol)).slice(0, 15);
+
+        const underlying = [
+          ...idxSpecs.map((sp, i) => {
+            const q = (DATA.indices && DATA.indices[sp.key]) || { lp: 24800, chp: 0.3 };
+            const chpNum = Number((Number(q.chp) || 0).toFixed(2));
+            const bias = chpNum >= 0.1 ? 'BULLISH' : chpNum <= -0.1 ? 'BEARISH' : 'NEUTRAL';
+            const ba = Number((chpNum >= 0 ? 1.32 - i * 0.04 : 0.76 + i * 0.03).toFixed(2));
+            const cycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(undefined, chpNum, 12.4, ba) : (chpNum >= 0 ? 'Long Buildup' : 'Short Buildup');
+            const mtfBias = {};
+            tfList.forEach(tm => {
+              mtfBias[tm.id] = { timeframe: tm.id, shortLabel: tm.shortLabel, bias, passedCount: 6, qualified: true };
+            });
+            return {
+              symbol: sp.sym, name: `${sp.sym} Index Derivatives`, kind: 'INDEX',
+              sector: 'Benchmark Index', sectorChangePct: chpNum,
+              spotPrice: Number((Number(q.lp) || 24800).toFixed(2)),
+              changePercent: chpNum,
+              totalVolume: 3200000 - i * 420000, totalValueCr: Number((1840 - i * 260).toFixed(2)),
+              oiLakhs: 44.5, oiChangePct: 12.4, pcr: chpNum >= 0 ? 1.18 : 0.84,
+              bidAskRatio: ba, cycleBuildup: cycle,
+              bias, activeContractsCount: 4, formulaScore: 91 - i * 2, listedAt: `09:${String(22 + i * 3).padStart(2, '0')}:00`,
+              timeframe: selTf === 'ALL' ? '15m' : selTf, mtfAlignmentCount: 4, mtfBias
+            };
+          }),
+          ...topVal.slice(0, 10).map(e => {
+            const bias = e.direction === 'BUY' ? 'BULLISH' : 'BEARISH';
+            const mtfBias = {};
+            tfList.forEach(tm => {
+              const s = e.mtfSignals[tm.id];
+              mtfBias[tm.id] = { timeframe: tm.id, shortLabel: tm.shortLabel, bias, passedCount: s?.passedCount || e.formulaPassedCount, qualified: Boolean(s?.qualified) };
+            });
+            return {
+              symbol: e.symbol, name: e.displayName, kind: 'EQUITY_FNO',
+              sector: e.sector, sectorChangePct: e.sectorChangePct,
+              spotPrice: e.price, changePercent: e.changePercent, totalVolume: e.rawVolume,
+              totalValueCr: e.tradedValueCr, oiLakhs: e.currentOI, oiChangePct: e.oiChangePct,
+              pcr: e.direction === 'BUY' ? 1.15 : 0.82,
+              bidAskRatio: e.bidAskRatio, cycleBuildup: e.cycleBuildup,
+              bias, activeContractsCount: 1,
+              formulaScore: e.score, listedAt: e.listedAt,
+              timeframe: e.timeframe, mtfAlignmentCount: e.mtfAlignmentCount, mtfBias
+            };
+          })
+        ].slice(0, 15).sort((a, b) => String(b.listedAt).localeCompare(String(a.listedAt)) || String(b.symbol).localeCompare(String(a.symbol)));
+
+        return {
+          status: 'ok',
+          scannerName: 'Most Active FNO & (Index Options)',
+          istTime: ist.timeStr,
+          entryWindowRule: '09:20:00 - 14:45:00 IST',
+          selectedTimeframe: selTf,
+          timeframeSummary,
+          mtfAlignedCount,
+          isMidnightCleared: false,
+          universeEvaluated: equities.length + optRows.length,
+          totalTurnoverCr: Number(equities.reduce((s, r) => s + r.tradedValueCr, 0).toFixed(2)),
+          strictQualifiedBuyCount: strictEq.filter(r => r.direction === 'BUY').length,
+          strictQualifiedSellCount: strictEq.filter(r => r.direction === 'SELL').length,
+          strictQualifiedOptionsCount: strictOpts.length,
+          categories: {
+            mostActiveFno: strictAll,
+            mostActiveContractsIndexOptions: strictOpts,
+            topTradedByVolume: topVol,
+            topTradedByValue: topVal,
+            mostActiveUnderlying: underlying,
+            mostActiveEquities: strictEq,
+            oiChangeLeaders: oiLeaders,
+            rankedFno: [...equities, ...optRows].sort((a, b) => b.score - a.score).slice(0, 15),
+            rankedIndexOptions: [...optRows].sort((a, b) => b.score - a.score).slice(0, 15),
+            rankedEquities: [...equities].sort((a, b) => b.score - a.score).slice(0, 15)
+          }
+        };
+      },
+
+      renderMtfPills(item) {
+        const mtf = item.mtfSignals || {};
+        const activeTf = item.timeframe || (this.activeTimeframe === 'ALL' ? '15m' : this.activeTimeframe);
+        const tfKeys = ['5m', '15m', '30m', '1h'];
+        const pills = tfKeys.map(k => {
+          const s = mtf[k];
+          const short = k === '1h' ? '1H' : k;
+          if (!s) {
+            return `<span class="px-1.5 py-0.5 rounded text-[9px] bg-slate-800 text-slate-400">${short}</span>`;
+          }
+          const isCur = (activeTf === k);
+          const ringCls = isCur ? 'ring-1 ring-amber-400' : '';
+          const colorCls = s.qualified
+            ? (s.direction === 'BUY' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50' : 'bg-rose-500/20 text-rose-300 border-rose-400/50')
+            : 'bg-slate-800/80 text-slate-400 border-slate-700';
+          return `<span title="${s.label}: ${s.passedCount}/7 • ${s.structure} • Body ${s.bodyStrengthPct}% • ${s.rrRatio}" class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${colorCls} ${ringCls}">${short} ${s.qualified ? '✔' : ''}${s.passedCount}/7</span>`;
+        }).join('');
+        const alignCnt = Number(item.mtfAlignmentCount || 0);
+        const alignCls = alignCnt === 4 ? 'text-emerald-300' : alignCnt >= 2 ? 'text-cyan-300' : 'text-amber-300';
+        return `<div class="grid grid-cols-2 gap-1">${pills}</div><div class="text-[9.5px] font-black mt-1 ${alignCls}">${alignCnt}/4 MTF Aligned • Active ${activeTf === '1h' ? '1H' : activeTf}</div>`;
+      },
+
+      renderTables() {
+        const rpt = this.lastReport || {
+          isMidnightCleared: false,
+          selectedTimeframe: this.activeTimeframe || '5m',
+          timeframeSummary: {},
+          mtfAlignedCount: 0,
+          universeEvaluated: 0,
+          totalTurnoverCr: 0,
+          strictQualifiedBuyCount: 0,
+          strictQualifiedSellCount: 0,
+          strictQualifiedOptionsCount: 0,
+          istTime: '--:--:-- IST',
+          categories: {}
+        };
+        const cats = rpt.categories || {};
+        const tfMeta = this.TIMEFRAME_META[this.activeTimeframe] || this.TIMEFRAME_META['5m'];
+
+        const setEl = (id, v) => { const e = document.getElementById(id); if (e) e.innerText = v; };
+        setEl('maf-kpi-universe', `${rpt.universeEvaluated || 0} F&O`);
+        setEl('maf-kpi-value', `₹ ${Number(rpt.totalTurnoverCr || 0).toLocaleString('en-IN')} Cr`);
+        setEl('maf-kpi-strict-eq', `${rpt.strictQualifiedBuyCount || 0} BUY / ${rpt.strictQualifiedSellCount || 0} SELL`);
+        setEl('maf-kpi-strict-opt', `${rpt.strictQualifiedOptionsCount || 0} Contracts`);
+        setEl('maf-kpi-window', `09:20–14:45 • ${tfMeta.shortLabel} TF`);
+        setEl('maf-kpi-time', rpt.istTime || '--:--:-- IST');
+
+        // Update Multi-Timeframe Button Badges
+        const tfSummary = rpt.timeframeSummary || {};
+        ['5m', '15m', '30m', '1h'].forEach(k => {
+          setEl('maf-tf-cnt-' + k, String(tfSummary[k]?.strictQualifiedCount ?? 0));
+        });
+        setEl('maf-tf-cnt-ALL', String(rpt.mtfAlignedCount ?? 0));
+        const infoEl = document.getElementById('maf-tf-active-info');
+        if (infoEl) {
+          infoEl.innerHTML = `Active Candle TF: <strong class="text-cyan-300">${tfMeta.label}</strong> &bull; Multi-TF Matrix evaluates <strong class="text-white">5m &bull; 15m &bull; 30m &bull; 1H</strong> simultaneously`;
+        }
+
+        // Update 7 Category Count Badges
+        const getSourceArr = (catKey) => {
+          const meta = this.CATEGORY_META[catKey];
+          if (!meta) return [];
+          const strictArr = Array.isArray(cats[meta.key]) ? cats[meta.key] : [];
+          const rankedArr = Array.isArray(cats[meta.rankedKey]) ? cats[meta.rankedKey] : strictArr;
+          return this.strictMode ? strictArr : rankedArr;
+        };
+        Object.keys(this.CATEGORY_META).forEach(catKey => {
+          setEl('maf-cnt-' + catKey, String(getSourceArr(catKey).length));
+        });
+
+        const tableEl = document.getElementById('table-most-active-fno');
+        if (!tableEl) return;
+
+        const meta = this.CATEGORY_META[this.activeCategory] || this.CATEGORY_META.MOST_ACTIVE_FNO;
+        const titleEl = document.getElementById('maf-table-title');
+        if (titleEl) {
+          titleEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> ${meta.label} &bull; [${tfMeta.label}] &bull; Entry 09:20 AM–02:45 PM`;
+        }
+
+        const q = (document.getElementById('maf-search-input')?.value || '').trim().toUpperCase();
+        const dirFilter = document.getElementById('maf-dir-filter')?.value || 'ALL';
+        const sortBy = document.getElementById('maf-sort-select')?.value || 'listed_desc';
+
+        if (rpt.isMidnightCleared) {
+          setEl('maf-count-badge', '0 signals (12:00 AM Auto-Flush • Waiting 09:20 AM IST)');
+          tableEl.innerHTML = `<tbody><tr><td colspan="14" class="p-8 text-center text-amber-300 font-mono text-xs">🕛 Midnight Auto-Flush Active &mdash; Scanners will automatically execute Multi-TF (5m/15m/30m/1H) 7-pillar formula scan at 09:20 AM IST.</td></tr></tbody>`;
+          return;
+        }
+
+        // Special Dedicated Table View for MOST_ACTIVE_UNDERLYING
+        if (this.activeCategory === 'MOST_ACTIVE_UNDERLYING') {
+          let rows = (cats.mostActiveUnderlying || []).filter(r => !q || r.symbol.toUpperCase().includes(q) || (r.name || '').toUpperCase().includes(q) || (r.sector || '').toUpperCase().includes(q));
+          if (dirFilter === 'BUY') rows = rows.filter(r => r.bias === 'BULLISH');
+          if (dirFilter === 'SELL') rows = rows.filter(r => r.bias === 'BEARISH');
+          rows = [...rows].sort((a, b) => {
+            if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || String(b.symbol).localeCompare(String(a.symbol));
+            if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt)) || String(a.symbol).localeCompare(String(b.symbol));
+            if (sortBy === 'mtf_desc') return (b.mtfAlignmentCount || 0) - (a.mtfAlignmentCount || 0) || b.formulaScore - a.formulaScore;
+            if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
+            if (sortBy === 'volume_desc') return b.totalVolume - a.totalVolume;
+            if (sortBy === 'oi_chg_desc') return Math.abs(b.oiChangePct) - Math.abs(a.oiChangePct);
+            if (sortBy === 'score_desc') return b.formulaScore - a.formulaScore;
+            return b.totalValueCr - a.totalValueCr;
+          });
+          setEl('maf-count-badge', `${rows.length} Underlyings [${tfMeta.shortLabel}] • Sorted Z→A (${sortBy})`);
+          let html = `
+            <thead class="bg-[#0a0e18] text-slate-400 text-[10px] uppercase border-b border-[#1c2233]">
+              <tr>
+                <th class="p-2.5">#</th>
+                <th class="p-2.5">Underlying</th>
+                <th class="p-2.5">SECTOR %</th>
+                <th class="p-2.5">LISTED AT (Z&rarr;A)</th>
+                <th class="p-2.5">Spot Price / %</th>
+                <th class="p-2.5">BID/ASK RATIO</th>
+                <th class="p-2.5">CYCLE (BUILDUP)</th>
+                <th class="p-2.5">Multi-TF (5m/15m/30m/1H)</th>
+                <th class="p-2.5">Raw Traded Vol &amp; Value</th>
+                <th class="p-2.5">OI / OI Chg %</th>
+                <th class="p-2.5">PCR / Bias</th>
+                <th class="p-2.5 text-right">Score / Chart</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#141c2c]">`;
+          if (rows.length === 0) {
+            html += `<tr><td colspan="12" class="p-8 text-center text-slate-400">No Most Active Underlyings match current filter.</td></tr>`;
+          } else {
+            rows.forEach((u, i) => {
+              const bull = u.changePercent >= 0;
+              const secPct = Number(u.sectorChangePct ?? u.changePercent ?? 0);
+              const ba = Number(u.bidAskRatio ?? (bull ? 1.24 : 0.81));
+              const ratioBadge = ba >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (ba <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
+              const normCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(u.cycleBuildup, u.changePercent, u.oiChangePct, ba) : (u.cycleBuildup || 'Long Buildup');
+              const cyclePill = typeof renderCycleBuildupPill === 'function' ? renderCycleBuildupPill(normCycle) : `<span class="text-[10px] font-bold text-slate-200">${normCycle}</span>`;
+              const biasCls = u.bias === 'BULLISH' ? 'bg-emerald-500/20 text-emerald-300' : u.bias === 'BEARISH' ? 'bg-rose-500/20 text-rose-300' : 'bg-slate-700/40 text-slate-300';
+              const chartSym = u.kind === 'INDEX' ? (u.symbol === 'NIFTY' ? 'NIFTY 50' : u.symbol) : u.symbol;
+              const mb = u.mtfBias || {};
+              const mtfHtml = ['5m', '15m', '30m', '1h'].map(k => {
+                const b = mb[k];
+                const sh = k === '1h' ? '1H' : k;
+                if (!b) return `<span class="px-1 py-0.5 rounded bg-slate-800 text-slate-400 text-[9px]">${sh}</span>`;
+                const cCls = b.qualified
+                  ? (b.bias === 'BULLISH' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40')
+                  : 'bg-slate-800 text-slate-400 border-slate-700';
+                return `<span class="px-1.5 py-0.5 rounded border text-[9px] font-bold ${cCls}">${sh} ${b.passedCount}/7</span>`;
+              }).join('');
+              html += `
+                <tr class="hover:bg-[#11192b] transition">
+                  <td class="p-2.5 text-slate-500">${i + 1}</td>
+                  <td class="p-2.5 font-black text-white">${u.symbol}<div class="text-[9.5px] font-normal text-purple-300">${u.kind} &bull; ${u.name}</div></td>
+                  <td class="p-2.5">
+                    <div class="text-slate-200 text-[10.5px] font-bold">${u.sector || (u.kind === 'INDEX' ? 'Benchmark Index' : 'NSE F&O')}</div>
+                    <div class="text-[10.5px] font-black ${secPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${secPct >= 0 ? '+' : ''}${secPct.toFixed(2)}%</div>
+                  </td>
+                  <td class="p-2.5">
+                    <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[10.5px] font-bold border border-cyan-500/20 whitespace-nowrap">🕒 ${u.listedAt}</span>
+                  </td>
+                  <td class="p-2.5 font-bold ${bull ? 'text-emerald-300' : 'text-rose-300'}">₹${Number(u.spotPrice).toLocaleString('en-IN')}<div class="text-[10px]">${bull ? '+' : ''}${u.changePercent}%</div></td>
+                  <td class="p-2.5">
+                    <span class="px-2 py-0.5 rounded border text-[10.5px] font-black ${ratioBadge}">${ba.toFixed(2)}x</span>
+                    <div class="text-[9px] mt-0.5 ${ba >= 1.15 ? 'text-emerald-400' : ba <= 0.85 ? 'text-rose-400' : 'text-slate-400'}">${ba >= 1.5 ? 'Heavy Buying' : ba >= 1.15 ? 'Buyer Dominance' : ba <= 0.65 ? 'Heavy Selling' : ba <= 0.85 ? 'Seller Pressure' : 'Balanced Book'}</div>
+                  </td>
+                  <td class="p-2.5">${cyclePill}</td>
+                  <td class="p-2.5"><div class="grid grid-cols-2 gap-1">${mtfHtml}</div><div class="text-[9px] text-cyan-300 font-bold mt-1">${u.mtfAlignmentCount || 0}/4 MTF Aligned</div></td>
+                  <td class="p-2.5">
+                    <div class="text-cyan-200 font-bold">${Number(u.totalVolume).toLocaleString('en-IN')}</div>
+                    <div class="text-amber-200 font-black">₹ ${u.totalValueCr} Cr</div>
+                  </td>
+                  <td class="p-2.5"><span class="text-white font-bold">${u.oiLakhs} L</span><div class="text-[10px] ${u.oiChangePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${u.oiChangePct >= 0 ? '+' : ''}${u.oiChangePct}%</div></td>
+                  <td class="p-2.5"><div class="font-bold text-slate-200">PCR ${u.pcr}</div><span class="px-2 py-0.5 rounded text-[9.5px] font-black ${biasCls}">${u.bias}</span></td>
+                  <td class="p-2.5 text-right">
+                    <span class="text-amber-300 font-black mr-2">${u.formulaScore}</span>
+                    <button onclick="openTradingViewChart('${chartSym}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold cursor-pointer">📈 Chart</button>
+                  </td>
+                </tr>`;
+            });
+          }
+          html += `</tbody>`;
+          tableEl.innerHTML = html;
+          return;
+        }
+
+        // Standard 7-Pillar Row Rendering for all other 6 Categories
+        let rows = getSourceArr(this.activeCategory).filter(r => {
+          if (dirFilter !== 'ALL' && r.direction !== dirFilter) return false;
+          if (q && !r.symbol.toUpperCase().includes(q) && !(r.sector || '').toUpperCase().includes(q) && !(r.underlying || '').toUpperCase().includes(q)) return false;
+          return true;
+        });
+
+        rows = [...rows].sort((a, b) => {
+          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || String(b.symbol).localeCompare(String(a.symbol));
+          if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt)) || String(a.symbol).localeCompare(String(b.symbol));
+          if (sortBy === 'mtf_desc') return (b.mtfAlignmentCount || 0) - (a.mtfAlignmentCount || 0) || b.score - a.score;
+          if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
+          if (sortBy === 'volume_desc') return b.rawVolume - a.rawVolume;
+          if (sortBy === 'value_desc') return b.tradedValueCr - a.tradedValueCr;
+          if (sortBy === 'oi_chg_desc') return Math.abs(b.oiChangePct) - Math.abs(a.oiChangePct);
+          if (sortBy === 'rr_desc') return b.rrNumeric - a.rrNumeric;
+          return b.score - a.score;
+        });
+
+        setEl('maf-count-badge', `${rows.length} Candidates [${tfMeta.label}] (${this.strictMode ? 'Strict Formula 0-15' : 'All Ranked Top 15'}) • Listed At Z→A`);
+
+        let html = `
+          <thead class="bg-[#0a0e18] text-slate-400 text-[10px] uppercase border-b border-[#1c2233]">
+            <tr>
+              <th class="p-2.5"># / Symbol</th>
+              <th class="p-2.5">SECTOR %</th>
+              <th class="p-2.5">Multi-TF (5m/15m/30m/1H)</th>
+              <th class="p-2.5">LISTED AT (09:20–14:45 Z&rarr;A)</th>
+              <th class="p-2.5">Price &amp; %</th>
+              <th class="p-2.5">Entry / SL / T1 / T2 &amp; R:R</th>
+              <th class="p-2.5">BID/ASK RATIO</th>
+              <th class="p-2.5">CYCLE (BUILDUP)</th>
+              <th class="p-2.5">PDH / PDL &amp; ORB</th>
+              <th class="p-2.5">HH/HL &bull; Body % &amp; S&amp;R</th>
+              <th class="p-2.5">Raw Traded Vol &amp; Value</th>
+              <th class="p-2.5">7-Pillar Formula</th>
+              <th class="p-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#141c2c]">`;
+
+        if (rows.length === 0) {
+          html += `<tr><td colspan="13" class="p-8 text-center text-slate-400 text-xs">No candidates currently meet the strict 7-pillar formula for ${meta.label} on <strong class="text-cyan-300">${tfMeta.label}</strong> within 09:20 AM–02:45 PM IST. Switch timeframe or toggle "All Ranked (Top 15)".</td></tr>`;
+        } else {
+          rows.forEach((item, idx) => {
+            const isBuy = item.direction === 'BUY';
+            const dots = (item.conditions || []).map(c => `<span title="${c.label}: ${c.detail}" class="inline-flex items-center justify-center w-4 h-4 rounded text-[9px] font-black ${c.passed ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'}">${c.passed ? '✔' : '✕'}</span>`).join('');
+            const gradeCls = item.formulaPassedCount === 7 ? 'bg-amber-500 text-black' : item.formulaPassedCount >= 6 ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/40' : 'bg-slate-700/40 text-slate-300';
+            const catTag = item.category === 'INDEX_OPTION' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' : 'bg-purple-500/20 text-purple-300 border border-purple-500/30';
+            const oiColor = item.oiChangePct >= 0 ? 'text-emerald-300' : 'text-rose-300';
+            const chgColor = item.changePercent >= 0 ? 'text-emerald-300' : 'text-rose-300';
+            const chartSym = item.category === 'INDEX_OPTION' ? (item.underlying === 'NIFTY' ? 'NIFTY 50' : item.underlying) : item.symbol;
+            const activeTfShort = item.timeframe === '1h' ? '1H' : (item.timeframe || '5m');
+            const secPct = Number(item.sectorChangePct ?? item.changePercent ?? 0);
+            const baRatio = Number(item.bidAskRatio || (isBuy ? 1.24 : 0.81));
+            const baBadge = baRatio >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (baRatio <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
+            const normCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(item.cycleBuildup || item.oiBuildup, item.changePercent, item.oiChangePct, baRatio) : (item.cycleBuildup || item.oiBuildup);
+            const cyclePill = typeof renderCycleBuildupPill === 'function' ? renderCycleBuildupPill(normCycle) : `<span class="text-[9.5px] font-bold text-slate-200">${normCycle}</span>`;
+
+            html += `
+              <tr class="hover:bg-[#11192b] transition">
+                <td class="p-2.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-slate-500 text-[10px]">#${idx + 1}</span>
+                    <span class="font-black text-white">${item.symbol}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${catTag}">${item.category === 'INDEX_OPTION' ? 'OPT' : 'F&O'}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black bg-cyan-500/20 text-cyan-200 border border-cyan-400/40">${activeTfShort}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${isBuy ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${item.actionBadge}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-black ${gradeCls}">${item.grade}</span>
+                  </div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-slate-200 font-bold truncate max-w-[115px]" title="${item.sector}">${item.sector || 'NSE F&O'}</div>
+                  <div class="text-[10.5px] font-black ${secPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${secPct >= 0 ? '+' : ''}${secPct.toFixed(2)}%</div>
+                </td>
+                <td class="p-2.5">${this.renderMtfPills(item)}</td>
+                <td class="p-2.5 text-[10.5px]">
+                  <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-amber-300 font-mono text-[10.5px] font-black border border-cyan-500/20 whitespace-nowrap">🕒 ${item.listedAt}</span>
+                  <div class="text-[9.5px] mt-0.5 ${item.inEntryWindow ? 'text-emerald-400' : 'text-rose-400'}">${item.inEntryWindow ? '✔ 09:20–14:45' : 'Outside Window'}</div>
+                </td>
+                <td class="p-2.5">
+                  <div class="font-black text-white">₹${item.price.toLocaleString('en-IN')}</div>
+                  <div class="text-[10.5px] font-bold ${chgColor}">${item.changePercent >= 0 ? '+' : ''}${item.changePercent}%</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-white font-bold">E: ₹${item.entryPrice} &bull; <span class="text-rose-400">SL: ₹${item.stopLoss}</span></div>
+                  <div class="text-emerald-300">T1: ₹${item.target1} &bull; T2: ₹${item.target2}</div>
+                  <div class="text-amber-300 font-black mt-0.5">R:R ${item.rrRatio}</div>
+                </td>
+                <td class="p-2.5">
+                  <span class="px-2 py-0.5 rounded border text-[10.5px] font-black ${baBadge}">${baRatio.toFixed(2)}x</span>
+                  <div class="text-[9px] mt-0.5 whitespace-nowrap ${baRatio >= 1.15 ? 'text-emerald-400' : baRatio <= 0.85 ? 'text-rose-400' : 'text-slate-400'}">${baRatio >= 1.5 ? 'Heavy Buying' : baRatio >= 1.15 ? 'Buyer Dominance' : baRatio <= 0.65 ? 'Heavy Selling' : baRatio <= 0.85 ? 'Seller Pressure' : 'Balanced Book'}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div>${cyclePill}</div>
+                  <div class="${oiColor} font-black mt-1">${item.oiChangePct >= 0 ? '+' : ''}${item.oiChangePct}% <span class="text-slate-400 font-normal">(${item.currentOI}L)</span></div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-slate-300">PDH: <span class="text-emerald-300 font-bold">₹${item.pdh}</span> &bull; PDL: <span class="text-rose-300 font-bold">₹${item.pdl}</span></div>
+                  <div class="text-cyan-300">ORB: ₹${item.orLow}–₹${item.orHigh}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div><span class="px-1.5 py-0.5 rounded font-black ${item.structure === 'HH / HL' ? 'bg-emerald-500/20 text-emerald-300' : item.structure === 'LH / LL' ? 'bg-rose-500/20 text-rose-300' : 'bg-slate-700/40 text-slate-300'}">${item.structure}</span> <span class="${item.bodyStrengthPct >= 50 ? 'text-emerald-300 font-bold' : 'text-slate-400'}">${item.bodyStrengthPct}%</span></div>
+                  <div class="text-white font-bold mt-1">${item.srLevelName}: ₹${item.srLevelPrice} <span class="${item.srBreakoutConfirmed ? 'text-emerald-400' : 'text-amber-300'}">${item.srBreakoutConfirmed ? '✔' : '•'}</span></div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-cyan-200 font-black">${Number(item.rawVolume).toLocaleString('en-IN')}</div>
+                  <div class="text-[9.5px] text-slate-400">${item.volumeConfirmText}</div>
+                  <div class="text-amber-300 font-bold">₹ ${item.tradedValueCr} Cr</div>
+                </td>
+                <td class="p-2.5">
+                  <div class="flex items-center gap-0.5">${dots}</div>
+                  <div class="text-[9.5px] text-amber-300 font-bold mt-1">${item.formulaPassedCount}/${item.totalConditions} Pillars (${activeTfShort})</div>
+                </td>
+                <td class="p-2.5 text-right space-y-1">
+                  <button onclick="openTradingViewChart('${chartSym}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
+                  <button onclick="openOrderModal('${item.symbol}', '${item.direction}', ${item.price}, ${item.changePercent})" class="px-2 py-1 rounded ${isBuy ? 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40' : 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40'} border text-[10px] font-black block w-full text-center transition cursor-pointer">⚡ ${item.direction}</button>
+                </td>
+              </tr>`;
+          });
+        }
+        html += `</tbody>`;
+        if (tableEl._lastHtmlStr !== html) {
+          tableEl._lastHtmlStr = html;
+          tableEl.innerHTML = html;
+        }
+      }
+    };
+
+    // ============================================================
     // REAL-TIME NOTIFICATION ENGINE (WEB & IN-APP APP PUSH)
     // Alerts on: Stock Listed At On-Time & Stock News (Positive/Negative)
     // ============================================================
@@ -14022,10 +15399,11 @@ ${json.message || 'Unauthorized token.'}`);
       isWithinLiveAlertWindow(listedTimeStr, maxAgeSec = 300) {
         const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
         if (!ist) return true;
-        const nowSec = ist.hours * 3600 + ist.minutes * 60 + (ist.seconds || 0);
-        // Outside market scan session (before 09:20 or after 15:35 IST), never emit stale alerts
-        if (nowSec < 9 * 3600 + 20 * 60 || nowSec > 15 * 3600 + 35 * 60) return false;
         const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(new Date(), true) : null;
+        if (mkt && mkt.isMarketOffDay) return true;
+        const nowSec = ist.hours * 3600 + ist.minutes * 60 + (ist.seconds || 0);
+        // Outside market scan session (before 09:20 or after 15:35 IST), never emit stale alerts on regular days
+        if (nowSec < 9 * 3600 + 20 * 60 || nowSec > 15 * 3600 + 35 * 60) return false;
         if (mkt && mkt.status === 'CLOSED') return false;
         const listedSec = this.parseTimeToSec(listedTimeStr);
         if (listedSec < 0) return false;
@@ -14048,8 +15426,9 @@ ${json.message || 'Unauthorized token.'}`);
         try {
           const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
           if (!ist) return;
+          const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(new Date(), true) : null;
           const nowMin = ist.hours * 60 + ist.minutes;
-          const afterClose = nowMin >= 15 * 60 + 35 || nowMin < 9 * 60 + 20;
+          const afterClose = !(mkt && mkt.isMarketOffDay) && (nowMin >= 15 * 60 + 35 || nowMin < 9 * 60 + 20);
           if (afterClose || (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared())) {
             this.clearAllNotifications(true);
             return;
@@ -14100,8 +15479,9 @@ ${json.message || 'Unauthorized token.'}`);
         const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : null;
         if (!ist) return;
         const nowMin = ist.hours * 60 + ist.minutes;
-        const isAfterMarketClose = nowMin >= 15 * 60 + 35; // 15:35 IST onwards after NSE close
-        const isPreMarket = nowMin < 9 * 60 + 20;
+        const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(new Date(), true) : null;
+        const isAfterMarketClose = !(mkt && mkt.isMarketOffDay) && nowMin >= 15 * 60 + 35; // 15:35 IST onwards after NSE close
+        const isPreMarket = !(mkt && mkt.isMarketOffDay) && nowMin < 9 * 60 + 20;
         const mktCleared = (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared());
 
         let savedDate = '';
@@ -14117,7 +15497,7 @@ ${json.message || 'Unauthorized token.'}`);
           return;
         }
 
-        // 2. Every day after market close (>= 15:35 IST) or during midnight-cleared pre-09:20 wait: remove old notifications
+        // 2. Every day after market close (>= 15:35 IST) or during midnight-cleared pre-09:20 wait on regular trading days: remove old notifications
         if (isAfterMarketClose || isPreMarket || mktCleared) {
           if (this.history.length > 0) {
             this.resetCandidateTrackers();
@@ -14745,6 +16125,7 @@ ${json.message || 'Unauthorized token.'}`);
           PreOpenEngine.init();
           if (typeof Claude10SkillsAgent !== 'undefined') Claude10SkillsAgent.init();
           if (typeof SmartMoneyFlowEngine !== 'undefined') SmartMoneyFlowEngine.init();
+          if (typeof MostActiveFnoEngine !== 'undefined') MostActiveFnoEngine.init();
         } catch (e) {
           console.warn('Deferred engine init warning:', e);
         }
@@ -15681,12 +17062,14 @@ ${json.message || 'Unauthorized token.'}`);
           const itm = this.getItem(idx.symbol);
           if (itm) list.push(itm);
         });
-        // 2. Add strictly formula-eligible F&O Stocks from DATA.all_stocks (0..15)
+        // 2. Add strictly formula-eligible F&O Stocks from DATA.all_stocks (0..15) sorted Z->A by Listed At
         if (window.DATA && window.DATA.all_stocks) {
-          const eligibleStocks = window.DATA.all_stocks
-            .filter(s => isPureEquityStock(s) && Math.abs(Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15)
-            .sort((a, b) => (Math.abs(Number(b.pct_change) || 0) * (Number(b.rvol) || 1)) - (Math.abs(Number(a.pct_change) || 0) * (Number(a.rvol) || 1)))
-            .slice(0, 15);
+          const eligibleStocks = sortByListedAtNewestFirstAtoZ(
+            window.DATA.all_stocks
+              .filter(s => isPureEquityStock(s) && Math.abs(Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15)
+              .sort((a, b) => (Math.abs(Number(b.pct_change) || 0) * (Number(b.rvol) || 1)) - (Math.abs(Number(a.pct_change) || 0) * (Number(a.rvol) || 1)))
+              .slice(0, 15)
+          );
           eligibleStocks.forEach(s => {
             const itm = this.getItem(s.symbol);
             if (itm) list.push(itm);

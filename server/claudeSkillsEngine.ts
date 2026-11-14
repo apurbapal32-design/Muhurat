@@ -44,11 +44,11 @@ function getSecFromHHMMSS(t?: string): number {
   return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
 }
 
-function sortByListedAtAsc<T extends { listedAt?: string; triggerTime?: string; symbol?: string }>(items: T[]): T[] {
+function sortByListedAtDesc<T extends { listedAt?: string; triggerTime?: string; symbol?: string }>(items: T[]): T[] {
   return [...items].sort((a, b) => {
-    const secDiff = getSecFromHHMMSS(a.listedAt || a.triggerTime) - getSecFromHHMMSS(b.listedAt || b.triggerTime);
+    const secDiff = getSecFromHHMMSS(b.listedAt || b.triggerTime) - getSecFromHHMMSS(a.listedAt || a.triggerTime);
     if (secDiff !== 0) return secDiff;
-    return (a.symbol || '').localeCompare(b.symbol || '');
+    return (b.symbol || '').localeCompare(a.symbol || '');
   });
 }
 
@@ -224,11 +224,11 @@ export function buildClaude10SkillsReport(
     };
   };
 
-  const buyRecommendations = sortByListedAtAsc(bullPool.slice(0, 15).map((s) => toRec(s, true)));
-  const sellRecommendations = sortByListedAtAsc(bearPool.slice(0, 15).map((s) => toRec(s, false)));
+  const buyRecommendations = sortByListedAtDesc(bullPool.slice(0, 15).map((s) => toRec(s, true)));
+  const sellRecommendations = sortByListedAtDesc(bearPool.slice(0, 15).map((s) => toRec(s, false)));
 
   // Skill 1: Chart & Pattern Scanner
-  const chartPatternScanner = sortByListedAtAsc(
+  const chartPatternScanner = sortByListedAtDesc(
     [...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map((r) => ({
       symbol: r.symbol,
       side: r.action.includes('BUY') ? 'BULLISH' : 'BEARISH',
@@ -273,7 +273,7 @@ export function buildClaude10SkillsReport(
   ].slice(0, 8);
 
   // Skill 4: Exit & Target Planner
-  const exitTargetPlanner = sortByListedAtAsc(
+  const exitTargetPlanner = sortByListedAtDesc(
     [...buyRecommendations.slice(0, 4), ...sellRecommendations.slice(0, 4)].map((r) => ({
       symbol: r.symbol,
       action: r.action,
@@ -346,11 +346,11 @@ export function buildClaude10SkillsReport(
       timeMachineSignals.length > 0
         ? Number((timeMachineSignals.reduce((a, b) => a + b.pnlNowPct, 0) / timeMachineSignals.length).toFixed(2))
         : 0,
-    replayRows: sortByListedAtAsc(timeMachineSignals.slice(0, 12)),
+    replayRows: sortByListedAtDesc(timeMachineSignals.slice(0, 12)),
   };
 
   // Skill 6: Budget & Position Sizing Manager
-  const combinedTopPicks = sortByListedAtAsc([...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)]);
+  const combinedTopPicks = sortByListedAtDesc([...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)]);
   const totalDeployedMargin = Number(combinedTopPicks.reduce((a, b) => a + b.capitalRequired, 0).toFixed(2));
   const totalRiskRs = Number(combinedTopPicks.reduce((a, b) => a + b.maxRiskRs, 0).toFixed(2));
   const totalPotentialProfitT1 = Number(combinedTopPicks.reduce((a, b) => a + b.projectedProfitT1Rs, 0).toFixed(2));
@@ -474,7 +474,7 @@ export function buildClaude10SkillsReport(
         : 'Choppy mean-reversion day; enforce tighter VWAP pullback entries.',
       `Order-book pressure spread across ${new Set(equityStocks.map((s) => s.bidAskRatio)).size} unique ratios confirmed clean accumulation vs distribution separation.`,
     ],
-    entries: sortByListedAtAsc(
+    entries: sortByListedAtDesc(
       [...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map((r) => {
         const movePct = Number((((r.action.includes('BUY') ? r.livePrice - r.entryPrice : r.entryPrice - r.livePrice) / Math.max(1, r.entryPrice)) * 100).toFixed(2));
         const outcome =

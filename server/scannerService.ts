@@ -24,7 +24,7 @@ import {
 } from '../src/utils/technicalAnalysis';
 import { calculateStockOI } from '../src/utils/oiAnalysis';
 import { calculateMarketStatus, getISTDateParts } from '../src/data/marketSchedule';
-import { upstoxService } from './upstoxService';
+import { BrokerMarketScheduleStatus, upstoxService } from './upstoxService';
 import { autonomousPriceService, deriveOrderBookDepth, IntradayCandleBar, UnifiedMarketQuote } from './autonomousPriceService';
 import { marketWebSocketServer } from './marketWebSocketServer';
 import { sentinelAgentService } from './sentinelAgentService';
@@ -101,6 +101,8 @@ export class ScannerService {
   private midnightWatcherTimer: NodeJS.Timeout | null = null;
   private periodicFetchTimer: NodeJS.Timeout | null = null;
   private lastQuoteSource: string = 'AUTONOMOUS_LIVE_ENGINE';
+  private brokerSchedule: BrokerMarketScheduleStatus = upstoxService.getSyncBrokerSchedule();
+  private lastScheduleSyncAt: number = 0;
 
   private sessionState: DailySessionState = {
     lastPurgeDateIST: null,
@@ -195,11 +197,17 @@ export class ScannerService {
 
     const ist = getISTDateParts(new Date());
     const initStatus = calculateMarketStatus();
+    const sched = upstoxService.getSyncBrokerSchedule();
+    this.brokerSchedule = sched;
     const DAILY_SCAN_START_MIN = 9 * 60 + 20; // 09:20 AM IST every market day
 
-    // Stay 100% midnight-flushed automatically between 00:00:00 and 09:19:59 IST.
-    // Once 09:20 AM IST Market-Day Scanner Start arrives on a trading day, auto-scan immediately.
-    const isScanWindowActiveNow = initStatus.isOpen && ist.minutesFromMidnight >= DAILY_SCAN_START_MIN;
+    // Stay midnight-flushed strictly before 09:20 AM IST on trading days;
+    // Run Broker API Scanner automatically all day on Weekends (Sat/Sun), Market Off Days & Special Event Off Days,
+    // and at/after 09:20 AM IST on regular trading days.
+    const isScanWindowActiveNow =
+      sched.isMarketOffDay ||
+      ((initStatus.isOpen || (sched.isTradingDay && ist.minutesFromMidnight >= DAILY_SCAN_START_MIN)) &&
+        ist.minutesFromMidnight >= DAILY_SCAN_START_MIN);
     const shouldFlushOnBoot =
       !isScanWindowActiveNow &&
       ((ist.minutesFromMidnight < DAILY_SCAN_START_MIN && this.sessionState.manualOverrideDateIST !== ist.dateStr) ||
@@ -220,14 +228,61 @@ export class ScannerService {
         this.sessionState.lastScanDateIST = ist.dateStr;
       }
       this.saveSessionState();
-      this.marketOverview.marketStatus = initStatus.isOpen
-        ? 'OPEN (LIVE NSE/BSE)'
-        : `MARKET CLOSED (${initStatus.statusLabel})`;
+      this.marketOverview.marketStatus = this.formatOverviewMarketStatus(initStatus, sched);
       this.runScanCycle(isScanWindowActiveNow).catch(() => {});
     }
 
-    // Start 3-second tick updates + 1-second Midnight/Market-Open schedule watcher
+    // Async sync against Upstox Broker API v2 Market Info (/v2/market/holidays, /timings, /status/NSE)
+    this.refreshBrokerSchedule(true).catch(() => {});
+
+    // Start 3-second tick updates + 1-second Midnight/Market-Open/Broker-OffDay schedule watcher
     this.startAutoScan(3);
+  }
+
+  private formatOverviewMarketStatus(
+    statusInfo: ReturnType<typeof calculateMarketStatus>,
+    sched: BrokerMarketScheduleStatus
+  ): string {
+    if (statusInfo.isOpen) return 'OPEN (LIVE NSE/BSE)';
+    if (sched.isMarketOffDay) {
+      return `BROKER API SCAN • ${sched.dayCategory.replace(/_/g, ' ')}`;
+    }
+    return `MARKET CLOSED (${statusInfo.statusLabel})`;
+  }
+
+  public getBrokerScheduleSync(): BrokerMarketScheduleStatus {
+    this.brokerSchedule = upstoxService.getSyncBrokerSchedule();
+    return this.brokerSchedule;
+  }
+
+  public async refreshBrokerSchedule(forceRefresh: boolean = false): Promise<BrokerMarketScheduleStatus> {
+    const resolved = await upstoxService.resolveBrokerMarketSchedule({
+      accessToken: this.getEffectiveUpstoxToken(),
+      forceRefresh,
+    });
+    this.brokerSchedule = resolved;
+    this.lastScheduleSyncAt = Date.now();
+    // If Broker API classifies today as Market Off Day (or special event off day) & scanners are cleared, trigger scan immediately
+    const ist = getISTDateParts(new Date());
+    if (
+      resolved.isMarketOffDay &&
+      (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr)
+    ) {
+      this.sessionState.isMidnightCleared = false;
+      this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
+      this.sessionState.lastScanDateIST = ist.dateStr;
+      this.sessionState.scannedAt = new Date().toISOString();
+      this.saveSessionState();
+      await this.runScanCycle(true).catch(() => {});
+      marketWebSocketServer.broadcastSystemEvent({
+        type: 'new_day_scan_complete',
+        phase: resolved.dayCategory,
+        isMidnightCleared: false,
+        dateIST: ist.dateStr,
+        stocksCount: this.stockScanResults.length,
+      });
+    }
+    return resolved;
   }
 
   private loadSessionState() {
@@ -1307,10 +1362,8 @@ export class ScannerService {
    */
   public getMarketStatus(): string {
     const statusInfo = calculateMarketStatus();
-    if (statusInfo.isOpen) {
-      return 'OPEN (LIVE NSE/BSE)';
-    }
-    return `MARKET CLOSED (${statusInfo.statusLabel})`;
+    const sched = this.getBrokerScheduleSync();
+    return this.formatOverviewMarketStatus(statusInfo, sched);
   }
 
   /**
@@ -1318,14 +1371,13 @@ export class ScannerService {
    */
   public tickLivePrices() {
     const statusInfo = calculateMarketStatus();
+    const sched = this.getBrokerScheduleSync();
     if (this.sessionState.isMidnightCleared) {
       this.marketOverview.marketStatus = 'MIDNIGHT_FLUSHED_AWAITING_MARKET_OPEN';
       return;
     }
 
-    this.marketOverview.marketStatus = statusInfo.isOpen
-      ? 'OPEN (LIVE NSE/BSE)'
-      : `MARKET CLOSED (${statusInfo.statusLabel})`;
+    this.marketOverview.marketStatus = this.formatOverviewMarketStatus(statusInfo, sched);
 
     if (!statusInfo.isOpen) {
       return;
@@ -1391,7 +1443,7 @@ export class ScannerService {
       this.evaluateMidnightAndScanSchedule().catch(() => {});
     }, 1000);
 
-    // Fast 5s scan cycle when market open (sub-300ms Upstox/TV batch); 45s when closed
+    // Fast 5s scan cycle when market open; 45s on closed / Weekend / Market Off Day (Broker API mode)
     let cycleTick = 0;
     this.periodicFetchTimer = setInterval(() => {
       cycleTick++;
@@ -1410,18 +1462,32 @@ export class ScannerService {
   private async evaluateMidnightAndScanSchedule() {
     const ist = getISTDateParts(new Date());
 
+    // Periodically sync live Upstox Broker API market schedule (holidays, timings, exchange status) every 2 mins
+    if (Date.now() - this.lastScheduleSyncAt > 120000) {
+      this.lastScheduleSyncAt = Date.now();
+      upstoxService
+        .resolveBrokerMarketSchedule({ accessToken: this.getEffectiveUpstoxToken(), forceRefresh: false })
+        .then((s) => {
+          this.brokerSchedule = s;
+        })
+        .catch(() => {});
+    }
+
     // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH (00:00:00 IST):
-    // Automatically empties all scanner results & logs as soon as IST calendar date rolls over
+    // Automatically empties previous session results & ledger as soon as IST calendar date rolls over
     if (ist.dateStr !== this.sessionState.lastPurgeDateIST) {
       this.resetMidnightPurge(ist.dateStr, true);
       return;
     }
 
     const statusInfo = calculateMarketStatus();
-    const DAILY_SCAN_START_MIN = 9 * 60 + 20; // Every market day scan starts at 09:20:00 AM IST
+    const sched = this.getBrokerScheduleSync();
+    const DAILY_SCAN_START_MIN = 9 * 60 + 20; // Regular Trading Day scan starts at 09:20:00 AM IST
 
-    // 2. Keep Midnight-Cleared prior to 09:20:00 AM IST on trading days unless manually unlocked
+    // 2. On REGULAR TRADING DAYS prior to 09:20:00 AM IST: hold Midnight Standby unless manually unlocked.
+    // On WEEKENDS (Sat/Sun), HOLIDAY OFF DAYS, and SPECIAL EVENT MARKET OFF DAYS: skip 09:20 hold & run Broker API Scanner immediately!
     if (
+      !sched.isMarketOffDay &&
       ist.minutesFromMidnight < DAILY_SCAN_START_MIN &&
       this.sessionState.manualOverrideDateIST !== ist.dateStr &&
       !this.sessionState.isMidnightCleared
@@ -1430,15 +1496,25 @@ export class ScannerService {
       return;
     }
 
-    // 3. DAILY MARKET-DAY AUTO-SCAN AT 09:20:00 AM IST — ZERO MANUAL ACTION REQUIRED:
-    // Automatically runs fresh live formula discovery scan & repopulates all scanners at 09:20 AM IST
-    if (
-      statusInfo.isOpen &&
+    // 3A. WEEKEND (SAT/SUN), MARKET OFF DAY, OR SPECIAL EVENT MARKET OFF DAY BROKER API AUTO-SCAN:
+    // Automatically populates every scanner via Broker API (Upstox v2 + Option Chain + Completed Session Bars)
+    const shouldRunOffDayScan =
+      sched.isMarketOffDay &&
+      (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr);
+
+    // 3B. REGULAR TRADING-DAY 09:20:00 AM IST AUTO-SCAN — ZERO MANUAL ACTION REQUIRED:
+    const shouldRunRegularScan =
+      !sched.isMarketOffDay &&
+      (statusInfo.isOpen || (sched.isTradingDay && ist.minutesFromMidnight >= DAILY_SCAN_START_MIN)) &&
       ist.minutesFromMidnight >= DAILY_SCAN_START_MIN &&
-      (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr)
-    ) {
+      (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr);
+
+    if (shouldRunOffDayScan || shouldRunRegularScan) {
+      const modeLabel = shouldRunOffDayScan
+        ? `BROKER API OFF-DAY SCAN (${sched.dayCategory}: ${sched.eventName || sched.weekday})`
+        : 'MARKET-DAY 09:20 AM IST AUTO-SCAN';
       console.log(
-        `[ScannerService] 🚀 MARKET-DAY 09:20 AM IST AUTO-SCAN (${ist.dateStr} ${ist.timeStr} IST)! Populating formula-eligible stocks...`
+        `[ScannerService] 🚀 ${modeLabel} (${ist.dateStr} ${ist.timeStr} IST)! Populating formula-eligible stocks...`
       );
       this.sessionState.isMidnightCleared = false;
       this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
@@ -1450,7 +1526,7 @@ export class ScannerService {
 
       marketWebSocketServer.broadcastSystemEvent({
         type: 'new_day_scan_complete',
-        phase: 'REGULAR_0920',
+        phase: shouldRunOffDayScan ? sched.dayCategory : 'REGULAR_0920',
         isMidnightCleared: false,
         dateIST: ist.dateStr,
         stocksCount: this.stockScanResults.length,
@@ -1521,6 +1597,7 @@ export class ScannerService {
   public getSessionStatus() {
     const ist = getISTDateParts(new Date());
     const statusInfo = calculateMarketStatus();
+    const sched = this.getBrokerScheduleSync();
     return {
       isMidnightCleared: this.sessionState.isMidnightCleared,
       lastPurgeDateIST: this.sessionState.lastPurgeDateIST,
@@ -1531,12 +1608,28 @@ export class ScannerService {
       scannedAt: this.sessionState.scannedAt,
       currentDateIST: ist.dateStr,
       currentTimeIST: ist.timeStr,
+      weekdayIST: ist.weekday,
       hours: ist.hour,
       minutes: ist.minute,
       isMarketOpen: statusInfo.isOpen,
       marketSession: statusInfo.session,
       stocksCount: this.stockScanResults.length,
       quoteSource: this.lastQuoteSource,
+      brokerSchedule: {
+        dayCategory: sched.dayCategory,
+        isTradingDay: sched.isTradingDay,
+        isMarketOffDay: sched.isMarketOffDay,
+        isWeekendOffDay: sched.isWeekendOffDay,
+        isHolidayOffDay: sched.isHolidayOffDay,
+        isSpecialEventOffDay: sched.isSpecialEventOffDay,
+        isSpecialSession: sched.isSpecialSession,
+        eventName: sched.eventName,
+        description: sched.description,
+        exchangeStatus: sched.exchangeStatus,
+        brokerApiSource: sched.brokerApiSource,
+        isBrokerOffDayScanActive: sched.isMarketOffDay && !this.sessionState.isMidnightCleared,
+        nextTradingDay: sched.nextTradingDay,
+      },
     };
   }
 
@@ -1805,6 +1898,7 @@ export class ScannerService {
       this.evaluateTargetHitsAndTrades(newResults);
 
       const statusInfo = calculateMarketStatus();
+      const sched = this.getBrokerScheduleSync();
       this.ensureNiftySparklineAndTrend();
       this.marketOverview = {
         ...this.marketOverview,
@@ -1813,9 +1907,9 @@ export class ScannerService {
         sellCount,
         highRvolCount,
         lastScanTime: this.lastScanTimestamp,
-        marketStatus: statusInfo.isOpen ? 'OPEN (LIVE NSE/BSE)' : `MARKET CLOSED (${statusInfo.statusLabel})`,
+        marketStatus: this.formatOverviewMarketStatus(statusInfo, sched),
       };
-      if (statusInfo.isOpen && newResults.length > 0 && !isNewDayFreshScan) {
+      if ((statusInfo.isOpen || sched.isMarketOffDay) && newResults.length > 0 && !isNewDayFreshScan) {
         marketWebSocketServer.broadcastSystemEvent({
           type: 'scan_update',
           dateIST: ist.dateStr,
@@ -2318,8 +2412,8 @@ export class ScannerService {
       const p = t.split(':').map((x) => parseInt(x, 10) || 0);
       return (p[0] || 0) * 3600 + (p[1] || 0) * 60 + (p[2] || 0);
     };
-    const sortNewestFirstAtoZ = (arr: ScannedStock[]) =>
-      [...arr].sort((a, b) => parseSec(b.listedAt) - parseSec(a.listedAt) || a.symbol.localeCompare(b.symbol));
+    const sortNewestFirstZtoA = (arr: ScannedStock[]) =>
+      [...arr].sort((a, b) => parseSec(b.listedAt) - parseSec(a.listedAt) || b.symbol.localeCompare(a.symbol));
 
     const isEligibleBuyFormula = (s: ScannedStock) =>
       isPureStock(s) &&
@@ -2347,8 +2441,8 @@ export class ScannerService {
     const cleared = this.sessionState.isMidnightCleared;
     return {
       stocks: cleared ? [] : this.stockScanResults,
-      top10Buy: cleared ? [] : sortNewestFirstAtoZ(buyStocks.slice(0, 15)),
-      top10Sell: cleared ? [] : sortNewestFirstAtoZ(sellStocks.slice(0, 15)),
+      top10Buy: cleared ? [] : sortNewestFirstZtoA(buyStocks.slice(0, 15)),
+      top10Sell: cleared ? [] : sortNewestFirstZtoA(sellStocks.slice(0, 15)),
       overview: this.marketOverview,
       broker: this.brokerConfig,
       alerts: this.alertConfig,
@@ -2527,6 +2621,7 @@ export class ScannerService {
           ? 'autonomous'
           : 'connected'),
     };
+    this.refreshBrokerSchedule(true).catch(() => {});
     return this.brokerConfig;
   }
 
