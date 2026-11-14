@@ -14,6 +14,7 @@ import { marketWebSocketServer } from './server/marketWebSocketServer';
 import { buildClaude10SkillsReport } from './server/claudeSkillsEngine';
 import { buildSmartMoneyFlowReport } from './server/moneyFlowEngine';
 import { buildMostActiveFnoReport } from './server/mostActiveFnoEngine';
+import { buildClaudeFnoReport } from './server/claudeFnoEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
@@ -1209,6 +1210,75 @@ async function startServer() {
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Most Active FNO & (Index Options) scan' });
+    }
+  });
+
+  // Claude FNO & (Index Options) 10-Point Scorecard Scanner with Exact Trade Math & 2% Loss Kill-Switch
+  let cachedClaudeOc: Record<string, { source: string; expiryDate?: string; data: any[] | null }> = {};
+  let lastClaudeOcAt = 0;
+
+  app.get('/api/claude-fno/scan', async (req, res) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const accessToken =
+        (req.headers['x-upstox-access-token'] as string) ||
+        scannerService.getEffectiveUpstoxToken();
+
+      const indexSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'INDIAVIX'];
+      const cachedQ = autonomousPriceService.getCachedQuotes();
+      const indexQuotes =
+        cachedQ['NIFTY 50'] && cachedQ['BANKNIFTY']
+          ? cachedQ
+          : await upstoxService.fetchUnifiedMarketQuotes(indexSyms, accessToken).catch(() => cachedQ);
+
+      if (!isCleared && accessToken && accessToken.length > 15 && Date.now() - lastClaudeOcAt > 25000) {
+        if (Date.now() - lastMostActiveOcAt <= 25000 && Object.keys(cachedMostActiveOc).length > 0) {
+          cachedClaudeOc = cachedMostActiveOc;
+          lastClaudeOcAt = lastMostActiveOcAt;
+        } else {
+          const ocSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX'];
+          const ocResults = await Promise.allSettled(
+            ocSyms.map((sym) => upstoxService.fetchLiveOptionChain(sym, accessToken))
+          );
+          const nextOc: Record<string, { source: string; expiryDate?: string; data: any[] | null }> = {};
+          ocSyms.forEach((sym, i) => {
+            const r = ocResults[i];
+            if (r.status === 'fulfilled' && r.value) {
+              nextOc[sym] = r.value;
+            }
+          });
+          cachedClaudeOc = nextOc;
+          lastClaudeOcAt = Date.now();
+        }
+      }
+
+      const capital = Math.max(1000, Number(req.query.capital) || 100000);
+      const dailyLossPct = Number(req.query.dailyLossPct) || 0;
+
+      const report = buildClaudeFnoReport({
+        stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        indexQuotes,
+        optionChainsByIndex: cachedClaudeOc,
+        newsItems: scannerService.getNewsFeedDirect(),
+        indiaVix: scannerService.getIndiaVixPrice(),
+        isMidnightCleared: isCleared,
+        isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
+        dayCategory: sessionState?.brokerSchedule?.dayCategory,
+        capital,
+        dailyLossPct,
+      });
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Claude FNO & (Index Options) scan' });
     }
   });
 
