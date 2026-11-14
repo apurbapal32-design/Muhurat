@@ -2736,13 +2736,13 @@
             <div class="flex items-center gap-2">
               <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-bold">PRO QUANT WORKBENCH</span>
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span class="text-[10px] text-emerald-400 font-bold">218 F&amp;O Candidates Live</span>
+              <span class="text-[10px] text-emerald-400 font-bold">|Chg| &ge; 2% Movers (&plusmn;2% Filter Active)</span>
             </div>
             <h2 class="text-base md:text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-amber-300 mt-1">
               Custom Tables &amp; Multi-Factor Screener
             </h2>
             <p class="text-[11px] text-slate-400 mt-0.5">
-              Construct personalized quantitative screens combining Price, RVOL, OI Change, VWAP Confluence &amp; Institutional Turnover.
+              Construct personalized quantitative screens for <strong>&ge; +2% Up / &le; &minus;2% Down</strong> movers combining Price, RVOL, OI Change, VWAP Confluence &amp; Institutional Turnover.
             </p>
           </div>
 
@@ -2764,7 +2764,7 @@
           </div>
           <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-nowrap md:flex-wrap">
             <button onclick="applyCustomPreset('all')" id="preset-all" class="preset-btn px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 cursor-pointer">
-              All Candidates (218)
+              All &plusmn;2% Movers
             </button>
             <button onclick="applyCustomPreset('bullish_buildup')" id="preset-bullish" class="preset-btn px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap bg-[#121826] text-slate-300 border border-[#222d42] hover:border-emerald-500/40 cursor-pointer">
               🟢 Bullish Long Buildup
@@ -3820,7 +3820,7 @@
         <div class="card p-4 border-l-4 border-cyan-400 bg-gradient-to-r from-[#0d1424] via-[#0e192d] to-[#111526] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div class="space-y-1">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-black">TREND + SMC + OI + GREEKS + REGIME</span>
+              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-black">TREND + SMC + OI + GREEKS + REGIME &bull; |CHG| &ge; 2%</span>
               <h2 class="text-base md:text-lg font-black text-white">Money Flow &bull; Smart Money + Supertrend(10,2) + Hull(55) + Greeks &amp; NIFTY Regime (22/22)</h2>
               <button onclick="openFormulaModal('money_flow')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
             </div>
@@ -4173,7 +4173,7 @@
         <div class="card p-4 border-l-4 border-emerald-400 bg-gradient-to-r from-[#0d1816] via-[#101c29] to-[#0b1322] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div class="space-y-1">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] font-black">10-POINT SCORECARD (≥8/10) • VWAP + 30m/1H AGREE • R:R ≥ 1:2 • 1% RISK QTY • 2% LOSS HALT</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] font-black">10-POINT SCORECARD (&ge;8/10) &bull; |CHG| &ge; 2% &bull; VWAP + 30m/1H AGREE &bull; R:R &ge; 1:2 &bull; 1% RISK QTY &bull; 2% LOSS HALT</span>
               <h2 class="text-base md:text-lg font-black text-white">⚡ Claude FNO &amp; (Index Options)</h2>
               <button onclick="openFormulaModal('claude_fno')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
             </div>
@@ -4616,7 +4616,7 @@
           </div>
           <div class="text-right font-mono text-xs text-slate-400">
             <div>Delivery Ratio: <span class="text-blue-400 font-bold">&ge; 55% Cash Flow</span></div>
-            <div>Holding Horizon: <span class="text-emerald-400 font-bold">Multi-Day Swing</span></div>
+            <div>Move Filter: <span class="text-emerald-400 font-bold">Up &ge; +2% / Down &le; -2%</span></div>
           </div>
         </div>
 
@@ -6348,7 +6348,7 @@
           const turn = Number(s.turnover_cr) || 0;
           const price = Number(s.price) || 0;
           const atp = Number(s.atp) || price;
-          return pct >= 0.50 && pct <= 3.5 && turn >= 90 && price >= atp * 0.999 && (Number(s.bid_ask_ratio) || 1) >= 1.20;
+          return pct >= 2.0 && turn >= 90 && price >= atp * 0.999 && (Number(s.bid_ask_ratio) || 1) >= 1.20;
         },
         score: (s) => {
           const turn = Number(s.turnover_cr) || 0;
@@ -6363,7 +6363,7 @@
           const turn = Number(s.turnover_cr) || 0;
           const price = Number(s.price) || 0;
           const atp = Number(s.atp) || price;
-          return pct <= -0.50 && pct >= -3.5 && turn >= 90 && price <= atp * 1.001 && (Number(s.bid_ask_ratio) || 1) <= 0.85;
+          return pct <= -2.0 && turn >= 90 && price <= atp * 1.001 && (Number(s.bid_ask_ratio) || 1) <= 0.85;
         },
         score: (s) => {
           const turn = Number(s.turnover_cr) || 0;
@@ -7072,8 +7072,9 @@
         if (s.minPrice !== null && price < s.minPrice) return false;
         if (s.maxPrice !== null && price > s.maxPrice) return false;
 
-        // % Change
+        // % Change: Custom Tables strictly shows stocks up >= +2% or down <= -2% (hides below 2% change)
         const pct = Number(stock.pct_change) || 0;
+        if (Math.abs(pct) < 2.0) return false;
         if (s.minPct !== null && pct < s.minPct) return false;
 
         // RVOL
@@ -14446,13 +14447,13 @@ ${json.message || 'Unauthorized token.'}`);
         };
 
         const buyRows = [];
-        pool.filter(s => (Number(s.pct_change) || 0) >= 0.2).forEach(s => {
+        pool.filter(s => (Number(s.pct_change) || 0) >= 2.0).forEach(s => {
           const r = evalSide(s, true);
           if (r.smartMoneyFilters.dualFlowAligned && r.conditionsMet >= 15) buyRows.push(r);
           else blockedContraBuys++;
         });
         const sellRows = [];
-        pool.filter(s => (Number(s.pct_change) || 0) <= -0.2).forEach(s => {
+        pool.filter(s => (Number(s.pct_change) || 0) <= -2.0).forEach(s => {
           const r = evalSide(s, false);
           if (r.smartMoneyFilters.dualFlowAligned && r.conditionsMet >= 15) sellRows.push(r);
           else blockedContraSells++;
@@ -14517,7 +14518,7 @@ ${json.message || 'Unauthorized token.'}`);
         }
 
         const filterList = (list) => {
-          let arr = Array.isArray(list) ? list : [];
+          let arr = (Array.isArray(list) ? list : []).filter(x => Math.abs(Number(x.changePercent) || 0) >= 2.0);
           if (this.strictOnly) arr = arr.filter(x => x.conditionsMet === (x.totalConditions || 22));
           if (q) arr = arr.filter(x => x.symbol.includes(q) || (x.sector && x.sector.toUpperCase().includes(q)));
           return arr;
@@ -15826,10 +15827,11 @@ ${json.message || 'Unauthorized token.'}`);
           };
         });
 
+        const eligibleRows = rows.filter(r => Math.abs(Number(r.changePercent) || 0) >= 2.0);
         const zToA = arr => [...arr].sort((a, b) => String(b.listedAt).localeCompare(String(a.listedAt)) || b.symbol.localeCompare(a.symbol));
-        const qual = rows.filter(r => r.isQualifiedTrade).sort((a, b) => (b.inBothTopVolAndVal - a.inBothTopVolAndVal) || (b.score - a.score)).slice(0, 15);
+        const qual = eligibleRows.filter(r => r.isQualifiedTrade).sort((a, b) => (b.inBothTopVolAndVal - a.inBothTopVolAndVal) || (b.score - a.score)).slice(0, 15);
         const overlap = qual.filter(r => r.inBothTopVolAndVal);
-        const watch = rows.filter(r => !r.isQualifiedTrade).sort((a, b) => b.score - a.score).slice(0, 15);
+        const watch = eligibleRows.filter(r => !r.isQualifiedTrade).sort((a, b) => b.score - a.score).slice(0, 15);
 
         return {
           status: 'ok',
@@ -15853,8 +15855,8 @@ ${json.message || 'Unauthorized token.'}`);
             equitiesFno: zToA(qual),
             indexOptions: [],
             nearMissWatchlist: zToA(watch),
-            topVolumeRankings: [...rows].sort((a, b) => b.rawVolume - a.rawVolume).slice(0, 15),
-            topValueRankings: [...rows].sort((a, b) => b.tradedValueCr - a.tradedValueCr).slice(0, 15)
+            topVolumeRankings: [...eligibleRows].sort((a, b) => b.rawVolume - a.rawVolume).slice(0, 15),
+            topValueRankings: [...eligibleRows].sort((a, b) => b.tradedValueCr - a.tradedValueCr).slice(0, 15)
           }
         };
       },
@@ -15911,6 +15913,7 @@ ${json.message || 'Unauthorized token.'}`);
         const sortBy = document.getElementById('cfno-sort-select')?.value || 'listed_desc';
 
         let rows = (Array.isArray(cats[meta.key]) ? cats[meta.key] : []).filter(r => {
+          if (Math.abs(Number(r.changePercent) || 0) < 2.0) return false;
           if (q && !r.symbol.toUpperCase().includes(q) && !(r.sector || '').toUpperCase().includes(q) && !(r.underlying || '').toUpperCase().includes(q)) return false;
           return true;
         });

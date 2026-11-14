@@ -2,6 +2,10 @@ import { Candle, ScannedStock } from '../src/types';
 import { getISTDateParts } from '../src/data/marketSchedule';
 import { IntradayCandleBar } from './autonomousPriceService';
 
+export function passesMoneyFlowTwoPercentFilter(changePercent: number): boolean {
+  return Math.abs(Number(changePercent) || 0) >= 2.0;
+}
+
 export interface MoneyFlowConditionCheck {
   step: number;
   label: string;
@@ -1442,16 +1446,17 @@ export function buildSmartMoneyFlowReport(
     const isContraSellTrap =
       niftyRegime.trend === 'BEARISH' && greeksData.oiFlowDirection === 'POSITIVE' && greeksData.deltaFlowDirection === 'POSITIVE';
 
-    if ((stock.changePercent || 0) >= 0.2 && bestBuyCount >= 15) {
+    const chp = Number(stock.changePercent) || 0;
+    if (chp >= 2.0 && bestBuyCount >= 15) {
       if (isContraBuyTrap || !bothPositiveBuy) {
-        if ((stock.changePercent || 0) >= 0) blockedContraBuys++;
+        blockedContraBuys++;
       } else {
         allBuyCandidates.push(buildRow('BUY', bestBuyIdx, bestBuyCount, bestBuyScore, bestBuyChecks));
       }
     }
-    if ((stock.changePercent || 0) <= -0.2 && bestSellCount >= 15) {
+    if (chp <= -2.0 && bestSellCount >= 15) {
       if (isContraSellTrap || !bothNegativeSell) {
-        if ((stock.changePercent || 0) < 0) blockedContraSells++;
+        blockedContraSells++;
       } else {
         allSellCandidates.push(buildRow('SELL', bestSellIdx, bestSellCount, bestSellScore, bestSellChecks));
       }

@@ -185,6 +185,11 @@ export const ENTRY_END_SEC = 14 * 3600 + 45 * 60; // 14:45:00 IST
 export const SESSION_START_SEC = 9 * 3600 + 15 * 60; // 09:15:00 IST
 export const ORB_END_SEC = 9 * 3600 + 30 * 60; // 09:30:00 IST
 export const LAST_15_MIN_START_SEC = 15 * 3600 + 15 * 60; // 15:15:00 IST (skips last 15 min)
+export const MIN_TWO_PERCENT_MOVE = 2.0;
+
+export function passesTwoPercentMoveFilter(changePercent: number): boolean {
+  return Math.abs(Number(changePercent) || 0) >= MIN_TWO_PERCENT_MOVE;
+}
 
 const INDEX_SYMBOLS_BLACKLIST = new Set([
   'NIFTY',
@@ -1413,6 +1418,10 @@ export function buildClaudeFnoReport(params: {
     niftyChangePct,
   });
 
+  // Enforce Stock % Chg >= +2.0% (up) or <= -2.0% (down); hide sub-2% movers from the scanner
+  const eligibleEquityRows = equityRows.filter((r) => passesTwoPercentMoveFilter(r.changePercent));
+  const eligibleOptionRows = optionRows.filter((r) => passesTwoPercentMoveFilter(r.changePercent));
+
   // Z-to-A Model (1st/earliest eligible stock shows LAST, latest eligible shows FIRST), prioritizing Top Vol + Value overlap when desired
   const sortByZtoAListedAt = (arr: ClaudeFnoRow[]) =>
     [...arr].sort((a, b) => {
@@ -1420,11 +1429,11 @@ export function buildClaudeFnoReport(params: {
       return diff !== 0 ? diff : b.symbol.localeCompare(a.symbol);
     });
 
-  const allQualifiedEquities = equityRows
+  const allQualifiedEquities = eligibleEquityRows
     .filter((r) => r.isQualifiedTrade)
     .sort((a, b) => (b.inBothTopVolAndVal ? 1 : 0) - (a.inBothTopVolAndVal ? 1 : 0) || b.score - a.score || b.tradedValueCr - a.tradedValueCr);
 
-  const allQualifiedOptions = optionRows
+  const allQualifiedOptions = eligibleOptionRows
     .filter((r) => r.isQualifiedTrade)
     .sort((a, b) => b.score - a.score || b.tradedValueCr - a.tradedValueCr);
 
@@ -1438,7 +1447,7 @@ export function buildClaudeFnoReport(params: {
   // Strict 0..15 cap per scanner tab, sorted Z->A Listed At
   const qualifiedTrades = sortByZtoAListedAt(combinedQualifiedPool.slice(0, 15));
   const topVolAndValueQualified = sortByZtoAListedAt(
-    equityRows
+    eligibleEquityRows
       .filter((r) => r.isQualifiedTrade && r.inBothTopVolAndVal)
       .sort((a, b) => b.score - a.score || b.tradedValueCr - a.tradedValueCr)
       .slice(0, 15)
@@ -1447,7 +1456,7 @@ export function buildClaudeFnoReport(params: {
   const indexOptions = sortByZtoAListedAt(allQualifiedOptions.slice(0, 15));
 
   const nearMissWatchlist = sortByZtoAListedAt(
-    [...equityRows, ...optionRows]
+    [...eligibleEquityRows, ...eligibleOptionRows]
       .filter((r) => !r.isQualifiedTrade)
       .sort(
         (a, b) =>
@@ -1458,8 +1467,8 @@ export function buildClaudeFnoReport(params: {
       .slice(0, 15)
   );
 
-  const topVolumeRankings = [...equityRows].sort((a, b) => b.rawVolume - a.rawVolume).slice(0, 15);
-  const topValueRankings = [...equityRows].sort((a, b) => b.tradedValueCr - a.tradedValueCr).slice(0, 15);
+  const topVolumeRankings = [...eligibleEquityRows].sort((a, b) => b.rawVolume - a.rawVolume).slice(0, 15);
+  const topValueRankings = [...eligibleEquityRows].sort((a, b) => b.tradedValueCr - a.tradedValueCr).slice(0, 15);
 
   return {
     status: 'ok',

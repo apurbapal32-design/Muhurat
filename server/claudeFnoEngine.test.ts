@@ -9,8 +9,10 @@ import {
   evaluateEntryGate,
   resampleClaudeBars,
   buildClaudeFnoReport,
+  passesTwoPercentMoveFilter,
   ClaudeFnoBar,
 } from './claudeFnoEngine';
+import { passesMoneyFlowTwoPercentFilter } from './moneyFlowEngine';
 import { ScannedStock } from '../src/types';
 
 test('evaluate10PointScore grants full 10/10 when all 10 exact criteria pass', () => {
@@ -319,3 +321,116 @@ test('buildClaudeFnoReport integrates stocks, Top Vol+Val overlap, Z->A Listed A
   assert.ok(haltedReport.haltReason?.includes('2.00%'));
   assert.equal(haltedReport.categories.equitiesFno.every((r) => !r.executionAllowed), true);
 });
+
+test('±2% Stock % Chg filter accepts >= +2% / <= -2% and rejects all < 2% moves', () => {
+  for (const fn of [passesTwoPercentMoveFilter, passesMoneyFlowTwoPercentFilter]) {
+    assert.equal(fn(2.0), true);
+    assert.equal(fn(5.24), true);
+    assert.equal(fn(-2.0), true);
+    assert.equal(fn(-3.42), true);
+    assert.equal(fn(1.99), false);
+    assert.equal(fn(-1.99), false);
+    assert.equal(fn(0.5), false);
+    assert.equal(fn(0), false);
+  }
+});
+
+test('buildClaudeFnoReport hides sub-2% stocks from all categories while keeping >= +2% and <= -2% stocks', () => {
+  const today = '2026-11-13';
+  const prev = '2026-11-12';
+  const makeBars = (base: number) => {
+    const out: any[] = [];
+    for (let i = 0; i < 10; i++) {
+      const sec = 9 * 3600 + 15 * 60 + i * 300;
+      out.push({
+        tsSec: 1700000000 + i * 300,
+        dateIST: prev,
+        timeIST: '09:30',
+        secIST: sec,
+        open: base - 15 + i * 0.5,
+        high: base - 10 + i * 0.5,
+        low: base - 18 + i * 0.5,
+        close: base - 11 + i * 0.5,
+        volume: 10000,
+      });
+    }
+    for (let i = 0; i < 25; i++) {
+      const sec = 9 * 3600 + 15 * 60 + i * 300;
+      const open = base + i * 1.4;
+      const close = i === 24 ? open + 12 : open + 2.2;
+      const high = i === 24 ? open + 13 : open + 2.5;
+      const low = open - 0.5;
+      out.push({
+        tsSec: 1700100000 + i * 300,
+        dateIST: today,
+        timeIST: '11:15',
+        secIST: sec,
+        open,
+        high,
+        low,
+        close,
+        volume: i === 24 ? 45000 : 12000,
+      });
+    }
+    return out;
+  };
+
+  const makeStock = (symbol: string, chp: number): ScannedStock => {
+    const s: ScannedStock = {
+      symbol,
+      name: symbol,
+      sector: 'IT',
+      price: 1046,
+      change: Number(((1000 * chp) / 100).toFixed(2)),
+      changePercent: chp,
+      volume: 9500000,
+      signal: chp >= 0 ? 'BUY' : 'SELL',
+      aiScore: 90,
+      scoreBreakdown: {} as any,
+      indicators: { open: 1002, high: 1048, low: 999, close: 990, vwap: 1020, pdh: 1000, pdl: 970 } as any,
+      risk: {} as any,
+      oiData: { openInterest: 20, changeInOI: 3, changeInOIPercent: 14.5, pcr: 1.2, buildup: 'LONG_BUILDUP', maxPainStrike: 1050, totalCallOI: 10, totalPutOI: 12, atmStrike: 1050, optionChain: [] },
+      lastUpdated: '11:15:00',
+      listedAt: '11:15:00',
+      bidAskRatio: 1.45,
+      keyTriggers: [],
+    };
+    (s as any).deliveryPercent = 62.5;
+    return s;
+  };
+
+  const report = buildClaudeFnoReport({
+    stocks: [
+      makeStock('SMALLUP', 1.85),
+      makeStock('SMALLDOWN', -1.42),
+      makeStock('BIGUP', 5.6),
+      makeStock('BIGDOWN', -2.75),
+    ],
+    getExtendedBarsFn: () => makeBars(1000),
+    candlesMap: new Map(),
+    indexQuotes: {},
+    optionChainsByIndex: {},
+    indiaVix: 15,
+    isMidnightCleared: false,
+    capital: 100000,
+    dailyLossPct: 0,
+  });
+
+  const allReturnedRows = [
+    ...report.categories.qualifiedTrades,
+    ...report.categories.topVolAndValueQualified,
+    ...report.categories.equitiesFno,
+    ...report.categories.indexOptions,
+    ...report.categories.nearMissWatchlist,
+    ...report.categories.topVolumeRankings,
+    ...report.categories.topValueRankings,
+  ];
+  const returnedSymbols = new Set(allReturnedRows.map((r) => r.symbol));
+
+  assert.equal(returnedSymbols.has('SMALLUP'), false);
+  assert.equal(returnedSymbols.has('SMALLDOWN'), false);
+  assert.equal(returnedSymbols.has('BIGUP'), true);
+  assert.equal(returnedSymbols.has('BIGDOWN'), true);
+  assert.ok(allReturnedRows.every((r) => Math.abs(r.changePercent) >= 2.0));
+});
+
