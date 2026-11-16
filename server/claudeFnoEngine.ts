@@ -207,11 +207,12 @@ const INDEX_SYMBOLS_BLACKLIST = new Set([
 ]);
 
 export function parseClockSec(t?: string): number {
-  if (!t) return ENTRY_START_SEC;
+  if (!t || t === '--') return 0;
   const parts = String(t)
     .trim()
     .split(':')
     .map((x) => parseInt(x, 10) || 0);
+  if (parts.length < 2) return 0;
   return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
 }
 
@@ -223,19 +224,9 @@ export function formatClockHHMMSS(sec: number): string {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
 }
 
-export function clampSecToEntryWindow(sec: number, sym: string, maxLiveSec: number): string {
-  const effectiveUpper = maxLiveSec >= ENTRY_START_SEC ? Math.min(ENTRY_END_SEC, maxLiveSec) : ENTRY_END_SEC;
-  let clamped = sec;
-  if (clamped < ENTRY_START_SEC || clamped > effectiveUpper) {
-    let h = 2166136261;
-    for (let i = 0; i < sym.length; i++) {
-      h ^= sym.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    const span = Math.max(60, effectiveUpper - ENTRY_START_SEC);
-    clamped = ENTRY_START_SEC + (Math.abs(h) % span);
-  }
-  return formatClockHHMMSS(Math.max(ENTRY_START_SEC, Math.min(ENTRY_END_SEC, clamped)));
+export function formatBarConfirmationTime(sec: number, maxLiveSec: number): string {
+  const capped = maxLiveSec > 0 ? Math.min(sec, maxLiveSec) : sec;
+  return formatClockHHMMSS(capped);
 }
 
 /**
@@ -635,7 +626,7 @@ function buildWorkBars(
   todayDateIST: string
 ): ClaudeFnoBar[] {
   let bars: ClaudeFnoBar[] = [];
-  if (Array.isArray(extendedBars) && extendedBars.length >= 10) {
+  if (Array.isArray(extendedBars) && extendedBars.length >= 4) {
     bars = extendedBars.map((b) => ({
       timeIST: b.timeIST.length === 5 ? `${b.timeIST}:00` : b.timeIST,
       dateIST: b.dateIST,
@@ -644,11 +635,12 @@ function buildWorkBars(
       high: Number(b.high) || Number(b.close),
       low: Number(b.low) || Number(b.close),
       close: Number(b.close) || Number(stock.price),
-      volume: Math.max(100, Math.round(Number(b.volume) || 1000)),
+      volume: Math.max(1, Math.round(Number(b.volume) || 0)),
     }));
-  } else if (Array.isArray(fallbackCandles) && fallbackCandles.length >= 8) {
+  } else if (Array.isArray(fallbackCandles) && fallbackCandles.length >= 4) {
     bars = fallbackCandles.map((c, idx) => {
-      const sec = SESSION_START_SEC + idx * 300;
+      const parsed = c.time ? parseClockSec(c.time) : 0;
+      const sec = parsed >= SESSION_START_SEC ? parsed : SESSION_START_SEC + idx * 300;
       return {
         timeIST: c.time.length === 5 ? `${c.time}:00` : c.time,
         dateIST: todayDateIST,
@@ -657,29 +649,13 @@ function buildWorkBars(
         high: Number(c.high) || Number(c.close),
         low: Number(c.low) || Number(c.close),
         close: Number(c.close) || Number(stock.price),
-        volume: Math.max(100, Math.round(Number(c.volume) || 1000)),
+        volume: Math.max(1, Math.round(Number(c.volume) || 0)),
       };
     });
   }
 
   if (bars.length === 0) {
-    const lp = Number(stock.price) || 100;
-    const prev = Number((lp - (Number(stock.change) || 0)).toFixed(2)) || lp;
-    for (let i = 0; i < 60; i++) {
-      const ratio = (i + 1) / 60;
-      const c = Number((prev + (lp - prev) * ratio).toFixed(2));
-      const sec = SESSION_START_SEC + i * 300;
-      bars.push({
-        timeIST: formatClockHHMMSS(sec),
-        dateIST: todayDateIST,
-        secIST: sec,
-        open: Number((i === 0 ? prev : bars[i - 1].close).toFixed(2)),
-        high: Number((c * 1.002).toFixed(2)),
-        low: Number((c * 0.998).toFixed(2)),
-        close: c,
-        volume: Math.max(1500, Math.round((Number(stock.volume) || 250000) / 60)),
-      });
-    }
+    return [];
   }
 
   const last = bars[bars.length - 1];
@@ -827,7 +803,7 @@ function evaluateEquityClaudeRow(params: {
   const tradedValueCr = Number(((rawTotalVolume * lp) / 1e7).toFixed(2));
 
   const oiChangePct = Number((stock.oiData?.changeInOIPercent ?? 0).toFixed(2));
-  const bidAskRatio = Number((stock.bidAskRatio || (chgPct >= 0 ? 1.25 : 0.82)).toFixed(2));
+  const bidAskRatio = Number((stock.bidAskRatio && stock.bidAskRatio > 0 ? stock.bidAskRatio : 1.0).toFixed(2));
   const cycleBuildup = normalizeCycleBuildup(stock.oiData?.buildup, chgPct, oiChangePct, bidAskRatio);
 
   const dayHigh = Number(stock.indicators?.high || Math.max(...activeBars.map((b) => b.high), lp));
@@ -906,8 +882,7 @@ function evaluateEquityClaudeRow(params: {
       oiChangePct,
     });
 
-  const rawSec = stock.listedAt ? parseClockSec(stock.listedAt) : breakoutBar.secIST;
-  const listedAt = clampSecToEntryWindow(rawSec, stock.symbol, maxLiveSec);
+  const listedAt = formatBarConfirmationTime(breakoutBar.secIST, maxLiveSec);
   const listedSec = parseClockSec(listedAt);
   const inEntryWindow = listedSec >= ENTRY_START_SEC && listedSec <= ENTRY_END_SEC;
 
@@ -941,6 +916,7 @@ function evaluateEquityClaudeRow(params: {
     finalEval.score >= 8 &&
     entryGate.ltpGtVwap &&
     entryGate.trend1h30mAgree &&
+    entryGate.inValidTimeWindow &&
     entryGate.notFirst5Min &&
     entryGate.notLast15Min &&
     entryGate.notResultDay &&
@@ -1129,10 +1105,18 @@ function buildClaudeIndexOptions(params: {
 
         const rawBidQ = Number(mkt.bid_qty || mkt.total_buy_qty || 0);
         const rawAskQ = Number(mkt.ask_qty || mkt.total_sell_qty || 0);
+        const spotBa = Number(q?.bidAskRatio || (q?.bidQty && q?.askQty ? q.bidQty / Math.max(1, q.askQty) : 0));
         const bidAskRatio =
           rawBidQ > 0 && rawAskQ > 0
-            ? Number(Math.max(0.45, Math.min(2.6, rawBidQ / rawAskQ)).toFixed(2))
-            : Number(Math.max(0.55, Math.min(2.2, (premChgPct >= 0 ? 1.28 : 0.78) + premChgPct * 0.01)).toFixed(2));
+            ? Number(Math.max(0.25, Math.min(4.0, rawBidQ / rawAskQ)).toFixed(2))
+            : spotBa > 0
+            ? Number(
+                Math.max(
+                  0.35,
+                  Math.min(3.0, optType === 'CE' ? spotBa : 1 / Math.max(0.35, spotBa))
+                ).toFixed(2)
+              )
+            : 1.0;
 
         const cycleBuildup = normalizeCycleBuildup(undefined, premChgPct, oiChangePct, bidAskRatio);
 
@@ -1153,11 +1137,19 @@ function buildClaudeIndexOptions(params: {
         const slotAvg10dVolume = Math.round((sp.key === 'NIFTY 50' ? 1900000 : 1200000) / 48);
         const prevDeliveryPct = Number(Math.min(78, Math.max(38, 52 + premChgPct * 0.5)).toFixed(1));
 
-        const listedAt = clampSecToEntryWindow(
-          ENTRY_START_SEC + 90 + spIdx * 240 + sIdx * 85 + (optType === 'PE' ? 35 : 0),
-          `CLAUDE-OPT-${sp.label}-${strike}-${optType}`,
-          params.maxLiveSec
-        );
+        // Anchor Option listedAt strictly to actual index spot breakout candle within [09:20, maxLiveSec]
+        const spotWindowBars = activeIdx.filter((b) => b.secIST >= ENTRY_START_SEC && b.secIST <= Math.min(ENTRY_END_SEC, params.maxLiveSec));
+        let optBreakoutBar = spotWindowBars[spotWindowBars.length - 1];
+        for (const sb of spotWindowBars) {
+          const hit = optType === 'CE' ? sb.close > spotOrb.orh || sb.close > spotPdh : sb.close < spotOrb.orl;
+          if (hit) {
+            optBreakoutBar = sb;
+            break;
+          }
+        }
+        const listedAt = optBreakoutBar
+          ? formatBarConfirmationTime(optBreakoutBar.secIST, params.maxLiveSec)
+          : '--';
         const listedSec = parseClockSec(listedAt);
 
         const evalScore = evaluate10PointScore({
@@ -1205,7 +1197,12 @@ function buildClaudeIndexOptions(params: {
         });
 
         const isQualifiedTrade =
-          evalScore.score >= 8 && entryGate.ltpGtVwap && entryGate.trend1h30mAgree && tradeMath.isValidRR;
+          listedAt !== '--' &&
+          entryGate.inValidTimeWindow &&
+          evalScore.score >= 8 &&
+          entryGate.ltpGtVwap &&
+          entryGate.trend1h30mAgree &&
+          tradeMath.isValidRR;
 
         rawRows.push({
           id: `COPT-${sp.label}-${strike}-${optType}`,
@@ -1259,7 +1256,7 @@ function buildClaudeIndexOptions(params: {
           maxScore: 10,
           criteria: evalScore.criteria,
           listedAt,
-          inEntryWindow: activeIdx.length >= 0 && listedSec >= ENTRY_START_SEC && listedSec <= ENTRY_END_SEC,
+          inEntryWindow: listedSec >= ENTRY_START_SEC && listedSec <= ENTRY_END_SEC,
           isResultDay: false,
           isCircuitLimit: false,
           entryGate,

@@ -434,3 +434,41 @@ test('buildClaudeFnoReport hides sub-2% stocks from all categories while keeping
   assert.ok(allReturnedRows.every((r) => Math.abs(r.changePercent) >= 2.0));
 });
 
+test('buildClaudeFnoReport generates zero fake rows when real candles are missing', () => {
+  const s: ScannedStock = {
+    symbol: 'SBIN',
+    name: 'State Bank of India',
+    sector: 'Banking',
+    price: 840,
+    change: 24,
+    changePercent: 2.94,
+    volume: 6500000,
+    signal: 'BUY',
+    aiScore: 90,
+    scoreBreakdown: {} as any,
+    indicators: { open: 820, high: 844, low: 818, close: 840, vwap: 830, pdh: 822, pdl: 805 } as any,
+    risk: {} as any,
+    oiData: { openInterest: 30, changeInOI: 4, changeInOIPercent: 15, pcr: 1.25, buildup: 'LONG_BUILDUP', maxPainStrike: 840, totalCallOI: 15, totalPutOI: 18, atmStrike: 840, optionChain: [] },
+    lastUpdated: '10:30:00',
+    listedAt: '10:30:00',
+    bidAskRatio: 1.38,
+    keyTriggers: [],
+  };
+
+  const report = buildClaudeFnoReport({
+    stocks: [s],
+    getExtendedBarsFn: () => undefined,
+    candlesMap: new Map(),
+    indexQuotes: {},
+    optionChainsByIndex: {},
+    indiaVix: 14.5,
+    isMidnightCleared: false,
+    capital: 100000,
+    dailyLossPct: 0,
+  });
+
+  assert.equal(report.categories.qualifiedTrades.length, 0);
+  assert.equal(report.categories.equitiesFno.length, 0);
+  assert.equal(report.categories.indexOptions.length, 0);
+});
+

@@ -13,6 +13,7 @@ export interface BuySellRecommendation {
   symbol: string;
   name: string;
   sector: string;
+  sectorChangePercent: number;
   action: 'STRONG BUY' | 'BUY' | 'STRONG SELL' | 'SELL';
   confidence: number;
   confluenceScore: number;
@@ -39,8 +40,9 @@ export interface BuySellRecommendation {
 }
 
 function getSecFromHHMMSS(t?: string): number {
-  if (!t) return 0;
+  if (!t || t === '--') return 0;
   const parts = t.trim().split(':').map((x) => parseInt(x, 10) || 0);
+  if (parts.length < 2) return 0;
   return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
 }
 
@@ -102,6 +104,8 @@ export function buildClaude10SkillsReport(
     .filter(
       (s) =>
         s.signal === 'BUY' &&
+        Boolean(s.listedAt && s.listedAt !== '--') &&
+        (s.fixedEntryPrice || s.risk.entryPrice || 0) > 0 &&
         s.changePercent >= 0.45 &&
         (s.indicators.rvol || 1) >= 1.15 &&
         s.indicators.price >= (s.indicators.vwap || s.indicators.price) * 0.998 &&
@@ -112,6 +116,8 @@ export function buildClaude10SkillsReport(
     .filter(
       (s) =>
         s.signal === 'SELL' &&
+        Boolean(s.listedAt && s.listedAt !== '--') &&
+        (s.fixedEntryPrice || s.risk.entryPrice || 0) > 0 &&
         s.changePercent <= -0.45 &&
         (s.indicators.rvol || 1) >= 1.15 &&
         s.indicators.price <= (s.indicators.vwap || s.indicators.price) * 1.002 &&
@@ -196,11 +202,12 @@ export function buildClaude10SkillsReport(
       symbol: s.symbol,
       name: s.name,
       sector: s.sector,
+      sectorChangePercent: Number((s.sectorChangePercent ?? 0).toFixed(2)),
       action,
       confidence: confluenceScore,
       confluenceScore,
       formulaName: s.formulaName || 'ORB / VWAP Trigger',
-      listedAt: s.listedAt || '09:20:05',
+      listedAt: s.listedAt && s.listedAt !== '--' ? s.listedAt : '--',
       entryPrice: entry,
       livePrice: s.price,
       stopLoss: sl,
@@ -208,7 +215,7 @@ export function buildClaude10SkillsReport(
       target2: t2,
       target3: t3,
       changePercent: s.changePercent,
-      rvol: Number((s.indicators.rvol || 1.2).toFixed(2)),
+      rvol: Number((s.indicators.rvol || 0).toFixed(2)),
       bidAskRatio: bidRatio,
       orderBookBias: s.orderBookBias || (bidRatio >= 1.15 ? 'Buyer Dominance' : bidRatio <= 0.85 ? 'Seller Pressure' : 'Balanced'),
       pattern: detectPattern(s),
@@ -310,7 +317,7 @@ export function buildClaude10SkillsReport(
 
   for (const s of [...bullPool.slice(0, 8), ...bearPool.slice(0, 8)]) {
     const listedSec = getSecFromHHMMSS(s.listedAt);
-    if (listedSec <= sliceSec) {
+    if (listedSec > 0 && listedSec <= sliceSec) {
       const bars = candlesMap.get(s.symbol) || [];
       let sliceBar = bars.length > 0 ? bars[0] : undefined;
       for (const b of bars) {
@@ -318,13 +325,13 @@ export function buildClaude10SkillsReport(
       }
       const entryP = s.fixedEntryPrice || s.risk.entryPrice || s.price;
       const priceAtSlice = Number((sliceBar?.close || entryP).toFixed(2));
-      const isBuySide = s.changePercent >= 0 || s.signal === 'BUY';
+      const isBuySide = s.signal === 'BUY';
       const pnlAtSlicePct = Number((((isBuySide ? priceAtSlice - entryP : entryP - priceAtSlice) / Math.max(1, entryP)) * 100).toFixed(2));
       const pnlNowPct = Number((((isBuySide ? s.price - entryP : entryP - s.price) / Math.max(1, entryP)) * 100).toFixed(2));
       timeMachineSignals.push({
         symbol: s.symbol,
         side: isBuySide ? 'BUY' : 'SELL',
-        listedAt: s.listedAt || '09:30:00',
+        listedAt: s.listedAt!,
         entryPrice: entryP,
         priceAtSlice,
         currentPrice: s.price,
@@ -413,9 +420,9 @@ export function buildClaude10SkillsReport(
   };
 
   // Skill 8: Backtesting & Strategy Reviewer
-  const btSample = buyRecommendations[0] || { symbol: 'RELIANCE', entryPrice: 1335 };
+  const btSample = buyRecommendations[0] || sellRecommendations[0] || equityStocks[0];
   let simResult: { winRatePercent: number; profitFactor: number; maxDrawdownPercent: number } | null = null;
-  if (runBacktestFn) {
+  if (runBacktestFn && btSample) {
     try {
       simResult = runBacktestFn(btSample.symbol);
     } catch {
@@ -425,6 +432,7 @@ export function buildClaude10SkillsReport(
 
   const formulaGroups: Record<string, { label: string; count: number; wins: number; sumPct: number; best: string; bestPct: number }> = {};
   for (const s of equityStocks) {
+    if (s.signal !== 'BUY' && s.signal !== 'SELL') continue;
     const code = s.formulaCode || 'STRONG_ORB';
     const label = s.formulaName || code;
     if (!formulaGroups[code]) {
@@ -442,11 +450,15 @@ export function buildClaude10SkillsReport(
     }
   }
 
+  const totalActionable = Object.values(formulaGroups).reduce((a, g) => a + g.count, 0);
+  const totalActionableWins = Object.values(formulaGroups).reduce((a, g) => a + g.wins, 0);
+  const fallbackWinRate = totalActionable > 0 ? Number(((totalActionableWins / totalActionable) * 100).toFixed(1)) : 0;
+
   const backtestingStrategyReviewer = {
-    liveBenchmarkSymbol: btSample.symbol,
-    simulatedWinRatePct: simResult?.winRatePercent ?? 66.7,
-    simulatedProfitFactor: simResult?.profitFactor ?? 2.15,
-    simulatedMaxDrawdownPct: simResult?.maxDrawdownPercent ?? 3.4,
+    liveBenchmarkSymbol: btSample?.symbol || '--',
+    simulatedWinRatePct: simResult?.winRatePercent ?? fallbackWinRate,
+    simulatedProfitFactor: simResult?.profitFactor ?? 0,
+    simulatedMaxDrawdownPct: simResult?.maxDrawdownPercent ?? 0,
     strategies: Object.entries(formulaGroups).map(([code, g]) => ({
       formulaCode: code,
       formulaName: g.label,
@@ -458,16 +470,16 @@ export function buildClaude10SkillsReport(
   };
 
   // Skill 9: End-of-Day Journaling & Auditing
-  const closedOrHit = equityStocks.filter((s) => s.tradeStatus && s.tradeStatus !== 'OPEN');
+  const closedOrHit = equityStocks.filter((s) => s.tradeStatus && s.tradeStatus !== 'OPEN' && s.tradeStatus !== 'NO_SIGNAL');
   const t1Hits = equityStocks.filter((s) => String(s.tradeStatus || '').includes('TARGET')).length;
   const slHits = equityStocks.filter((s) => s.tradeStatus === 'CLOSED_STOP_LOSS').length;
   const eodJournalAuditor = {
     dateIST: ist.dateStr,
-    totalTrackedSignals: equityStocks.length,
+    totalTrackedSignals: buyRecommendations.length + sellRecommendations.length,
     targetsAchieved: t1Hits,
     stopLossesHit: slHits,
-    activeTrades: equityStocks.length - closedOrHit.length,
-    auditAccuracyPct: t1Hits + slHits > 0 ? Number(((t1Hits / (t1Hits + slHits)) * 100).toFixed(1)) : 74.5,
+    activeTrades: equityStocks.filter((s) => s.tradeStatus === 'OPEN').length,
+    auditAccuracyPct: t1Hits + slHits > 0 ? Number(((t1Hits / (t1Hits + slHits)) * 100).toFixed(1)) : 0,
     auditNotes: [
       t1Hits > slHits
         ? 'Trend alignment strongly favored ORB & RVOL breakouts over fading moves.'

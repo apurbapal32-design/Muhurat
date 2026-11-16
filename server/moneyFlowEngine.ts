@@ -54,6 +54,7 @@ export interface MoneyFlowSignalRow {
   symbol: string;
   name: string;
   sector: string;
+  sectorChangePct?: number;
   direction: 'BUY' | 'SELL';
   grade: 'STRICT 22/22' | 'HIGH SURGE' | 'SETUP';
   conditionsMet: number;
@@ -169,8 +170,9 @@ interface WorkBar {
 }
 
 function parseTimeToSec(t?: string): number {
-  if (!t) return 9 * 3600 + 30 * 60;
+  if (!t || t === '--') return 0;
   const parts = t.trim().split(':').map((x) => parseInt(x, 10) || 0);
+  if (parts.length < 2) return 0;
   return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
 }
 
@@ -180,15 +182,6 @@ function formatSecToHHMMSS(sec: number): string {
   const mm = Math.floor((s % 3600) / 60);
   const ss = s % 60;
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
-}
-
-function deterministicSecOffset(symbol: string, barIdx: number): number {
-  let h = 2166136261;
-  for (let i = 0; i < symbol.length; i++) {
-    h ^= symbol.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return ((Math.abs(h) + barIdx * 17) % 53) + 4;
 }
 
 /**
@@ -704,7 +697,7 @@ function buildWorkBars(
 ): WorkBar[] {
   let raw: WorkBar[] = [];
 
-  if (Array.isArray(extendedBars) && extendedBars.length >= 12) {
+  if (Array.isArray(extendedBars) && extendedBars.length >= 6) {
     raw = extendedBars.map((b) => ({
       timeIST: b.timeIST.length === 5 ? `${b.timeIST}:00` : b.timeIST,
       dateIST: b.dateIST,
@@ -713,11 +706,12 @@ function buildWorkBars(
       high: Number(b.high) || Number(b.close),
       low: Number(b.low) || Number(b.close),
       close: Number(b.close) || Number(stock.price),
-      volume: Math.max(100, Math.round(Number(b.volume) || 1000)),
+      volume: Math.max(1, Math.round(Number(b.volume) || 0)),
     }));
-  } else if (Array.isArray(fallbackCandles) && fallbackCandles.length >= 8) {
+  } else if (Array.isArray(fallbackCandles) && fallbackCandles.length >= 6) {
     raw = fallbackCandles.map((c, idx) => {
-      const sec = 9 * 3600 + 15 * 60 + idx * 300;
+      const parsed = c.time ? parseTimeToSec(c.time) : 0;
+      const sec = parsed >= 9 * 3600 + 15 * 60 ? parsed : 9 * 3600 + 15 * 60 + idx * 300;
       return {
         timeIST: c.time.length === 5 ? `${c.time}:00` : c.time,
         dateIST: todayDateIST,
@@ -726,28 +720,13 @@ function buildWorkBars(
         high: Number(c.high) || Number(c.close),
         low: Number(c.low) || Number(c.close),
         close: Number(c.close) || Number(stock.price),
-        volume: Math.max(100, Math.round(Number(c.volume) || 1000)),
+        volume: Math.max(1, Math.round(Number(c.volume) || 0)),
       };
     });
   }
 
   if (raw.length === 0) {
-    const p = Number(stock.price) || 100;
-    const prev = p - (Number(stock.change) || 0);
-    for (let i = 0; i < 30; i++) {
-      const ratio = (i + 1) / 30;
-      const c = Number((prev + (p - prev) * ratio).toFixed(2));
-      raw.push({
-        timeIST: formatSecToHHMMSS(9 * 3600 + 15 * 60 + i * 300),
-        dateIST: todayDateIST,
-        secIST: Math.min(15 * 3600 + 29 * 60, 9 * 3600 + 15 * 60 + i * 300),
-        open: Number((i === 0 ? prev : raw[i - 1].close).toFixed(2)),
-        high: Number((c * 1.002).toFixed(2)),
-        low: Number((c * 0.998).toFixed(2)),
-        close: c,
-        volume: Math.max(500, Math.round((Number(stock.volume) || 250000) / 30)),
-      });
-    }
+    return [];
   }
 
   // Sync live price onto the trailing bar accurately
@@ -769,7 +748,6 @@ function buildWorkBars(
 let lastCachedMfReport: MoneyFlowScanReport | null = null;
 let lastCachedMfAt = 0;
 let lastCachedMfDate = '';
-const liveTriggerFirstSeenSec = new Map<string, number>();
 
 export function buildSmartMoneyFlowReport(
   stocks: ScannedStock[],
@@ -783,7 +761,6 @@ export function buildSmartMoneyFlowReport(
 
   if (lastCachedMfDate !== ist.dateStr) {
     lastCachedMfDate = ist.dateStr;
-    liveTriggerFirstSeenSec.clear();
     lastCachedMfReport = null;
   }
 
@@ -833,7 +810,6 @@ export function buildSmartMoneyFlowReport(
 
   if (isMidnightCleared) {
     lastCachedMfReport = null;
-    liveTriggerFirstSeenSec.clear();
     return {
       status: 'ok',
       generatedAt: now.toISOString(),
@@ -867,6 +843,19 @@ export function buildSmartMoneyFlowReport(
     (s) => s.sector !== 'Indices' && !INDEX_BLACKLIST.has(s.symbol.toUpperCase())
   );
 
+  const sectorAccum = new Map<string, { sum: number; cnt: number }>();
+  for (const s of equityStocks) {
+    const sec = s.sector || 'NSE F&O';
+    const cur = sectorAccum.get(sec) || { sum: 0, cnt: 0 };
+    cur.sum += Number(s.changePercent) || 0;
+    cur.cnt += 1;
+    sectorAccum.set(sec, cur);
+  }
+  const sectorAvgPctMap: Record<string, number> = {};
+  sectorAccum.forEach((v, sec) => {
+    sectorAvgPctMap[sec] = Number((v.sum / Math.max(1, v.cnt)).toFixed(2));
+  });
+
   const allBuyCandidates: MoneyFlowSignalRow[] = [];
   const allSellCandidates: MoneyFlowSignalRow[] = [];
   let blockedContraBuys = 0;
@@ -875,7 +864,7 @@ export function buildSmartMoneyFlowReport(
   for (const stock of equityStocks) {
     const extBars = getExtendedBarsFn(stock.symbol);
     const bars = buildWorkBars(stock, extBars, candlesMap.get(stock.symbol), ist.dateStr);
-    if (bars.length < 12) continue;
+    if (bars.length < 6) continue;
 
     const closes = bars.map((b) => b.close);
     const hlc3 = bars.map((b) => (b.high + b.low + b.close) / 3);
@@ -1300,27 +1289,15 @@ export function buildSmartMoneyFlowReport(
       const sellPresPct = 100 - buyPresPct;
 
       const baseSec = parseTimeToSec(trig.timeIST);
-      const exactSec = baseSec % 60 === 0 ? Math.min(15 * 3600 + 29 * 60 + 55, baseSec + deterministicSecOffset(stock.symbol, trigIdx)) : baseSec;
       const nowParts = ist.timeStr.split(':').map((x) => parseInt(x, 10) || 0);
       const nowSec = (nowParts[0] || 0) * 3600 + (nowParts[1] || 0) * 60 + (nowParts[2] || 0);
       const isMarketToday = trig.dateIST === ist.dateStr && nowSec >= 9 * 3600 + 15 * 60 && nowSec <= 15 * 3600 + 30 * 60;
-      let cappedSec = isMarketToday ? Math.min(nowSec, exactSec) : exactSec;
-      // For triggers firing on the live forming 5m bar, stamp the exact real-time discovery second (never lag 2m!)
-      if (isMarketToday && trigIdx === bars.length - 1 && nowSec - baseSec >= 0 && nowSec - baseSec < 360) {
-        const trigKey = `${ist.dateStr}:${direction}:${stock.symbol}:${trig.timeIST}`;
-        if (!liveTriggerFirstSeenSec.has(trigKey)) {
-          liveTriggerFirstSeenSec.set(trigKey, nowSec);
-        }
-        cappedSec = liveTriggerFirstSeenSec.get(trigKey)!;
-      }
+      const barConfirmSec = Math.min(15 * 3600 + 29 * 60 + 55, baseSec + 299);
+      const cappedSec = isMarketToday ? Math.min(nowSec, barConfirmSec) : barConfirmSec;
       const listedAt = formatSecToHHMMSS(cappedSec);
 
       const livePrice = Number(stock.price) || trig.close;
-      let entryPrice = Number(trig.close.toFixed(2));
-      if (Math.abs(entryPrice - livePrice) < 0.02) {
-        const sep = Math.max(0.35, Number((livePrice * 0.0025).toFixed(2)));
-        entryPrice = Number((direction === 'BUY' ? Math.max(0.05, livePrice - sep) : livePrice + sep).toFixed(2));
-      }
+      const entryPrice = Number(trig.close.toFixed(2));
 
       const atr = Math.max(0.5, st.atr[trigIdx] || livePrice * 0.007);
       const riskDist = Math.max(atr * 1.35, entryPrice * 0.0075);
@@ -1368,6 +1345,7 @@ export function buildSmartMoneyFlowReport(
         symbol: stock.symbol,
         name: stock.name,
         sector: stock.sector,
+        sectorChangePct: sectorAvgPctMap[stock.sector] ?? Number((stock.changePercent || 0).toFixed(2)),
         direction,
         grade: condCount === 22 ? 'STRICT 22/22' : condCount >= 18 ? 'HIGH SURGE' : 'SETUP',
         conditionsMet: condCount,

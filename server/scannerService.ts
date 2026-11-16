@@ -18,10 +18,7 @@ import {
   ScannedStock,
   TradePosition,
 } from '../src/types';
-import {
-  evaluateStockScanner,
-  generateSyntheticCandles,
-} from '../src/utils/technicalAnalysis';
+import { evaluateStockScanner } from '../src/utils/technicalAnalysis';
 import { calculateStockOI } from '../src/utils/oiAnalysis';
 import { calculateMarketStatus, getISTDateParts } from '../src/data/marketSchedule';
 import { BrokerMarketScheduleStatus, upstoxService } from './upstoxService';
@@ -49,7 +46,9 @@ const EQUITY_ONLY_STOCKS = NIFTY_200_STOCKS.filter(
 const SESSION_STATE_FILE = path.join(os.tmpdir(), 'muhurat_scanner_session_state.json');
 const DAILY_SIGNAL_LEDGER_FILE = path.join(os.tmpdir(), 'muhurat_daily_signal_ledger.json');
 
-export type FormulaCode = 'STRONG_ORB' | 'SONIC_RVOL' | 'TITAN_WHALE' | 'QUANT_ELITE' | 'PRE_OPEN_IEP';
+const LEDGER_VERSION = 2;
+
+export type FormulaCode = 'STRONG_ORB' | 'SONIC_RVOL' | 'TITAN_WHALE' | 'QUANT_ELITE' | 'PRE_OPEN_IEP' | 'NONE';
 
 export interface DailySignalLedgerEntry {
   symbol: string;
@@ -63,7 +62,7 @@ export interface DailySignalLedgerEntry {
   target1: number;
   target2: number;
   target3: number;
-  triggerSource?: 'INTRADAY_5M_BAR' | 'PRE_OPEN_IEP' | 'ESTIMATED';
+  triggerSource?: 'INTRADAY_5M_BAR' | 'PRE_OPEN_IEP' | 'NONE';
 }
 
 export interface DailySessionState {
@@ -319,7 +318,13 @@ export class ScannerService {
     try {
       if (fs.existsSync(DAILY_SIGNAL_LEDGER_FILE)) {
         const raw = JSON.parse(fs.readFileSync(DAILY_SIGNAL_LEDGER_FILE, 'utf-8'));
-        if (raw && raw.dateIST === todayIST && raw.entries && typeof raw.entries === 'object') {
+        if (
+          raw &&
+          raw.version === LEDGER_VERSION &&
+          raw.dateIST === todayIST &&
+          raw.entries &&
+          typeof raw.entries === 'object'
+        ) {
           this.dailySignalLedger = { dateIST: raw.dateIST, entries: raw.entries };
           return;
         }
@@ -332,7 +337,10 @@ export class ScannerService {
 
   private saveDailySignalLedger() {
     try {
-      fs.writeFileSync(DAILY_SIGNAL_LEDGER_FILE, JSON.stringify(this.dailySignalLedger));
+      fs.writeFileSync(
+        DAILY_SIGNAL_LEDGER_FILE,
+        JSON.stringify({ version: LEDGER_VERSION, ...this.dailySignalLedger })
+      );
       this.ledgerDirty = false;
     } catch {
       // Non-fatal
@@ -349,89 +357,98 @@ export class ScannerService {
 
   /**
    * Computes & persists each stock's Formula-Authentic Discovery Timestamp (listedAt) and Locked Entry Price
-   * across all scanner strategies (ORB 15m, HyperFlow RVOL/VWAP, Titan Whale Flow, Quant Elite Pivot S&R, Pre-Open IEP).
-   * Once locked in dailySignalLedger for today's IST date, Entry Price & Listed At remain fixed while LIVE PRICE ticks.
+   * strictly from genuine 5-minute intraday NSE bars (NO synthetic candles, NO hash jitter, NO artificial price clamps).
+   * NEUTRAL / non-triggered stocks return listedAt: '--' and entryPrice: 0 without fabricating signals.
    */
   private resolveFormulaSignalDiscovery(
     scannedStock: ScannedStock,
     q: UnifiedMarketQuote | undefined,
     lp: number,
     prevClose: number,
-    dayHigh: number,
-    dayLow: number,
+    _dayHigh: number,
+    _dayLow: number,
     dateIST: string,
     istHour: number,
     istMin: number,
     istSec: number,
     marketSession: string,
     isMarketOpen: boolean,
-    hadExistingEntriesToday: boolean
+    _hadExistingEntriesToday: boolean
   ): { entry: DailySignalLedgerEntry; changed: boolean } {
     if (this.dailySignalLedger.dateIST !== dateIST) {
       this.dailySignalLedger = { dateIST, entries: {} };
     }
 
     const sym = scannedStock.symbol;
+    const emptyNeutral: DailySignalLedgerEntry = {
+      symbol: sym,
+      signal: 'NEUTRAL',
+      formulaCode: 'NONE',
+      formulaName: 'No Active Formula Signal',
+      listedAt: '--',
+      entryTime: '--',
+      entryPrice: 0,
+      stopLoss: 0,
+      target1: 0,
+      target2: 0,
+      target3: 0,
+      triggerSource: 'NONE',
+    };
+
+    if (scannedStock.signal !== 'BUY' && scannedStock.signal !== 'SELL') {
+      if (this.dailySignalLedger.entries[sym]) {
+        delete this.dailySignalLedger.entries[sym];
+        this.ledgerDirty = true;
+        return { entry: emptyNeutral, changed: true };
+      }
+      return { entry: emptyNeutral, changed: false };
+    }
+
+    const effSignal: 'BUY' | 'SELL' = scannedStock.signal;
+    const isBull = effSignal === 'BUY';
     const existing = this.dailySignalLedger.entries[sym];
-    const chp = scannedStock.changePercent || 0;
     const rvol = scannedStock.indicators.rvol || 1.0;
     const atr = Math.max(0.5, scannedStock.indicators.atr || lp * 0.009);
     const turnoverCr = ((scannedStock.volume || 100000) * lp) / 1e7;
-    const vwap = q?.atp && q.atp > 0 ? q.atp : scannedStock.indicators.vwap || lp;
     const openP = q?.open && q.open > 0 ? q.open : prevClose;
 
-    const effSignal: 'BUY' | 'SELL' | 'NEUTRAL' =
-      scannedStock.signal === 'BUY' || scannedStock.signal === 'SELL'
-        ? scannedStock.signal
-        : chp >= 0
-        ? 'BUY'
-        : 'SELL';
-    const isBull = effSignal !== 'SELL';
-    const dir = isBull ? 1 : -1;
-
-    // Preserve locked Entry & ListedAt for the active trading day unless:
-    // - transitioning from PRE_OPEN_IEP -> REGULAR open once market opens, or
-    // - upgrading from estimated/baseline entry to genuine today 5m intraday NSE bars, or
-    // - baseline price moved >12% (stale snapshot calibration), or
-    // - first real-time flip from NEUTRAL -> BUY/SELL after ledger already initialized today
     const realBars: IntradayCandleBar[] = Array.isArray(q?.intradayBars) ? q!.intradayBars! : [];
     const hasRealBars = realBars.length >= 4;
 
-    if (existing) {
+    if (!hasRealBars && marketSession !== 'PRE_OPEN') {
+      return { entry: emptyNeutral, changed: false };
+    }
+
+    if (
+      existing &&
+      existing.signal === effSignal &&
+      existing.entryPrice > 0 &&
+      /^\d{2}:\d{2}(:\d{2})?$/.test(existing.listedAt)
+    ) {
       const upgradePreOpenToRegular = isMarketOpen && existing.formulaCode === 'PRE_OPEN_IEP';
-      const upgradeEstimatedToRealBars = hasRealBars && existing.triggerSource !== 'INTRADAY_5M_BAR';
+      const upgradeToRealBars = hasRealBars && existing.triggerSource !== 'INTRADAY_5M_BAR';
       const staleBaselineMismatch =
-        lp > 0 && existing.entryPrice > 0 && Math.abs(existing.entryPrice - lp) / lp > 0.12;
-      const flippedFromNeutralLive =
-        isMarketOpen && hadExistingEntriesToday && existing.signal === 'NEUTRAL' && scannedStock.signal !== 'NEUTRAL';
-      if (
-        !upgradePreOpenToRegular &&
-        !upgradeEstimatedToRealBars &&
-        !staleBaselineMismatch &&
-        !flippedFromNeutralLive
-      ) {
+        lp > 0 && existing.entryPrice > 0 && Math.abs(existing.entryPrice - lp) / lp > 0.15;
+      if (!upgradePreOpenToRegular && !upgradeToRealBars && !staleBaselineMismatch) {
         return { entry: existing, changed: false };
       }
     }
 
-    // 1. Determine matching institutional scanner formula (+ exact real 5m breakout bar when available)
-    let formulaCode: FormulaCode = 'QUANT_ELITE';
-    let formulaName = 'Quant Elite • Pivot S&R';
-    let rawEntry = lp;
-    const minSep = Math.max(atr * 0.25, lp * 0.0025);
-    let barMatchSec: number | null = null;
-    let triggerSource: 'INTRADAY_5M_BAR' | 'PRE_OPEN_IEP' | 'ESTIMATED' = 'ESTIMATED';
+    const dailyStartSec = 9 * 3600 + 20 * 60; // 09:20:00 IST
+    const curSec = istHour * 3600 + istMin * 60 + istSec;
+
+    let formulaCode: FormulaCode = 'NONE';
+    let formulaName = 'No Active Formula Signal';
+    let rawEntry = 0;
+    let listedSec: number | null = null;
+    let triggerSource: 'INTRADAY_5M_BAR' | 'PRE_OPEN_IEP' | 'NONE' = 'NONE';
 
     if (marketSession === 'PRE_OPEN') {
       formulaCode = 'PRE_OPEN_IEP';
       formulaName = 'Pre-Open Equilibrium IEP';
       triggerSource = 'PRE_OPEN_IEP';
-      const gapDelta = Math.abs(lp - prevClose);
-      if (gapDelta > lp * 0.004) {
-        rawEntry = prevClose + dir * gapDelta * 0.55;
-      } else {
-        rawEntry = lp - dir * minSep;
-      }
+      rawEntry = Number(lp.toFixed(2));
+      listedSec = Math.max(9 * 3600, Math.min(9 * 3600 + 14 * 60 + 55, curSec));
     } else if (hasRealBars) {
       triggerSource = 'INTRADAY_5M_BAR';
       const orbBars = realBars.slice(0, Math.min(3, realBars.length));
@@ -451,12 +468,21 @@ export class ScannerService {
         avgVolAt.push(cumV / (i + 1));
       }
 
+      const barConfirmSec = (b: IntradayCandleBar) => {
+        const closeSec = b.secIST + 300;
+        if (isMarketOpen) {
+          return Math.max(dailyStartSec, Math.min(curSec, closeSec));
+        }
+        return Math.max(dailyStartSec, Math.min(15 * 3600 + 30 * 60, closeSec));
+      };
+
       const orbBreakIdx = realBars.findIndex(
-        (b, i) => i >= 3 && (isBull ? b.close > orbHigh : b.close < orbLow)
+        (b, i) => i >= 3 && b.secIST >= 9 * 3600 + 15 * 60 && (isBull ? b.close > orbHigh : b.close < orbLow)
       );
       const rvolVwapIdx = realBars.findIndex(
         (b, i) =>
           i >= 1 &&
+          b.secIST + 300 >= dailyStartSec &&
           b.volume >= avgVolAt[i] * 1.25 &&
           (isBull ? b.close > vwapAt[i] && b.close >= b.open : b.close < vwapAt[i] && b.close <= b.open)
       );
@@ -464,143 +490,78 @@ export class ScannerService {
       let whaleIdx = -1;
       let bestVolRatio = 0;
       for (let i = 1; i < realBars.length; i++) {
+        if (realBars[i].secIST + 300 < dailyStartSec) continue;
         const ratio = realBars[i].volume / Math.max(1, avgVolAt[i]);
-        const aligned = isBull ? realBars[i].close >= realBars[i].open : realBars[i].close <= realBars[i].open;
+        const aligned = isBull ? realBars[i].close > realBars[i].open : realBars[i].close < realBars[i].open;
         if (aligned && ratio > bestVolRatio) {
           bestVolRatio = ratio;
           whaleIdx = i;
         }
       }
 
-      if (orbBreakIdx >= 3 && (isBull ? lp >= orbHigh : lp <= orbLow)) {
+      const pivotRef = (prevClose + openP) / 2 || scannedStock.indicators.cprPivot || prevClose;
+      const pivIdx = realBars.findIndex(
+        (b, i) =>
+          i >= 1 &&
+          b.secIST + 300 >= dailyStartSec &&
+          (isBull ? b.close > pivotRef && b.close >= b.open : b.close < pivotRef && b.close <= b.open)
+      );
+
+      if (orbBreakIdx >= 3) {
+        const tb = realBars[orbBreakIdx];
         formulaCode = 'STRONG_ORB';
         formulaName = 'ORB 15m Breakout';
-        rawEntry = isBull ? orbHigh : orbLow;
-        barMatchSec = realBars[orbBreakIdx].secIST;
+        rawEntry = tb.close;
+        listedSec = barConfirmSec(tb);
       } else if (rvolVwapIdx >= 1) {
+        const tb = realBars[rvolVwapIdx];
         formulaCode = 'SONIC_RVOL';
         formulaName = 'HyperFlow RVOL + VWAP';
-        rawEntry = vwapAt[rvolVwapIdx];
-        barMatchSec = realBars[rvolVwapIdx].secIST;
-      } else if (whaleIdx >= 1 && (turnoverCr >= 25 || bestVolRatio >= 1.4)) {
+        rawEntry = tb.close;
+        listedSec = barConfirmSec(tb);
+      } else if (whaleIdx >= 1 && (turnoverCr >= 25 || bestVolRatio >= 1.4 || rvol >= 1.25)) {
+        const tb = realBars[whaleIdx];
         formulaCode = 'TITAN_WHALE';
         formulaName = 'Titan Whale Sweep';
-        rawEntry = realBars[whaleIdx].open * 0.45 + realBars[whaleIdx].close * 0.55;
-        barMatchSec = realBars[whaleIdx].secIST;
-      } else {
+        rawEntry = tb.close;
+        listedSec = barConfirmSec(tb);
+      } else if (pivIdx >= 1) {
+        const tb = realBars[pivIdx];
         formulaCode = 'QUANT_ELITE';
-        formulaName = 'Pivot / S&R Trap';
-        const pivotRef = (prevClose + openP) / 2 || scannedStock.indicators.cprPivot || prevClose;
-        const pivIdx = realBars.findIndex(
-          (b, i) => i >= 1 && (isBull ? b.close >= pivotRef : b.close <= pivotRef)
+        formulaName = 'Pivot / S&R Trigger';
+        rawEntry = tb.close;
+        listedSec = barConfirmSec(tb);
+      } else {
+        // Check last aligned bar in window; if none matches, return emptyNeutral rather than fabricating a fake timestamp
+        const lastAlignedIdx = [...realBars].reverse().findIndex(
+          (b) =>
+            b.secIST + 300 >= dailyStartSec &&
+            (isBull ? b.close >= b.open : b.close <= b.open)
         );
-        const targetIdx = pivIdx >= 1 ? pivIdx : Math.min(realBars.length - 1, Math.max(1, Math.floor(realBars.length * 0.35)));
-        rawEntry = pivIdx >= 1 ? pivotRef : realBars[targetIdx].open * 0.5 + pivotRef * 0.5;
-        barMatchSec = realBars[targetIdx].secIST;
-      }
-    } else if (
-      (isBull && scannedStock.indicators.ema13 >= scannedStock.indicators.ema21 && chp >= 0.45 && rvol >= 1.1) ||
-      (!isBull && scannedStock.indicators.ema13 <= scannedStock.indicators.ema21 && chp <= -0.45 && rvol >= 1.1)
-    ) {
-      formulaCode = 'STRONG_ORB';
-      formulaName = 'ORB 15m Breakout';
-      const orbOffset = Math.max(0.32 * atr, openP * 0.0035);
-      rawEntry = openP + dir * orbOffset;
-    } else if (rvol >= 1.35 || (isBull && lp > vwap * 1.001) || (!isBull && lp < vwap * 0.999)) {
-      formulaCode = 'SONIC_RVOL';
-      formulaName = 'HyperFlow RVOL + VWAP';
-      rawEntry = vwap + dir * Math.max(0.15 * atr, lp * 0.0018);
-    } else if (turnoverCr >= 25 || scannedStock.aiScore >= 72) {
-      formulaCode = 'TITAN_WHALE';
-      formulaName = 'Titan Whale Sweep';
-      rawEntry = openP * 0.45 + vwap * 0.35 + lp * 0.2 - dir * minSep * 0.6;
-    } else {
-      formulaCode = 'QUANT_ELITE';
-      formulaName = 'Pivot / S&R Trap';
-      const pivotRef = scannedStock.indicators.cprPivot || prevClose;
-      rawEntry = pivotRef * 0.5 + lp * 0.5 - dir * minSep * 0.7;
-    }
-
-    // Ensure formula Entry Price stays within realistic intraday range & NEVER clones moving live price
-    let lockedEntry = Number(rawEntry.toFixed(2));
-    if (isBull) {
-      lockedEntry = Math.min(lockedEntry, Number((lp - minSep).toFixed(2)));
-      if (dayLow > 0 && dayLow < lp * 0.997) {
-        lockedEntry = Math.max(dayLow, lockedEntry);
-      }
-      if (lockedEntry >= lp) {
-        lockedEntry = Number((lp - minSep).toFixed(2));
-      }
-    } else {
-      lockedEntry = Math.max(lockedEntry, Number((lp + minSep).toFixed(2)));
-      if (dayHigh > 0 && dayHigh > lp * 1.003) {
-        lockedEntry = Math.min(dayHigh, lockedEntry);
-      }
-      if (lockedEntry <= lp) {
-        lockedEntry = Number((lp + minSep).toFixed(2));
+        if (lastAlignedIdx >= 0) {
+          const realIdx = realBars.length - 1 - lastAlignedIdx;
+          const tb = realBars[realIdx];
+          formulaCode = 'QUANT_ELITE';
+          formulaName = 'Trend Bar Alignment';
+          rawEntry = tb.close;
+          listedSec = barConfirmSec(tb);
+        }
       }
     }
-    lockedEntry = Number(Math.max(0.05, lockedEntry).toFixed(2));
 
-    // Anchor SL & Targets cleanly to locked Formula Entry Price
+    if (!rawEntry || rawEntry <= 0 || listedSec === null) {
+      return { entry: emptyNeutral, changed: false };
+    }
+
+    const lockedEntry = Number(Math.max(0.05, rawEntry).toFixed(2));
     const atrDist = Math.max(1.2 * atr, lockedEntry * 0.011);
     const stopLoss = Number((isBull ? lockedEntry - atrDist : lockedEntry + atrDist).toFixed(2));
     const target1 = Number((isBull ? lockedEntry + 1.5 * atrDist : lockedEntry - 1.5 * atrDist).toFixed(2));
     const target2 = Number((isBull ? lockedEntry + 2.5 * atrDist : lockedEntry - 2.5 * atrDist).toFixed(2));
     const target3 = Number((isBull ? lockedEntry + 3.6 * atrDist : lockedEntry - 3.6 * atrDist).toFixed(2));
 
-    // 2. Formula-Derived Discovery Timestamp (IST HH:MM:SS)
-    let symHash = 0;
-    for (let i = 0; i < sym.length; i++) {
-      symHash = (symHash << 5) - symHash + sym.charCodeAt(i);
-      symHash |= 0;
-    }
-    const uHash = (Math.abs(symHash) % 1000) / 1000; // deterministic 0..0.999
-    const curSec = istHour * 3600 + istMin * 60 + istSec;
-
-    let listedSec: number;
-    const dailyStartSec = 9 * 3600 + 20 * 60; // Every market day scan starts at 09:20:00 IST
-    const isRealtimeNewDiscovery =
-      isMarketOpen &&
-      hadExistingEntriesToday &&
-      (!existing || existing.signal === 'NEUTRAL' || existing.formulaCode === 'PRE_OPEN_IEP') &&
-      curSec >= dailyStartSec;
-
-    if (isRealtimeNewDiscovery) {
-      // Live new breakout discovered during active session -> stamp exact real wall-clock IST HH:MM:SS!
-      listedSec = Math.max(dailyStartSec, curSec);
-    } else if (barMatchSec !== null && barMatchSec >= dailyStartSec) {
-      // Real 5-minute intraday NSE bar trigger timestamp + exact intra-bar second offset (strictly <= curSec!)
-      const intraBarOffset = 18 + Math.round(uHash * 255);
-      const maxAllowed = isMarketOpen ? Math.min(curSec, barMatchSec + 295) : barMatchSec + 295;
-      listedSec = Math.max(dailyStartSec, Math.min(maxAllowed, barMatchSec + intraBarOffset));
-    } else {
-      // Formula-based intraday trigger timestamp strictly >= 09:20:02 IST and <= current clock
-      const sessionStartSec = dailyStartSec + 2;
-      const sessionEndSec = isMarketOpen ? Math.max(sessionStartSec + 2, curSec - 5) : 15 * 3600 + 20 * 60;
-
-      const moveMaturity = Math.min(0.95, Math.abs(lp - lockedEntry) / Math.max(atr * 1.6, lp * 0.008));
-      let formulaBias = 0.5;
-      if (formulaCode === 'STRONG_ORB') {
-        formulaBias = 0.12 + (1 - moveMaturity) * 0.28;
-      } else if (formulaCode === 'SONIC_RVOL') {
-        formulaBias = 0.2 + (1 - moveMaturity) * 0.55;
-      } else if (formulaCode === 'TITAN_WHALE') {
-        formulaBias = 0.25 + (1 - moveMaturity) * 0.55;
-      } else {
-        formulaBias = 0.3 + (1 - moveMaturity) * 0.58;
-      }
-      const jitter = (uHash - 0.5) * 0.18;
-      const clampedFrac = Math.max(0.03, Math.min(0.97, formulaBias + jitter));
-      listedSec = Math.max(dailyStartSec, Math.round(sessionStartSec + clampedFrac * (sessionEndSec - sessionStartSec)));
-      if (isMarketOpen) {
-        listedSec = Math.max(dailyStartSec, Math.min(listedSec, curSec));
-      }
-    }
-
     const listedAt = this.formatSecToHHMMSS(listedSec);
-    const entrySec = Math.min(15 * 3600 + 28 * 60, listedSec + 90 + Math.round(uHash * 60));
-    const entryTime = this.formatSecToHHMMSS(entrySec);
+    const entryTime = listedAt;
 
     const locked: DailySignalLedgerEntry = {
       symbol: sym,
@@ -1193,20 +1154,30 @@ export class ScannerService {
     const dayHigh = q?.high || Math.max(lp, prevClose);
     const dayLow = q?.low || Math.min(lp, prevClose);
 
-    const existingCandles = this.stockCandles.get(symbol);
-    const candles =
-      existingCandles && existingCandles.length > 0
-        ? [...existingCandles]
-        : generateSyntheticCandles(prevClose || lp, 50, symbol);
+    let candles: Candle[] = [];
+    if (q?.intradayBars && q.intradayBars.length >= 4) {
+      candles = q.intradayBars.map((b) => ({
+        time: b.timeIST,
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        close: b.close,
+        volume: Math.max(100, b.volume),
+      }));
+    } else {
+      const existingCandles = this.stockCandles.get(symbol);
+      if (existingCandles && existingCandles.length >= 4) {
+        candles = [...existingCandles];
+      }
+    }
 
     if (candles.length > 0) {
       const lastIndex = candles.length - 1;
       candles[lastIndex] = {
         ...candles[lastIndex],
         close: lp,
-        high: Math.max(candles[lastIndex].high, dayHigh, lp),
-        low: Math.min(candles[lastIndex].low, dayLow, lp),
-        volume: q?.volume || candles[lastIndex].volume,
+        high: Math.max(candles[lastIndex].high, lp),
+        low: Math.min(candles[lastIndex].low, lp),
       };
     }
 
@@ -1269,90 +1240,69 @@ export class ScannerService {
   }
 
   /**
-   * Generates initial historical 5-min candles for all Nifty 200 stocks
+   * Seeds clean neutral stock placeholders before real 5m intraday bars finish loading
    */
   private initializeCandleData() {
     const initialResults: ScannedStock[] = [];
 
     for (const stock of EQUITY_ONLY_STOCKS) {
-      const candles = generateSyntheticCandles(stock.basePrice, 50, stock.symbol);
-      this.stockCandles.set(stock.symbol, candles);
+      this.stockCandles.set(stock.symbol, []);
+      const baseAnchor: Candle[] = [
+        { time: '09:15:00', open: stock.basePrice, high: stock.basePrice, low: stock.basePrice, close: stock.basePrice, volume: 0 },
+        { time: '09:20:00', open: stock.basePrice, high: stock.basePrice, low: stock.basePrice, close: stock.basePrice, volume: 0 },
+      ];
 
-      const lastCandlePrice = candles[candles.length - 1]?.close || stock.basePrice;
-      const meta = {
+      this.stockMetaCache.set(stock.symbol, {
         prevClose: stock.basePrice,
-        dayHigh: Number((Math.max(...candles.map((c) => c.high), stock.basePrice)).toFixed(2)),
-        dayLow: Number((Math.min(...candles.map((c) => c.low), stock.basePrice)).toFixed(2)),
-        price: lastCandlePrice,
+        dayHigh: stock.basePrice,
+        dayLow: stock.basePrice,
+        price: stock.basePrice,
         lastUpdated: Date.now(),
-      };
-      this.stockMetaCache.set(stock.symbol, meta);
+      });
 
       const scannedStock = evaluateStockScanner(
         stock.symbol,
         stock.name,
         stock.sector,
-        candles,
-        meta.dayHigh,
-        meta.dayLow,
-        meta.prevClose
+        baseAnchor,
+        stock.basePrice,
+        stock.basePrice,
+        stock.basePrice,
+        0,
+        0
       );
+      scannedStock.signal = 'NEUTRAL';
+      scannedStock.aiScore = 0;
+      scannedStock.tradeStatus = 'NO_SIGNAL';
+      scannedStock.listedAt = '--';
+      scannedStock.signalListedAt = '--';
+      scannedStock.entryTime = '--';
+      scannedStock.fixedEntryPrice = 0;
+      scannedStock.fixedStopLoss = 0;
+      scannedStock.fixedTarget1 = 0;
+      scannedStock.fixedTarget2 = 0;
+      scannedStock.fixedTarget3 = 0;
+      scannedStock.risk.entryPrice = 0;
+      scannedStock.risk.stopLoss = 0;
+      scannedStock.risk.target1 = 0;
+      scannedStock.risk.target2 = 0;
+      scannedStock.risk.target3 = 0;
+      scannedStock.sectorChangePercent = 0;
+      scannedStock.keyTriggers = ['Syncing live quotes & real 5m NSE bars...'];
       scannedStock.alertCreateTime = new Date().toISOString();
-      scannedStock.sparkline = candles.slice(-12).map((c) => Number(c.close.toFixed(2)));
-
-      // Deterministic realistic market session timing (09:18 to 11:30 AM IST)
-      let hash = 0;
-      for (let i = 0; i < stock.symbol.length; i++) {
-        hash = (hash << 5) - hash + stock.symbol.charCodeAt(i);
-        hash |= 0;
-      }
-      const positiveHash = Math.abs(hash);
-      const baseMins = (positiveHash % 135) + 3;
-      const listH = Math.floor((9 * 60 + 15 + baseMins) / 60);
-      const listM = (9 * 60 + 15 + baseMins) % 60;
-      const entH = Math.floor((9 * 60 + 15 + baseMins + 3) / 60);
-      const entM = (9 * 60 + 15 + baseMins + 3) % 60;
-      scannedStock.listedAt = `${String(listH).padStart(2, '0')}:${String(listM).padStart(2, '0')}`;
-      scannedStock.signalListedAt = scannedStock.listedAt;
-      scannedStock.entryTime = `${String(entH).padStart(2, '0')}:${String(entM).padStart(2, '0')}`;
+      scannedStock.sparkline = [];
 
       initialResults.push(scannedStock);
     }
 
-    initialResults.sort((a, b) => b.aiScore - a.aiScore);
     this.stockScanResults = initialResults;
-
-    // Attach Nifty 50 60-min trend history and sparkline
-    const niftyCandles = this.stockCandles.get('NIFTY') || [];
-    if (niftyCandles.length > 0) {
-      const last12 = niftyCandles.slice(-12);
-      this.marketOverview.nifty50.sparkline = last12.map((c) => Number(c.close.toFixed(2)));
-      this.marketOverview.nifty50.trendHistory = last12.map((c, i) => {
-        const minsAgo = (last12.length - 1 - i) * 5;
-        const timeLabel = minsAgo === 0 ? 'Now' : `-${minsAgo}m`;
-        return {
-          time: timeLabel,
-          price: Number(c.close.toFixed(2)),
-          change: Number((c.close - last12[0].close).toFixed(2)),
-        };
-      });
-    }
-
-    let buyCount = 0;
-    let sellCount = 0;
-    let highRvolCount = 0;
-    for (const s of initialResults) {
-      if (s.signal === 'BUY') buyCount++;
-      if (s.signal === 'SELL') sellCount++;
-      if (s.indicators.rvol >= 1.5) highRvolCount++;
-    }
 
     this.marketOverview = {
       ...this.marketOverview,
       scannedCount: initialResults.length,
-      buyCount,
-      sellCount,
-      highRvolCount,
+      buyCount: 0,
+      sellCount: 0,
+      highRvolCount: 0,
       lastScanTime: new Date().toISOString(),
     };
   }
@@ -1414,8 +1364,23 @@ export class ScannerService {
         stock.bidQty = tickDepth.bidQty;
         stock.askQty = tickDepth.askQty;
         stock.bidAskRatio = tickDepth.bidAskRatio;
+        stock.orderBookBias =
+          tickDepth.bidAskRatio >= 1.55
+            ? 'Heavy Buyer Accumulation'
+            : tickDepth.bidAskRatio >= 1.18
+            ? 'Buyer Dominance'
+            : tickDepth.bidAskRatio <= 0.65
+            ? 'Heavy Seller Supply'
+            : tickDepth.bidAskRatio <= 0.85
+            ? 'Seller Pressure'
+            : 'Balanced Order Book';
         stock.oiData = calculateStockOI(stock.symbol, stock.price, stock.changePercent, stock.volume);
       }
+    }
+
+    const liveSectorMap = this.computeSectorAvgMap();
+    for (const stock of this.stockScanResults) {
+      stock.sectorChangePercent = liveSectorMap[stock.sector] ?? Number((Number(stock.changePercent) || 0).toFixed(2));
     }
 
     this.evaluateTargetHitsAndTrades(this.stockScanResults);
@@ -1685,8 +1650,28 @@ export class ScannerService {
       const statusForScan = calculateMarketStatus();
       const hadExistingEntriesToday =
         this.dailySignalLedger.dateIST === ist.dateStr &&
-        Object.keys(this.dailySignalLedger.entries).length >= 50;
+        Object.keys(this.dailySignalLedger.entries).length >= 10;
       let ledgerModified = false;
+
+      // Pre-compute live arithmetic-mean SECTOR % and Nifty % from current live quotes BEFORE scoring any stock
+      const niftyLiveChp = Number(
+        (allQuotes['NIFTY 50']?.chp ?? allQuotes['NIFTY']?.chp ?? this.marketOverview.nifty50.changePercent ?? 0).toFixed(2)
+      );
+      const secAccum = new Map<string, { sum: number; cnt: number }>();
+      for (const sInfo of EQUITY_ONLY_STOCKS) {
+        const cleanS = upstoxService.cleanSymbol(sInfo.symbol);
+        const sq = allQuotes[cleanS] || allQuotes[sInfo.symbol];
+        if (sq && Number.isFinite(sq.chp)) {
+          const cur = secAccum.get(sInfo.sector) || { sum: 0, cnt: 0 };
+          cur.sum += sq.chp;
+          cur.cnt += 1;
+          secAccum.set(sInfo.sector, cur);
+        }
+      }
+      const precomputedSectorAvgMap: Record<string, number> = {};
+      secAccum.forEach((v, sec) => {
+        precomputedSectorAvgMap[sec] = Number((v.sum / Math.max(1, v.cnt)).toFixed(2));
+      });
 
       for (const stockInfo of EQUITY_ONLY_STOCKS) {
         if (myEpoch !== this.scanEpoch || this.sessionState.isMidnightCleared) {
@@ -1700,6 +1685,9 @@ export class ScannerService {
         const prevClose = q?.prevClose && q.prevClose > 0 ? q.prevClose : lp;
         const dayHigh = q?.high && q.high > 0 ? Math.max(q.high, lp) : Math.max(lp, prevClose);
         const dayLow = q?.low && q.low > 0 ? Math.min(q.low, lp) : Math.min(lp, prevClose);
+        const realSectorChp =
+          precomputedSectorAvgMap[stockInfo.sector] ??
+          Number((q?.chp ?? (prevClose > 0 ? ((lp - prevClose) / prevClose) * 100 : 0)).toFixed(2));
 
         const stockMeta: StockMetaCache = {
           prevClose,
@@ -1710,8 +1698,10 @@ export class ScannerService {
         };
         this.stockMetaCache.set(stockInfo.symbol, stockMeta);
 
-        let candles = this.stockCandles.get(stockInfo.symbol);
+        let candles = this.stockCandles.get(stockInfo.symbol) || [];
+        let hasRealBars = false;
         if (q?.intradayBars && q.intradayBars.length >= 4) {
+          hasRealBars = true;
           const liveBars = q.intradayBars.map((b) => ({
             time: b.timeIST,
             open: b.open,
@@ -1735,38 +1725,52 @@ export class ScannerService {
           } else {
             candles = liveBars;
           }
-          this.stockCandles.set(stockInfo.symbol, candles);
-        } else if (!candles || candles.length === 0 || isNewDayFreshScan) {
-          candles = generateSyntheticCandles(prevClose, 50, stockInfo.symbol);
-        }
-
-        if (candles.length > 0) {
+          // Preserve real 5-minute bar volume; only update forming close/high/low with live L1 tick
           const lastIdx = candles.length - 1;
           candles[lastIdx] = {
             ...candles[lastIdx],
-            open: q?.open || candles[lastIdx].open,
             close: lp,
-            high: Math.max(candles[lastIdx].high, dayHigh, lp),
-            low: Math.min(candles[lastIdx].low, dayLow, lp),
-            volume: q?.volume || candles[lastIdx].volume,
+            high: Math.max(candles[lastIdx].high, lp),
+            low: Math.min(candles[lastIdx].low, lp),
+          };
+          this.stockCandles.set(stockInfo.symbol, candles);
+        } else if (candles.length >= 4) {
+          hasRealBars = true;
+          const lastIdx = candles.length - 1;
+          candles[lastIdx] = {
+            ...candles[lastIdx],
+            close: lp,
+            high: Math.max(candles[lastIdx].high, lp),
+            low: Math.min(candles[lastIdx].low, lp),
           };
           this.stockCandles.set(stockInfo.symbol, candles);
         }
+
+        const evalCandles =
+          candles.length >= 4
+            ? candles
+            : [
+                { time: '09:15:00', open: prevClose, high: Math.max(prevClose, lp), low: Math.min(prevClose, lp), close: lp, volume: Math.max(100, q?.volume || 1000) },
+                { time: '09:20:00', open: lp, high: Math.max(dayHigh, lp), low: Math.min(dayLow, lp), close: lp, volume: Math.max(100, q?.volume || 1000) },
+              ];
 
         const scannedStock = evaluateStockScanner(
           stockInfo.symbol,
           stockInfo.name,
           stockInfo.sector,
-          candles,
+          evalCandles,
           dayHigh,
           dayLow,
-          prevClose
+          prevClose,
+          realSectorChp,
+          niftyLiveChp
         );
 
         // Apply exact live quote data
         scannedStock.price = Number(lp.toFixed(2));
         scannedStock.change = q ? q.ch : Number((lp - prevClose).toFixed(2));
         scannedStock.changePercent = q ? q.chp : (prevClose > 0 ? Number((((lp - prevClose) / prevClose) * 100).toFixed(2)) : 0);
+        scannedStock.sectorChangePercent = realSectorChp;
         if (q?.volume && q.volume > 0) scannedStock.volume = q.volume;
         scannedStock.indicators.price = scannedStock.price;
         scannedStock.indicators.close = scannedStock.price;
@@ -1774,10 +1778,10 @@ export class ScannerService {
         if (q?.ema20) scannedStock.indicators.ema21 = q.ema20;
         if (q?.sma50) scannedStock.indicators.ema50 = q.sma50;
 
-        if (scannedStock.changePercent >= 0.4 && scannedStock.signal === 'NEUTRAL') {
-          scannedStock.signal = 'BUY';
-        } else if (scannedStock.changePercent <= -0.4 && scannedStock.signal === 'NEUTRAL') {
-          scannedStock.signal = 'SELL';
+        if (!hasRealBars && statusForScan.session !== 'PRE_OPEN') {
+          scannedStock.signal = 'NEUTRAL';
+          scannedStock.tradeStatus = 'NO_SIGNAL';
+          scannedStock.keyTriggers = ['Awaiting verified 5m NSE intraday bars (No fake signal)'];
         }
 
         // Resolve & Lock Formula-Authentic Entry Price, Targets, SL & Discovery Time (listedAt)
@@ -1798,23 +1802,43 @@ export class ScannerService {
         );
         if (entryChanged) ledgerModified = true;
 
-        scannedStock.fixedEntryPrice = locked.entryPrice;
-        scannedStock.fixedStopLoss = locked.stopLoss;
-        scannedStock.fixedTarget1 = locked.target1;
-        scannedStock.fixedTarget2 = locked.target2;
-        scannedStock.fixedTarget3 = locked.target3;
-        scannedStock.formulaCode = locked.formulaCode;
-        scannedStock.formulaName = locked.formulaName;
+        if (scannedStock.signal === 'NEUTRAL' || locked.entryPrice <= 0) {
+          scannedStock.signal = 'NEUTRAL';
+          scannedStock.tradeStatus = 'NO_SIGNAL';
+          scannedStock.fixedEntryPrice = 0;
+          scannedStock.fixedStopLoss = 0;
+          scannedStock.fixedTarget1 = 0;
+          scannedStock.fixedTarget2 = 0;
+          scannedStock.fixedTarget3 = 0;
+          scannedStock.formulaCode = 'NONE';
+          scannedStock.formulaName = 'No Active Formula Signal';
+          scannedStock.risk.entryPrice = 0;
+          scannedStock.risk.stopLoss = 0;
+          scannedStock.risk.target1 = 0;
+          scannedStock.risk.target2 = 0;
+          scannedStock.risk.target3 = 0;
+          scannedStock.listedAt = '--';
+          scannedStock.signalListedAt = '--';
+          scannedStock.entryTime = '--';
+        } else {
+          scannedStock.fixedEntryPrice = locked.entryPrice;
+          scannedStock.fixedStopLoss = locked.stopLoss;
+          scannedStock.fixedTarget1 = locked.target1;
+          scannedStock.fixedTarget2 = locked.target2;
+          scannedStock.fixedTarget3 = locked.target3;
+          scannedStock.formulaCode = locked.formulaCode === 'NONE' ? 'QUANT_ELITE' : locked.formulaCode;
+          scannedStock.formulaName = locked.formulaName;
 
-        scannedStock.risk.entryPrice = locked.entryPrice;
-        scannedStock.risk.stopLoss = locked.stopLoss;
-        scannedStock.risk.target1 = locked.target1;
-        scannedStock.risk.target2 = locked.target2;
-        scannedStock.risk.target3 = locked.target3;
+          scannedStock.risk.entryPrice = locked.entryPrice;
+          scannedStock.risk.stopLoss = locked.stopLoss;
+          scannedStock.risk.target1 = locked.target1;
+          scannedStock.risk.target2 = locked.target2;
+          scannedStock.risk.target3 = locked.target3;
 
-        scannedStock.listedAt = locked.listedAt;
-        scannedStock.signalListedAt = locked.listedAt;
-        scannedStock.entryTime = locked.entryTime;
+          scannedStock.listedAt = locked.listedAt;
+          scannedStock.signalListedAt = locked.listedAt;
+          scannedStock.entryTime = locked.entryTime;
+        }
 
         scannedStock.oiData = calculateStockOI(
           scannedStock.symbol,
@@ -2067,61 +2091,66 @@ export class ScannerService {
     }
 
     // 3. Evaluate Target Hits & Trade Status across all Scanned Stocks
+    const istNow = getISTDateParts(new Date());
     for (const stock of scannedStocks) {
-      const fixedEntry = stock.fixedEntryPrice || stock.risk.entryPrice || stock.price;
+      if (stock.signal !== 'BUY' && stock.signal !== 'SELL') {
+        stock.tradeStatus = 'NO_SIGNAL';
+        stock.isClosed = false;
+        stock.listedAt = '--';
+        stock.signalListedAt = '--';
+        stock.entryTime = '--';
+        stock.exitTime = undefined;
+        stock.exitPrice = undefined;
+        stock.realizedPoints = 0;
+        stock.realizedPct = 0;
+        continue;
+      }
+
+      const fixedEntry = stock.fixedEntryPrice || stock.risk.entryPrice || 0;
+      if (fixedEntry <= 0 || !stock.listedAt || stock.listedAt === '--') {
+        stock.tradeStatus = 'NO_SIGNAL';
+        stock.isClosed = false;
+        continue;
+      }
       const fixedSL = stock.fixedStopLoss || stock.risk.stopLoss;
       const fixedT1 = stock.fixedTarget1 || stock.risk.target1;
       const fixedT2 = stock.fixedTarget2 || stock.risk.target2;
       const fixedT3 = stock.fixedTarget3 || stock.risk.target3 || fixedT2;
 
       if (!stock.entryTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.entryTime)) {
-        if (stock.listedAt && /^\d{2}:\d{2}(:\d{2})?$/.test(stock.listedAt)) {
-          const parts = stock.listedAt.split(':');
-          const lH = parseInt(parts[0], 10);
-          const lM = parseInt(parts[1], 10);
-          const totalM = Math.min(15 * 60 + 15, lH * 60 + lM + 3);
-          stock.entryTime = `${String(Math.floor(totalM / 60)).padStart(2, '0')}:${String(totalM % 60).padStart(2, '0')}`;
-        } else {
-          stock.entryTime = '09:28';
-        }
+        stock.entryTime = stock.listedAt;
       }
 
-      const getCleanExitTime = (entTime?: string): string => {
-        if (entTime && /^\d{2}:\d{2}(:\d{2})?$/.test(entTime)) {
-          const [eh, em] = entTime.split(':').map(Number);
-          const exitMin = Math.min(15 * 60 + 20, eh * 60 + em + 22);
-          return `${String(Math.floor(exitMin / 60)).padStart(2, '0')}:${String(exitMin % 60).padStart(2, '0')}`;
-        }
-        return '10:45';
-      };
+      const recordRealExitTime = () =>
+        stock.exitTime && /^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime) ? stock.exitTime : istNow.timeStr;
 
       if (stock.signal === 'BUY') {
         if (stock.price >= fixedT3) {
           stock.tradeStatus = 'CLOSED_TARGET_3';
           stock.isClosed = true;
           stock.exitPrice = stock.price;
-          if (!stock.exitTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime)) stock.exitTime = getCleanExitTime(stock.entryTime);
+          stock.exitTime = recordRealExitTime();
           stock.realizedPoints = Number((stock.price - fixedEntry).toFixed(2));
           stock.realizedPct = Number((((stock.price - fixedEntry) / fixedEntry) * 100).toFixed(2));
         } else if (stock.price >= fixedT2) {
           stock.tradeStatus = 'CLOSED_TARGET_2';
           stock.isClosed = true;
           stock.exitPrice = stock.price;
-          if (!stock.exitTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime)) stock.exitTime = getCleanExitTime(stock.entryTime);
+          stock.exitTime = recordRealExitTime();
           stock.realizedPoints = Number((stock.price - fixedEntry).toFixed(2));
           stock.realizedPct = Number((((stock.price - fixedEntry) / fixedEntry) * 100).toFixed(2));
         } else if (stock.price >= fixedT1) {
           stock.tradeStatus = 'CLOSED_TARGET_1';
           stock.isClosed = true;
           stock.exitPrice = stock.price;
-          if (!stock.exitTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime)) stock.exitTime = getCleanExitTime(stock.entryTime);
+          stock.exitTime = recordRealExitTime();
           stock.realizedPoints = Number((stock.price - fixedEntry).toFixed(2));
           stock.realizedPct = Number((((stock.price - fixedEntry) / fixedEntry) * 100).toFixed(2));
         } else if (stock.price <= fixedSL) {
           stock.tradeStatus = 'CLOSED_STOP_LOSS';
           stock.isClosed = true;
           stock.exitPrice = stock.price;
-          if (!stock.exitTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime)) stock.exitTime = getCleanExitTime(stock.entryTime);
+          stock.exitTime = recordRealExitTime();
           stock.realizedPoints = Number((stock.price - fixedEntry).toFixed(2));
           stock.realizedPct = Number((((stock.price - fixedEntry) / fixedEntry) * 100).toFixed(2));
         } else {
@@ -2135,28 +2164,28 @@ export class ScannerService {
           stock.tradeStatus = 'CLOSED_TARGET_3';
           stock.isClosed = true;
           stock.exitPrice = stock.price;
-          if (!stock.exitTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime)) stock.exitTime = getCleanExitTime(stock.entryTime);
+          stock.exitTime = recordRealExitTime();
           stock.realizedPoints = Number((fixedEntry - stock.price).toFixed(2));
           stock.realizedPct = Number((((fixedEntry - stock.price) / fixedEntry) * 100).toFixed(2));
         } else if (stock.price <= fixedT2) {
           stock.tradeStatus = 'CLOSED_TARGET_2';
           stock.isClosed = true;
           stock.exitPrice = stock.price;
-          if (!stock.exitTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime)) stock.exitTime = getCleanExitTime(stock.entryTime);
+          stock.exitTime = recordRealExitTime();
           stock.realizedPoints = Number((fixedEntry - stock.price).toFixed(2));
           stock.realizedPct = Number((((fixedEntry - stock.price) / fixedEntry) * 100).toFixed(2));
         } else if (stock.price <= fixedT1) {
           stock.tradeStatus = 'CLOSED_TARGET_1';
           stock.isClosed = true;
           stock.exitPrice = stock.price;
-          if (!stock.exitTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime)) stock.exitTime = getCleanExitTime(stock.entryTime);
+          stock.exitTime = recordRealExitTime();
           stock.realizedPoints = Number((fixedEntry - stock.price).toFixed(2));
           stock.realizedPct = Number((((fixedEntry - stock.price) / fixedEntry) * 100).toFixed(2));
         } else if (stock.price >= fixedSL) {
           stock.tradeStatus = 'CLOSED_STOP_LOSS';
           stock.isClosed = true;
           stock.exitPrice = stock.price;
-          if (!stock.exitTime || !/^\d{2}:\d{2}(:\d{2})?$/.test(stock.exitTime)) stock.exitTime = getCleanExitTime(stock.entryTime);
+          stock.exitTime = recordRealExitTime();
           stock.realizedPoints = Number((fixedEntry - stock.price).toFixed(2));
           stock.realizedPct = Number((((fixedEntry - stock.price) / fixedEntry) * 100).toFixed(2));
         } else {
@@ -2188,7 +2217,8 @@ export class ScannerService {
 
     const isBuy = stock.signal === 'BUY';
     const vwapStatus: 'ABOVE' | 'BELOW' = stock.price >= stock.indicators.vwap ? 'ABOVE' : 'BELOW';
-    const sectorStatus: 'POSITIVE' | 'NEGATIVE' = stock.changePercent >= 0 ? 'POSITIVE' : 'NEGATIVE';
+    const sectorAvgPct = this.getSectorAvgPct(stock.sector, stock.changePercent);
+    const sectorStatus: 'POSITIVE' | 'NEGATIVE' = sectorAvgPct >= 0 ? 'POSITIVE' : 'NEGATIVE';
     const newsSent: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' = stock.newsSentiment || (stock.changePercent >= 0 ? 'POSITIVE' : 'NEGATIVE');
 
     const alertItem: AlertLogItem = {
@@ -2208,7 +2238,7 @@ export class ScannerService {
       status: 'SENT',
       sector: stock.sector,
       sectorStatus: sectorStatus,
-      sectorChangePercent: stock.changePercent,
+      sectorChangePercent: sectorAvgPct,
       oi: stock.oiData ? `${stock.oiData.openInterest.toFixed(2)}L` : '1.25M',
       oiChangePercent: stock.oiData?.changeInOIPercent || 2.5,
       volumeX: `${stock.indicators.rvol || 1.2}x Vol`,
@@ -2219,7 +2249,7 @@ export class ScannerService {
       newsTitle: stock.newsTitle || `${stock.symbol} live intraday momentum update`,
       gapPct: stock.indicators.gapPct || stock.changePercent,
       gapType: stock.indicators.gapType || (stock.changePercent >= 2 ? 'STRONG_GAP_UP' : stock.changePercent >= 0.8 ? 'GAP_UP' : stock.changePercent <= -2 ? 'STRONG_GAP_DOWN' : stock.changePercent <= -0.8 ? 'GAP_DOWN' : 'NORMAL_OPEN'),
-      purchaseRationale: `${isBuy ? 'High Conviction Buy' : 'Bearish Sell'} (${stock.aiScore}% AI Score): ${stock.indicators.rvol || 1.2}x Vol expansion, ${vwapStatus === 'ABOVE' ? 'Above VWAP' : 'Below VWAP'}, RSI ${stock.indicators.rsi} (${stock.indicators.rsi >= 60 ? 'Bullish' : 'Bearish'}), Sector ${stock.sector} (${sectorStatus === 'POSITIVE' ? '+' : ''}${stock.changePercent}%), and Live News: ${newsSent}.`,
+      purchaseRationale: `${isBuy ? 'High Conviction Buy' : 'Bearish Sell'} (${stock.aiScore}% AI Score): ${stock.indicators.rvol || 1.2}x Vol expansion, ${vwapStatus === 'ABOVE' ? 'Above VWAP' : 'Below VWAP'}, RSI ${stock.indicators.rsi} (${stock.indicators.rsi >= 60 ? 'Bullish' : 'Bearish'}), Sector ${stock.sector} (${sectorAvgPct >= 0 ? '+' : ''}${sectorAvgPct}%), and Live News: ${newsSent}.`,
     };
 
     this.alertLogs.unshift(alertItem);
@@ -2264,7 +2294,8 @@ export class ScannerService {
     if (sentChannels.length === 0) sentChannels.push('Dashboard Toast');
 
     const vwapStatus: 'ABOVE' | 'BELOW' = stock.price >= stock.indicators.vwap ? 'ABOVE' : 'BELOW';
-    const sectorStatus: 'POSITIVE' | 'NEGATIVE' = stock.changePercent >= 0 ? 'POSITIVE' : 'NEGATIVE';
+    const sectorAvgPct = this.getSectorAvgPct(stock.sector, stock.changePercent);
+    const sectorStatus: 'POSITIVE' | 'NEGATIVE' = sectorAvgPct >= 0 ? 'POSITIVE' : 'NEGATIVE';
     const newsSent: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' = stock.newsSentiment || (stock.changePercent >= 0 ? 'POSITIVE' : 'NEGATIVE');
 
     const alertItem: AlertLogItem = {
@@ -2289,7 +2320,7 @@ export class ScannerService {
       reason: `🔥 ${estimatedOrderQty.toLocaleString('en-IN')} Qty ${dealType} Alert | RVol ${rvol.toFixed(1)}x | Vol ${(totalVolume / 100000).toFixed(2)} Lakhs`,
       sector: stock.sector,
       sectorStatus: sectorStatus,
-      sectorChangePercent: stock.changePercent,
+      sectorChangePercent: sectorAvgPct,
       oi: stock.oiData ? `${stock.oiData.openInterest.toFixed(2)}L` : '1.25M',
       oiChangePercent: stock.oiData?.changeInOIPercent || 2.5,
       volumeX: `${rvol.toFixed(1)}x Vol`,
@@ -2300,7 +2331,7 @@ export class ScannerService {
       newsTitle: stock.newsTitle || `${stock.symbol} large institutional surge`,
       gapPct: stock.indicators.gapPct || stock.changePercent,
       gapType: stock.indicators.gapType || (stock.changePercent >= 2 ? 'STRONG_GAP_UP' : stock.changePercent >= 0.8 ? 'GAP_UP' : stock.changePercent <= -2 ? 'STRONG_GAP_DOWN' : stock.changePercent <= -0.8 ? 'GAP_DOWN' : 'NORMAL_OPEN'),
-      purchaseRationale: `Institutional ${estimatedOrderQty.toLocaleString('en-IN')} Qty ${dealType} Surge: ${rvol.toFixed(1)}x Volume multiplier, ${vwapStatus === 'ABOVE' ? 'Trading Above VWAP' : 'Trading Below VWAP'}, RSI ${stock.indicators.rsi}, Sector ${stock.sector} (${sectorStatus === 'POSITIVE' ? '+' : ''}${stock.changePercent}%), and Live News: ${newsSent}.`,
+      purchaseRationale: `Institutional ${estimatedOrderQty.toLocaleString('en-IN')} Qty ${dealType} Surge: ${rvol.toFixed(1)}x Volume multiplier, ${vwapStatus === 'ABOVE' ? 'Trading Above VWAP' : 'Trading Below VWAP'}, RSI ${stock.indicators.rsi}, Sector ${stock.sector} (${sectorAvgPct >= 0 ? '+' : ''}${sectorAvgPct}%), and Live News: ${newsSent}.`,
     };
 
     this.alertLogs.unshift(alertItem);
@@ -2317,7 +2348,8 @@ export class ScannerService {
 
     const isBuy = topStock.signal === 'BUY';
     const vwapStatus: 'ABOVE' | 'BELOW' = topStock.price >= topStock.indicators.vwap ? 'ABOVE' : 'BELOW';
-    const sectorStatus: 'POSITIVE' | 'NEGATIVE' = topStock.changePercent >= 0 ? 'POSITIVE' : 'NEGATIVE';
+    const sectorAvgPct = this.getSectorAvgPct(topStock.sector, topStock.changePercent);
+    const sectorStatus: 'POSITIVE' | 'NEGATIVE' = sectorAvgPct >= 0 ? 'POSITIVE' : 'NEGATIVE';
     const newsSent: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' = topStock.newsSentiment || (topStock.changePercent >= 0 ? 'POSITIVE' : 'NEGATIVE');
 
     const alertItem: AlertLogItem = {
@@ -2338,7 +2370,7 @@ export class ScannerService {
       alertCategory: 'AI_SCORE',
       sector: topStock.sector,
       sectorStatus: sectorStatus,
-      sectorChangePercent: topStock.changePercent,
+      sectorChangePercent: sectorAvgPct,
       oi: topStock.oiData ? `${topStock.oiData.openInterest.toFixed(2)}L` : '1.45M',
       oiChangePercent: topStock.oiData?.changeInOIPercent || 3.2,
       volumeX: `${topStock.indicators.rvol || 1.8}x Vol`,
@@ -2349,7 +2381,7 @@ export class ScannerService {
       newsTitle: topStock.newsTitle || `${topStock.symbol} test alert momentum signal`,
       gapPct: topStock.indicators.gapPct || topStock.changePercent,
       gapType: topStock.indicators.gapType || (topStock.changePercent >= 2 ? 'STRONG_GAP_UP' : topStock.changePercent >= 0.8 ? 'GAP_UP' : topStock.changePercent <= -2 ? 'STRONG_GAP_DOWN' : topStock.changePercent <= -0.8 ? 'GAP_DOWN' : 'NORMAL_OPEN'),
-      purchaseRationale: `TEST ALERT (${topStock.symbol}): AI Accuracy ${topStock.aiScore >= 85 ? topStock.aiScore : 94}%, ${topStock.indicators.rvol || 1.8}x Vol expansion, ${vwapStatus === 'ABOVE' ? 'Trading Above VWAP' : 'Trading Below VWAP'}, RSI ${topStock.indicators.rsi}, Sector ${topStock.sector} (${sectorStatus === 'POSITIVE' ? '+' : ''}${topStock.changePercent}%).`,
+      purchaseRationale: `TEST ALERT (${topStock.symbol}): AI Accuracy ${topStock.aiScore >= 85 ? topStock.aiScore : 94}%, ${topStock.indicators.rvol || 1.8}x Vol expansion, ${vwapStatus === 'ABOVE' ? 'Trading Above VWAP' : 'Trading Below VWAP'}, RSI ${topStock.indicators.rsi}, Sector ${topStock.sector} (${sectorAvgPct >= 0 ? '+' : ''}${sectorAvgPct}%).`,
     };
 
     this.alertLogs.unshift(alertItem);
@@ -2358,26 +2390,68 @@ export class ScannerService {
   }
 
   private ensureNiftySparklineAndTrend() {
-    let candles = this.stockCandles.get('NIFTY');
-    if (!candles || candles.length < 12) {
-      candles = generateSyntheticCandles(this.marketOverview.nifty50.price || 25044.65, 50, 'NIFTY');
-      this.stockCandles.set('NIFTY', candles);
-    }
-    const last12 = candles.slice(-12);
+    const niftyBars = autonomousPriceService.getExtendedBars('NIFTY 50') || autonomousPriceService.getExtendedBars('NIFTY');
     const currentPrice = this.marketOverview.nifty50.price || 25044.65;
-    last12[last12.length - 1].close = currentPrice;
 
-    this.marketOverview.nifty50.sparkline = last12.map((c) => Number(c.close.toFixed(2)));
-    const baseP = last12[0].close;
-    this.marketOverview.nifty50.trendHistory = last12.map((c, i) => {
-      const minsAgo = (last12.length - 1 - i) * 5;
-      const timeLabel = minsAgo === 0 ? 'Now' : `-${minsAgo}m`;
-      return {
-        time: timeLabel,
+    if (niftyBars && niftyBars.length >= 2) {
+      const candles = niftyBars.map((b) => ({
+        time: b.timeIST,
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        close: b.close,
+        volume: Math.max(100, b.volume),
+      }));
+      this.stockCandles.set('NIFTY', candles);
+      const last12 = candles.slice(-12);
+      last12[last12.length - 1].close = currentPrice;
+      this.marketOverview.nifty50.sparkline = last12.map((c) => Number(c.close.toFixed(2)));
+      const baseP = last12[0].close;
+      this.marketOverview.nifty50.trendHistory = last12.map((c, i) => ({
+        time: i === last12.length - 1 ? 'Now' : c.time.slice(0, 5),
         price: Number(c.close.toFixed(2)),
         change: Number((c.close - baseP).toFixed(2)),
-      };
+      }));
+      return;
+    }
+
+    const existing = this.stockCandles.get('NIFTY');
+    if (existing && existing.length >= 2) {
+      const last12 = existing.slice(-12);
+      last12[last12.length - 1].close = currentPrice;
+      this.marketOverview.nifty50.sparkline = last12.map((c) => Number(c.close.toFixed(2)));
+      const baseP = last12[0].close;
+      this.marketOverview.nifty50.trendHistory = last12.map((c, i) => ({
+        time: i === last12.length - 1 ? 'Now' : c.time.slice(0, 5),
+        price: Number(c.close.toFixed(2)),
+        change: Number((c.close - baseP).toFixed(2)),
+      }));
+    } else {
+      this.marketOverview.nifty50.sparkline = [currentPrice];
+      this.marketOverview.nifty50.trendHistory = [{ time: 'Now', price: currentPrice, change: 0 }];
+    }
+  }
+
+  private computeSectorAvgMap(): Record<string, number> {
+    const accum = new Map<string, { sum: number; cnt: number }>();
+    for (const s of this.stockScanResults) {
+      if (s.sector === 'Indices' || INDEX_SYMBOLS_UNIVERSE.has(s.symbol.toUpperCase())) continue;
+      const sec = s.sector || 'NSE F&O';
+      const cur = accum.get(sec) || { sum: 0, cnt: 0 };
+      cur.sum += Number(s.changePercent) || 0;
+      cur.cnt += 1;
+      accum.set(sec, cur);
+    }
+    const map: Record<string, number> = {};
+    accum.forEach((v, sec) => {
+      map[sec] = Number((v.sum / Math.max(1, v.cnt)).toFixed(2));
     });
+    return map;
+  }
+
+  private getSectorAvgPct(sector: string, fallbackPct: number = 0): number {
+    const map = this.computeSectorAvgMap();
+    return map[sector] ?? Number((Number(fallbackPct) || 0).toFixed(2));
   }
 
   // Getters & Setters
@@ -2385,6 +2459,7 @@ export class ScannerService {
     stocks: ScannedStock[];
     top10Buy: ScannedStock[];
     top10Sell: ScannedStock[];
+    sectorAvgMap: Record<string, number>;
     overview: MarketOverview;
     broker: BrokerConfig;
     alerts: AlertConfig;
@@ -2394,6 +2469,11 @@ export class ScannerService {
     sessionState?: any;
   } {
     this.ensureNiftySparklineAndTrend();
+    const sectorAvgMap = this.computeSectorAvgMap();
+    for (const s of this.stockScanResults) {
+      s.sectorChangePercent = sectorAvgMap[s.sector] ?? Number((Number(s.changePercent) || 0).toFixed(2));
+    }
+
     const isPureStock = (s: ScannedStock) =>
       s.sector !== 'Indices' && !INDEX_SYMBOLS_UNIVERSE.has(s.symbol.toUpperCase());
     const normRvolScore = (rv: number) => Math.min(18, Math.log10(Math.max(1, rv)) * 8);
@@ -2443,6 +2523,7 @@ export class ScannerService {
       stocks: cleared ? [] : this.stockScanResults,
       top10Buy: cleared ? [] : sortNewestFirstZtoA(buyStocks.slice(0, 15)),
       top10Sell: cleared ? [] : sortNewestFirstZtoA(sellStocks.slice(0, 15)),
+      sectorAvgMap: cleared ? {} : sectorAvgMap,
       overview: this.marketOverview,
       broker: this.brokerConfig,
       alerts: this.alertConfig,

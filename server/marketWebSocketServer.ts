@@ -284,6 +284,16 @@ class MarketWebSocketServerManager {
     chp = chp !== undefined ? chp : Number(((ch / prevClose) * 100).toFixed(2));
 
     const spread = parsed.isOption ? 0.15 : 0.25;
+    const bidQtySafe = Math.max(1, Math.round(cachedQuote?.bidQty || 1800));
+    const askQtySafe = Math.max(1, Math.round(cachedQuote?.askQty || 2250));
+    const computedRatio =
+      typeof cachedQuote?.bidAskRatio === 'number' && cachedQuote.bidAskRatio > 0
+        ? Number(cachedQuote.bidAskRatio.toFixed(2))
+        : Number((bidQtySafe / askQtySafe).toFixed(2));
+    const computedBias =
+      cachedQuote?.orderBookBias ||
+      (computedRatio >= 1.25 ? 'BUY_PRESSURE' : computedRatio <= 0.8 ? 'SELL_PRESSURE' : 'BALANCED');
+
     return {
       symbol: upperSym,
       cleanSymbol: parsed.cleanName,
@@ -303,8 +313,10 @@ class MarketWebSocketServerManager {
       atp: Number((atp || lp).toFixed(2)),
       bid: Number((cachedQuote?.bid || lp - spread).toFixed(2)),
       ask: Number((cachedQuote?.ask || lp + spread).toFixed(2)),
-      bidQty: Math.round(cachedQuote?.bidQty || 1800),
-      askQty: Math.round(cachedQuote?.askQty || 2250),
+      bidQty: bidQtySafe,
+      askQty: askQtySafe,
+      bidAskRatio: computedRatio,
+      orderBookBias: computedBias,
       timestamp: Date.now(),
       ltt: cachedQuote?.ltt || (marketStatus.isOpen ? 'LIVE IST' : 'EOD Settlement'),
       feedMode: 'FULL_QUOTE',
@@ -362,7 +374,7 @@ class MarketWebSocketServerManager {
 
   private sendClientStatus(session: ClientSession) {
     const token = this.accessTokenResolver ? this.accessTokenResolver() : process.env.UPSTOX_ACCESS_TOKEN || '';
-    const isUpstoxConnected = Boolean(token && token.length > 15);
+    const isUpstoxConnected = upstoxService.isTokenVerified(token);
     this.safeSend(session.ws, {
       type: 'status',
       status: {
@@ -404,11 +416,11 @@ class MarketWebSocketServerManager {
 
   public getStatus() {
     const token = this.accessTokenResolver ? this.accessTokenResolver() : process.env.UPSTOX_ACCESS_TOKEN || '';
-    const isUpstoxConnected = Boolean(token && token.length > 15);
+    const isUpstoxConnected = upstoxService.isTokenVerified(token);
     return {
       activeClients: this.clients.size,
       upstreamConnected: isUpstoxConnected || this.latestQuotes.size > 0,
-      feedSource: this.lastFeedSource,
+      feedSource: isUpstoxConnected ? 'UPSTOX_API_V2_LIVE' : this.lastFeedSource,
       totalTicks: this.tickCount,
       ticksPerSecond: this.ticksPerSecond,
     };

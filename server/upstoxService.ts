@@ -126,6 +126,17 @@ class UpstoxService {
   };
   private specialEventOffDays: SpecialEventOffDay[] = [];
   private lastResolvedSchedule: BrokerMarketScheduleStatus | null = null;
+  private tokenVerificationCache: Map<
+    string,
+    {
+      valid: boolean;
+      tokenType: 'USER_ACCESS' | 'ANALYTICS_READONLY' | 'INVALID';
+      profile?: UpstoxProfile;
+      message?: string;
+      checkedAt: number;
+    }
+  > = new Map();
+  private authInvalidatedHandler: ((reason: string) => void) | null = null;
 
   constructor() {
     this.loadCachedMapFromDisk();
@@ -138,11 +149,66 @@ class UpstoxService {
     });
   }
 
+  public setAuthInvalidatedHandler(fn: (reason: string) => void) {
+    this.authInvalidatedHandler = fn;
+  }
+
+  private getTokenCacheKey(token?: string): string {
+    const clean = (token || '').trim();
+    return clean.length > 15 ? clean.slice(-24) : '';
+  }
+
+  public getTokenVerificationInfo(accessToken?: string): {
+    valid: boolean;
+    tokenType: 'USER_ACCESS' | 'ANALYTICS_READONLY' | 'INVALID';
+    profile?: UpstoxProfile;
+    message?: string;
+    checkedAt: number;
+  } | null {
+    const key = this.getTokenCacheKey(accessToken || process.env.UPSTOX_ACCESS_TOKEN || '');
+    if (!key) return null;
+    return this.tokenVerificationCache.get(key) || null;
+  }
+
+  public isTokenVerified(accessToken?: string): boolean {
+    const clean = (accessToken || '').trim();
+    if (!clean || clean.length < 15) return false;
+    const cached = this.getTokenVerificationInfo(clean);
+    return Boolean(cached?.valid);
+  }
+
+  private isTokenRecentlyRejected(accessToken?: string): boolean {
+    const cached = this.getTokenVerificationInfo(accessToken);
+    if (!cached) return false;
+    return !cached.valid && Date.now() - cached.checkedAt < 120000;
+  }
+
+  public invalidateToken(accessToken: string, reason: string) {
+    const key = this.getTokenCacheKey(accessToken);
+    if (!key) return;
+    this.tokenVerificationCache.set(key, {
+      valid: false,
+      tokenType: 'INVALID',
+      message: reason,
+      checkedAt: Date.now(),
+    });
+    this.lastUpstoxQuotes = {};
+    this.lastUpstoxQuotesAt = 0;
+    if (this.authInvalidatedHandler) {
+      try {
+        this.authInvalidatedHandler(reason);
+      } catch {
+        // Non-fatal
+      }
+    }
+  }
+
   public clearQuotesCache() {
     this.lastUpstoxQuotes = {};
     this.lastUpstoxQuotesAt = 0;
     this.lastUpstoxTokenTag = '';
     this.inFlightUpstoxBatch = null;
+    this.tokenVerificationCache.clear();
   }
 
   private loadCachedMapFromDisk() {
@@ -315,6 +381,9 @@ class UpstoxService {
       return { valid: false, tokenType: 'INVALID', message: 'Token missing or too short' };
     }
 
+    const cacheKey = this.getTokenCacheKey(token);
+    let sawUnauthorized = false;
+
     // 1. Try User Profile endpoint (Standard OAuth Access Token)
     try {
       const controller = new AbortController();
@@ -329,15 +398,23 @@ class UpstoxService {
       });
       clearTimeout(tid);
 
+      if (profileRes.status === 401 || profileRes.status === 403) {
+        sawUnauthorized = true;
+      }
+
       if (profileRes.ok) {
         const json = await profileRes.json();
         if (json?.status === 'success' && json?.data) {
-          return {
+          const verified = {
             valid: true,
-            tokenType: 'USER_ACCESS',
-            profile: json.data,
+            tokenType: 'USER_ACCESS' as const,
+            profile: json.data as UpstoxProfile,
             message: `Upstox Connected: ${json.data.user_name || json.data.user_id || 'Active Trader'}`,
           };
+          if (cacheKey) {
+            this.tokenVerificationCache.set(cacheKey, { ...verified, checkedAt: Date.now() });
+          }
+          return verified;
         }
       }
     } catch {
@@ -361,24 +438,45 @@ class UpstoxService {
       );
       clearTimeout(tid2);
 
+      if (qRes.status === 401 || qRes.status === 403) {
+        sawUnauthorized = true;
+      }
+
       if (qRes.ok) {
         const qJson = await qRes.json();
         if (qJson?.status === 'success') {
-          return {
+          const verified = {
             valid: true,
-            tokenType: 'ANALYTICS_READONLY',
+            tokenType: 'ANALYTICS_READONLY' as const,
             message: 'Upstox Analytics / Market Data Feed Verified!',
           };
+          if (cacheKey) {
+            this.tokenVerificationCache.set(cacheKey, { ...verified, checkedAt: Date.now() });
+          }
+          return verified;
         }
       }
     } catch (err: any) {
-      return { valid: false, tokenType: 'INVALID', message: err?.message || 'Upstox network check failed' };
+      const netMsg = err?.message || 'Upstox network check failed';
+      if (cacheKey) {
+        this.tokenVerificationCache.set(cacheKey, {
+          valid: false,
+          tokenType: 'INVALID',
+          message: netMsg,
+          checkedAt: Date.now(),
+        });
+      }
+      return { valid: false, tokenType: 'INVALID', message: netMsg };
     }
 
+    const failMsg = sawUnauthorized
+      ? 'Upstox API returned Unauthorized (401). Please generate a fresh Access Token or Analytics Token.'
+      : 'Upstox token validation failed. Please generate a fresh Access Token or Analytics Token.';
+    this.invalidateToken(token, failMsg);
     return {
       valid: false,
       tokenType: 'INVALID',
-      message: 'Upstox API returned Unauthorized (401). Please generate a fresh Access Token or Analytics Token.',
+      message: failMsg,
     };
   }
 
@@ -426,7 +524,7 @@ class UpstoxService {
     );
 
     // Layer Upstox Direct Live API v2 Full Market Quotes on top when authenticated (with 1s coalesced cache)
-    if (resolvedToken.length > 15) {
+    if (resolvedToken.length > 15 && !this.isTokenRecentlyRejected(resolvedToken)) {
       try {
         const tokenTag = resolvedToken.slice(-16);
         const cacheFresh =
@@ -484,6 +582,13 @@ class UpstoxService {
                     }
                   );
                   clearTimeout(tid);
+                  if (res.status === 401 || res.status === 403) {
+                    this.invalidateToken(
+                      resolvedToken,
+                      `Upstox market-quote HTTP ${res.status} Unauthorized — token expired or invalid.`
+                    );
+                    return null;
+                  }
                   if (!res.ok) return null;
                   return res.json();
                 })
@@ -541,6 +646,16 @@ class UpstoxService {
                     if (askQty <= 0) askQty = depthFb.askQty;
                   }
 
+                  const bidQtySafe = Math.max(1, Math.round(bidQty));
+                  const askQtySafe = Math.max(1, Math.round(askQty));
+                  const computedBidAskRatio = Number((bidQtySafe / askQtySafe).toFixed(2));
+                  const computedOrderBookBias =
+                    computedBidAskRatio >= 1.25
+                      ? 'BUY_PRESSURE'
+                      : computedBidAskRatio <= 0.8
+                      ? 'SELL_PRESSURE'
+                      : 'BALANCED';
+
                   const quoteObj: UnifiedMarketQuote = {
                     symbol: mappedClean,
                     instrumentKey: instToken,
@@ -559,8 +674,10 @@ class UpstoxService {
                     atp: Number(atp.toFixed(2)),
                     bid: Number(topBuy),
                     ask: Number(topSell),
-                    bidQty,
-                    askQty,
+                    bidQty: bidQtySafe,
+                    askQty: askQtySafe,
+                    bidAskRatio: computedBidAskRatio,
+                    orderBookBias: computedOrderBookBias,
                     oi: Number(item.oi || 0),
                     ltt: item.last_trade_time
                       ? new Date(Number(item.last_trade_time)).toLocaleTimeString('en-IN', {
@@ -568,6 +685,9 @@ class UpstoxService {
                           hour12: false,
                         })
                       : `${istTime} IST`,
+                    quoteTimestampSec: item.last_trade_time
+                      ? Math.floor(Number(item.last_trade_time) / 1000)
+                      : Math.floor(Date.now() / 1000),
                     rsi: prevAuto?.rsi,
                     macd: prevAuto?.macd,
                     ema20: prevAuto?.ema20,
@@ -668,6 +788,8 @@ class UpstoxService {
         ask: Number((basePrice + 0.1).toFixed(2)),
         bidQty: fbDepth.bidQty,
         askQty: fbDepth.askQty,
+        bidAskRatio: fbDepth.bidAskRatio,
+        orderBookBias: fbDepth.orderBookBias,
         oi: 0,
         ltt: 'EOD Settlement',
         source: 'SETTLED_CLOSE',
@@ -693,7 +815,7 @@ class UpstoxService {
     const clean = this.cleanSymbol(symbol);
     const instKey = this.getInstrumentKey(clean);
 
-    if (!token || token.length < 15) {
+    if (!token || token.length < 15 || this.isTokenRecentlyRejected(token)) {
       return { source: 'CALCULATED', instrumentKey: instKey, data: null };
     }
 
@@ -704,6 +826,10 @@ class UpstoxService {
           `https://api.upstox.com/v2/option/contract?instrument_key=${encodeURIComponent(instKey)}`,
           { headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } }
         );
+        if (cRes.status === 401 || cRes.status === 403) {
+          this.invalidateToken(token, `Upstox option/contract returned HTTP ${cRes.status}`);
+          return { source: 'CALCULATED', instrumentKey: instKey, data: null };
+        }
         if (cRes.ok) {
           const cJson = await cRes.json();
           const expiries: string[] = Array.from(
@@ -718,6 +844,10 @@ class UpstoxService {
           `https://api.upstox.com/v2/option/chain?instrument_key=${encodeURIComponent(instKey)}&expiry_date=${encodeURIComponent(targetExpiry)}`,
           { headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } }
         );
+        if (ocRes.status === 401 || ocRes.status === 403) {
+          this.invalidateToken(token, `Upstox option/chain returned HTTP ${ocRes.status}`);
+          return { source: 'CALCULATED', instrumentKey: instKey, data: null };
+        }
         if (ocRes.ok) {
           const ocJson = await ocRes.json();
           if (ocJson?.status === 'success' && Array.isArray(ocJson?.data)) {

@@ -246,7 +246,9 @@ export function evaluateStockScanner(
   candles: Candle[],
   pdh?: number,
   pdl?: number,
-  pdc?: number
+  pdc?: number,
+  realSectorChangePercent?: number,
+  realNiftyChangePercent?: number
 ): ScannedStock {
   const closes = candles.map((c) => c.close);
   const volumes = candles.map((c) => c.volume);
@@ -383,14 +385,23 @@ export function evaluateStockScanner(
   // --------------------------------------------------------------------------
   // V4 - NIFTY & SECTOR REGIME (10 Pts Max: 5 Market + 5 Sector)
   // --------------------------------------------------------------------------
+  const effMarketPct =
+    typeof realNiftyChangePercent === 'number' && Number.isFinite(realNiftyChangePercent)
+      ? Number(realNiftyChangePercent.toFixed(2))
+      : changePercent;
+  const effSectorPct =
+    typeof realSectorChangePercent === 'number' && Number.isFinite(realSectorChangePercent)
+      ? Number(realSectorChangePercent.toFixed(2))
+      : changePercent;
+
   let marketState: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
   let buyMarketScore = 2.5;
   let sellMarketScore = 2.5;
-  if (changePercent >= 0.20) {
+  if (effMarketPct >= 0.20) {
     marketState = 'BULLISH';
     buyMarketScore = 5;
     sellMarketScore = 0;
-  } else if (changePercent <= -0.20) {
+  } else if (effMarketPct <= -0.20) {
     marketState = 'BEARISH';
     sellMarketScore = 5;
     buyMarketScore = 0;
@@ -399,11 +410,11 @@ export function evaluateStockScanner(
   let sectorState: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
   let buySectorScore = 2.5;
   let sellSectorScore = 2.5;
-  if (changePercent >= 0.15) {
+  if (effSectorPct >= 0.15) {
     sectorState = 'BULLISH';
     buySectorScore = 5;
     sellSectorScore = 0;
-  } else if (changePercent <= -0.15) {
+  } else if (effSectorPct <= -0.15) {
     sectorState = 'BEARISH';
     sellSectorScore = 5;
     buySectorScore = 0;
@@ -874,8 +885,8 @@ export function evaluateStockScanner(
       greeks,
       candles,
     },
-    marketState === 'BULLISH' ? 0.55 : marketState === 'BEARISH' ? -0.55 : 0.02,
-    sectorState === 'BULLISH' ? 0.85 : sectorState === 'BEARISH' ? -0.85 : 0.05
+    effMarketPct,
+    effSectorPct
   );
 
   const confluence = calculate16PillarConfluence({
@@ -893,14 +904,15 @@ export function evaluateStockScanner(
     oiData,
     greeks,
     sector,
-    sectorChangePercent: sectorState === 'BULLISH' ? 0.85 : sectorState === 'BEARISH' ? -0.85 : 0.05,
-    niftyBenchmarkChange: marketState === 'BULLISH' ? 0.55 : marketState === 'BEARISH' ? -0.55 : 0.02,
+    sectorChangePercent: effSectorPct,
+    niftyBenchmarkChange: effMarketPct,
   });
 
   return {
     symbol,
     name,
     sector,
+    sectorChangePercent: effSectorPct,
     price,
     change,
     changePercent,

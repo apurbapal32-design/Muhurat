@@ -228,6 +228,8 @@ interface WorkBar {
   timeIST: string;
   dateIST: string;
   secIST: number;
+  startSecIST?: number;
+  endSecIST?: number;
   open: number;
   high: number;
   low: number;
@@ -256,11 +258,12 @@ const INDEX_SYMBOLS_BLACKLIST = new Set([
 ]);
 
 function parseSec(t?: string): number {
-  if (!t) return ENTRY_START_SEC;
+  if (!t || t === '--') return 0;
   const parts = String(t)
     .trim()
     .split(':')
     .map((x) => parseInt(x, 10) || 0);
+  if (parts.length < 2) return 0;
   return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
 }
 
@@ -272,31 +275,12 @@ function fmtClockHHMMSS(sec: number): string {
   return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
 }
 
-function fmtSecHHMMSS(sec: number): string {
-  const s = Math.max(ENTRY_START_SEC, Math.min(ENTRY_END_SEC, Math.round(sec)));
-  return fmtClockHHMMSS(s);
-}
-
-function symbolHashOffset(sym: string, offset: number = 0): number {
-  let h = 2166136261;
-  for (let i = 0; i < sym.length; i++) {
-    h ^= sym.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return ((Math.abs(h) + offset * 19) % 51) + 5;
-}
-
-function clampToEntryWindowSec(rawSec: number, sym: string, idx: number, maxLiveSec: number): string {
+function resolveAuthenticBarTime(rawSec: number, maxLiveSec: number): { listedAt: string; inEntryWindow: boolean } {
   const effectiveUpper = maxLiveSec >= ENTRY_START_SEC ? Math.min(ENTRY_END_SEC, maxLiveSec) : ENTRY_END_SEC;
-  let sec = rawSec;
-  if (sec < ENTRY_START_SEC) {
-    sec = ENTRY_START_SEC + symbolHashOffset(sym, idx);
-  }
-  if (sec > effectiveUpper) {
-    const span = Math.max(60, effectiveUpper - ENTRY_START_SEC);
-    sec = ENTRY_START_SEC + (symbolHashOffset(sym, idx) * 61) % span;
-  }
-  return fmtSecHHMMSS(Math.max(ENTRY_START_SEC, Math.min(ENTRY_END_SEC, sec)));
+  const boundedSec = maxLiveSec > 0 ? Math.min(rawSec, maxLiveSec) : rawSec;
+  const listedAt = fmtClockHHMMSS(boundedSec);
+  const inEntryWindow = boundedSec >= ENTRY_START_SEC && boundedSec <= effectiveUpper;
+  return { listedAt, inEntryWindow };
 }
 
 function normalizeCycleBuildupLabel(
@@ -340,7 +324,7 @@ function buildBarsForStock(
   todayDateIST: string
 ): WorkBar[] {
   let bars: WorkBar[] = [];
-  if (Array.isArray(extendedBars) && extendedBars.length >= 10) {
+  if (Array.isArray(extendedBars) && extendedBars.length >= 4) {
     bars = extendedBars.map((b) => ({
       timeIST: b.timeIST.length === 5 ? `${b.timeIST}:00` : b.timeIST,
       dateIST: b.dateIST,
@@ -349,11 +333,12 @@ function buildBarsForStock(
       high: Number(b.high) || Number(b.close),
       low: Number(b.low) || Number(b.close),
       close: Number(b.close) || Number(stock.price),
-      volume: Math.max(100, Math.round(Number(b.volume) || 1000)),
+      volume: Math.max(1, Math.round(Number(b.volume) || 0)),
     }));
-  } else if (Array.isArray(fallbackCandles) && fallbackCandles.length >= 8) {
+  } else if (Array.isArray(fallbackCandles) && fallbackCandles.length >= 4) {
     bars = fallbackCandles.map((c, idx) => {
-      const sec = ORB_START_SEC + idx * 300;
+      const parsed = c.time ? parseSec(c.time) : 0;
+      const sec = parsed >= ORB_START_SEC ? parsed : ORB_START_SEC + idx * 300;
       return {
         timeIST: c.time.length === 5 ? `${c.time}:00` : c.time,
         dateIST: todayDateIST,
@@ -362,28 +347,43 @@ function buildBarsForStock(
         high: Number(c.high) || Number(c.close),
         low: Number(c.low) || Number(c.close),
         close: Number(c.close) || Number(stock.price),
-        volume: Math.max(100, Math.round(Number(c.volume) || 1000)),
+        volume: Math.max(1, Math.round(Number(c.volume) || 0)),
       };
     });
   }
 
   if (bars.length === 0) {
-    const lp = Number(stock.price) || 100;
-    const prev = lp - (Number(stock.change) || 0);
-    for (let i = 0; i < 66; i++) {
-      const ratio = (i + 1) / 66;
-      const c = Number((prev + (lp - prev) * ratio).toFixed(2));
-      const sec = ORB_START_SEC + i * 300;
-      bars.push({
-        timeIST: fmtClockHHMMSS(sec),
-        dateIST: todayDateIST,
-        secIST: sec,
-        open: Number((i === 0 ? prev : bars[i - 1].close).toFixed(2)),
-        high: Number((c * 1.002).toFixed(2)),
-        low: Number((c * 0.998).toFixed(2)),
-        close: c,
-        volume: Math.max(1500, Math.round((Number(stock.volume) || 250000) / 66)),
-      });
+    return [];
+  }
+
+  bars.sort((a, b) => (a.dateIST === b.dateIST ? a.secIST - b.secIST : a.dateIST.localeCompare(b.dateIST)));
+
+  // Detect & normalize any trailing cumulative daily quote summary bar so it doesn't distort 5m/15m/30m/1h OHLCV
+  const latestDate = bars[bars.length - 1].dateIST;
+  const todayList = bars.filter((b) => b.dateIST === latestDate);
+  if (todayList.length >= 6) {
+    const tail = bars[bars.length - 1];
+    const priorToday = todayList.slice(0, -1);
+    const priorSumVol = priorToday.reduce((acc, b) => acc + b.volume, 0);
+    const priorMaxHigh = Math.max(...priorToday.map((b) => b.high));
+    const priorMinLow = Math.min(...priorToday.map((b) => b.low));
+    if (
+      priorSumVol > 0 &&
+      tail.volume > priorSumVol * 0.65 &&
+      tail.high >= priorMaxHigh &&
+      tail.low <= priorMinLow
+    ) {
+      const prevBar = priorToday[priorToday.length - 1];
+      const lpNow = Number(stock.price) || tail.close;
+      const barOpen = prevBar.close;
+      bars[bars.length - 1] = {
+        ...tail,
+        open: barOpen,
+        high: Math.max(barOpen, lpNow),
+        low: Math.min(barOpen, lpNow),
+        close: lpNow,
+        volume: Math.max(100, Math.round(tail.volume - priorSumVol)),
+      };
     }
   }
 
@@ -399,8 +399,8 @@ function buildBarsForStock(
 }
 
 function resampleBarsToTimeframe(bars: WorkBar[], tfMinutes: number): WorkBar[] {
-  if (tfMinutes <= 5 || bars.length === 0) return bars;
-  const bucketSec = tfMinutes * 60;
+  if (bars.length === 0) return bars;
+  const bucketSec = Math.max(5, tfMinutes) * 60;
   const grouped = new Map<string, WorkBar[]>();
 
   for (const bar of bars) {
@@ -415,22 +415,28 @@ function resampleBarsToTimeframe(bars: WorkBar[], tfMinutes: number): WorkBar[] 
   const resampled: WorkBar[] = [];
   for (const [, chunk] of grouped) {
     chunk.sort((a, b) => a.secIST - b.secIST);
-    const first = chunk[0];
-    const last = chunk[chunk.length - 1];
+    const nonMicro = chunk.filter((b) => !(b.open === b.high && b.high === b.low && b.volume <= 150));
+    const cleanChunk = nonMicro.length > 0 ? nonMicro : chunk;
+    const first = cleanChunk[0];
+    const last = cleanChunk[cleanChunk.length - 1];
     let high = -Infinity;
     let low = Infinity;
     let volume = 0;
-    for (const b of chunk) {
+    for (const b of cleanChunk) {
       if (b.high > high) high = b.high;
       if (b.low < low) low = b.low;
       volume += b.volume;
     }
     const bucketOffset = Math.floor(Math.max(0, first.secIST - ORB_START_SEC) / bucketSec) * bucketSec;
-    const candleEndSec = Math.min(15 * 3600 + 25 * 60, ORB_START_SEC + bucketOffset + bucketSec);
+    const bucketStartSec = Math.min(15 * 3600 + 25 * 60, ORB_START_SEC + bucketOffset);
+    const bucketEndSec = Math.min(15 * 3600 + 29 * 60 + 55, bucketStartSec + bucketSec - 1);
+    const candleSec = Math.max(bucketStartSec, Math.min(last.secIST, bucketEndSec));
     resampled.push({
       dateIST: first.dateIST,
-      secIST: Math.max(ORB_START_SEC, Math.min(last.secIST, candleEndSec)),
-      timeIST: fmtClockHHMMSS(Math.max(ORB_START_SEC, Math.min(last.secIST, candleEndSec))),
+      secIST: candleSec,
+      startSecIST: bucketStartSec,
+      endSecIST: bucketEndSec,
+      timeIST: fmtClockHHMMSS(bucketStartSec),
       open: first.open,
       high,
       low,
@@ -490,14 +496,17 @@ function evaluateEquityTimeframe(params: {
   const allTfVols = tfBars.map((b) => Math.max(100, b.volume));
   const baselineBarVol = Math.max(500, Math.round(medianNumber(allTfVols)));
 
-  // Search chronologically in 09:20:00 .. 14:45:00 IST on this timeframe
+  // Search chronologically in 09:20:00 .. min(14:45:00, maxLiveSec) IST on this timeframe
+  const effectiveUpper = maxLiveSec >= ENTRY_START_SEC ? Math.min(ENTRY_END_SEC, maxLiveSec) : ENTRY_END_SEC;
   let bestGlobalIdx = tfBars.length - 1;
   let bestPassCount = -1;
   const minTodayStartGlobalIdx = Math.max(1, tfBars.length - sessionTfBars.length);
 
   for (let gi = minTodayStartGlobalIdx; gi < tfBars.length; gi++) {
     const bar = tfBars[gi];
-    if (bar.secIST < ENTRY_START_SEC || bar.secIST > ENTRY_END_SEC) continue;
+    const barStart = bar.startSecIST ?? bar.secIST;
+    const barEnd = bar.endSecIST ?? (barStart + tfMeta.minutes * 60 - 1);
+    if (barEnd < ENTRY_START_SEC + 60 || barStart > effectiveUpper) continue;
     const prev1 = tfBars[Math.max(0, gi - 1)];
     const prev2 = tfBars[Math.max(0, gi - 2)];
 
@@ -577,11 +586,11 @@ function evaluateEquityTimeframe(params: {
   const rawVolumePassed = rawTotalVolume >= 150000 && (triggerBarVolume >= baselineBarVol * 1.08 || tradedValueCr >= 15);
   const volumeConfirmText = `${tfMeta.shortLabel} ${(triggerBarVolume / 1000).toFixed(1)}k vs ${(baselineBarVol / 1000).toFixed(1)}k (${rawVolumeRatio}x)`;
 
-  const tfHashOffset = tfMeta.minutes === 5 ? 0 : tfMeta.minutes === 15 ? 7 : tfMeta.minutes === 30 ? 13 : 21;
-  const rawListedSec = stock.listedAt ? parseSec(stock.listedAt) + tfHashOffset * 15 : refBar.secIST;
-  const listedAt = clampToEntryWindowSec(rawListedSec, `${stock.symbol}-${tfMeta.id}`, sessionTfBars.length, maxLiveSec);
-  const listedSec = parseSec(listedAt);
-  const inEntryWindow = listedSec >= ENTRY_START_SEC && listedSec <= ENTRY_END_SEC;
+  // Listed At timestamp anchored directly to the real trigger candle refBar within [09:20, min(14:45, maxLiveSec)]
+  const refStartSec = refBar.startSecIST ?? refBar.secIST;
+  const refEndSec = refBar.endSecIST ?? (refStartSec + tfMeta.minutes * 60 - 1);
+  const triggerCandleSec = Math.min(effectiveUpper, refEndSec);
+  const { listedAt, inEntryWindow } = resolveAuthenticBarTime(triggerCandleSec, maxLiveSec);
 
   const orbWindowTxt = tfMeta.minutes <= 15 ? 'ORB 15m' : `ORB ${tfMeta.shortLabel}`;
   const conditions: MostActiveFnoCondition[] = [
@@ -635,7 +644,25 @@ function evaluateEquityTimeframe(params: {
     passedCount === 7 ? 'STRICT 7/7' : passedCount === 6 ? 'HIGH 6/7' : 'WATCH';
 
   const tfRiskScale = tfMeta.minutes === 5 ? 1.0 : tfMeta.minutes === 15 ? 1.15 : tfMeta.minutes === 30 ? 1.3 : 1.45;
-  const entryPrice = Number((stock.fixedEntryPrice || stock.risk?.entryPrice || refBar.close || lp).toFixed(2));
+  // Derive entryPrice strictly from the trigger candle refBar (within [refBar.low, refBar.high]), never stale fixedEntryPrice
+  let rawTriggerEntry = refBar.close;
+  const crossedTrigger = isBuy
+    ? (refBar.high > orHigh && refBar.low <= orHigh
+        ? orHigh
+        : refBar.high > pdh && refBar.low <= pdh
+        ? pdh
+        : refBar.close)
+    : (refBar.low < orLow && refBar.high >= orLow
+        ? orLow
+        : refBar.low < pdl && refBar.high >= pdl
+        ? pdl
+        : refBar.close);
+  if (Math.abs(rawTriggerEntry - lp) < 0.02 && Math.abs(crossedTrigger - lp) >= 0.02) {
+    rawTriggerEntry = crossedTrigger;
+  }
+  const entryPrice = Number(
+    Math.max(0.05, Math.min(refBar.high, Math.max(refBar.low, rawTriggerEntry || lp))).toFixed(2)
+  );
   const rawRiskDist = isBuy
     ? Math.max(entryPrice * 0.0055 * tfRiskScale, entryPrice - Math.max(orLow, (orHigh + orLow) / 2, pdl * 0.995))
     : Math.max(entryPrice * 0.0055 * tfRiskScale, Math.min(orHigh, (orHigh + orLow) / 2, pdh * 1.005) - entryPrice);
@@ -805,7 +832,7 @@ function evaluateEquityRow(
     ).toFixed(1)
   );
 
-  const bidAskRatio = Number((stock.bidAskRatio || (isBuy ? 1.24 : 0.81)).toFixed(2));
+  const bidAskRatio = Number((stock.bidAskRatio && stock.bidAskRatio > 0 ? stock.bidAskRatio : 1.0).toFixed(2));
   const cycleBuildup = normalizeCycleBuildupLabel(oiBuildup, chgPct, oiChangePct, bidAskRatio);
 
   return {
@@ -967,11 +994,42 @@ function buildIndexOptionContracts(
           const todayTfBars = tfIdxBars.filter((b) => b.dateIST === todayDateIST);
           const activeTf = todayTfBars.length >= 2 ? todayTfBars : tfIdxBars;
 
+          const rawVol = Number(mkt.volume) > 0
+            ? Number(mkt.volume)
+            : Math.round((sp.key === 'NIFTY 50' ? 4200000 : sp.key === 'BANKNIFTY' ? 2850000 : 1450000) * (sIdx === 1 ? 1.45 : 0.9) * (1 + Math.abs(chgPct) * 0.35));
+          const effectiveUpper = maxLiveSec >= ENTRY_START_SEC ? Math.min(ENTRY_END_SEC, maxLiveSec) : ENTRY_END_SEC;
           const orbEndForTf = ORB_START_SEC + Math.max(15, tfMeta.minutes) * 60;
           const orbBars = activeTf.filter((b) => b.secIST >= ORB_START_SEC && b.secIST <= orbEndForTf);
           const orbRef = orbBars.length > 0 ? orbBars : activeTf.slice(0, 1);
           const spotOrHigh = orbRef.length > 0 ? Math.max(...orbRef.map((b) => b.high)) : Number((openPx * 1.0022).toFixed(2));
           const spotOrLow = orbRef.length > 0 ? Math.min(...orbRef.map((b) => b.low)) : Number((openPx * 0.9978).toFixed(2));
+
+          // Find earliest index spot breakout/breakdown candle on this timeframe within [09:20, effectiveUpper]
+          let spotRefBar: WorkBar | undefined;
+          let spotRefIdx = Math.max(0, activeTf.length - 1);
+          let bestSpotScore = -1;
+          for (let bi = 1; bi < activeTf.length; bi++) {
+            const sb = activeTf[bi];
+            const sbStart = sb.startSecIST ?? sb.secIST;
+            const sbEnd = sb.endSecIST ?? (sbStart + tfMeta.minutes * 60 - 1);
+            if (sbEnd < ENTRY_START_SEC + 60 || sbStart > effectiveUpper) continue;
+            const prevSb = activeTf[bi - 1];
+            const sbBody = computeBodyStrengthPct(sb);
+            const hitOrb = isBullishMarket ? (sb.close > spotOrHigh || sb.high > spotOrHigh) : (sb.close < spotOrLow || sb.low < spotOrLow);
+            const hitPdh = isBullishMarket ? (sb.close > spotPdh || sb.high > spotPdh) : (sb.close < spotPdl || sb.low < spotPdl);
+            const hitSr = isBullishMarket ? sb.close >= spotR1 : sb.close <= spotS1;
+            const hitTrend = isBullishMarket ? sb.close >= prevSb.close : sb.close <= prevSb.close;
+            const sc = (hitOrb ? 2 : 0) + (hitPdh ? 2 : 0) + (hitSr ? 1 : 0) + (hitTrend ? 1 : 0) + (sbBody >= 50 ? 1 : 0);
+            if (sc > bestSpotScore) {
+              bestSpotScore = sc;
+              spotRefBar = sb;
+              spotRefIdx = bi;
+              if (sc >= 6) break;
+            }
+          }
+          if (!spotRefBar && activeTf.length > 0) {
+            spotRefBar = activeTf.find((sb) => (sb.endSecIST ?? sb.secIST) >= ENTRY_START_SEC && (sb.startSecIST ?? sb.secIST) <= effectiveUpper) || activeTf[activeTf.length - 1];
+          }
 
           const premOrHigh = Number((premPrevClose * (1 + (tfMeta.minutes <= 15 ? 0.07 : 0.09))).toFixed(2));
           const premOrLow = Number((premPrevClose * (1 - (tfMeta.minutes <= 15 ? 0.07 : 0.09))).toFixed(2));
@@ -984,8 +1042,8 @@ function buildIndexOptionContracts(
           const structure: MostActiveFnoRow['structure'] =
             direction === 'BUY' ? (tfStructOk ? 'HH / HL' : 'RANGE') : tfStructOk ? 'LH / LL' : 'RANGE';
 
-          const idxBody = lastBar
-            ? computeBodyStrengthPct({ open: lastBar.open, high: lastBar.high, low: lastBar.low, close: lastBar.close })
+          const idxBody = (spotRefBar || lastBar)
+            ? computeBodyStrengthPct({ open: (spotRefBar || lastBar).open, high: (spotRefBar || lastBar).high, low: (spotRefBar || lastBar).low, close: (spotRefBar || lastBar).close })
             : Math.min(88, 52 + Math.abs(chgPct) * 14);
           const bodyStrengthPct = Number(Math.max(idxBody, Math.min(92, 54 + Math.abs(premChgPct) * 0.65)).toFixed(1));
           const bodyOk = bodyStrengthPct >= 50;
@@ -1011,15 +1069,16 @@ function buildIndexOptionContracts(
           const baseBarVol = Math.round(baseContractVol / (tfBarDivisor * 1.25));
           const rawVolumeRatio = Number((triggerBarVol / Math.max(1, baseBarVol)).toFixed(2));
 
-          const tfOffsetSec = tfMeta.minutes === 5 ? 0 : tfMeta.minutes === 15 ? 120 : tfMeta.minutes === 30 ? 240 : 360;
-          const listedAt = clampToEntryWindowSec(
-            ENTRY_START_SEC + 45 + spIdx * 280 + sIdx * 95 + (optType === 'PE' ? 40 : 0) + tfOffsetSec,
-            `${sp.label}-${strike}-${optType}-${tfMeta.id}`,
-            sIdx,
-            maxLiveSec
-          );
-          const listedSec = parseSec(listedAt);
-          const inWindow = listedSec >= ENTRY_START_SEC && listedSec <= ENTRY_END_SEC;
+          // Listed At derived directly from spotRefBar's real candle confirmation window on this timeframe
+          let listedAt = '--';
+          let inWindow = false;
+          if (spotRefBar) {
+            const spotStart = spotRefBar.startSecIST ?? spotRefBar.secIST;
+            const spotEnd = spotRefBar.endSecIST ?? (spotStart + tfMeta.minutes * 60 - 1);
+            const resolved = resolveAuthenticBarTime(Math.min(effectiveUpper, spotEnd), maxLiveSec);
+            listedAt = resolved.listedAt;
+            inWindow = resolved.inEntryWindow;
+          }
 
           const conditions: MostActiveFnoCondition[] = [
             {
@@ -1072,7 +1131,24 @@ function buildIndexOptionContracts(
             passedCount === 7 ? 'STRICT 7/7' : passedCount === 6 ? 'HIGH 6/7' : 'WATCH';
 
           const tfRiskMult = tfMeta.minutes === 5 ? 1.0 : tfMeta.minutes === 15 ? 1.08 : tfMeta.minutes === 30 ? 1.16 : 1.25;
-          const entryPrem = Number(Math.max(5, direction === 'BUY' ? livePrem * 0.94 : livePrem * 1.05).toFixed(2));
+          // Compute option entry premium at spotRefBar via delta displacement from trigger spot -> live spot
+          const triggerSpot = spotRefBar ? spotRefBar.close : spot;
+          const spotMoveSinceTrigger = spot - triggerSpot;
+          const signedDelta = optType === 'CE' ? Math.abs(delta || bs.callDelta || 0.5) : -Math.abs(delta || bs.putDelta || 0.5);
+          const deltaDisplacedEntry = livePrem - signedDelta * spotMoveSinceTrigger;
+          const lowPremFloor =
+            direction === 'BUY'
+              ? livePrem > premPrevClose
+                ? Math.max(5, Math.min(livePrem * 0.96, premPrevClose * 0.995))
+                : Math.max(5, livePrem * 0.84, premPdl * 0.9)
+              : Math.max(5, livePrem * 0.97);
+          const highPremCeil =
+            direction === 'BUY'
+              ? Math.max(5, livePrem * 1.025)
+              : Math.max(livePrem * 1.18, premPdh * 1.02);
+          const entryPrem = Number(
+            Math.min(highPremCeil, Math.max(lowPremFloor, deltaDisplacedEntry)).toFixed(2)
+          );
           const slDist = Math.abs(entryPrem * 0.22) * tfRiskMult;
           const slPrem = Number((direction === 'BUY' ? Math.max(1, entryPrem - slDist) : entryPrem + slDist).toFixed(2));
           const riskPts = Number(Math.max(2, Math.abs(entryPrem - slPrem)).toFixed(2));
@@ -1150,21 +1226,18 @@ function buildIndexOptionContracts(
 
         const rawBidQ = Number(mkt.bid_qty || mkt.total_buy_qty || 0);
         const rawAskQ = Number(mkt.ask_qty || mkt.total_sell_qty || 0);
+        const spotBa = Number(q?.bidAskRatio || (q?.bidQty && q?.askQty ? q.bidQty / Math.max(1, q.askQty) : 0));
         const optBidAskRatio =
           rawBidQ > 0 && rawAskQ > 0
-            ? Number(Math.max(0.45, Math.min(2.6, rawBidQ / rawAskQ)).toFixed(2))
-            : Number(
+            ? Number(Math.max(0.25, Math.min(4.0, rawBidQ / rawAskQ)).toFixed(2))
+            : spotBa > 0
+            ? Number(
                 Math.max(
-                  0.52,
-                  Math.min(
-                    2.25,
-                    (direction === 'BUY' ? 1.24 : 0.78) +
-                      (premChgPct * 0.012) +
-                      (oiChangePct * 0.004) +
-                      (sIdx === 1 ? 0.08 : -0.04)
-                  )
+                  0.35,
+                  Math.min(3.0, optType === 'CE' ? spotBa : 1 / Math.max(0.35, spotBa))
                 ).toFixed(2)
-              );
+              )
+            : 1.0;
         const cycleBuildup = normalizeCycleBuildupLabel(oiBuildup, premChgPct, oiChangePct, optBidAskRatio);
 
         rows.push({
@@ -1491,7 +1564,7 @@ export function buildMostActiveFnoReport(params: {
       bias: baseBias,
       activeContractsCount: contracts.length,
       formulaScore: Math.round((contracts.reduce((acc, c) => acc + c.formulaPassedCount, 0) / Math.max(1, contracts.length)) * 14),
-      listedAt: contracts[0]?.listedAt || '09:20:45',
+      listedAt: contracts[0]?.listedAt || '--',
       timeframe: contracts[0]?.timeframe || activeTfFallback,
       mtfAlignmentCount: uAlignCount,
       mtfBias,

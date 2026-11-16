@@ -311,6 +311,7 @@ export interface ScannedStock {
   symbol: string;
   name: string;
   sector: string;
+  sectorChangePercent?: number;
   price: number;
   change: number;
   changePercent: number;
@@ -334,7 +335,7 @@ export interface ScannedStock {
   entryTime?: string;
   exitTime?: string;
   exitPrice?: number;
-  tradeStatus?: 'OPEN' | 'CLOSED_TARGET_1' | 'CLOSED_TARGET_2' | 'CLOSED_TARGET_3' | 'CLOSED_STOP_LOSS';
+  tradeStatus?: 'OPEN' | 'NO_SIGNAL' | 'CLOSED_TARGET_1' | 'CLOSED_TARGET_2' | 'CLOSED_TARGET_3' | 'CLOSED_STOP_LOSS';
   isClosed?: boolean;
   realizedPoints?: number;
   realizedPct?: number;
@@ -1667,6 +1668,8 @@ export interface FyersWsTick {
   ask?: number;
   bidQty?: number;
   askQty?: number;
+  bidAskRatio?: number;
+  orderBookBias?: string;
   iv?: number;
   delta?: number;
   gamma?: number;

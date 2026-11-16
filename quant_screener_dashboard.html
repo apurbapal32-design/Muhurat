@@ -955,6 +955,13 @@
             </span>
             <span class="text-[10px] text-emerald-300 font-mono font-bold">1:2 RR &bull; OPT</span>
           </div>
+          <div id="nav-smart-money-concepts" class="sidebar-link border-l-2 border-purple-400 bg-purple-500/10 hover:bg-purple-500/20" onclick="switchTab('smart-money-concepts')" title="Smart Money Concepts (ICT): Market Structure (SH/SL, HH/HL, LH/LL, BOS, CHoCH), Liquidity Sweeps (BSL/SSL/EQH/EQL), 3-Candle FVG & CE, Order Blocks & Breakers, Premium/Discount & OTE 0.705, 5-Point Checklist & Position Sizing">
+            <span class="flex items-center gap-1.5">
+              <span>🏛️ Smart Money Concepts</span>
+              <span class="text-[9px] px-1 py-0.2 bg-purple-500/25 text-purple-200 border border-purple-400/40 rounded font-bold">ICT</span>
+            </span>
+            <span class="text-[10px] text-purple-300 font-mono font-bold">BOS &bull; FVG &bull; OB</span>
+          </div>
           <div id="nav-strong" class="sidebar-link" onclick="switchTab('strong')">
             <span>Muhurat Strong</span>
             <span class="text-[10px] text-emerald-400 font-mono font-bold">ORB 15m</span>
@@ -4007,6 +4014,7 @@
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
           <button onclick="switchTab('most-active-fno')" class="px-3 py-1.5 rounded-lg bg-amber-500 text-black font-black whitespace-nowrap shadow-md shadow-amber-500/20">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-bold whitespace-nowrap transition">⚡ Claude FNO &amp; (Index Options)</button>
+          <button onclick="switchTab('smart-money-concepts')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-400/40 font-bold whitespace-nowrap transition">🏛️ Smart Money Concepts</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4165,6 +4173,7 @@
           <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
           <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
           <button onclick="switchTab('claude-fno')" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-black whitespace-nowrap shadow-md shadow-emerald-500/20">⚡ Claude FNO &amp; (Index Options)</button>
+          <button onclick="switchTab('smart-money-concepts')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-400/40 font-bold whitespace-nowrap transition">🏛️ Smart Money Concepts</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
         </div>
@@ -4292,6 +4301,220 @@
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-claude-fno"></table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-smart-money-concepts" class="tab-pane hidden space-y-5 font-mono">
+        <!-- Shared Candidate Engines Horizontal Pill Switcher -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-[#172033] text-xs font-mono">
+          <button onclick="switchTab('claude-10skills')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/25 via-emerald-500/25 to-amber-500/25 text-cyan-200 border border-cyan-400/50 font-bold whitespace-nowrap hover:scale-105 transition">🧠 10-Skill AI &amp; Sentinel</button>
+          <button onclick="switchTab('world-strategy')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/25 via-emerald-500/25 to-cyan-500/25 text-amber-200 border border-amber-400/40 font-bold whitespace-nowrap hover:scale-105 transition">⚡ World #1 Omni-Quantum</button>
+          <button onclick="switchTab('strong')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Strong (ORB 15m)</button>
+          <button onclick="switchTab('sonic')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Pulse (RVOL &bull; OI)</button>
+          <button onclick="switchTab('titan')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-sky-400 border border-sky-500/20 font-bold whitespace-nowrap transition">Flow (Whales)</button>
+          <button onclick="switchTab('elite')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-rose-400 border border-rose-500/20 font-bold whitespace-nowrap transition">Elite (3m Squeeze)</button>
+          <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
+          <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
+          <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
+          <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-bold whitespace-nowrap transition">⚡ Claude FNO &amp; (Index Options)</button>
+          <button onclick="switchTab('smart-money-concepts')" class="px-3 py-1.5 rounded-lg bg-purple-500 text-black font-black whitespace-nowrap shadow-md shadow-purple-500/20">🏛️ Smart Money Concepts</button>
+          <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
+          <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
+        </div>
+
+        <!-- Title & Controls Banner -->
+        <div class="card p-4 border-l-4 border-purple-400 bg-gradient-to-r from-[#130d24] via-[#10182b] to-[#0b1322] flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-400/40 text-[10px] font-black">ICT RULEBOOK &bull; SH/SL &bull; BOS/CHoCH &bull; BSL/SSL SWEEP &bull; 3-CANDLE FVG &bull; ORDER BLOCK &bull; OTE 0.705 &bull; R:R &ge; 1:2</span>
+              <h2 class="text-base md:text-lg font-black text-white">🏛️ Smart Money Concepts (ICT Institutional Structure)</h2>
+              <button onclick="openFormulaModal('smart_money_concepts')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
+            </div>
+            <p class="text-xs text-slate-300 max-w-4xl font-sans leading-relaxed">
+              Rule-based ICT price-action scanner across <strong>218 NSE F&amp;O equities + 5 indices</strong>: detects Swing High/Low fractals, <strong>BOS &amp; CHoCH</strong>, Equal Highs/Lows (<strong>&le; 0.1%</strong>) &amp; <strong>Liquidity Sweeps</strong>, 3-candle <strong>FVG + 50% CE</strong>, unmitigated <strong>Order Blocks &amp; Breaker flips</strong>, <strong>Premium/Discount + OTE (0.705)</strong>, 5-point checklist, and exact Risk Position Sizing.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap shrink-0">
+            <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#080c16] border border-purple-500/30 text-[11px] text-purple-200 font-bold">
+              <span>Account ₹</span>
+              <input id="smc-capital-input" type="number" min="5000" step="10000" value="100000" onchange="SmartMoneyConceptsEngine.onParamsChange()" class="bg-transparent text-white font-black w-20 focus:outline-none">
+            </label>
+            <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#080c16] border border-amber-500/30 text-[11px] text-amber-200 font-bold">
+              <span>Risk %</span>
+              <input id="smc-risk-input" type="number" min="0.25" max="5" step="0.25" value="1.0" onchange="SmartMoneyConceptsEngine.onParamsChange()" class="bg-transparent text-white font-black w-14 focus:outline-none">
+            </label>
+            <input id="smc-search-input" oninput="SmartMoneyConceptsEngine.renderTables()" type="text" placeholder="Filter symbol/sector..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-36 focus:outline-none focus:border-purple-400">
+            <select id="smc-dir-filter" onchange="SmartMoneyConceptsEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-amber-200 text-xs font-bold focus:outline-none">
+              <option value="ALL">Dir: BUY &amp; SELL</option>
+              <option value="BUY">Dir: BUY (Long / Discount)</option>
+              <option value="SELL">Dir: SELL (Short / Premium)</option>
+            </select>
+            <select id="smc-sort-select" onchange="SmartMoneyConceptsEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-cyan-200 text-xs font-bold focus:outline-none">
+              <option value="listed_desc" selected>Sort: Listed At (Z&rarr;A)</option>
+              <option value="score_desc">Sort: Checklist Score (5/5&rarr;0)</option>
+              <option value="rr_desc">Sort: Risk-Reward (High&rarr;Low)</option>
+              <option value="rvol_desc">Sort: RVOL (High&rarr;Low)</option>
+              <option value="turnover_desc">Sort: Turnover (High&rarr;Low)</option>
+              <option value="atr25_desc">Sort: ATR-25 % (High&rarr;Low)</option>
+              <option value="rsi_desc">Sort: RSI (High&rarr;Low)</option>
+              <option value="bid_ask_desc">Sort: Bid/Ask Ratio (High&rarr;Low)</option>
+              <option value="listed_asc">Sort: Listed At (A&rarr;Z)</option>
+            </select>
+            <button onclick="SmartMoneyConceptsEngine.load(true)" class="px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-black font-black text-xs transition cursor-pointer">🔄 Scan Now</button>
+          </div>
+        </div>
+
+        <!-- Timeframe Selector Strip -->
+        <div class="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-[#0b101d] border border-[#1b2740] text-xs">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span class="text-[10px] text-slate-400 font-bold uppercase px-1">Timeframe:</span>
+            <button onclick="SmartMoneyConceptsEngine.setTimeframe('5m')" id="smc-tf-5m" class="px-3 py-1 rounded-lg font-black transition cursor-pointer bg-purple-500 text-black shadow-md shadow-purple-500/20">5m <span id="smc-tf-cnt-5m" class="ml-1 px-1.5 py-0.2 rounded bg-black/25 text-[10px]">0</span></button>
+            <button onclick="SmartMoneyConceptsEngine.setTimeframe('15m')" id="smc-tf-15m" class="px-3 py-1 rounded-lg font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-slate-200 border border-[#23314f]">15m <span id="smc-tf-cnt-15m" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-purple-300 text-[10px]">0</span></button>
+            <button onclick="SmartMoneyConceptsEngine.setTimeframe('30m')" id="smc-tf-30m" class="px-3 py-1 rounded-lg font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-slate-200 border border-[#23314f]">30m <span id="smc-tf-cnt-30m" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-purple-300 text-[10px]">0</span></button>
+            <button onclick="SmartMoneyConceptsEngine.setTimeframe('1h')" id="smc-tf-1h" class="px-3 py-1 rounded-lg font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-slate-200 border border-[#23314f]">1H <span id="smc-tf-cnt-1h" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-purple-300 text-[10px]">0</span></button>
+            <button onclick="SmartMoneyConceptsEngine.setTimeframe('ALL')" id="smc-tf-ALL" class="px-3 py-1 rounded-lg font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-amber-300 border border-amber-500/30">🔥 All Timeframes</button>
+          </div>
+          <button onclick="SmartMoneyConceptsEngine.toggleRulebook()" id="smc-rulebook-toggle" class="px-3 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-bold text-[11px] cursor-pointer">
+            📖 Hide Buy vs Sell Rulebook &amp; Calculator
+          </button>
+        </div>
+
+        <!-- 6 KPI Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-[#1a253d]">
+            <div class="text-[10px] text-slate-400 uppercase">Universe Scanned</div>
+            <div id="smc-kpi-universe" class="text-base font-black text-white mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/30">
+            <div class="text-[10px] text-emerald-400 uppercase font-bold">5/5 Checklist Setups</div>
+            <div id="smc-kpi-qualified" class="text-base font-black text-emerald-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-teal-500/30">
+            <div class="text-[10px] text-teal-300 uppercase font-bold">BUY (Discount / SSL)</div>
+            <div id="smc-kpi-buy" class="text-base font-black text-teal-200 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-rose-500/30">
+            <div class="text-[10px] text-rose-400 uppercase font-bold">SELL (Premium / BSL)</div>
+            <div id="smc-kpi-sell" class="text-base font-black text-rose-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-purple-500/30">
+            <div class="text-[10px] text-purple-300 uppercase font-bold">Unmitigated OB / FVG</div>
+            <div id="smc-kpi-obfvg" class="text-base font-black text-purple-200 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-amber-500/30">
+            <div class="text-[10px] text-amber-300 uppercase font-bold">Breaker / Window</div>
+            <div id="smc-kpi-breaker" class="text-xs font-black text-amber-200 mt-1">--</div>
+          </div>
+        </div>
+
+        <!-- Collapsible Buy vs Sell Rulebook + OTE 0.705 & Position Sizing Calculator -->
+        <div id="smc-rulebook-panel" class="grid grid-cols-1 xl:grid-cols-12 gap-4 text-[11px]">
+          <!-- Side-by-Side BUY vs SELL Matrix + FVG/OB Rules -->
+          <div class="xl:col-span-7 p-4 rounded-xl bg-[#0a0f1c] border border-purple-500/30 space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2 border-b border-[#1c2740] pb-2">
+              <div class="font-black text-xs text-purple-300 uppercase tracking-wider">ICT Smart Money Concepts: BUY (Long) vs SELL (Short) Side-by-Side Rules</div>
+              <span class="text-[9.5px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold">Educational Rulebook • Always Check 5/5 Checklist</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-[10px] border-collapse">
+                <thead>
+                  <tr class="bg-[#0e1526] text-slate-300 border-b border-[#1f2c44] uppercase">
+                    <th class="p-1.5">Concept</th>
+                    <th class="p-1.5 text-emerald-300">BUY (Long)</th>
+                    <th class="p-1.5 text-rose-300">SELL (Short)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#151f33] text-slate-300">
+                  <tr><td class="p-1.5 font-bold text-white">HTF Bias</td><td class="p-1.5">Bullish: HH + HL, BOS upward</td><td class="p-1.5">Bearish: LH + LL, BOS downward</td></tr>
+                  <tr><td class="p-1.5 font-bold text-white">Liquidity Sweep First</td><td class="p-1.5">SSL (below swing lows / EQL &le;0.1%): Low &lt; prior SL &amp; Close &gt; prior SL</td><td class="p-1.5">BSL (above swing highs / EQH &le;0.1%): High &gt; prior SH &amp; Close &lt; prior SH</td></tr>
+                  <tr><td class="p-1.5 font-bold text-white">Confirmation</td><td class="p-1.5">CHoCH/BOS: body closes above last Lower-High</td><td class="p-1.5">CHoCH/BOS: body closes below last Higher-Low</td></tr>
+                  <tr><td class="p-1.5 font-bold text-white">FVG (C1, C2, C3) &amp; CE</td><td class="p-1.5">C1.high &lt; C3.low, zone = [C1.H..C3.L], CE = (C3.L + C1.H)/2</td><td class="p-1.5">C1.low &gt; C3.high, zone = [C3.H..C1.L], CE = (C1.L + C3.H)/2</td></tr>
+                  <tr><td class="p-1.5 font-bold text-white">Order Block (OB)</td><td class="p-1.5">Last bearish candle before displacement up-move causing BOS/CHoCH</td><td class="p-1.5">Last bullish candle before displacement down-move causing BOS/CHoCH</td></tr>
+                  <tr><td class="p-1.5 font-bold text-white">Zone &amp; OTE (0.705)</td><td class="p-1.5">Discount (&lt;50% Eq): Entry = H &minus; 0.705 &times; (H &minus; L)</td><td class="p-1.5">Premium (&gt;50% Eq): Entry = L + 0.705 &times; (H &minus; L)</td></tr>
+                  <tr><td class="p-1.5 font-bold text-white">SL &amp; Target (TP1)</td><td class="p-1.5">SL below OB/sweep low; Target next BSL (SH / EQH)</td><td class="p-1.5">SL above OB/sweep high; Target next SSL (SL / EQL)</td></tr>
+                  <tr><td class="p-1.5 font-bold text-white">Size &amp; R:R Formula</td><td class="p-1.5">Qty = RiskAmt / (Entry &minus; SL); RR = (TP &minus; Entry)/(Entry &minus; SL)</td><td class="p-1.5">Qty = RiskAmt / (SL &minus; Entry); RR = (Entry &minus; TP)/(SL &minus; Entry)</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-[10px]">
+              <div class="p-2.5 rounded-lg bg-[#0d1424] border border-emerald-500/25">
+                <div class="font-black text-emerald-300 mb-1">5-Point Pre-Entry Checklist</div>
+                <div>1. HTF bias (1H/30m) matches direction</div>
+                <div>2. Liquidity swept first (SSL for Buy / BSL for Sell)</div>
+                <div>3. LTF CHoCH or BOS body-close confirmed</div>
+                <div>4. Entry at unmitigated OB/FVG in Discount/Premium</div>
+                <div>5. R:R &ge; 1:2 (Breakeven win rate = 1 / (1 + RR) = 33.3% at 1:2)</div>
+              </div>
+              <div class="p-2.5 rounded-lg bg-[#0d1424] border border-amber-500/25 text-slate-300 font-sans">
+                <div class="font-black font-mono text-amber-300 mb-1">Honest Caveats &amp; Breaker Rule</div>
+                <div>&bull; <strong>Breaker Block:</strong> Failed OB closed through flips polarity (support &harr; resistance).</div>
+                <div>&bull; SMC marking is partially subjective across traders; always backtest on NSE timeframes.</div>
+                <div>&bull; Educational decision-support only &mdash; not financial advice.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive OTE 0.705 & Position Sizing Calculator -->
+          <div class="xl:col-span-5 p-4 rounded-xl bg-[#0a0f1c] border border-cyan-500/30 space-y-3">
+            <div class="flex items-center justify-between flex-wrap gap-2 border-b border-[#1c2740] pb-2">
+              <div class="font-black text-xs text-cyan-300 uppercase">SMC OTE (0.705) &amp; Position Size Calculator</div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="SmartMoneyConceptsEngine.loadExample('BUY')" class="px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[9.5px] font-bold cursor-pointer">Buy Ex (100&rarr;120)</button>
+                <button onclick="SmartMoneyConceptsEngine.loadExample('SELL')" class="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-[9.5px] font-bold cursor-pointer">Sell Ex (120&rarr;100)</button>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-[10px]">
+              <label class="block"><span class="text-slate-400">Side</span>
+                <select id="smc-calc-side" onchange="SmartMoneyConceptsEngine.recalcWidget()" class="mt-0.5 w-full bg-[#070b14] border border-[#22304d] rounded px-2 py-1 text-white font-bold">
+                  <option value="BUY">BUY (Long)</option>
+                  <option value="SELL">SELL (Short)</option>
+                </select>
+              </label>
+              <label class="block"><span class="text-slate-400">Swing Low</span>
+                <input id="smc-calc-low" type="number" step="0.05" value="100" oninput="SmartMoneyConceptsEngine.recalcWidget()" class="mt-0.5 w-full bg-[#070b14] border border-[#22304d] rounded px-2 py-1 text-white font-bold">
+              </label>
+              <label class="block"><span class="text-slate-400">Swing High</span>
+                <input id="smc-calc-high" type="number" step="0.05" value="120" oninput="SmartMoneyConceptsEngine.recalcWidget()" class="mt-0.5 w-full bg-[#070b14] border border-[#22304d] rounded px-2 py-1 text-white font-bold">
+              </label>
+              <label class="block"><span class="text-slate-400">Entry (Auto OTE if blank)</span>
+                <input id="smc-calc-entry" type="number" step="0.05" value="105.90" oninput="SmartMoneyConceptsEngine.recalcWidget()" class="mt-0.5 w-full bg-[#070b14] border border-[#22304d] rounded px-2 py-1 text-cyan-300 font-bold">
+              </label>
+              <label class="block"><span class="text-slate-400">Stop Loss</span>
+                <input id="smc-calc-sl" type="number" step="0.05" value="99" oninput="SmartMoneyConceptsEngine.recalcWidget()" class="mt-0.5 w-full bg-[#070b14] border border-[#22304d] rounded px-2 py-1 text-rose-300 font-bold">
+              </label>
+              <label class="block"><span class="text-slate-400">Target (BSL/SSL)</span>
+                <input id="smc-calc-tp" type="number" step="0.05" value="120" oninput="SmartMoneyConceptsEngine.recalcWidget()" class="mt-0.5 w-full bg-[#070b14] border border-[#22304d] rounded px-2 py-1 text-emerald-300 font-bold">
+              </label>
+            </div>
+            <div id="smc-calc-output" class="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2.5 rounded-lg bg-[#070b14] border border-[#1a2740] text-[10px]">
+              <!-- Dynamically rendered by SmartMoneyConceptsEngine.recalcWidget() -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <button onclick="SmartMoneyConceptsEngine.setCategory('ALL_SETUPS')" id="smc-cat-ALL_SETUPS" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-purple-500 text-black">🏛️ All SMC Setups <span id="smc-cnt-ALL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-black/20 text-[10px]">0</span></button>
+          <button onclick="SmartMoneyConceptsEngine.setCategory('QUALIFIED_5_OF_5')" id="smc-cat-QUALIFIED_5_OF_5" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-emerald-300 border border-emerald-500/30">✅ 5/5 Checklist Qualified <span id="smc-cnt-QUALIFIED_5_OF_5" class="ml-1 px-1.5 py-0.2 rounded bg-emerald-500/20 text-[10px]">0</span></button>
+          <button onclick="SmartMoneyConceptsEngine.setCategory('BUY_DISCOUNT')" id="smc-cat-BUY_DISCOUNT" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-teal-300 border border-teal-500/30">🟢 BUY (Discount + SSL) <span id="smc-cnt-BUY_DISCOUNT" class="ml-1 px-1.5 py-0.2 rounded bg-teal-500/20 text-[10px]">0</span></button>
+          <button onclick="SmartMoneyConceptsEngine.setCategory('SELL_PREMIUM')" id="smc-cat-SELL_PREMIUM" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-rose-300 border border-rose-500/30">🔴 SELL (Premium + BSL) <span id="smc-cnt-SELL_PREMIUM" class="ml-1 px-1.5 py-0.2 rounded bg-rose-500/20 text-[10px]">0</span></button>
+          <button onclick="SmartMoneyConceptsEngine.setCategory('UNMITIGATED_OB_FVG')" id="smc-cat-UNMITIGATED_OB_FVG" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-cyan-300 border border-cyan-500/30">📦 Unmitigated OB + FVG <span id="smc-cnt-UNMITIGATED_OB_FVG" class="ml-1 px-1.5 py-0.2 rounded bg-cyan-500/20 text-[10px]">0</span></button>
+          <button onclick="SmartMoneyConceptsEngine.setCategory('BOS_CHOCH_BREAKER')" id="smc-cat-BOS_CHOCH_BREAKER" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-amber-300 border border-amber-500/30">⚡ BOS / CHoCH / Breaker <span id="smc-cnt-BOS_CHOCH_BREAKER" class="ml-1 px-1.5 py-0.2 rounded bg-amber-500/20 text-[10px]">0</span></button>
+        </div>
+
+        <!-- Primary SMC Table -->
+        <div class="card overflow-hidden bg-[#0d111a] border border-purple-500/30 rounded-xl shadow-xl">
+          <div class="bg-[#110e22] px-4 py-3 border-b border-purple-500/25 flex items-center justify-between flex-wrap gap-2">
+            <span id="smc-table-title" class="font-bold text-sm text-purple-300 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span>
+              SMART MONEY CONCEPTS &bull; Market Structure + Liquidity + FVG/OB + OTE 0.705 + Checklist
+            </span>
+            <span id="smc-count-badge" class="text-xs font-mono text-purple-200 font-bold">Loading live SMC scan...</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs" id="table-smart-money-concepts"></table>
           </div>
         </div>
       </section>
@@ -6218,10 +6441,10 @@
 
     function sortByListedAtNewestFirstAtoZ(arr) {
       return [...(arr || [])].sort((a, b) => {
-        const rawA = a.listed_at || a.listedAt || '09:20:00';
-        const rawB = b.listed_at || b.listedAt || '09:20:00';
-        const secA = typeof timeStringToSec === 'function' ? timeStringToSec(rawA) : 0;
-        const secB = typeof timeStringToSec === 'function' ? timeStringToSec(rawB) : 0;
+        const rawA = a.listed_at || a.listedAt || '';
+        const rawB = b.listed_at || b.listedAt || '';
+        const secA = (rawA && rawA !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawA) : 0;
+        const secB = (rawB && rawB !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawB) : 0;
         if (secB !== secA) return secB - secA; // Z->A Model: Latest/2nd eligible FIRST -> Earliest/1st eligible LAST
         return String(b.symbol || '').localeCompare(String(a.symbol || ''));
       });
@@ -6383,14 +6606,38 @@
       }
     ];
 
+    const SCANNER_FULL_NAMES = {
+      strong_bullish: 'Strong Bull (ORB 15m)',
+      strong_bearish: 'Strong Bear (ORB 15m)',
+      sonic_bullish: 'Pulse Bull (RVOL • OI)',
+      sonic_bearish: 'Pulse Bear (RVOL • OI)',
+      titan_bullish: 'Flow Bull (Whales)',
+      titan_bearish: 'Flow Bear (Whales)',
+      quant_elite_bullish: 'Elite Bull (3m Squeeze)',
+      quant_elite_bearish: 'Elite Bear (3m Squeeze)',
+      quant_elite_pro_bullish: 'Elite Pro ▲ (6m Waves)',
+      quant_elite_pro_bearish: 'Elite Pro ▼ (6m Waves)',
+      titan_cash_bullish: 'Flow Cash ▲ (Delivery)',
+      titan_cash_bearish: 'Flow Cash ▼ (Delivery)',
+      best_momentum_upside: 'Momentum ▲ (Velocity)',
+      best_momentum_downside: 'Momentum ▼ (Velocity)',
+      liquidity_bull: 'Liquidity ▲ (Deep Flow)',
+      liquidity_bear: 'Liquidity ▼ (Deep Flow)'
+    };
+
     function getStockScannerRecommendations(stock) {
       if (!stock || !isPureEquityStock(stock)) return [];
       if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) return [];
       const recs = [];
+      const sym = String(stock.symbol || '').toUpperCase();
       SCANNER_FORMULA_DEFS.forEach(def => {
         try {
           if (def.match(stock)) {
-            recs.push({ key: def.key, label: def.label, side: def.side });
+            recs.push({
+              key: def.key,
+              label: SCANNER_FULL_NAMES[def.key] || def.label,
+              side: def.side
+            });
           }
         } catch (e) {}
       });
@@ -6402,10 +6649,47 @@
       const price = Number(stock.price) || 0;
       const atp = Number(stock.atp) || price;
       if (pct >= 0.55 && turn >= 100 && rvol >= 1.15 && price >= atp * 0.998 && ba >= 1.15) {
-        recs.push({ key: 'liquidity_bull', label: 'Liquidity ▲', side: 'BUY' });
+        recs.push({ key: 'liquidity_bull', label: SCANNER_FULL_NAMES.liquidity_bull, side: 'BUY' });
       } else if (pct <= -0.55 && turn >= 100 && rvol >= 1.15 && price <= atp * 1.002 && ba <= 0.88) {
-        recs.push({ key: 'liquidity_bear', label: 'Liquidity ▼', side: 'SELL' });
+        recs.push({ key: 'liquidity_bear', label: SCANNER_FULL_NAMES.liquidity_bear, side: 'SELL' });
       }
+      // Include live engine matches from Money Flow, Most Active F&O, and Claude F&O when loaded
+      try {
+        if (typeof SmartMoneyFlowEngine !== 'undefined' && SmartMoneyFlowEngine.data) {
+          const mfBuy = (SmartMoneyFlowEngine.data.buySignals || []).find(x => String(x.symbol || '').toUpperCase() === sym);
+          const mfSell = (SmartMoneyFlowEngine.data.sellSignals || []).find(x => String(x.symbol || '').toUpperCase() === sym);
+          if (mfBuy) recs.push({ key: 'money_flow_buy', label: `Money Flow ▲ (${mfBuy.score || 22}/22)`, side: 'BUY' });
+          if (mfSell) recs.push({ key: 'money_flow_sell', label: `Money Flow ▼ (${mfSell.score || 22}/22)`, side: 'SELL' });
+        }
+        if (typeof MostActiveFnoEngine !== 'undefined' && MostActiveFnoEngine.data?.categories) {
+          const mafCats = MostActiveFnoEngine.data.categories;
+          const mafAll = [...(mafCats.mostActiveFno || []), ...(mafCats.mostActiveEquities || [])];
+          const mafHit = mafAll.find(x => String(x.symbol || '').toUpperCase() === sym);
+          if (mafHit) {
+            const mafSide = String(mafHit.direction || mafHit.signal || '').includes('SELL') || Number(mafHit.chgPct || 0) < 0 ? 'SELL' : 'BUY';
+            recs.push({ key: 'most_active_fno', label: `Most Active F&O (${mafHit.timeframe || '5m'} ${mafHit.formulaScore || 7}/7)`, side: mafSide });
+          }
+        }
+        if (typeof ClaudeFnoEngine !== 'undefined' && ClaudeFnoEngine.data?.categories) {
+          const cfCats = ClaudeFnoEngine.data.categories;
+          const cfAll = [...(cfCats.qualifiedTrades || []), ...(cfCats.equitiesFno || [])];
+          const cfHit = cfAll.find(x => String(x.symbol || '').toUpperCase() === sym);
+          if (cfHit) {
+            recs.push({ key: 'claude_fno', label: `Claude F&O (${cfHit.score10 || 8}/10)`, side: 'BUY' });
+          }
+        }
+        if (typeof SmartMoneyConceptsEngine !== 'undefined' && SmartMoneyConceptsEngine.lastReport?.categories) {
+          const smcAll = SmartMoneyConceptsEngine.lastReport.categories.allSetups || [];
+          const smcHit = smcAll.find(x => String(x.symbol || '').toUpperCase() === sym);
+          if (smcHit) {
+            recs.push({
+              key: 'smart_money_concepts',
+              label: `SMC ${smcHit.side === 'BUY' ? '▲' : '▼'} (${smcHit.structureEvent !== 'NONE' ? smcHit.structureEvent : smcHit.checklistScore + '/5'})`,
+              side: smcHit.side === 'SELL' ? 'SELL' : 'BUY'
+            });
+          }
+        }
+      } catch (e) {}
       return recs;
     }
 
@@ -6414,14 +6698,22 @@
       if (!recs || recs.length === 0) {
         return `<span class="px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-500 border border-slate-700/70 text-[9.5px] font-mono">No Formula Match</span>`;
       }
-      const shown = recs.slice(0, 3).map(r => {
+      const buyCount = recs.filter(r => r.side === 'BUY').length;
+      const sellCount = recs.filter(r => r.side === 'SELL').length;
+      const summaryLabel = `${recs.length} Scanner${recs.length > 1 ? 's' : ''}`
+        + (buyCount > 0 && sellCount > 0 ? ` (${buyCount}▲ / ${sellCount}▼)` : buyCount > 0 ? ' (Bullish)' : ' (Bearish)');
+      const badges = recs.map(r => {
         const cls = r.side === 'BUY'
           ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35'
           : 'bg-rose-500/15 text-rose-300 border-rose-500/35';
-        return `<span class="px-1.5 py-0.2 rounded border text-[9px] font-bold whitespace-nowrap ${cls}">${r.label}</span>`;
+        return `<span class="px-1.5 py-0.5 rounded border text-[9px] font-bold whitespace-nowrap ${cls}">${r.label}</span>`;
       }).join('');
-      const more = recs.length > 3 ? `<span class="px-1 py-0.2 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[9px] font-bold">+${recs.length - 3}</span>` : '';
-      return `<div class="flex flex-wrap items-center gap-1 max-w-[210px]" title="${recs.map(r => r.label).join(', ')}">${shown}${more}</div>`;
+      return `
+        <div class="flex flex-col gap-1 min-w-[260px] max-w-[390px]" title="${recs.map(r => r.label).join(' | ')}">
+          <div class="text-[9px] font-extrabold text-cyan-300 tracking-wide uppercase">${summaryLabel}</div>
+          <div class="flex flex-wrap items-center gap-1">${badges}</div>
+        </div>
+      `;
     }
 
     function buildDistinctFormulaScanners(equityPool) {
@@ -6700,6 +6992,8 @@
           if (typeof MostActiveFnoEngine !== 'undefined') MostActiveFnoEngine.load(false);
         } else if (tabId === 'claude-fno') {
           if (typeof ClaudeFnoEngine !== 'undefined') ClaudeFnoEngine.load(false);
+        } else if (tabId === 'smart-money-concepts') {
+          if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.load(false);
         } else if (tabId === 'world-strategy') {
           renderWorldStrategyTab();
         } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(tabId)) {
@@ -6756,22 +7050,58 @@
       }
     };
 
-    function initCustomTableSectors() {
-      const sectorSelect = document.getElementById('ct-sector');
-      if (!sectorSelect || (sectorSelect.options && sectorSelect.options.length > 1)) return;
-      
-      const sectors = new Set();
-      if (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) {
-        DATA.all_stocks.forEach(s => {
-          if (s.sector) sectors.add(s.sector);
-        });
+    function getLiveSectorAvgPct(sectorName, fallbackPct = 0) {
+      if (typeof DATA !== 'undefined' && Array.isArray(DATA.sectors)) {
+        const sec = DATA.sectors.find(s => s.name === sectorName);
+        if (sec && typeof sec.change === 'number' && !Number.isNaN(sec.change)) {
+          return Number(sec.change.toFixed(2));
+        }
       }
-      Array.from(sectors).sort().forEach(sec => {
-        const opt = document.createElement('option');
-        opt.value = sec;
-        opt.textContent = sec;
-        sectorSelect.appendChild(opt);
+      if (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) {
+        const matching = DATA.all_stocks.filter(s => s.sector === sectorName);
+        if (matching.length > 0) {
+          const sum = matching.reduce((acc, s) => acc + (Number(s.pct_change) || 0), 0);
+          return Number((sum / matching.length).toFixed(2));
+        }
+      }
+      return Number((Number(fallbackPct) || 0).toFixed(2));
+    }
+
+    function refreshSectorFilterDropdowns() {
+      const uniqueSecs = Array.from(new Set(
+        (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks) && DATA.all_stocks.length > 0
+          ? DATA.all_stocks.map(s => s.sector).filter(Boolean)
+          : (DATA.sectors || []).map(s => s.name).filter(Boolean))
+      )).sort();
+
+      const sigKey = uniqueSecs.join('|');
+      if (window._lastSectorFilterSig === sigKey) return;
+      window._lastSectorFilterSig = sigKey;
+
+      ['watchlist-sector-filter', 'heatmap-sector-filter', 'ct-sector'].forEach(selId => {
+        const el = document.getElementById(selId);
+        if (!el) return;
+        const prevVal = el.value || 'ALL';
+        const firstOpt = el.options && el.options[0] ? el.options[0] : null;
+        const defaultVal = firstOpt ? firstOpt.value : 'ALL';
+        const defaultText = firstOpt ? firstOpt.textContent : 'All Sectors';
+        el.innerHTML = '';
+        const baseOpt = document.createElement('option');
+        baseOpt.value = defaultVal;
+        baseOpt.textContent = defaultText;
+        el.appendChild(baseOpt);
+        uniqueSecs.forEach(sec => {
+          const opt = document.createElement('option');
+          opt.value = sec;
+          opt.textContent = sec;
+          el.appendChild(opt);
+        });
+        el.value = uniqueSecs.includes(prevVal) ? prevVal : defaultVal;
       });
+    }
+
+    function initCustomTableSectors() {
+      refreshSectorFilterDropdowns();
     }
 
     function toggleFilterControlsCollapse() {
@@ -7140,8 +7470,10 @@
           return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         }
         if (sortBy === 'listed_at') {
-          const secA = typeof timeStringToSec === 'function' ? timeStringToSec(a.listed_at || a.listedAt || '09:20:00') : 0;
-          const secB = typeof timeStringToSec === 'function' ? timeStringToSec(b.listed_at || b.listedAt || '09:20:00') : 0;
+          const rawA = a.listed_at || a.listedAt || '';
+          const rawB = b.listed_at || b.listedAt || '';
+          const secA = (rawA && rawA !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawA) : 0;
+          const secB = (rawB && rawB !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawB) : 0;
           return sortDir === 'asc' ? secA - secB : secB - secA;
         }
         if (sortBy === 'scanner_rec') {
@@ -7178,7 +7510,7 @@
       filtered.forEach((stock, idx) => {
         const price = Number(stock.price) || 0;
         const pct = Number(stock.pct_change) || 0;
-        const secPct = Number(stock.sector_pct ?? (pct * 0.85)) || 0;
+        const secPct = Number((typeof getLiveSectorAvgPct === 'function' ? getLiveSectorAvgPct(stock.sector, stock.sector_pct) : (stock.sector_pct ?? 0)) || 0);
         const baRatio = Number(stock.bid_ask_ratio) || 1.0;
         const rvol = Number(stock.rvol) || 1.0;
         const atp = Number(stock.atp) || price;
@@ -7187,9 +7519,9 @@
         const turnover = Number(stock.turnover_cr) || 0;
         const oiChg = Number(stock.oi_chg_pct) || 0;
         const buildup = normalizeCycleBuildup(stock.buildup, pct, oiChg, stock.bid_ask_ratio);
-        const listedTime = (!stock.listed_at || (typeof isTimeInFutureIST === 'function' && isTimeInFutureIST(stock.listed_at)))
-          ? (typeof sanitizeStockListedTime === 'function' ? sanitizeStockListedTime(stock, idx, !isUp, filtered.length || 20) : (stock.listed_at || '09:20:05'))
-          : stock.listed_at;
+        const listedTime = (stock.listed_at && stock.listed_at !== '--' && !(typeof isTimeInFutureIST === 'function' && isTimeInFutureIST(stock.listed_at)))
+          ? stock.listed_at
+          : '--';
 
         rowsHTML += `
           <tr class="hover:bg-[#0c1220] transition group">
@@ -7898,19 +8230,23 @@
       const isBearish = s.pct_change < 0;
       const curPrice = s.price;
       
-      // Calculate Realistic Setup Bounds
+      // Use real locked signal setup bounds when present, otherwise derive from live price levels
       let entryPrice, stopPrice, targetPrice, dayLowPrice, dayHighPrice, stopPct, targetPct, rrRatio;
-      if (s.symbol === 'SRF') {
-        entryPrice = 2209.33;
-        stopPrice = 2229.80;
-        targetPrice = 2169.63;
-        dayLowPrice = 2169.63;
-        dayHighPrice = 2260.00;
-        stopPct = '+0.98%';
-        targetPct = '-1.80%';
-        rrRatio = '1:2.04';
+      const hasRealSetup = Number(s.entry) > 0 && Number(s.stop) > 0 && Number(s.target) > 0;
+      if (hasRealSetup) {
+        entryPrice = +Number(s.entry).toFixed(2);
+        stopPrice = +Number(s.stop).toFixed(2);
+        targetPrice = +Number(s.target).toFixed(2);
+        dayLowPrice = Math.min(entryPrice, stopPrice, targetPrice);
+        dayHighPrice = Math.max(entryPrice, stopPrice, targetPrice);
+        const sPct = ((stopPrice - entryPrice) / Math.max(0.01, entryPrice)) * 100;
+        const tPct = ((targetPrice - entryPrice) / Math.max(0.01, entryPrice)) * 100;
+        stopPct = (sPct >= 0 ? '+' : '') + sPct.toFixed(2) + '%';
+        targetPct = (tPct >= 0 ? '+' : '') + tPct.toFixed(2) + '%';
+        const rrVal = Math.abs(targetPrice - entryPrice) / Math.max(0.01, Math.abs(entryPrice - stopPrice));
+        rrRatio = '1:' + rrVal.toFixed(2);
       } else if (isBearish) {
-        entryPrice = +(curPrice * 1.013).toFixed(2);
+        entryPrice = +curPrice.toFixed(2);
         stopPrice = +(entryPrice * 1.0095).toFixed(2);
         targetPrice = +(entryPrice * 0.981).toFixed(2);
         dayLowPrice = targetPrice;
@@ -7919,7 +8255,7 @@
         targetPct = '-1.90%';
         rrRatio = '1:2.00';
       } else {
-        entryPrice = +(curPrice * 0.987).toFixed(2);
+        entryPrice = +curPrice.toFixed(2);
         stopPrice = +(entryPrice * 0.9905).toFixed(2);
         targetPrice = +(entryPrice * 1.021).toFixed(2);
         dayLowPrice = +(stopPrice * 0.995).toFixed(2);
@@ -8228,7 +8564,7 @@
     }
 
     function isTimeInFutureIST(timeStr) {
-      if (!timeStr || typeof timeStr !== 'string') return true;
+      if (!timeStr || typeof timeStr !== 'string' || timeStr.trim() === '--') return false;
       const parts = timeStr.trim().split(':');
       if (parts.length < 2) return true;
       const h = parseInt(parts[0], 10);
@@ -8259,50 +8595,25 @@
       return false;
     }
 
-    function sanitizeStockListedTime(stock, rankIdx, isDownside, totalCount) {
+    function sanitizeStockListedTime(stock) {
       if (!stock) return '--';
+      if (!stock.listed_at || stock.listed_at === '--') return '--';
       const now = new Date();
       const istDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-      const curH = istDate.getHours();
-      const curM = istDate.getMinutes();
-      const curS = istDate.getSeconds();
-      const curTotalSec = curH * 3600 + curM * 60 + curS;
-
-      const scanStartSec = 9 * 3600 + 20 * 60; // Every market day scan starts at 09:20:00 IST
-      const marketCloseSec = 15 * 3600 + 30 * 60; // 15:30:00
-
+      const curTotalSec = istDate.getHours() * 3600 + istDate.getMinutes() * 60 + istDate.getSeconds();
+      const scanStartSec = 9 * 3600 + 20 * 60;
+      const marketCloseSec = 15 * 3600 + 30 * 60;
       const existingSec = timeStringToSec(stock.listed_at);
       const mkt = typeof getIndianMarketStatus === 'function' ? getIndianMarketStatus(now, true) : null;
       const isSessionActiveNow = !(mkt && mkt.isMarketOffDay) && (curTotalSec >= scanStartSec && curTotalSec <= marketCloseSec);
 
       if (isSessionActiveNow) {
-        // Keep genuine formula / real-time discovery timestamp >= 09:20:00 and <= current clock
-        if (existingSec >= scanStartSec && existingSec <= curTotalSec) {
-          return stock.listed_at;
-        }
-        const elapsedSec = Math.max(30, curTotalSec - scanStartSec);
-        const count = totalCount || 15;
-        const step = elapsedSec / (count + 1);
-        const symSeed = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0) * (c.charCodeAt(1) || 7), 0);
-        const jitter = (symSeed % 40) - 20;
-        const assignedSec = Math.min(curTotalSec - 2, Math.max(scanStartSec + 3, Math.round(scanStartSec + ((rankIdx || 0) + 1) * step + jitter)));
-        const newTime = formatSecToTime(assignedSec);
-        stock.listed_at = newTime;
-        return newTime;
+        if (existingSec >= scanStartSec && existingSec <= curTotalSec) return stock.listed_at;
       } else {
-        if (existingSec >= scanStartSec && existingSec <= marketCloseSec) {
-          return stock.listed_at;
-        }
-        const totalSessionSec = marketCloseSec - scanStartSec;
-        const count = totalCount || 15;
-        const step = totalSessionSec / (count + 1);
-        const symSeed = (stock.symbol || '').split('').reduce((acc, c) => acc + c.charCodeAt(0) * (c.charCodeAt(1) || 7), 0);
-        const jitter = (symSeed % 90) - 45;
-        const assignedSec = Math.min(marketCloseSec - 600, Math.max(scanStartSec + 60, Math.round(scanStartSec + ((rankIdx || 0) + 1) * step + jitter)));
-        const newTime = formatSecToTime(assignedSec);
-        stock.listed_at = newTime;
-        return newTime;
+        if (existingSec >= scanStartSec && existingSec <= marketCloseSec) return stock.listed_at;
       }
+      stock.listed_at = '--';
+      return '--';
     }
 
     
@@ -8515,7 +8826,7 @@
 
     function buildEngineRow(s, isBullish, shouldFilter = false, rankIdx = 0, totalCount = 15, showScannerRec = false) {
       if (!s.listed_at || isTimeInFutureIST(s.listed_at)) {
-        s.listed_at = sanitizeStockListedTime(s, rankIdx, !isBullish, totalCount);
+        s.listed_at = sanitizeStockListedTime(s);
       }
       const pColor = s.pct_change >= 0 ? 'text-emerald-400' : 'text-rose-400';
       const pSign = s.pct_change >= 0 ? '+' : '';
@@ -8531,54 +8842,35 @@
       }
 
       // -------------------------------------------------------------
-      // CLAUDE AI TRADER SKILL: QUANTUM ENTRY, TARGETS & STOP LOSS
+      // AUTHENTIC BACKEND ENTRY, TARGET & STOP LOSS (ZERO SYNTHESIS)
       // -------------------------------------------------------------
-      const curPrice = Number(s.price) || 100.0;
-      const pctMove = Number(s.pct_change) || 0;
-      const openRef = curPrice / (1 + pctMove / 100);
-      const vwapRef = Number(s.atp) || openRef;
-      const minEntrySep = Math.max(0.5, curPrice * 0.0028);
+      const curPrice = Number(s.price) || 0;
+      const rawEntry = Number(s.entry);
+      const hasValidEntry = Number.isFinite(rawEntry) && rawEntry > 0 && s.trade_status !== 'NO_SIGNAL';
+      const entryVal = hasValidEntry ? Math.round(rawEntry * 100) / 100 : 0;
 
-      let entryVal = Number(s.entry);
-      if (!entryVal || isNaN(entryVal) || entryVal <= 0 || (!s.entry_locked && Math.abs(entryVal - curPrice) < minEntrySep * 0.35)) {
-        // Formula fallback anchored to Open/VWAP breakout level so Entry NEVER matches moving Live Price
-        const anchor = (openRef * 0.55 + vwapRef * 0.45);
-        entryVal = isBullish
-          ? Math.min(curPrice - minEntrySep, anchor)
-          : Math.max(curPrice + minEntrySep, anchor);
-        entryVal = Math.max(0.05, entryVal);
-      }
-      entryVal = Math.round(entryVal * 100) / 100;
-      s.entry = entryVal;
+      const rawStop = Number(s.stop);
+      const stopVal = (hasValidEntry && Number.isFinite(rawStop) && rawStop > 0) ? Math.round(rawStop * 100) / 100 : 0;
 
-      let stopVal = Number(s.stop);
-      if (!stopVal || isNaN(stopVal) || stopVal <= 0) {
-        stopVal = isBullish ? (entryVal * 0.985) : (entryVal * 1.015);
-      }
-      stopVal = Math.round(stopVal * 100) / 100;
-      s.stop = stopVal;
+      const rawTarget = Number(s.target);
+      const targetVal = (hasValidEntry && Number.isFinite(rawTarget) && rawTarget > 0) ? Math.round(rawTarget * 100) / 100 : 0;
 
-      let targetVal = Number(s.target);
-      if (!targetVal || isNaN(targetVal) || targetVal <= 0) {
-        targetVal = isBullish ? (entryVal * 1.028) : (entryVal * 0.972);
-      }
-      targetVal = Math.round(targetVal * 100) / 100;
-      s.target = targetVal;
-
-      const rawVsEntryPct = ((curPrice - entryVal) / entryVal) * 100;
+      const rawVsEntryPct = hasValidEntry && curPrice > 0 ? ((curPrice - entryVal) / entryVal) * 100 : 0;
       const vsEntryPct = isBullish ? rawVsEntryPct : -rawVsEntryPct;
-      const isT1Hit = isBullish ? (curPrice >= targetVal) : (curPrice <= targetVal);
-      const isSlHit = isBullish ? (curPrice <= stopVal) : (curPrice >= stopVal);
-      const liveEntryBadge = isT1Hit
-        ? `<span class="text-[8.5px] px-1 rounded bg-emerald-500/25 text-emerald-300 font-black border border-emerald-500/40">🎯 T1 HIT</span>`
-        : (isSlHit
-          ? `<span class="text-[8.5px] px-1 rounded bg-rose-500/25 text-rose-300 font-black border border-rose-500/40">🛡️ SL HIT</span>`
-          : `<span class="text-[8.5px] px-1 rounded ${vsEntryPct >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'} font-bold">${vsEntryPct >= 0 ? '+' : ''}${vsEntryPct.toFixed(2)}% vs Entry</span>`);
-      const formulaLabel = s.formula_name || (strat && strat.tag ? strat.tag.replace(/^[^A-Za-z0-9]+/, '') : 'Formula Trigger');
+      const isT1Hit = hasValidEntry && targetVal > 0 && (isBullish ? (curPrice >= targetVal) : (curPrice <= targetVal));
+      const isSlHit = hasValidEntry && stopVal > 0 && (isBullish ? (curPrice <= stopVal) : (curPrice >= stopVal));
+      const liveEntryBadge = !hasValidEntry
+        ? `<span class="text-[8.5px] px-1 rounded bg-slate-800 text-slate-400 font-bold">NO TRIGGER</span>`
+        : isT1Hit
+          ? `<span class="text-[8.5px] px-1 rounded bg-emerald-500/25 text-emerald-300 font-black border border-emerald-500/40">🎯 T1 HIT</span>`
+          : (isSlHit
+            ? `<span class="text-[8.5px] px-1 rounded bg-rose-500/25 text-rose-300 font-black border border-rose-500/40">🛡️ SL HIT</span>`
+            : `<span class="text-[8.5px] px-1 rounded ${vsEntryPct >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'} font-bold">${vsEntryPct >= 0 ? '+' : ''}${vsEntryPct.toFixed(2)}% vs Entry</span>`);
+      const formulaLabel = s.formula_name || (hasValidEntry && strat && strat.tag ? strat.tag.replace(/^[^A-Za-z0-9]+/, '') : 'Standby');
 
-      const risk = Math.abs(entryVal - stopVal);
-      const reward = Math.abs(targetVal - entryVal);
-      const rrRatio = (risk > 0 && reward > 0) ? `1:${(reward / risk).toFixed(1)} R` : `1:${strat.rrMultiplier || 3.0} R`;
+      const risk = (hasValidEntry && stopVal > 0) ? Math.abs(entryVal - stopVal) : 0;
+      const reward = (hasValidEntry && targetVal > 0) ? Math.abs(targetVal - entryVal) : 0;
+      const rrRatio = (risk > 0 && reward > 0) ? `1:${(reward / risk).toFixed(1)} R` : '--';
 
       const normBuildup = normalizeCycleBuildup(s.buildup, s.pct_change, s.oi_chg_pct, s.bid_ask_ratio);
       s.buildup = normBuildup;
@@ -8609,23 +8901,23 @@
           </td>
           <td class="p-3">
             <div class="text-slate-300 text-xs">${s.sector}</div>
-            <div class="text-[10px] ${s.sector_pct >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${s.sector_pct >= 0 ? '+' : ''}${s.sector_pct}%</div>
+            <div class="text-[10px] ${Number(s.sector_pct || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${Number(s.sector_pct || 0) >= 0 ? '+' : ''}${Number(s.sector_pct || 0).toFixed(2)}%</div>
           </td>
           <td class="p-3">
-            <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/20 whitespace-nowrap" title="Formula Trigger (${formulaLabel}): ${s.listed_at || ''} IST">🕒 ${s.listed_at || '--'}</span>
+            <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[11px] font-bold border border-cyan-500/20 whitespace-nowrap" title="Formula Trigger (${formulaLabel}): ${s.listed_at || '--'} IST">🕒 ${s.listed_at || '--'}</span>
             <div class="text-[9px] text-amber-300/90 font-bold mt-0.5 truncate max-w-[125px]" title="${formulaLabel}">${formulaLabel}</div>
           </td>
           ${scannerRecCell}
           <!-- ENTRY PRICE & BEST STRATEGY (CLAUDE AI TRADER SKILL) -->
           <td class="p-3 min-w-[175px]" onclick="event.stopPropagation(); openClaudeAiStockSignalModal('${s.symbol}')">
             <div class="flex items-center gap-1.5 font-bold font-mono">
-              <span class="text-amber-300 text-xs font-black" title="Locked Scanner Formula Entry Price">₹${entryVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${s.entry_locked ? ' 🔒' : ''}</span>
+              <span class="text-amber-300 text-xs font-black" title="Locked Scanner Formula Entry Price">${hasValidEntry ? ('₹' + entryVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (s.entry_locked ? ' 🔒' : '')) : '--'}</span>
               <span class="text-[9px] px-1.5 py-0.2 rounded font-extrabold ${strat.badgeClass} font-mono border whitespace-nowrap cursor-pointer hover:opacity-90 transition" title="${strat.name} • Click to open AI Strategy Studio">${strat.tag}</span>
             </div>
             <div class="text-[9.5px] text-slate-400 font-mono mt-0.5 flex items-center gap-1.5 flex-wrap">
-              <span class="text-emerald-400 font-bold" title="Profit Target 1">T1: ₹${targetVal.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</span>
+              <span class="text-emerald-400 font-bold" title="Profit Target 1">${targetVal > 0 ? ('T1: ₹' + targetVal.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 2 })) : 'T1: --'}</span>
               <span class="text-slate-600">&bull;</span>
-              <span class="text-rose-400 font-bold" title="Strict Stop Loss">SL: ₹${stopVal.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</span>
+              <span class="text-rose-400 font-bold" title="Strict Stop Loss">${stopVal > 0 ? ('SL: ₹' + stopVal.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 2 })) : 'SL: --'}</span>
               <span class="text-slate-600">&bull;</span>
               <span class="text-cyan-300 text-[8.5px] font-extrabold px-1 rounded bg-cyan-500/10">${rrRatio}</span>
             </div>
@@ -10391,7 +10683,7 @@ function renderJournal() {
           name: b.name || baseStock?.name || b.symbol,
           fyers: b.fyersSymbol || baseStock?.fyers || `NSE:${b.symbol}-EQ`,
           sector: b.sector || baseStock?.sector || 'NSE F&O',
-          sector_pct: Number((pct * 0.85).toFixed(2)),
+          sector_pct: Number((b.sectorChangePercent ?? b.sector_pct ?? baseStock?.sector_pct ?? 0).toFixed(2)),
           price,
           pct_change: Number(pct.toFixed(2)),
           abs_change: Number(absChg.toFixed(2)),
@@ -10399,17 +10691,17 @@ function renderJournal() {
           hyperflow: Number(hyperflow.toFixed(1)),
           delta: Math.round(vol * (pct / 100) * 0.45),
           side: isBull ? 'LONG' : 'SHORT',
-          entry: Number(b.fixedEntryPrice || b.risk?.entryPrice || (isBull ? price * 0.995 : price * 1.005)),
-          stop: Number(b.fixedStopLoss || b.risk?.stopLoss || (isBull ? price * 0.985 : price * 1.015)),
-          target: Number(b.fixedTarget1 || b.risk?.target1 || (isBull ? price * 1.03 : price * 0.97)),
+          entry: Number(b.fixedEntryPrice || b.risk?.entryPrice || 0),
+          stop: Number(b.fixedStopLoss || b.risk?.stopLoss || 0),
+          target: Number(b.fixedTarget1 || b.risk?.target1 || 0),
           entry_locked: Boolean(b.fixedEntryPrice || b.risk?.entryPrice),
           formula_code: b.formulaCode || '',
           formula_name: b.formulaName || '',
-          trade_status: b.tradeStatus || 'ACTIVE',
+          trade_status: b.tradeStatus || (b.listedAt && b.listedAt !== '--' ? 'ACTIVE' : 'NO_SIGNAL'),
           entry_time: b.entryTime || b.listedAt || '',
           day_high: Number(b.indicators?.high || Math.max(price, price - absChg)),
           day_low: Number(b.indicators?.low || Math.min(price, price - absChg)),
-          listed_at: b.listedAt || b.signalListedAt || sanitizeStockListedTime({ symbol: b.symbol }, 0, !isBull, 25),
+          listed_at: b.listedAt || b.signalListedAt || '--',
           volume: vol,
           volume_str: this.formatCrVolStr(vol, false),
           atp: Number(b.indicators?.vwap || price),
@@ -10442,13 +10734,18 @@ function renderJournal() {
         };
       },
 
-      rebuildScannersFromFreshStocks(freshPool) {
+      rebuildScannersFromFreshStocks(freshPool, sectorAvgOverrideMap = null) {
         if (!Array.isArray(freshPool) || freshPool.length === 0) return;
 
         // Pure Equity Universe Only (zero benchmark indices inside Candidate Engines)
         const equityPool = freshPool.filter(isPureEquityStock);
         DATA.all_stocks = equityPool;
         this.universeCache = equityPool;
+
+        // Recompute authoritative sector averages BEFORE building scanner tables so every scanner card gets exact live SECTOR %
+        if (typeof CyberLivePriceEngine !== 'undefined' && CyberLivePriceEngine.syncSectorStocksFromAllStocks) {
+          CyberLivePriceEngine.syncSectorStocksFromAllStocks(sectorAvgOverrideMap);
+        }
 
         // Assign distinct, strictly eligible (0..15) per scanner (ordered Newest Listed At first, A-Z tie-break)
         const distinct = buildDistinctFormulaScanners(equityPool);
@@ -10469,6 +10766,7 @@ function renderJournal() {
           return {
             symbol: s.symbol,
             sector: s.sector,
+            sector_pct: s.sector_pct,
             side: isLong ? 'BUY LONG' : 'SELL SHORT',
             listed_at: s.listed_at,
             price: s.price,
@@ -10498,7 +10796,7 @@ function renderJournal() {
             if (Array.isArray(json.stocks) && json.stocks.length > 0) {
               const baseMap = new Map((this.universeCache || DATA.all_stocks || []).map(x => [x.symbol, x]));
               const freshPool = json.stocks.map(b => this.mapBackendStockToRow(b, baseMap.get(b.symbol)));
-              this.rebuildScannersFromFreshStocks(freshPool);
+              this.rebuildScannersFromFreshStocks(freshPool, json.sectorAvgMap || null);
               this.refreshAllRenderedViews();
               if (typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.syncMomentumCandidates) {
                 ClaudeNotificationEngine.syncMomentumCandidates(DATA.best_momentum_upside, DATA.best_momentum_downside, true);
@@ -10537,12 +10835,14 @@ function renderJournal() {
 
           // Fetch already auto-populated backend scan first (zero manual action needed); trigger only if needed
           let freshPool = null;
+          let freshSectorAvgMap = null;
           let res = await fetch('/api/scan/results?compact=1');
           if (res.ok) {
             const existing = await res.json();
             if (Array.isArray(existing.stocks) && existing.stocks.length > 0 && existing.sessionState && !existing.sessionState.isMidnightCleared) {
               const baseMap = new Map((this.universeCache || DATA.all_stocks || []).map(x => [x.symbol, x]));
               freshPool = existing.stocks.map(b => this.mapBackendStockToRow(b, baseMap.get(b.symbol)));
+              freshSectorAvgMap = existing.sectorAvgMap || null;
             }
           }
           if (!freshPool || freshPool.length === 0) {
@@ -10552,23 +10852,23 @@ function renderJournal() {
               if (Array.isArray(json.stocks) && json.stocks.length > 0) {
                 const baseMap = new Map((this.universeCache || DATA.all_stocks || []).map(x => [x.symbol, x]));
                 freshPool = json.stocks.map(b => this.mapBackendStockToRow(b, baseMap.get(b.symbol)));
+                freshSectorAvgMap = json.sectorAvgMap || null;
               }
             }
           }
 
-          // Clean local backup fallback if offline: fetch /api/market/quotes and assign formula-staggered timestamps!
+          // Clean local backup fallback if offline: fetch /api/market/quotes without fabricating timestamps
           if (!freshPool || freshPool.length === 0) {
             await CyberLivePriceEngine.fetchBatchQuotes();
             freshPool = [...(this.universeCache || DATA.all_stocks || [])];
-            freshPool.forEach((s, idx) => {
+            freshPool.forEach((s) => {
               if (!s.listed_at || isTimeInFutureIST(s.listed_at)) {
-                s.listed_at = '';
-                sanitizeStockListedTime(s, idx, (s.pct_change || 0) < 0, freshPool.length || 20);
+                s.listed_at = '--';
               }
             });
           }
 
-          this.rebuildScannersFromFreshStocks(freshPool);
+          this.rebuildScannersFromFreshStocks(freshPool, freshSectorAvgMap);
           this.refreshAllRenderedViews();
           if (typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.syncMomentumCandidates) {
             ClaudeNotificationEngine.syncMomentumCandidates(DATA.best_momentum_upside, DATA.best_momentum_downside, true);
@@ -10600,6 +10900,7 @@ function renderJournal() {
         if (typeof SmartMoneyFlowEngine !== 'undefined') SmartMoneyFlowEngine.load(false);
         if (typeof MostActiveFnoEngine !== 'undefined') MostActiveFnoEngine.load(false);
         if (typeof ClaudeFnoEngine !== 'undefined') ClaudeFnoEngine.load(false);
+        if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.load(false);
         if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
         if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
         this.renderSessionPill();
@@ -10928,40 +11229,96 @@ function renderJournal() {
         }
       },
 
-      syncSectorStocksFromAllStocks() {
-        if (!DATA || !Array.isArray(DATA.sectors) || !Array.isArray(DATA.all_stocks)) return;
-        const stockMap = new Map(DATA.all_stocks.map(s => [s.symbol, s]));
-        DATA.sectors.forEach(sec => {
-          if (!Array.isArray(sec.stocks)) return;
+      syncSectorStocksFromAllStocks(sectorAvgOverrideMap = null) {
+        if (!DATA || !Array.isArray(DATA.all_stocks)) return {};
+        const purePool = DATA.all_stocks.filter(st =>
+          typeof isPureEquityStock === 'function' ? isPureEquityStock(st) : st.sector !== 'Indices'
+        );
+        if (purePool.length === 0) return {};
+
+        const sectorGroups = new Map();
+        purePool.forEach(st => {
+          const secName = st.sector || 'NSE F&O';
+          if (!sectorGroups.has(secName)) sectorGroups.set(secName, []);
+          sectorGroups.get(secName).push(st);
+        });
+
+        const sectorAvgMap = {};
+        const rebuiltSectors = [];
+
+        sectorGroups.forEach((groupStocks, secName) => {
           let sumChg = 0;
-          let cnt = 0;
-          sec.stocks.forEach(st => {
-            const live = stockMap.get(st.symbol);
-            if (live) {
-              st.price = live.price;
-              st.pct_change = live.pct_change;
-              st.abs_change = live.abs_change;
-              st.volume = live.volume;
-              st.total_bid = live.total_bid;
-              st.total_ask = live.total_ask;
-              st.total_bid_str = live.total_bid_str;
-              st.total_ask_str = live.total_ask_str;
-              st.bid_ask_ratio = live.bid_ask_ratio;
-              st.order_book_bias = live.order_book_bias;
-            }
-            if (typeof st.pct_change === 'number') {
-              sumChg += st.pct_change;
-              cnt++;
+          let sumPcr = 0;
+          let sumRvol = 0;
+          let sumTurn = 0;
+          let adv = 0;
+          let dec = 0;
+          let topMover = groupStocks[0];
+
+          groupStocks.forEach(st => {
+            const pct = Number(st.pct_change) || 0;
+            sumChg += pct;
+            sumPcr += Number(st.pcr) || 1.0;
+            sumRvol += Number(st.rvol) || 1.0;
+            sumTurn += Number(st.turnover_cr) || 0;
+            if (pct >= 0) adv++;
+            else dec++;
+            if (Math.abs(pct) > Math.abs(Number(topMover?.pct_change) || 0)) {
+              topMover = st;
             }
           });
-          if (cnt > 0) {
-            sec.change = Number((sumChg / cnt).toFixed(2));
-            sec.stocks.forEach(st => {
-              const live = stockMap.get(st.symbol);
-              if (live) live.sector_pct = sec.change;
+
+          const count = Math.max(1, groupStocks.length);
+          const avgChange = (sectorAvgOverrideMap && typeof sectorAvgOverrideMap[secName] === 'number' && !Number.isNaN(sectorAvgOverrideMap[secName]))
+            ? Number(sectorAvgOverrideMap[secName].toFixed(2))
+            : Number((sumChg / count).toFixed(2));
+          sectorAvgMap[secName] = avgChange;
+
+          groupStocks.forEach(st => {
+            st.sector_pct = avgChange;
+          });
+
+          rebuiltSectors.push({
+            name: secName,
+            change: avgChange,
+            rvol: Number((sumRvol / count).toFixed(2)),
+            turnover_cr: Number(sumTurn.toFixed(1)).toLocaleString('en-IN'),
+            adv,
+            dec,
+            avg_pcr: Number((sumPcr / count).toFixed(2)),
+            top_stock: topMover ? `${topMover.symbol} (${topMover.pct_change >= 0 ? '+' : ''}${topMover.pct_change}%)` : '--',
+            stocks: [...groupStocks].sort((a, b) => Math.abs(Number(b.pct_change) || 0) - Math.abs(Number(a.pct_change) || 0))
+          });
+        });
+
+        // Sort dynamically by sector performance descending
+        rebuiltSectors.sort((a, b) => b.change - a.change);
+        DATA.sectors = rebuiltSectors;
+
+        // Propagate true sector_pct onto every active scanner array in DATA so every tab & table stays identical
+        const allListKeys = [
+          'sonic_bullish', 'sonic_bearish', 'strong_bullish', 'strong_bearish',
+          'titan_bullish', 'titan_bearish', 'quant_elite_bullish', 'quant_elite_bearish',
+          'quant_elite_pro_bullish', 'quant_elite_pro_bearish', 'titan_cash_bullish',
+          'titan_cash_bearish', 'best_momentum_upside', 'best_momentum_downside',
+          'top_traded_value', 'most_active_volume', 'market_pulse', 'cloud_ai_signals'
+        ];
+        allListKeys.forEach(k => {
+          if (Array.isArray(DATA[k])) {
+            DATA[k].forEach(row => {
+              const sec = row.sector || 'NSE F&O';
+              if (sectorAvgMap[sec] !== undefined) {
+                row.sector_pct = sectorAvgMap[sec];
+              }
             });
           }
         });
+
+        // Keep Sector Filter dropdowns synced with real authoritative sectors
+        if (typeof refreshSectorFilterDropdowns === 'function') {
+          refreshSectorFilterDropdowns();
+        }
+        return sectorAvgMap;
       },
 
       applyBatchQuotes(quotesMap) {
@@ -10994,7 +11351,13 @@ function renderJournal() {
             s.total_ask = Number(q.askQty);
             s.total_bid_str = s.total_bid >= 100000 ? (s.total_bid / 100000).toFixed(1) + ' L' : s.total_bid.toLocaleString('en-IN');
             s.total_ask_str = s.total_ask >= 100000 ? (s.total_ask / 100000).toFixed(1) + ' L' : s.total_ask.toLocaleString('en-IN');
-            s.bid_ask_ratio = Number((s.total_bid / s.total_ask).toFixed(2));
+            s.bid_ask_ratio = Number((q.bidAskRatio && q.bidAskRatio > 0 ? q.bidAskRatio : s.total_bid / s.total_ask).toFixed(2));
+          } else if (q.bidAskRatio && Number(q.bidAskRatio) > 0) {
+            s.bid_ask_ratio = Number(Number(q.bidAskRatio).toFixed(2));
+          }
+          if (q.orderBookBias) {
+            s.order_book_bias = q.orderBookBias;
+          } else if (s.bid_ask_ratio) {
             s.order_book_bias = s.bid_ask_ratio >= 1.55
               ? 'Heavy Buyer Accumulation'
               : s.bid_ask_ratio >= 1.18
@@ -11011,21 +11374,11 @@ function renderJournal() {
             s.buildup_type = (s.buildup === 'Long Buildup' || s.buildup === 'Short Covering') ? 'BULLISH' : 'BEARISH';
           }
 
-          // Update dynamic strikes around spot, but NEVER overwrite formula-locked Entry/Stop/Target!
+          // Update dynamic strikes around spot, NEVER invent or overwrite Entry/Stop/Target
           const step = newLp > 3000 ? 50 : newLp > 1000 ? 20 : 10;
           const atm = Math.round(newLp / step) * step;
           s.put_writing_strike = `${atm - step} PE`;
           s.call_writing_strike = `${atm + step} CE`;
-
-          if (!s.entry_locked && (!s.entry || Math.abs(s.entry - newLp) / newLp > 0.12)) {
-            const isBull = (s.pct_change || 0) >= 0;
-            const refAnchor = Number(q.atp || q.open || newLp * (isBull ? 0.994 : 1.006));
-            const minSep = Math.max(0.5, newLp * 0.0028);
-            const fallbackEntry = isBull ? Math.min(newLp - minSep, refAnchor) : Math.max(newLp + minSep, refAnchor);
-            s.entry = Number(Math.max(0.05, fallbackEntry).toFixed(2));
-            s.stop = Number((s.entry * (isBull ? 0.985 : 1.015)).toFixed(2));
-            s.target = Number((s.entry * (isBull ? 1.028 : 0.972)).toFixed(2));
-          }
 
           if (oldPrice > 0 && newLp !== oldPrice) {
             this.tpsCounter++;
@@ -11054,9 +11407,11 @@ function renderJournal() {
                 sig.price = Number(q.lp);
                 if (q.chp !== undefined) sig.pct_change = Number(q.chp);
                 if (q.bidQty && q.askQty && q.askQty > 0) {
-                  sig.bid_ask_ratio = Number((Number(q.bidQty) / Number(q.askQty)).toFixed(2));
+                  sig.bid_ask_ratio = Number((q.bidAskRatio && q.bidAskRatio > 0 ? q.bidAskRatio : Number(q.bidQty) / Number(q.askQty)).toFixed(2));
                   sig.total_bid_str = q.bidQty >= 100000 ? (q.bidQty / 100000).toFixed(1) + ' L' : Number(q.bidQty).toLocaleString('en-IN');
                   sig.total_ask_str = q.askQty >= 100000 ? (q.askQty / 100000).toFixed(1) + ' L' : Number(q.askQty).toLocaleString('en-IN');
+                } else if (q.bidAskRatio && Number(q.bidAskRatio) > 0) {
+                  sig.bid_ask_ratio = Number(Number(q.bidAskRatio).toFixed(2));
                 }
               }
             });
@@ -11145,7 +11500,13 @@ function renderJournal() {
               s.total_ask = Number(tick.askQty);
               s.total_bid_str = s.total_bid >= 100000 ? (s.total_bid / 100000).toFixed(1) + ' L' : s.total_bid.toLocaleString('en-IN');
               s.total_ask_str = s.total_ask >= 100000 ? (s.total_ask / 100000).toFixed(1) + ' L' : s.total_ask.toLocaleString('en-IN');
-              s.bid_ask_ratio = Number((s.total_bid / s.total_ask).toFixed(2));
+              s.bid_ask_ratio = Number((tick.bidAskRatio && tick.bidAskRatio > 0 ? tick.bidAskRatio : s.total_bid / s.total_ask).toFixed(2));
+            } else if (tick.bidAskRatio && Number(tick.bidAskRatio) > 0) {
+              s.bid_ask_ratio = Number(Number(tick.bidAskRatio).toFixed(2));
+            }
+            if (tick.orderBookBias) {
+              s.order_book_bias = tick.orderBookBias;
+            } else if (s.bid_ask_ratio) {
               s.order_book_bias = s.bid_ask_ratio >= 1.55 ? 'Heavy Buyer Accumulation' : s.bid_ask_ratio >= 1.18 ? 'Buyer Dominance' : s.bid_ask_ratio <= 0.65 ? 'Heavy Seller Supply' : s.bid_ask_ratio <= 0.85 ? 'Seller Pressure' : 'Balanced Order Book';
             }
             s.day_high = Math.max(s.day_high || 0, s.price);
@@ -11162,14 +11523,7 @@ function renderJournal() {
       },
 
       startLiveTick() {
-        if (this.tickTimer) {
-          clearInterval(this.tickTimer);
-          this.tickTimer = null;
-        }
-        if (window.FORCE_LIVE_MARKET !== true) return;
-        this.tickTimer = setInterval(() => {
-          this.executeMicroTick();
-        }, 900);
+        this.stopLiveTick();
       },
 
       stopLiveTick() {
@@ -11180,60 +11534,7 @@ function renderJournal() {
       },
 
       executeMicroTick() {
-        const isForceLive = (window.FORCE_LIVE_MARKET === true);
-        // Outside real exchange hours, only micro-tick when user explicitly activates Live Simulation Mode in the active tab!
-        if (!isForceLive) {
-          this.stopLiveTick();
-          return;
-        }
-
-        if (DATA.indices) {
-          const tickIndex = (key, driftRange) => {
-            const idx = DATA.indices[key];
-            if (idx && idx.lp) {
-              const drift = (Math.random() - 0.49) * driftRange;
-              const newLp = Math.round((idx.lp + drift) * 100) / 100;
-              const prev = idx.prev_close_price || idx.prevClose || (idx.lp - (idx.ch || 0));
-              idx.lp = newLp;
-              idx.ch = Math.round((newLp - prev) * 100) / 100;
-              idx.chp = prev > 0 ? Math.round(((idx.ch / prev) * 100) * 100) / 100 : 0;
-              this.tpsCounter++;
-            }
-          };
-          tickIndex('NSE:NIFTY50-INDEX', 3.5);
-          tickIndex('NSE:NIFTYBANK-INDEX', 8.0);
-          tickIndex('NSE:FINNIFTY-INDEX', 4.0);
-          tickIndex('NSE:MIDCPNIFTY-INDEX', 2.0);
-          tickIndex('NSE:NIFTYNXT50-INDEX', 10.0);
-          tickIndex('BSE:SENSEX-INDEX', 12.0);
-          tickIndex('NSE:INDIAVIX-INDEX', 0.08);
-          updateIndicesUI();
-          syncIndicesToEngines();
-        }
-
-        if (DATA.all_stocks && DATA.all_stocks.length > 0 && (!MidnightSessionManager || !MidnightSessionManager.isMidnightCleared())) {
-          const count = 4 + Math.floor(Math.random() * 5);
-          for (let i = 0; i < count; i++) {
-            const randIdx = Math.floor(Math.random() * DATA.all_stocks.length);
-            const s = DATA.all_stocks[randIdx];
-            if (!s || !s.price) continue;
-
-            const oldPrice = s.price;
-            const delta = (Math.random() - 0.485) * (s.price * 0.0005);
-            const newPrice = Math.round((s.price + delta) * 100) / 100;
-            const prevClose = s.price - (s.abs_change || 0);
-
-            s.price = newPrice;
-            s.abs_change = Math.round((newPrice - prevClose) * 100) / 100;
-            s.pct_change = prevClose > 0 ? Math.round(((s.abs_change / prevClose) * 100) * 100) / 100 : 0;
-            s.volume = (s.volume || 100000) + Math.floor(Math.random() * 250);
-            s.day_high = Math.max(s.day_high || newPrice, newPrice);
-            s.day_low = Math.min(s.day_low || newPrice, newPrice);
-            this.tpsCounter++;
-            this.previousPrices.set(s.symbol, { old: oldPrice, new: newPrice, dir: newPrice > oldPrice ? 'up' : 'down' });
-          }
-        }
-        this.batchRender();
+        this.stopLiveTick();
       },
 
       batchRender() {
@@ -11270,6 +11571,8 @@ function renderJournal() {
             if (typeof MostActiveFnoEngine !== 'undefined') MostActiveFnoEngine.load(false);
           } else if (activeTabId === 'claude-fno') {
             if (typeof ClaudeFnoEngine !== 'undefined') ClaudeFnoEngine.load(false);
+          } else if (activeTabId === 'smart-money-concepts') {
+            if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.load(false);
           }
         };
 
@@ -11370,7 +11673,8 @@ function renderJournal() {
         const srcTextEl = document.getElementById('cockpit-feed-source-text');
         const inputTokenEl = document.getElementById('upstox-input-token');
 
-        if (data.connected) {
+        const isUpstoxVerified = Boolean(data.upstoxConnected !== undefined ? data.upstoxConnected : (data.connected && data.feedSource !== 'AUTONOMOUS_LIVE_ENGINE'));
+        if (isUpstoxVerified) {
           if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px]';
           if (badgeText) badgeText.innerText = data.tokenType === 'ANALYTICS_READONLY' ? 'UPSTOX ANALYTICS LIVE' : 'UPSTOX API V2/V3 LIVE';
           if (userEl) userEl.innerText = data.profileName || 'Upstox Direct Broker';
@@ -11381,12 +11685,12 @@ function renderJournal() {
           }
         } else {
           if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px]';
-          if (badgeText) badgeText.innerText = 'AUTONOMOUS ENGINE ACTIVE';
-          if (userEl) userEl.innerText = 'Zero-Token Autonomous Real-Time Feed';
-          if (latencyEl) latencyEl.innerText = '180ms • All 225 NSE Stocks & Indices Live';
-          if (srcTextEl) srcTextEl.innerText = 'AUTONOMOUS + UPSTOX';
+          if (badgeText) badgeText.innerText = data.upstoxConfigured ? 'UPSTOX TOKEN EXPIRED • AUTONOMOUS LIVE' : 'AUTONOMOUS ENGINE ACTIVE';
+          if (userEl) userEl.innerText = data.tokenMessage || 'Live Yahoo/NSE + Autonomous Real-Time Feed';
+          if (latencyEl) latencyEl.innerText = '226 NSE Stocks & Indices Live (Auto Failover)';
+          if (srcTextEl) srcTextEl.innerText = 'AUTONOMOUS LIVE ENGINE';
           if (inputTokenEl) {
-            inputTokenEl.placeholder = 'Paste your Upstox Access Token or 1-Year Read-Only Analytics Token (optional — live prices already work automatically via Autonomous Engine)...';
+            inputTokenEl.placeholder = 'Paste a fresh Upstox Access Token (current token inactive/expired — live prices remain active via Autonomous Engine)...';
           }
         }
       } catch (e) {}
@@ -12000,13 +12304,6 @@ ${json.message || 'Unauthorized token.'}`);
         const topUp = upsideTraded.slice(0, 15);
         const topDn = downsideTraded.slice(0, 15);
 
-        topDn.forEach((s, idx) => {
-          sanitizeStockListedTime(s, idx, true, Math.max(1, topDn.length));
-        });
-        topUp.forEach((s, idx) => {
-          sanitizeStockListedTime(s, idx, false, Math.max(1, topUp.length));
-        });
-
         window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(topUp);
         window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(topDn);
 
@@ -12328,6 +12625,27 @@ ${json.message || 'Unauthorized token.'}`);
     qty = int((capital * 0.01) / (entry - sl)) if entry > sl else 0
     take = (score >= 8 and ltp > vwap and trend_1h == trend_30m == "UP"
             and (target - entry) / max(0.01, entry - sl) >= 2.0)`
+      },
+      'smart_money_concepts': {
+        title: '🏛️ Smart Money Concepts (ICT) • Market Structure, Liquidity, FVG, OB, OTE 0.705 & Risk Math',
+        file: 'server/smartMoneyConceptsEngine.ts',
+        desc: 'Rule-based ICT institutional price action: Swing High/Low (N=2), HH/HL & LH/LL structure, BOS & CHoCH body closes, BSL/SSL & Equal Highs/Lows (<=0.1%), Liquidity Sweeps, 3-candle FVG & 50% Consequent Encroachment (CE), Bullish/Bearish Order Blocks & Breaker flips, Equilibrium (H+L)/2, Discount/Premium + OTE 0.705, 5-point checklist, and exact Risk Position Sizing.',
+        code: `def analyze_smc(bars, capital=100000, risk_pct=1.0):
+    # 1. Structure: SH/SL (N candles each side), BOS continuation / CHoCH reversal
+    # 2. Liquidity: EQH/EQL within <= 0.1%; Sweep = wick beyond + close inside
+    # 3. 3-Candle FVG (C1, C2, C3):
+    #    Bullish: C1.high < C3.low -> zone [C1.high..C3.low], CE = (C3.low + C1.high)/2
+    #    Bearish: C1.low > C3.high -> zone [C3.high..C1.low], CE = (C1.low + C3.high)/2
+    # 4. Order Block: last opposite candle before displacement BOS/CHoCH (Breaker if closed through)
+    # 5. Dealing Range: Equilibrium = (H + L)/2; Discount < Eq (Buy), Premium > Eq (Sell)
+    #    Buy OTE (0.705)  = H - 0.705 * (H - L)
+    #    Sell OTE (0.705) = L + 0.705 * (H - L)
+    # 6. Risk & Position Sizing:
+    risk_amount = capital * (risk_pct / 100.0)
+    risk_per_unit = abs(entry - sl)
+    position_size = int(risk_amount / risk_per_unit)
+    rr = abs(target - entry) / risk_per_unit
+    breakeven_win_rate = 1.0 / (1.0 + rr)`
       }
     };
 
@@ -13547,12 +13865,11 @@ ${json.message || 'Unauthorized token.'}`);
       auditAndHeal(manual = false) {
         let fixesApplied = 0;
 
-        // Rule 1: Audit all LISTED AT timestamps (strictly no future times relative to IST)
+        // Rule 1: Audit all LISTED AT timestamps (never invent timestamps; clear invalid future ones to '--')
         if (window.DATA && window.DATA.all_stocks) {
-          window.DATA.all_stocks.forEach((s, idx) => {
-            if (!s.listed_at || isTimeInFutureIST(s.listed_at)) {
-              const isDown = (s.pct_change || 0) < 0;
-              sanitizeStockListedTime(s, idx % 15, isDown, 15);
+          window.DATA.all_stocks.forEach((s) => {
+            if (s.listed_at && s.listed_at !== '--' && isTimeInFutureIST(s.listed_at)) {
+              s.listed_at = '--';
               fixesApplied++;
             }
           });
@@ -13796,139 +14113,76 @@ ${json.message || 'Unauthorized token.'}`);
           return { status: 'ok', istTime: '00:00-09:19 IST Standby', buyRecommendations: [], sellRecommendations: [], skills: {} };
         }
         const pool = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) ? DATA.all_stocks.filter(isPureEquityStock) : [];
-        const bull = [...pool]
-          .filter(s => (Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) >= (Number(s.atp) || Number(s.price) || 0) * 0.998)
-          .sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true));
-        const bear = [...pool]
-          .filter(s => (Number(s.pct_change) || 0) <= -0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) <= (Number(s.atp) || Number(s.price) || 0) * 1.002)
-          .sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false));
-        const riskPerTradeRs = (params.capital * params.riskPct) / 100;
-        const maxSlot = (params.capital * params.leverage) / params.maxPositions;
+        const vix = Number(DATA?.indices?.['INDIAVIX']?.price || DATA?.indices?.['NSE:INDIAVIX-INDEX']?.lp || 0);
+        const adv = pool.filter(s => (Number(s.pct_change) || 0) >= 0).length;
+        const dec = Math.max(0, pool.length - adv);
+        const avgBa = pool.length > 0
+          ? Number((pool.reduce((a, b) => a + (Number(b.bid_ask_ratio) || 1.0), 0) / pool.length).toFixed(2))
+          : 1.0;
 
-        const mapRec = (s, isBuy) => {
-          const entry = Number(s.entry || s.price || 100);
-          const lp = Number(s.price || entry);
-          const sl = Number(s.stop || (isBuy ? entry * 0.985 : entry * 1.015));
-          const t1 = Number(s.target || (isBuy ? entry * 1.03 : entry * 0.97));
-          const slDist = Math.max(0.5, Math.abs(entry - sl));
-          const qty = Math.max(1, Math.min(Math.floor(maxSlot / Math.max(1, lp)), Math.floor(riskPerTradeRs / slDist)));
-          const margin = Number(((qty * lp) / params.leverage).toFixed(2));
-          return {
-            symbol: s.symbol,
-            name: s.name || s.symbol,
-            sector: s.sector || 'Equity',
-            action: (isBuy && (s.pct_change || 0) >= 2.0) ? 'STRONG BUY' : isBuy ? 'BUY' : Math.abs(s.pct_change || 0) >= 2.0 ? 'STRONG SELL' : 'SELL',
-            confidence: Math.min(97, Math.max(76, Math.round(74 + Math.abs(s.pct_change || 0) * 6 + ((s.rvol || 1) - 1) * 10))),
-            formulaName: (typeof getClaudeAiTraderSkillStrategy === 'function' ? getClaudeAiTraderSkillStrategy(s, isBuy).name : 'ORB + RVOL Formula'),
-            listedAt: s.listed_at || '09:20:05',
-            entryPrice: Number(entry.toFixed(2)),
-            livePrice: Number(lp.toFixed(2)),
-            stopLoss: Number(sl.toFixed(2)),
-            target1: Number(t1.toFixed(2)),
-            target2: Number((isBuy ? entry + (t1 - entry) * 1.5 : entry - (entry - t1) * 1.5).toFixed(2)),
-            target3: Number((isBuy ? entry + (t1 - entry) * 2.1 : entry - (entry - t1) * 2.1).toFixed(2)),
-            changePercent: Number((s.pct_change || 0).toFixed(2)),
-            rvol: Number((s.rvol || 1.2).toFixed(2)),
-            bidAskRatio: Number((s.bid_ask_ratio || 1.0).toFixed(2)),
-            pattern: isBuy ? 'ORB / VWAP Breakout' : 'Supply Distribution Breakdown',
-            recommendedQty: qty,
-            capitalRequired: margin,
-            maxRiskRs: Number((qty * slDist).toFixed(2)),
-            projectedProfitT1Rs: Number((qty * Math.abs(t1 - entry)).toFixed(2)),
-            guardrailStatus: 'APPROVED',
-            guardrailNote: 'Within Risk Cap',
-            reason: `${s.listed_at || '09:20:05'} IST trigger | ${(s.bid_ask_ratio || 1).toFixed(2)}x B/A | ${(s.rvol || 1).toFixed(2)}x RVol`
-          };
-        };
-
-        const buyRecommendations = this.sortListByMode(bull.slice(0, 15).map(s => mapRec(s, true)), 'listed_desc');
-        const sellRecommendations = this.sortListByMode(bear.slice(0, 15).map(s => mapRec(s, false)), 'listed_desc');
-        const adv = bull.length;
-        const dec = bear.length;
-        const vix = Number(DATA?.indices?.['INDIAVIX']?.price || 17.42);
-        const topCombined3 = this.sortListByMode([...buyRecommendations.slice(0, 3), ...sellRecommendations.slice(0, 3)], 'listed_desc');
+        // Honest fallback: never fabricate fake entries, targets, or fake backtest metrics if API is offline
         return {
-          status: 'ok',
+          status: 'standby',
           istTime: new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }) + ' IST',
-          buyRecommendations,
-          sellRecommendations,
+          buyRecommendations: [],
+          sellRecommendations: [],
           skills: {
-            chartPatternScanner: this.sortListByMode([...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map(r => ({
-              symbol: r.symbol, side: r.action.includes('BUY') ? 'BULLISH' : 'BEARISH', pattern: r.pattern,
-              triggerTime: r.listedAt, listedAt: r.listedAt, triggerLevel: r.entryPrice, livePrice: r.livePrice, rvol: r.rvol, score: r.confidence
-            })), 'listed_desc'),
+            chartPatternScanner: [],
             newsCatalystMonitor: (DATA.news || []).slice(0, 6).map(n => ({
-              symbol: n.symbol || 'MARKET', headline: n.title, source: n.source || 'NSE Feed',
+              symbol: n.symbol || 'MARKET', headline: n.title || n.headline, source: n.source || 'NSE Feed',
               sentiment: n.sentiment || 'NEUTRAL', impact: 'HIGH', livePrice: 0, changePercent: 0,
               actionBias: n.sentiment === 'POSITIVE' ? 'MOMENTUM BUY' : 'WATCH'
             })),
-            entrySignalIdentifier: { buy: buyRecommendations, sell: sellRecommendations },
-            exitTargetPlanner: topCombined3.map(r => ({
-              symbol: r.symbol, action: r.action, listedAt: r.listedAt, entryPrice: r.entryPrice, livePrice: r.livePrice,
-              initialSL: r.stopLoss, t1Book50Pct: r.target1, t2Book30Pct: r.target2, t3Trail20Pct: r.target3,
-              trailRule: 'Move SL to Cost after 50% booking at T1; trail 1.2x ATR', liveStatus: 'ACTIVE TRACKING'
-            })),
+            entrySignalIdentifier: { buy: [], sell: [] },
+            exitTargetPlanner: [],
             timeMachineSimulator: {
               selectedTimeIST: params.timeSlice,
               currentTimeIST: new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }),
-              triggeredBySliceCount: buyRecommendations.length + sellRecommendations.length,
-              avgSliceReturnPct: 1.42,
-              avgCurrentReturnPct: 2.18,
-              replayRows: this.sortListByMode([...buyRecommendations.slice(0, 5), ...sellRecommendations.slice(0, 5)].map(r => ({
-                symbol: r.symbol, side: r.action.includes('BUY') ? 'BUY' : 'SELL', listedAt: r.listedAt,
-                entryPrice: r.entryPrice, priceAtSlice: r.entryPrice, currentPrice: r.livePrice,
-                pnlAtSlicePct: Number((r.changePercent * 0.65).toFixed(2)), pnlNowPct: r.changePercent, formulaName: r.formulaName
-              })), 'listed_desc')
+              triggeredBySliceCount: 0,
+              avgSliceReturnPct: 0,
+              avgCurrentReturnPct: 0,
+              replayRows: []
             },
             budgetPositionManager: {
               capital: params.capital, riskPct: params.riskPct, leverage: params.leverage, maxPositions: params.maxPositions,
-              riskPerTradeRs, maxBuyingPower: params.capital * params.leverage, maxSlotCapital: maxSlot,
-              totalDeployedMargin: topCombined3.reduce((a, b) => a + b.capitalRequired, 0),
-              totalPortfolioRiskRs: topCombined3.reduce((a, b) => a + b.maxRiskRs, 0),
-              totalPortfolioRiskPct: params.riskPct * 2,
-              totalPotentialProfitT1: topCombined3.reduce((a, b) => a + b.projectedProfitT1Rs, 0),
-              allocations: topCombined3.map(r => ({
-                symbol: r.symbol, action: r.action, listedAt: r.listedAt, qty: r.recommendedQty, entryPrice: r.entryPrice,
-                stopLoss: r.stopLoss, target1: r.target1, marginNeeded: r.capitalRequired,
-                maxRiskRs: r.maxRiskRs, targetProfitRs: r.projectedProfitT1Rs
-              }))
+              riskPerTradeRs: (params.capital * params.riskPct) / 100,
+              maxBuyingPower: params.capital * params.leverage,
+              maxSlotCapital: (params.capital * params.leverage) / params.maxPositions,
+              totalDeployedMargin: 0,
+              totalPortfolioRiskRs: 0,
+              totalPortfolioRiskPct: 0,
+              totalPotentialProfitT1: 0,
+              allocations: []
             },
             riskControlGuardrails: {
               status: vix > 22 ? 'DEFENSIVE_THROTTLE' : 'GREEN_ACTIVE',
-              indiaVix: vix, maxDailyLossLimitPct: 3.0, currentEstimatedRiskPct: Number((params.riskPct * 0.8).toFixed(2)),
+              indiaVix: vix, maxDailyLossLimitPct: 3.0, currentEstimatedRiskPct: 0,
               rules: [
                 { rule: 'Per-Trade Stop Loss <= 2.5%', status: params.riskPct <= 2.5 ? 'PASS' : 'BREACH', value: `${params.riskPct}%` },
                 { rule: 'Index-Stock Isolation Check', status: pool.length >= 200 ? 'PASS' : 'CAUTION', value: `${pool.length} Stocks` }
               ]
             },
             backtestingStrategyReviewer: {
-              liveBenchmarkSymbol: buyRecommendations[0]?.symbol || 'RELIANCE',
-              simulatedWinRatePct: 68.4, simulatedProfitFactor: 2.24, simulatedMaxDrawdownPct: 3.1,
-              strategies: [
-                { formulaCode: 'ORB_15M', formulaName: 'Opening Range Breakout (15m)', signalsToday: bull.length, winRatePct: 71.2, avgReturnPct: 1.85, topPerformer: buyRecommendations[0]?.symbol || 'RELIANCE' }
-              ]
+              liveBenchmarkSymbol: '--',
+              simulatedWinRatePct: 0, simulatedProfitFactor: 0, simulatedMaxDrawdownPct: 0,
+              strategies: []
             },
             eodJournalAuditor: {
-              dateIST: 'Today IST', totalTrackedSignals: pool.length, targetsAchieved: Math.round(pool.length * 0.42),
-              stopLossesHit: Math.round(pool.length * 0.08), activeTrades: Math.round(pool.length * 0.5),
-              auditAccuracyPct: 84.0,
-              auditNotes: ['Live fallback audit computed directly from active pure-equity scanner tape.'],
-              entries: this.sortListByMode([...buyRecommendations.slice(0, 4), ...sellRecommendations.slice(0, 4)].map(r => ({
-                symbol: r.symbol, side: r.action, formula: r.formulaName, listedAt: r.listedAt,
-                entryPrice: r.entryPrice, livePrice: r.livePrice, returnPct: r.changePercent, outcome: 'ACTIVE'
-              })), 'listed_desc')
+              dateIST: 'Today IST', totalTrackedSignals: 0, targetsAchieved: 0,
+              stopLossesHit: 0, activeTrades: 0,
+              auditAccuracyPct: 0,
+              auditNotes: ['Awaiting live backend 10-Skill scan sync (zero fake signals).'],
+              entries: []
             },
             multiTimeframeSynthesizer: {
               marketBias: adv >= dec ? 'BULLISH EXPANSION' : 'BEARISH LIQUIDATION',
               advances: adv, declines: dec, advanceDeclineRatio: Number((adv / Math.max(1, dec)).toFixed(2)),
-              avgOrderBookBidAsk: 1.15, indiaVix: vix,
+              avgOrderBookBidAsk: avgBa, indiaVix: vix,
               timeframes: [
-                { tf: '5m Execution', signal: adv >= dec ? 'BULLISH' : 'BEARISH', driver: 'VWAP + Bid/Ask Imbalance' },
-                { tf: '15m ORB Structure', signal: adv >= dec ? 'BULLISH' : 'BEARISH', driver: 'Breakout Continuity' },
-                { tf: '1H Swing Alignment', signal: adv > dec ? 'BULLISH' : 'NEUTRAL', driver: 'EMA Alignment' },
-                { tf: 'Daily Macro Sentiment', signal: vix < 20 ? 'RISK-ON' : 'CAUTION', driver: `India VIX ${vix.toFixed(2)}` }
+                { tf: '5m Execution', signal: adv >= dec ? 'BULLISH' : 'BEARISH', driver: 'Live Tape Breadth' },
+                { tf: '15m ORB Structure', signal: adv >= dec ? 'BULLISH' : 'BEARISH', driver: 'Awaiting Backend Scan' }
               ],
-              topActionSummary: `Top BUY: ${buyRecommendations.slice(0, 3).map(x => x.symbol).join(', ')} • Top SELL: ${sellRecommendations.slice(0, 3).map(x => x.symbol).join(', ')}`
+              topActionSummary: 'Syncing authentic backend formula signals...'
             }
           }
         };
@@ -14060,7 +14314,7 @@ ${json.message || 'Unauthorized token.'}`);
           const comb = this.sortListByMode([...buyRaw.slice(0, 5), ...sellRaw.slice(0, 5)], sortMode);
           s3.innerHTML = comb.map(x => `
             <div class="flex items-center justify-between gap-2 p-2 rounded bg-[#070b14] border border-[#162136] text-[10.5px]">
-              <span><strong class="text-white cursor-pointer hover:text-cyan-400" onclick="openTradingViewChart('${x.symbol}')">${x.symbol}</strong> <span class="${x.action.includes('BUY') ? 'text-emerald-400' : 'text-rose-400'}">(${x.action})</span> <span class="text-amber-300 text-[9.5px]">🕒 ${x.listedAt || '09:20:05'}</span></span>
+              <span><strong class="text-white cursor-pointer hover:text-cyan-400" onclick="openTradingViewChart('${x.symbol}')">${x.symbol}</strong> <span class="${x.action.includes('BUY') ? 'text-emerald-400' : 'text-rose-400'}">(${x.action})</span> <span class="text-amber-300 text-[9.5px]">🕒 ${x.listedAt || '--'}</span></span>
               <span class="text-slate-300">Entry ₹${x.entryPrice} | T1 ₹${x.target1} | SL ₹${x.stopLoss}</span>
             </div>`).join('');
         }
@@ -14255,233 +14509,33 @@ ${json.message || 'Unauthorized token.'}`);
       buildClientReport() {
         const pool = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) ? DATA.all_stocks.filter(isPureEquityStock) : [];
         const istNow = getISTDatePartsNow();
-        const n50 = (typeof DATA !== 'undefined' && DATA.indices && (DATA.indices['NSE:NIFTY50-INDEX'] || DATA.indices['NIFTY 50'])) || { lp: 25250, chp: 0 };
-        const niftyPx = Number(n50.lp) || 25250;
-        const niftyVw = Number(n50.atp || n50.prev_close_price || niftyPx * 0.999);
+        const n50 = (typeof DATA !== 'undefined' && DATA.indices && (DATA.indices['NSE:NIFTY50-INDEX'] || DATA.indices['NIFTY 50'])) || { lp: 0, chp: 0 };
+        const niftyPx = Number(n50.lp) || 0;
+        const niftyVw = Number(n50.atp || n50.prev_close_price || niftyPx);
         const niftyTrend = niftyPx >= niftyVw ? 'BULLISH' : 'BEARISH';
-        const niftyRegime = {
-          symbol: 'NIFTY 50',
-          price: Number(niftyPx.toFixed(2)),
-          vwap: Number(niftyVw.toFixed(2)),
-          trend: niftyTrend,
-          vsVwapPct: Number((((niftyPx - niftyVw) / Math.max(1, niftyVw)) * 100).toFixed(2))
-        };
-
-        let blockedContraBuys = 0;
-        let blockedContraSells = 0;
-
-        const evalSide = (s, isBuy) => {
-          const lp = Number(s.price) || 100;
-          const pct = Number(s.pct_change) || 0;
-          const candles = Array.isArray(s.candles) && s.candles.length >= 2 ? s.candles : [];
-          const lastC = candles[candles.length - 1] || { open: lp * (isBuy ? 0.996 : 1.004), high: s.day_high || lp, low: s.day_low || lp, close: lp, volume: s.volume || 200000 };
-          const prevC = candles[candles.length - 2] || lastC;
-          const hlc3 = ((s.day_high || lp) + (s.day_low || lp) + lp) / 3;
-          const mfRs = (Number(s.volume) || 200000) * hlc3;
-          const mfCr = mfRs / 1e7;
-          const speed = Number(s.rvol) || 1.2;
-          const glow = Number((speed * (isBuy ? 1.04 : 0.98)).toFixed(2));
-          const avgMfCr = mfCr / Math.max(0.5, glow);
-          const ba = Number(s.bid_ask_ratio) || 1.0;
-          const buyPres = Math.round((ba / (ba + 1)) * 100);
-          const sellPres = 100 - buyPres;
-          const atr = Math.max(0.5, lp * 0.008);
-          const stVal = Number((isBuy ? lp - 1.6 * atr : lp + 1.6 * atr).toFixed(2));
-          const hma55 = Number((Number(s.atp) || (isBuy ? lp * 0.994 : lp * 1.006)).toFixed(2));
-          const obLow = Number((Math.min(prevC.low || lp * 0.992, lp * 0.995)).toFixed(2));
-          const obHigh = Number((Math.max(prevC.high || lp * 1.005, lp * 1.002)).toFixed(2));
-          const entry = Number(s.entry || (isBuy ? lp * 0.995 : lp * 1.005));
-          const slDist = Math.max(atr * 1.35, entry * 0.0075);
-          const sl = Number((s.stop || (isBuy ? entry - slDist : entry + slDist)).toFixed(2));
-          const t1 = Number((s.target || (isBuy ? entry + slDist * 2 : entry - slDist * 2)).toFixed(2));
-
-          const vwap = Number((Number(s.atp) || lp).toFixed(2));
-          const pdh = Number((lp * (isBuy ? 0.996 : 1.008)).toFixed(2));
-          const pdl = Number((lp * (isBuy ? 0.992 : 1.004)).toFixed(2));
-          const dHigh = Number((s.day_high || lp).toFixed(2));
-          const dLow = Number((s.day_low || lp).toFixed(2));
-          const rPos = Math.round(((lp - dLow) / Math.max(0.05, dHigh - dLow)) * 100);
-
-          const adx14 = Number(s.adx || (22 + Math.abs(pct) * 4).toFixed(2));
-          const rsi14 = Number(s.rsi || (50 + pct * 9).toFixed(2));
-          const lotSize = lp > 3000 ? 125 : lp > 1000 ? 250 : 500;
-          const oiPct = Number(s.oi_chg_pct ?? (pct * 2.1));
-          const curOI = parseFloat(s.oi) || 14.5;
-          const prevOI = Number((curOI / (1 + oiPct / 100)).toFixed(2));
-          const oiChg = Number((curOI - prevOI).toFixed(2));
-          let oiInterp = 'Neutral';
-          if (pct > 0.1 && oiChg > 0) oiInterp = 'Long buildup';
-          else if (pct < -0.1 && oiChg > 0) oiInterp = 'Short buildup';
-          else if (pct > 0.1 && oiChg < 0) oiInterp = 'Short covering';
-          else if (pct < -0.1 && oiChg < 0) oiInterp = 'Long unwinding';
-          const iv = Number(s.iv || 18.5);
-          const ivp = Number(s.ivp || 54);
-          const ivRegime = ivp < 20 ? 'Low volatility regime' : ivp < 50 ? 'Moderate-low' : ivp <= 80 ? 'Elevated' : 'High volatility';
-          const pcr = Number(s.pcr || (isBuy ? 1.24 : 0.76));
-          const deltaExp = Number(((oiChg >= 0 ? 1 : -1) * (pct >= 0 ? 1 : -1) * Math.max(8, Math.abs(oiChg) * lotSize * 0.04) * (ba >= 1 ? 1.1 : -1.1) * (pct >= 0 ? 1 : -1)).toFixed(2));
-          const signedDe = Number(((oiInterp === 'Long buildup' || oiInterp === 'Short covering') ? Math.abs(deltaExp) : -Math.abs(deltaExp)).toFixed(2));
-          const gex = Number((curOI * lotSize * 0.015).toFixed(2));
-          const vex = Number((curOI * lotSize * 0.18).toFixed(2));
-          const oiFlow = (oiInterp === 'Long buildup' || oiInterp === 'Short covering') ? 'POSITIVE' : 'NEGATIVE';
-          const deltaFlow = signedDe >= 0 ? 'POSITIVE' : 'NEGATIVE';
-
-          const checks = isBuy ? [
-            { step: 1, label: 'Supertrend (10,2) Bullish', passed: pct > 0, detail: `BULLISH @ ₹${stVal}` },
-            { step: 2, label: '2 Consecutive Green Candles', passed: (lastC.close >= lastC.open) && (pct > 0.25), detail: '2x Green impulse bars' },
-            { step: 3, label: 'Close > HMA(55)', passed: lp > hma55, detail: `Close ₹${lp} vs HMA ₹${hma55}` },
-            { step: 4, label: 'Money Flow > 20-Avg', passed: mfCr > avgMfCr, detail: `₹${mfCr.toFixed(1)} Cr > ₹${avgMfCr.toFixed(1)} Cr` },
-            { step: 5, label: 'Volume Speed >= 1.5x', passed: speed >= 1.5, detail: `${speed.toFixed(2)}x` },
-            { step: 6, label: 'Money Flow Surge >= 1.3x', passed: glow >= 1.3, detail: `${glow.toFixed(2)}x` },
-            { step: 7, label: 'Bullish BOS / OB Confirmed', passed: pct > 0.4, detail: `BULLISH BOS • OB ₹${obLow}-${obHigh}` },
-            { step: 8, label: 'Break / Close Above Bull OB', passed: lp >= entry, detail: `Above OB High ₹${obHigh}` },
-            { step: 9, label: 'Breakout', passed: pct > 0.5, detail: `Breakout above OR-High ₹${entry.toFixed(2)}` },
-            { step: 10, label: 'PDH (Prev Day High)', passed: lp > pdh || dHigh > pdh, detail: `High ₹${dHigh} vs PDH ₹${pdh}` },
-            { step: 11, label: 'RANGE Holding Upper', passed: rPos >= 65, detail: `${rPos}% of Day Range` },
-            { step: 12, label: 'BRK Confirm (BEK)', passed: lp > entry && pct > 0.3, detail: `Follow-through above ₹${entry.toFixed(2)}` },
-            { step: 13, label: 'VWAP Above', passed: lp > vwap, detail: `₹${lp} vs VWAP ₹${vwap}` },
-            { step: 14, label: 'Bid / Ask Ratio >= 1.15x', passed: ba >= 1.15, detail: `B/A ${ba.toFixed(2)}x` },
-            { step: 15, label: 'NIFTY Trend Above VWAP', passed: niftyTrend === 'BULLISH', detail: `NIFTY ₹${niftyPx} (${niftyTrend})` },
-            { step: 16, label: 'ADX(14) > 20', passed: adx14 > 20, detail: `ADX ${adx14}` },
-            { step: 17, label: 'RSI(14) > 55', passed: rsi14 > 55, detail: `RSI ${rsi14}` },
-            { step: 18, label: 'RVOL >= 1.5x', passed: speed >= 1.5, detail: `${speed.toFixed(2)}x` },
-            { step: 19, label: 'Futures OI Long Buildup', passed: oiInterp === 'Long buildup', detail: `${oiInterp} (ΔOI ${oiChg}L)` },
-            { step: 20, label: 'Delta Flow Positive', passed: deltaFlow === 'POSITIVE', detail: `DE ${signedDe} (${deltaFlow})` },
-            { step: 21, label: 'SMC Bullish BOS', passed: pct > 0.4, detail: 'BULLISH BOS' },
-            { step: 22, label: 'Hull HMA(55) Rising', passed: pct > 0 && lp > hma55, detail: 'RISING' }
-          ] : [
-            { step: 1, label: 'Supertrend (10,2) Bearish', passed: pct < 0, detail: `BEARISH @ ₹${stVal}` },
-            { step: 2, label: '2 Consecutive Red Candles', passed: (lastC.close <= lastC.open) && (pct < -0.25), detail: '2x Red breakdown bars' },
-            { step: 3, label: 'Close < HMA(55)', passed: lp < hma55, detail: `Close ₹${lp} vs HMA ₹${hma55}` },
-            { step: 4, label: 'Money Flow > 20-Avg (Turnover)', passed: mfCr > avgMfCr, detail: `₹${mfCr.toFixed(1)} Cr > ₹${avgMfCr.toFixed(1)} Cr` },
-            { step: 5, label: 'Volume Speed >= 1.5x', passed: speed >= 1.5, detail: `${speed.toFixed(2)}x` },
-            { step: 6, label: 'Selling Pressure Dominant', passed: sellPres >= 55 || ba < 0.95, detail: `Sell ${sellPres}%` },
-            { step: 7, label: 'Bearish BOS / OB Confirmed', passed: pct < -0.4, detail: `BEARISH BOS • OB ₹${obLow}-${obHigh}` },
-            { step: 8, label: 'Break / Close Below Bear OB', passed: lp <= entry, detail: `Below OB Low ₹${obLow}` },
-            { step: 9, label: 'Breakout (Downside)', passed: pct < -0.5, detail: `Breakdown below OR-Low ₹${entry.toFixed(2)}` },
-            { step: 10, label: 'VWAP Below', passed: lp < vwap, detail: `₹${lp} vs VWAP ₹${vwap}` },
-            { step: 11, label: 'DL (Day Low Zone)', passed: rPos <= 35, detail: `${rPos}% pressing DL ₹${dLow}` },
-            { step: 12, label: 'BRK Confirm (BEK)', passed: lp < entry && pct < -0.3, detail: `Follow-through below ₹${entry.toFixed(2)}` },
-            { step: 13, label: 'PDL (Prev Day Low)', passed: lp < pdl || dLow < pdl, detail: `Low ₹${dLow} vs PDL ₹${pdl}` },
-            { step: 14, label: 'Bid / Ask Ratio <= 0.90x', passed: ba <= 0.9, detail: `B/A ${ba.toFixed(2)}x` },
-            { step: 15, label: 'NIFTY Trend Below VWAP', passed: niftyTrend === 'BEARISH', detail: `NIFTY ₹${niftyPx} (${niftyTrend})` },
-            { step: 16, label: 'ADX(14) > 20', passed: adx14 > 20, detail: `ADX ${adx14}` },
-            { step: 17, label: 'RSI(14) < 45', passed: rsi14 < 45, detail: `RSI ${rsi14}` },
-            { step: 18, label: 'RVOL >= 1.5x', passed: speed >= 1.5, detail: `${speed.toFixed(2)}x` },
-            { step: 19, label: 'Futures OI Short Buildup', passed: oiInterp === 'Short buildup', detail: `${oiInterp} (ΔOI ${oiChg}L)` },
-            { step: 20, label: 'Delta Flow Negative', passed: deltaFlow === 'NEGATIVE', detail: `DE ${signedDe} (${deltaFlow})` },
-            { step: 21, label: 'SMC Bearish BOS', passed: pct < -0.4, detail: 'BEARISH BOS' },
-            { step: 22, label: 'Hull HMA(55) Falling', passed: pct < 0 && lp < hma55, detail: 'FALLING' }
-          ];
-          const met = checks.filter(c => c.passed).length;
-          return {
-            symbol: s.symbol,
-            name: s.name || s.symbol,
-            sector: s.sector || 'NSE F&O',
-            direction: isBuy ? 'BUY' : 'SELL',
-            grade: met === 22 ? 'STRICT 22/22' : met >= 18 ? 'HIGH SURGE' : 'SETUP',
-            conditionsMet: met,
-            totalConditions: 22,
-            listedAt: s.listed_at || '09:30:00',
-            price: Number(lp.toFixed(2)),
-            entryPrice: Number(entry.toFixed(2)),
-            stopLoss: sl,
-            target1: t1,
-            target2: Number((isBuy ? entry + slDist * 3 : Math.max(0.05, entry - slDist * 3)).toFixed(2)),
-            changePercent: Number(pct.toFixed(2)),
-            hlc3: Number(hlc3.toFixed(2)),
-            vwap,
-            pdh,
-            pdl,
-            dayHigh: dHigh,
-            dayLow: dLow,
-            rangePosPct: rPos,
-            moneyFlowRs: Math.round(mfRs),
-            moneyFlowCr: Number(mfCr.toFixed(2)),
-            avgMoneyFlowCr: Number(avgMfCr.toFixed(2)),
-            speed: Number(speed.toFixed(2)),
-            glowSurge: Number(glow.toFixed(2)),
-            buyingPressurePct: buyPres,
-            sellingPressurePct: sellPres,
-            bidAskRatio: Number(ba.toFixed(2)),
-            supertrend: { direction: isBuy ? 'BULLISH' : 'BEARISH', value: stVal, atr10: Number(atr.toFixed(2)), justTurned: false },
-            hullSuite: { hma55, periodUsed: 55, position: lp >= hma55 ? 'ABOVE' : 'BELOW', slope: isBuy ? 'UP' : 'DOWN' },
-            structure: { tag: isBuy ? 'BULLISH BOS' : 'BEARISH BOS', swingLevel: Number(entry.toFixed(2)) },
-            orderBlock: { type: isBuy ? 'BULLISH OB' : 'BEARISH OB', low: obLow, high: obHigh, time: s.listed_at || '09:30', breakConfirmed: checks[7].passed },
-            greeksAndDerivatives: {
-              delta: 0.52,
-              gamma: 0.0025,
-              vega: 2.1,
-              deltaExposure: signedDe,
-              deltaFlowDirection: deltaFlow,
-              gammaExposure: gex,
-              gammaNote: 'Gamma sensitivity only',
-              vegaExposure: vex,
-              currentOI: curOI,
-              previousOI: prevOI,
-              oiChange: oiChg,
-              oiChangePct: Number(oiPct.toFixed(2)),
-              oiInterpretation: oiInterp,
-              oiFlowDirection: oiFlow,
-              iv,
-              ivp,
-              ivRegime,
-              pcr,
-              lotSize
-            },
-            smartMoneyFilters: {
-              niftyTrend: niftyTrend === 'BULLISH' ? 'ABOVE_VWAP' : 'BELOW_VWAP',
-              adx14,
-              rsi14,
-              rvol: speed,
-              futuresOiBuildup: oiInterp,
-              oiFlow,
-              deltaFlow,
-              smcStructure: isBuy ? 'BULLISH BOS' : 'BEARISH BOS',
-              hullSlope: isBuy ? 'RISING' : 'FALLING',
-              dualFlowAligned: isBuy ? (oiFlow === 'POSITIVE' && deltaFlow === 'POSITIVE') : (oiFlow === 'NEGATIVE' && deltaFlow === 'NEGATIVE'),
-              specialFilterPassed: true
-            },
-            conditions: checks,
-            score: met * 100 + Math.abs(pct) * 10 + speed * 10 + glow * 10
-          };
-        };
-
-        const buyRows = [];
-        pool.filter(s => (Number(s.pct_change) || 0) >= 2.0).forEach(s => {
-          const r = evalSide(s, true);
-          if (r.smartMoneyFilters.dualFlowAligned && r.conditionsMet >= 15) buyRows.push(r);
-          else blockedContraBuys++;
-        });
-        const sellRows = [];
-        pool.filter(s => (Number(s.pct_change) || 0) <= -2.0).forEach(s => {
-          const r = evalSide(s, false);
-          if (r.smartMoneyFilters.dualFlowAligned && r.conditionsMet >= 15) sellRows.push(r);
-          else blockedContraSells++;
-        });
-
-        const buySignals = sortByListedAtNewestFirstAtoZ(
-          buyRows.sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score).slice(0, 15)
-        );
-        const sellSignals = sortByListedAtNewestFirstAtoZ(
-          sellRows.sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score).slice(0, 15)
-        );
-
+        // Honest fallback: zero synthetic 22-pillar fake signals when backend API is unavailable
         return {
-          status: 'ok',
+          status: 'standby',
           generatedAt: new Date().toISOString(),
           istTime: istNow.timeStr,
           isMidnightCleared: false,
           universeEvaluated: pool.length,
-          strictBuyCount: buySignals.filter(x => x.conditionsMet === 22).length,
-          strictSellCount: sellSignals.filter(x => x.conditionsMet === 22).length,
-          niftyRegime,
-          specialFilterStats: {
-            blockedContraBuys,
-            blockedContraSells,
-            ruleSummary: 'OI Flow & Delta Flow both Positive BUY / both Negative SELL'
+          strictBuyCount: 0,
+          strictSellCount: 0,
+          niftyRegime: {
+            symbol: 'NIFTY 50',
+            price: Number(niftyPx.toFixed(2)),
+            vwap: Number(niftyVw.toFixed(2)),
+            trend: niftyTrend,
+            vsVwapPct: niftyVw > 0 ? Number((((niftyPx - niftyVw) / niftyVw) * 100).toFixed(2)) : 0
           },
-          buySignals,
-          sellSignals
+          specialFilterStats: {
+            blockedContraBuys: 0,
+            blockedContraSells: 0,
+            ruleSummary: 'Awaiting live backend 22-pillar candle verification (zero fake signals)'
+          },
+          buySignals: [],
+          sellSignals: []
         };
       },
 
@@ -14566,7 +14620,10 @@ ${json.message || 'Unauthorized token.'}`);
                 <tr class="border-b border-[#141c2e] hover:bg-[#101829] transition">
                   <td class="p-2.5">
                     <div class="font-black text-white text-xs cursor-pointer hover:text-cyan-300" onclick="openTradingViewChart('${item.symbol}')">${item.symbol}</div>
-                    <div class="text-[9.5px] text-slate-400">${item.sector}</div>
+                    <div class="text-[9.5px] text-slate-400 flex items-center gap-1 flex-wrap">
+                      <span>${item.sector}</span>
+                      ${typeof item.sectorChangePct === 'number' ? `<span class="font-bold ${item.sectorChangePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${item.sectorChangePct >= 0 ? '+' : ''}${Number(item.sectorChangePct).toFixed(2)}%)</span>` : ''}
+                    </div>
                     <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-black ${item.conditionsMet === totC ? 'bg-amber-500/25 text-amber-300 border border-amber-400/40' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'}">${item.conditionsMet}/${totC} ${item.grade}</span>
                   </td>
                   <td class="p-2.5">
@@ -14814,413 +14871,52 @@ ${json.message || 'Unauthorized token.'}`);
 
       clampEntryTimeStr(rawTime) {
         const clean = String(rawTime || '').trim();
+        if (!clean || clean === '--') return '--';
         const m = clean.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-        if (!m) return '09:30:00';
+        if (!m) return '--';
         const hh = Math.min(23, Math.max(0, Number(m[1])));
         const mm = Math.min(59, Math.max(0, Number(m[2])));
         const ss = Math.min(59, Math.max(0, Number(m[3] || 0)));
         const sec = hh * 3600 + mm * 60 + ss;
-        const clamped = Math.min(14 * 3600 + 45 * 60, Math.max(9 * 3600 + 20 * 60, sec));
-        const h = String(Math.floor(clamped / 3600)).padStart(2, '0');
-        const min = String(Math.floor((clamped % 3600) / 60)).padStart(2, '0');
-        const s = String(clamped % 60).padStart(2, '0');
-        return `${h}:${min}:${s}`;
+        if (sec < 9 * 3600 + 20 * 60 || sec > 14 * 3600 + 45 * 60) return '--';
+        return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
       },
 
       buildClientFallbackReport() {
         const ist = getISTDatePartsNow();
-        const tfList = [
-          { id: '5m', label: '5 Minutes', shortLabel: '5m', minutes: 5 },
-          { id: '15m', label: '15 Minutes', shortLabel: '15m', minutes: 15 },
-          { id: '30m', label: '30 Minutes', shortLabel: '30m', minutes: 30 },
-          { id: '1h', label: '1 Hour', shortLabel: '1H', minutes: 60 }
-        ];
         const selTf = this.activeTimeframe || '5m';
         const pool = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) ? DATA.all_stocks.filter(isPureEquityStock) : [];
-        const sectorAgg = new Map();
-        pool.forEach((st) => {
-          const sec = st.sector || 'NSE F&O';
-          const cur = sectorAgg.get(sec) || { sum: 0, cnt: 0 };
-          cur.sum += Number(st.pct_change) || 0;
-          cur.cnt += 1;
-          sectorAgg.set(sec, cur);
-        });
-        const sectorAvgMap = {};
-        sectorAgg.forEach((v, sec) => {
-          sectorAvgMap[sec] = Number((v.sum / Math.max(1, v.cnt)).toFixed(2));
-        });
-
-        const equities = pool.map((s) => {
-          const lp = Number(s.price) || 100;
-          const pct = Number(s.pct_change) || 0;
-          const secName = s.sector || 'NSE F&O';
-          const secPct = Number((s.sector_pct ?? sectorAvgMap[secName] ?? pct * 0.85).toFixed(2));
-          const isBuy = pct >= 0;
-          const dHigh = Number(s.day_high || lp * 1.012);
-          const dLow = Number(s.day_low || lp * 0.988);
-          const prevClose = lp / Math.max(0.5, 1 + pct / 100);
-          const pdh = Number((prevClose * 1.0065).toFixed(2));
-          const pdl = Number((prevClose * 0.9935).toFixed(2));
-          const orHigh = Number((prevClose * 1.0045).toFixed(2));
-          const orLow = Number((prevClose * 0.9955).toFixed(2));
-          const pivot = Number(((pdh + pdl + prevClose) / 3).toFixed(2));
-          const r1 = Number((2 * pivot - pdl).toFixed(2));
-          const s1 = Number((2 * pivot - pdh).toFixed(2));
-          const bodyPct = Math.round(Math.min(92, Math.max(28, 46 + Math.abs(pct) * 18)));
-          const rawVol = Math.round(Number(s.volume) || 350000);
-          const valCr = Number((Number(s.turnover_cr) || (rawVol * lp) / 1e7).toFixed(2));
-          const srLevel = isBuy ? r1 : s1;
-          const srBreak = isBuy ? lp > r1 || dHigh > r1 : lp < s1 || dLow < s1;
-          const listedAt = this.clampEntryTimeStr(s.listed_at || '09:30:00');
-          const structure = isBuy ? (pct >= 0.45 ? 'HH / HL' : 'RANGE') : (pct <= -0.45 ? 'LH / LL' : 'RANGE');
-
-          const mtfSignals = {};
-          const alignedTfs = [];
-          tfList.forEach((tm, tIdx) => {
-            const barDiv = Math.max(2, Math.round(375 / tm.minutes));
-            const trigBar = Math.round(rawVol / barDiv * (Number(s.rvol) || 1.35));
-            const baseBar = Math.round(rawVol / (barDiv * 1.15));
-            const volRatio = Number((trigBar / Math.max(1, baseBar)).toFixed(2));
-            const checks = [
-              { key: 'PDH_PDL', label: `[${tm.shortLabel}] Prev Day High/Low`, passed: isBuy ? (lp > pdh || dHigh > pdh) : (lp < pdl || dLow < pdl), detail: isBuy ? `LTP ₹${lp} vs PDH ₹${pdh}` : `LTP ₹${lp} vs PDL ₹${pdl}` },
-              { key: 'ORB', label: `[${tm.shortLabel}] ORB Breakout`, passed: isBuy ? lp > orHigh : lp < orLow, detail: `ORB ₹${orLow} - ₹${orHigh}` },
-              { key: 'STRUCTURE', label: `[${tm.shortLabel}] Structure`, passed: isBuy ? structure === 'HH / HL' : structure === 'LH / LL', detail: structure },
-              { key: 'BODY_STRENGTH', label: `[${tm.shortLabel}] Body >= 50%`, passed: bodyPct >= (50 + tIdx), detail: `Body ${bodyPct}%` },
-              { key: 'SR_BREAKOUT', label: `[${tm.shortLabel}] S&R Breakout`, passed: srBreak, detail: `${isBuy ? 'R1' : 'S1'} ₹${srLevel}` },
-              { key: 'RAW_VOLUME', label: `[${tm.shortLabel}] Raw Traded Volume`, passed: trigBar >= baseBar * 1.1 && rawVol >= 150000, detail: `${tm.shortLabel} (${volRatio}x)` },
-              { key: 'ENTRY_WINDOW', label: 'Entry 09:20-14:45 IST', passed: listedAt >= '09:20:00' && listedAt <= '14:45:00', detail: `${listedAt} IST` }
-            ];
-            const met = checks.filter(c => c.passed).length;
-            const qual = met >= 6 && checks[5].passed && checks[6].passed;
-            if (qual) alignedTfs.push(tm.id);
-            const tfScale = tm.minutes === 5 ? 1.0 : tm.minutes === 15 ? 1.15 : tm.minutes === 30 ? 1.3 : 1.45;
-            const entryPrice = Number((s.entry || lp).toFixed(2));
-            const risk = Number(Math.max(0.5, lp * 0.0085 * tfScale).toFixed(2));
-            const stopLoss = Number((isBuy ? entryPrice - risk : entryPrice + risk).toFixed(2));
-            const actualRisk = Number(Math.max(0.25, Math.abs(entryPrice - stopLoss)).toFixed(2));
-            const rrMult = met === 7 ? 2.4 : 2.0;
-            const target1 = Number((isBuy ? entryPrice + actualRisk * rrMult : Math.max(0.05, entryPrice - actualRisk * rrMult)).toFixed(2));
-            const target2 = Number((isBuy ? entryPrice + actualRisk * (rrMult + 1.0) : Math.max(0.05, entryPrice - actualRisk * (rrMult + 1.0))).toFixed(2));
-            const rew = Number(Math.abs(target1 - entryPrice).toFixed(2));
-            const rrNum = Number((rew / Math.max(0.05, actualRisk)).toFixed(2));
-
-            mtfSignals[tm.id] = {
-              timeframe: tm.id,
-              label: tm.label,
-              shortLabel: tm.shortLabel,
-              direction: isBuy ? 'BUY' : 'SELL',
-              passedCount: met,
-              totalConditions: 7,
-              qualified: qual,
-              grade: met === 7 ? 'STRICT 7/7' : met === 6 ? 'HIGH 6/7' : 'WATCH',
-              structure,
-              bodyStrengthPct: bodyPct,
-              orHigh,
-              orLow,
-              srLevelName: isBuy ? 'Pivot R1' : 'Pivot S1',
-              srLevelPrice: srLevel,
-              srBreakoutConfirmed: srBreak,
-              triggerBarVolume: trigBar,
-              baselineBarVolume: baseBar,
-              rawVolumeRatio: volRatio,
-              volumeConfirmText: `${tm.shortLabel} ${(trigBar / 1000).toFixed(1)}k vs ${(baseBar / 1000).toFixed(1)}k (${volRatio}x)`,
-              listedAt,
-              inEntryWindow: true,
-              entryPrice,
-              stopLoss,
-              target1,
-              target2,
-              riskPoints: actualRisk,
-              rewardPoints: rew,
-              rrRatio: `1 : ${rrNum.toFixed(2)}`,
-              rrNumeric: rrNum,
-              conditions: checks,
-              score: Number((met * 12 + Math.min(18, Math.log10(Math.max(10, valCr)) * 7)).toFixed(1))
-            };
-          });
-
-          const activeTf = selTf === 'ALL' ? (alignedTfs[0] || '15m') : selTf;
-          const activeSig = mtfSignals[activeTf] || mtfSignals['5m'];
-          const curOi = parseFloat(s.oi) || 12.5;
-          const oiPct = Number(s.oi_chg_pct ?? pct * 2.1);
-          const prevOi = Number((curOi / Math.max(0.2, 1 + oiPct / 100)).toFixed(2));
-          const oiChg = Number((curOi - prevOi).toFixed(2));
-          const buildup = pct >= 0 && oiChg >= 0 ? 'LONG BUILDUP' : pct < 0 && oiChg >= 0 ? 'SHORT BUILDUP' : pct >= 0 ? 'SHORT COVERING' : 'LONG UNWINDING';
-          const baRatio = Number((s.bid_ask_ratio || (isBuy ? 1.24 : 0.81)).toFixed(2));
-          const cycleBuildup = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(buildup, pct, oiPct, baRatio) : buildup;
-
-          return {
-            id: `FNO-${s.symbol}`,
-            category: 'EQUITY_FNO',
-            symbol: s.symbol,
-            displayName: s.name || s.symbol,
-            underlying: s.symbol,
-            sector: secName,
-            sectorChangePct: secPct,
-            lotSize: lp > 3000 ? 125 : lp > 1000 ? 250 : 500,
-            direction: isBuy ? 'BUY' : 'SELL',
-            actionBadge: isBuy ? (activeSig.passedCount === 7 ? 'STRONG BUY' : 'BUY') : (activeSig.passedCount === 7 ? 'STRONG SELL' : 'SELL'),
-            formulaPassedCount: activeSig.passedCount,
-            totalConditions: 7,
-            isFormulaQualified: selTf === 'ALL' ? (alignedTfs.length >= 2 && activeSig.qualified) : activeSig.qualified,
-            grade: activeSig.grade,
-            timeframe: activeTf,
-            timeframeLabel: activeSig.label,
-            mtfSignals,
-            mtfAlignmentCount: alignedTfs.length,
-            mtfAlignedTimeframes: alignedTfs,
-            price: Number(lp.toFixed(2)),
-            changePercent: Number(pct.toFixed(2)),
-            pdh, pdl, orHigh: activeSig.orHigh, orLow: activeSig.orLow, structure: activeSig.structure,
-            bodyStrengthPct: activeSig.bodyStrengthPct,
-            srLevelName: activeSig.srLevelName,
-            srLevelPrice: activeSig.srLevelPrice,
-            srBreakoutConfirmed: activeSig.srBreakoutConfirmed,
-            rawVolume: rawVol,
-            triggerBarVolume: activeSig.triggerBarVolume,
-            baselineBarVolume: activeSig.baselineBarVolume,
-            volumeConfirmText: activeSig.volumeConfirmText,
-            tradedValueCr: valCr,
-            currentOI: Number(curOi.toFixed(2)),
-            previousOI: prevOi,
-            oiChange: oiChg,
-            oiChangePct: Number(oiPct.toFixed(2)),
-            oiBuildup: buildup,
-            cycleBuildup,
-            bidAskRatio: baRatio,
-            listedAt: activeSig.listedAt,
-            inEntryWindow: true,
-            entryPrice: activeSig.entryPrice,
-            stopLoss: activeSig.stopLoss,
-            target1: activeSig.target1,
-            target2: activeSig.target2,
-            riskPoints: activeSig.riskPoints,
-            rewardPoints: activeSig.rewardPoints,
-            rrRatio: activeSig.rrRatio,
-            rrNumeric: activeSig.rrNumeric,
-            conditions: activeSig.conditions,
-            score: activeSig.score
-          };
-        });
-
-        const strictEq = equities.filter(r => r.isFormulaQualified).sort((a, b) => b.listedAt.localeCompare(a.listedAt) || b.symbol.localeCompare(a.symbol)).slice(0, 15);
-        const topVol = [...equities].sort((a, b) => b.rawVolume - a.rawVolume).slice(0, 15);
-        const topVal = [...equities].sort((a, b) => b.tradedValueCr - a.tradedValueCr).slice(0, 15);
-        const oiLeaders = [...equities].sort((a, b) => Math.abs(b.oiChangePct) - Math.abs(a.oiChangePct)).slice(0, 15);
-
-        const idxSpecs = [
-          { key: 'NSE:NIFTY50-INDEX', sym: 'NIFTY', step: 50, lot: 75 },
-          { key: 'NSE:NIFTYBANK-INDEX', sym: 'BANKNIFTY', step: 100, lot: 30 },
-          { key: 'NSE:FINNIFTY-INDEX', sym: 'FINNIFTY', step: 50, lot: 65 },
-          { key: 'NSE:MIDCPNIFTY-INDEX', sym: 'MIDCPNIFTY', step: 25, lot: 120 },
-          { key: 'BSE:SENSEX-INDEX', sym: 'SENSEX', step: 100, lot: 20 }
-        ];
-        const optRows = [];
-        idxSpecs.forEach((sp, sIdx) => {
-          const idxQ = (DATA.indices && DATA.indices[sp.key]) || { lp: sp.sym === 'BANKNIFTY' ? 52400 : sp.sym === 'SENSEX' ? 80200 : 24800, chp: 0.35 };
-          const spot = Number(idxQ.lp) || 24800;
-          const chp = Number(idxQ.chp) || 0;
-          const atm = Math.round(spot / sp.step) * sp.step;
-          [0, sp.step].forEach((off, oIdx) => {
-            ['CE', 'PE'].forEach(optType => {
-              const strike = optType === 'CE' ? atm + off : atm - off;
-              const isBull = (optType === 'CE' && chp >= 0) || (optType === 'PE' && chp < 0);
-              const ltp = Number(Math.max(25, spot * 0.0085 - off * 0.25).toFixed(2));
-              const pdh = Number((ltp * 1.05).toFixed(2));
-              const pdl = Number((ltp * 0.88).toFixed(2));
-              const orHigh = Number((ltp * 1.03).toFixed(2));
-              const orLow = Number((ltp * 0.94).toFixed(2));
-              const rawVol = Math.round(1450000 - oIdx * 280000 + Math.abs(chp) * 420000);
-              const valCr = Number(((rawVol * sp.lot * ltp) / 1e7 * 0.08).toFixed(2));
-              const bodyPct = Math.round(54 + Math.min(34, Math.abs(chp) * 14));
-              const listedMin = 22 + sIdx * 11 + oIdx * 7 + (optType === 'PE' ? 3 : 0);
-              const hh = String(9 + Math.floor(listedMin / 60)).padStart(2, '0');
-              const mm = String(listedMin % 60).padStart(2, '0');
-              const listedAt = `${hh}:${mm}:00`;
-              const risk = Number(Math.max(4, ltp * 0.16).toFixed(2));
-              const stopLoss = Number(Math.max(1, ltp - risk).toFixed(2));
-              const target1 = Number((ltp + risk * 2.2).toFixed(2));
-              const target2 = Number((ltp + risk * 3.2).toFixed(2));
-
-              const mtfSignals = {};
-              const alignedTfs = [];
-              tfList.forEach((tm) => {
-                const checks = [
-                  { key: 'PDH_PDL', label: `[${tm.shortLabel}] Option PDH`, passed: isBull, detail: `₹${ltp} vs PDH ₹${pdh}` },
-                  { key: 'ORB', label: `[${tm.shortLabel}] Option ORB`, passed: isBull, detail: `ORB ₹${orLow}-₹${orHigh}` },
-                  { key: 'STRUCTURE', label: `[${tm.shortLabel}] Momentum`, passed: Math.abs(chp) >= 0.12, detail: isBull ? 'HH / HL' : 'LH / LL' },
-                  { key: 'BODY_STRENGTH', label: `[${tm.shortLabel}] Body >= 50%`, passed: bodyPct >= 50, detail: `${bodyPct}%` },
-                  { key: 'SR_BREAKOUT', label: `[${tm.shortLabel}] S&R Breakout`, passed: isBull, detail: `R1 ₹${orHigh}` },
-                  { key: 'RAW_VOLUME', label: `[${tm.shortLabel}] Raw Contract Vol`, passed: true, detail: rawVol.toLocaleString('en-IN') },
-                  { key: 'ENTRY_WINDOW', label: '09:20-14:45 IST', passed: true, detail: listedAt }
-                ];
-                const met = checks.filter(c => c.passed).length;
-                const qual = met >= 6;
-                if (qual) alignedTfs.push(tm.id);
-                mtfSignals[tm.id] = {
-                  timeframe: tm.id, label: tm.label, shortLabel: tm.shortLabel, direction: isBull ? 'BUY' : 'SELL',
-                  passedCount: met, totalConditions: 7, qualified: qual, grade: met === 7 ? 'STRICT 7/7' : met === 6 ? 'HIGH 6/7' : 'WATCH',
-                  structure: isBull ? 'HH / HL' : 'LH / LL', bodyStrengthPct: bodyPct, orHigh, orLow,
-                  srLevelName: 'Strike R1', srLevelPrice: orHigh, srBreakoutConfirmed: isBull,
-                  triggerBarVolume: Math.round(rawVol / 15), baselineBarVolume: Math.round(rawVol / 26), rawVolumeRatio: 1.73,
-                  volumeConfirmText: `${tm.shortLabel} ${Math.round(rawVol / 1000)}K lots`, listedAt, inEntryWindow: true,
-                  entryPrice: ltp, stopLoss, target1, target2, riskPoints: risk, rewardPoints: Number((target1 - ltp).toFixed(2)),
-                  rrRatio: '1 : 2.20', rrNumeric: 2.2, conditions: checks, score: Number((met * 12 + 16).toFixed(1))
-                };
-              });
-
-              const activeTf = selTf === 'ALL' ? (alignedTfs[0] || '15m') : selTf;
-              const activeSig = mtfSignals[activeTf] || mtfSignals['5m'];
-              const premChg = Number((isBull ? Math.max(4.5, Math.abs(chp) * 18) : -Math.max(3.2, Math.abs(chp) * 12)).toFixed(2));
-              const optOiPct = isBull ? 28.5 : -14.2;
-              const optBa = Number((isBull ? 1.42 : 0.78).toFixed(2));
-              const optCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(isBull ? 'LONG BUILDUP' : 'SHORT BUILDUP', premChg, optOiPct, optBa) : (isBull ? 'Long Buildup' : 'Short Buildup');
-              optRows.push({
-                id: `OPT-${sp.sym}-${strike}-${optType}`,
-                category: 'INDEX_OPTION',
-                symbol: `${sp.sym} ${strike} ${optType}`,
-                displayName: `${sp.sym} ${strike} ${optType}`,
-                underlying: sp.sym,
-                sector: `${sp.sym} Options`,
-                sectorChangePct: Number(chp.toFixed(2)),
-                lotSize: sp.lot,
-                direction: isBull ? 'BUY' : 'SELL',
-                actionBadge: isBull ? `BUY ${optType}` : `SELL ${optType}`,
-                formulaPassedCount: activeSig.passedCount,
-                totalConditions: 7,
-                isFormulaQualified: selTf === 'ALL' ? (alignedTfs.length >= 2 && activeSig.qualified) : activeSig.qualified,
-                grade: activeSig.grade,
-                timeframe: activeTf,
-                timeframeLabel: activeSig.label,
-                mtfSignals,
-                mtfAlignmentCount: alignedTfs.length,
-                mtfAlignedTimeframes: alignedTfs,
-                price: ltp,
-                changePercent: premChg,
-                pdh, pdl, orHigh, orLow,
-                structure: activeSig.structure,
-                bodyStrengthPct: bodyPct,
-                srLevelName: 'Strike R1',
-                srLevelPrice: orHigh,
-                srBreakoutConfirmed: isBull,
-                rawVolume: rawVol,
-                triggerBarVolume: activeSig.triggerBarVolume,
-                baselineBarVolume: activeSig.baselineBarVolume,
-                volumeConfirmText: activeSig.volumeConfirmText,
-                tradedValueCr: valCr,
-                currentOI: 28.4,
-                previousOI: 22.1,
-                oiChange: 6.3,
-                oiChangePct: optOiPct,
-                oiBuildup: isBull ? 'LONG BUILDUP' : 'SHORT BUILDUP',
-                cycleBuildup: optCycle,
-                bidAskRatio: optBa,
-                listedAt,
-                inEntryWindow: true,
-                entryPrice: ltp,
-                stopLoss, target1, target2,
-                riskPoints: risk,
-                rewardPoints: Number((target1 - ltp).toFixed(2)),
-                rrRatio: '1 : 2.20',
-                rrNumeric: 2.2,
-                optionType: optType,
-                strikePrice: strike,
-                spotPrice: Number(spot.toFixed(2)),
-                iv: 14.8,
-                delta: optType === 'CE' ? 0.52 : -0.48,
-                conditions: activeSig.conditions,
-                score: activeSig.score
-              });
-            });
-          });
-        });
-
-        const timeframeSummary = {};
-        tfList.forEach(tm => {
-          const eqQ = equities.filter(r => r.mtfSignals[tm.id]?.qualified);
-          const opQ = optRows.filter(r => r.mtfSignals[tm.id]?.qualified);
-          timeframeSummary[tm.id] = {
-            timeframe: tm.id, label: tm.label, shortLabel: tm.shortLabel,
-            strictQualifiedCount: eqQ.length + opQ.length,
-            buyCount: eqQ.filter(r => r.direction === 'BUY').length,
-            sellCount: eqQ.filter(r => r.direction === 'SELL').length,
-            optionsCount: opQ.length
-          };
-        });
-        const mtfAlignedCount = [...equities, ...optRows].filter(r => r.mtfAlignmentCount >= 2).length;
-
-        const strictOpts = optRows.filter(r => r.isFormulaQualified).sort((a, b) => b.listedAt.localeCompare(a.listedAt) || b.symbol.localeCompare(a.symbol)).slice(0, 15);
-        const strictAll = [...strictEq, ...strictOpts].sort((a, b) => b.listedAt.localeCompare(a.listedAt) || b.symbol.localeCompare(a.symbol)).slice(0, 15);
-
-        const underlying = [
-          ...idxSpecs.map((sp, i) => {
-            const q = (DATA.indices && DATA.indices[sp.key]) || { lp: 24800, chp: 0.3 };
-            const chpNum = Number((Number(q.chp) || 0).toFixed(2));
-            const bias = chpNum >= 0.1 ? 'BULLISH' : chpNum <= -0.1 ? 'BEARISH' : 'NEUTRAL';
-            const ba = Number((chpNum >= 0 ? 1.32 - i * 0.04 : 0.76 + i * 0.03).toFixed(2));
-            const cycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(undefined, chpNum, 12.4, ba) : (chpNum >= 0 ? 'Long Buildup' : 'Short Buildup');
-            const mtfBias = {};
-            tfList.forEach(tm => {
-              mtfBias[tm.id] = { timeframe: tm.id, shortLabel: tm.shortLabel, bias, passedCount: 6, qualified: true };
-            });
-            return {
-              symbol: sp.sym, name: `${sp.sym} Index Derivatives`, kind: 'INDEX',
-              sector: 'Benchmark Index', sectorChangePct: chpNum,
-              spotPrice: Number((Number(q.lp) || 24800).toFixed(2)),
-              changePercent: chpNum,
-              totalVolume: 3200000 - i * 420000, totalValueCr: Number((1840 - i * 260).toFixed(2)),
-              oiLakhs: 44.5, oiChangePct: 12.4, pcr: chpNum >= 0 ? 1.18 : 0.84,
-              bidAskRatio: ba, cycleBuildup: cycle,
-              bias, activeContractsCount: 4, formulaScore: 91 - i * 2, listedAt: `09:${String(22 + i * 3).padStart(2, '0')}:00`,
-              timeframe: selTf === 'ALL' ? '15m' : selTf, mtfAlignmentCount: 4, mtfBias
-            };
-          }),
-          ...topVal.slice(0, 10).map(e => {
-            const bias = e.direction === 'BUY' ? 'BULLISH' : 'BEARISH';
-            const mtfBias = {};
-            tfList.forEach(tm => {
-              const s = e.mtfSignals[tm.id];
-              mtfBias[tm.id] = { timeframe: tm.id, shortLabel: tm.shortLabel, bias, passedCount: s?.passedCount || e.formulaPassedCount, qualified: Boolean(s?.qualified) };
-            });
-            return {
-              symbol: e.symbol, name: e.displayName, kind: 'EQUITY_FNO',
-              sector: e.sector, sectorChangePct: e.sectorChangePct,
-              spotPrice: e.price, changePercent: e.changePercent, totalVolume: e.rawVolume,
-              totalValueCr: e.tradedValueCr, oiLakhs: e.currentOI, oiChangePct: e.oiChangePct,
-              pcr: e.direction === 'BUY' ? 1.15 : 0.82,
-              bidAskRatio: e.bidAskRatio, cycleBuildup: e.cycleBuildup,
-              bias, activeContractsCount: 1,
-              formulaScore: e.score, listedAt: e.listedAt,
-              timeframe: e.timeframe, mtfAlignmentCount: e.mtfAlignmentCount, mtfBias
-            };
-          })
-        ].slice(0, 15).sort((a, b) => String(b.listedAt).localeCompare(String(a.listedAt)) || String(b.symbol).localeCompare(String(a.symbol)));
-
+        // Honest standby response: zero synthetic 7-pillar equity or index-option fake signals if backend API is unavailable
         return {
-          status: 'ok',
+          status: 'standby',
           scannerName: 'Most Active FNO & (Index Options)',
           istTime: ist.timeStr,
           entryWindowRule: '09:20:00 - 14:45:00 IST',
           selectedTimeframe: selTf,
-          timeframeSummary,
-          mtfAlignedCount,
+          timeframeSummary: {
+            '5m': { timeframe: '5m', label: '5 Minutes', shortLabel: '5m', strictQualifiedCount: 0, buyCount: 0, sellCount: 0, optionsCount: 0 },
+            '15m': { timeframe: '15m', label: '15 Minutes', shortLabel: '15m', strictQualifiedCount: 0, buyCount: 0, sellCount: 0, optionsCount: 0 },
+            '30m': { timeframe: '30m', label: '30 Minutes', shortLabel: '30m', strictQualifiedCount: 0, buyCount: 0, sellCount: 0, optionsCount: 0 },
+            '1h': { timeframe: '1h', label: '1 Hour', shortLabel: '1H', strictQualifiedCount: 0, buyCount: 0, sellCount: 0, optionsCount: 0 }
+          },
+          mtfAlignedCount: 0,
           isMidnightCleared: false,
-          universeEvaluated: equities.length + optRows.length,
-          totalTurnoverCr: Number(equities.reduce((s, r) => s + r.tradedValueCr, 0).toFixed(2)),
-          strictQualifiedBuyCount: strictEq.filter(r => r.direction === 'BUY').length,
-          strictQualifiedSellCount: strictEq.filter(r => r.direction === 'SELL').length,
-          strictQualifiedOptionsCount: strictOpts.length,
+          universeEvaluated: pool.length,
+          totalTurnoverCr: Number(pool.reduce((s, r) => s + (Number(r.turnover_cr) || 0), 0).toFixed(2)),
+          strictQualifiedBuyCount: 0,
+          strictQualifiedSellCount: 0,
+          strictQualifiedOptionsCount: 0,
           categories: {
-            mostActiveFno: strictAll,
-            mostActiveContractsIndexOptions: strictOpts,
-            topTradedByVolume: topVol,
-            topTradedByValue: topVal,
-            mostActiveUnderlying: underlying,
-            mostActiveEquities: strictEq,
-            oiChangeLeaders: oiLeaders,
-            rankedFno: [...equities, ...optRows].sort((a, b) => b.score - a.score).slice(0, 15),
-            rankedIndexOptions: [...optRows].sort((a, b) => b.score - a.score).slice(0, 15),
-            rankedEquities: [...equities].sort((a, b) => b.score - a.score).slice(0, 15)
+            mostActiveFno: [],
+            mostActiveContractsIndexOptions: [],
+            topTradedByVolume: [],
+            topTradedByValue: [],
+            mostActiveUnderlying: [],
+            mostActiveEquities: [],
+            oiChangeLeaders: [],
+            rankedFno: [],
+            rankedIndexOptions: [],
+            rankedEquities: []
           }
         };
       },
@@ -15353,8 +15049,8 @@ ${json.message || 'Unauthorized token.'}`);
           } else {
             rows.forEach((u, i) => {
               const bull = u.changePercent >= 0;
-              const secPct = Number(u.sectorChangePct ?? u.changePercent ?? 0);
-              const ba = Number(u.bidAskRatio ?? (bull ? 1.24 : 0.81));
+              const secPct = Number(u.sectorChangePct !== undefined ? u.sectorChangePct : (typeof getLiveSectorAvgPct === 'function' ? getLiveSectorAvgPct(u.sector, 0) : 0));
+              const ba = Number(u.bidAskRatio ?? 1.0);
               const ratioBadge = ba >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (ba <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
               const normCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(u.cycleBuildup, u.changePercent, u.oiChangePct, ba) : (u.cycleBuildup || 'Long Buildup');
               const cyclePill = typeof renderCycleBuildupPill === 'function' ? renderCycleBuildupPill(normCycle) : `<span class="text-[10px] font-bold text-slate-200">${normCycle}</span>`;
@@ -15459,8 +15155,8 @@ ${json.message || 'Unauthorized token.'}`);
             const chgColor = item.changePercent >= 0 ? 'text-emerald-300' : 'text-rose-300';
             const chartSym = item.category === 'INDEX_OPTION' ? (item.underlying === 'NIFTY' ? 'NIFTY 50' : item.underlying) : item.symbol;
             const activeTfShort = item.timeframe === '1h' ? '1H' : (item.timeframe || '5m');
-            const secPct = Number(item.sectorChangePct ?? item.changePercent ?? 0);
-            const baRatio = Number(item.bidAskRatio || (isBuy ? 1.24 : 0.81));
+            const secPct = Number(item.sectorChangePct !== undefined ? item.sectorChangePct : (typeof getLiveSectorAvgPct === 'function' ? getLiveSectorAvgPct(item.sector, 0) : 0));
+            const baRatio = Number(item.bidAskRatio ?? 1.0);
             const baBadge = baRatio >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (baRatio <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
             const normCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(item.cycleBuildup || item.oiBuildup, item.changePercent, item.oiChangePct, baRatio) : (item.cycleBuildup || item.oiBuildup);
             const cyclePill = typeof renderCycleBuildupPill === 'function' ? renderCycleBuildupPill(normCycle) : `<span class="text-[9.5px] font-bold text-slate-200">${normCycle}</span>`;
@@ -15703,138 +15399,10 @@ ${json.message || 'Unauthorized token.'}`);
         const ist = getISTDatePartsNow();
         const pool = (typeof DATA !== 'undefined' && Array.isArray(DATA.all_stocks)) ? DATA.all_stocks.filter(isPureEquityStock) : [];
         const halted = this.dailyLossPct >= 2.0;
-        const sectorAgg = new Map();
-        pool.forEach(s => {
-          const sec = s.sector || 'NSE F&O';
-          const cur = sectorAgg.get(sec) || { sum: 0, cnt: 0 };
-          cur.sum += Number(s.pct_change) || 0;
-          cur.cnt += 1;
-          sectorAgg.set(sec, cur);
-        });
-        const secAvg = {};
-        sectorAgg.forEach((v, k) => { secAvg[k] = Number((v.sum / Math.max(1, v.cnt)).toFixed(2)); });
-
-        const topVolSet = new Set([...pool].sort((a, b) => (b.volume || 0) - (a.volume || 0)).slice(0, 30).map(s => s.symbol));
-        const topValSet = new Set([...pool].sort((a, b) => ((b.volume || 0) * (b.price || 0)) - ((a.volume || 0) * (a.price || 0))).slice(0, 30).map(s => s.symbol));
-        const niftyPct = Number((typeof DATA !== 'undefined' && DATA.indices && DATA.indices.NIFTY50 && DATA.indices.NIFTY50.pct_change) || 0);
-
-        const rows = pool.map((st, idx) => {
-          const lp = Number(st.price) || 100;
-          const prevC = Number((lp / (1 + (Number(st.pct_change) || 0) / 100)).toFixed(2)) || lp;
-          const dayO = Number((prevC * (1 + (Number(st.pct_change) || 0) * 0.0025)).toFixed(2));
-          const pdh = Number((prevC * 1.006).toFixed(2));
-          const pdl = Number((prevC * 0.994).toFixed(2));
-          const orh = Number((dayO * 1.005).toFixed(2));
-          const orl = Number((dayO * 0.995).toFixed(2));
-          const vwap = Number(((dayO + lp) / 2).toFixed(2));
-          const cHigh = Number((lp * 1.0035).toFixed(2));
-          const cLow = Number((Math.max(orh * 0.996, lp * 0.992)).toFixed(2));
-          const sl = Number(Math.max(cLow, (orh + orl) / 2).toFixed(2));
-          const risk = Number(Math.max(0, cHigh - sl).toFixed(2));
-          const target = risk > 0 ? Number((cHigh + 2 * risk).toFixed(2)) : cHigh;
-          const qty = risk > 0 ? Math.floor((this.capital * 0.01) / risk) : 0;
-          const rrNumeric = risk > 0 ? 2.0 : 0;
-          const pct = Number(st.pct_change) || 0;
-          const secPct = secAvg[st.sector || 'NSE F&O'] ?? pct;
-          const oiPct = Number(st.oi_change_pct || 0);
-          const ba = Number(st.bid_ask_ratio || (pct >= 0 ? 1.24 : 0.82));
-          const deliv = Number(st.delivery_pct || (46 + Math.min(25, Math.max(-10, pct * 4))));
-          const hh20 = Number((lp * 0.998).toFixed(2));
-          const cChecks = [
-            { number: 1, label: 'LTP > PDH', passed: lp > pdh, detail: `LTP ₹${lp} vs PDH ₹${pdh}` },
-            { number: 2, label: '5m Close > ORH', passed: lp > orh, detail: `Close ₹${lp} vs ORH ₹${orh}` },
-            { number: 3, label: '15m & 30m HH+HL', passed: pct > 0.8, detail: pct > 0.8 ? '15m & 30m HH+HL' : 'Consolidating' },
-            { number: 4, label: 'Body ≥ 60%', passed: pct > 0.7, detail: 'Breakout impulse body' },
-            { number: 5, label: 'Close > HH(20)×1.001', passed: lp > hh20 * 1.001, detail: `LTP vs ${(hh20 * 1.001).toFixed(2)}` },
-            { number: 6, label: 'Vol ≥ 1.5× 10d Slot', passed: Number(st.rvol || 1) >= 1.5, detail: `RVOL ${(st.rvol || 1).toFixed(2)}x` },
-            { number: 7, label: 'Prev Delivery ≥ 50%', passed: deliv >= 50, detail: `${deliv.toFixed(1)}%` },
-            { number: 8, label: 'Stock%>Nifty% & Sec%>0', passed: pct > niftyPct && secPct > 0, detail: `Stock ${pct}% vs Nifty ${niftyPct}%` },
-            { number: 9, label: 'Open>PrevC & LTP>Open', passed: dayO > prevC && lp > dayO, detail: `Gap holds` },
-            { number: 10, label: 'OI%>0 Long Buildup', passed: oiPct > 0 && pct > 0, detail: `OI ${oiPct}%` }
-          ];
-          const score = cChecks.reduce((a, b) => a + (b.passed ? 1 : 0), 0);
-          const listedAt = MostActiveFnoEngine.clampEntryTimeStr(st.listed_at || st.time || '09:35:00');
-          const inOverlap = topVolSet.has(st.symbol) && topValSet.has(st.symbol);
-          const qualified = score >= 8 && lp > vwap && pct > 0.5 && risk > 0;
-          return {
-            id: `CFNO-${st.symbol}`,
-            category: 'EQUITY_FNO',
-            symbol: st.symbol,
-            displayName: st.name || st.symbol,
-            underlying: st.symbol,
-            sector: st.sector || 'NSE F&O',
-            sectorChangePct: secPct,
-            niftyChangePct: niftyPct,
-            lotSize: 250,
-            price: lp,
-            dayOpen: dayO,
-            prevClose: prevC,
-            changePercent: pct,
-            pdh,
-            pdl,
-            orh,
-            orl,
-            orMid: Number(((orh + orl) / 2).toFixed(2)),
-            vwap,
-            tf15mHhHl: pct > 0.8,
-            tf30mHhHl: pct > 0.8,
-            trend30m: pct > 0.3 ? 'UP' : 'FLAT',
-            trend1h: pct > 0.3 ? 'UP' : 'FLAT',
-            trend1h30mAgree: pct > 0.3,
-            rawVolume: Number(st.volume || 0),
-            tradedValueCr: Number((((st.volume || 0) * lp) / 1e7).toFixed(2)),
-            slotVolumeRatio: Number((st.rvol || 1.2).toFixed(2)),
-            prevDeliveryPct: Number(deliv.toFixed(1)),
-            bidAskRatio: ba,
-            oiChangePct: oiPct,
-            cycleBuildup: typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(st.oi_buildup, pct, oiPct, ba) : 'Long Buildup',
-            inTopVolume: topVolSet.has(st.symbol),
-            inTopValue: topValSet.has(st.symbol),
-            inBothTopVolAndVal: inOverlap,
-            score,
-            maxScore: 10,
-            criteria: cChecks,
-            listedAt,
-            inEntryWindow: true,
-            isResultDay: false,
-            isCircuitLimit: Math.abs(pct) >= 9.8,
-            entryGate: {
-              scoreOk: score >= 8,
-              ltpGtVwap: lp > vwap,
-              trend1h30mAgree: pct > 0.3,
-              notResultDay: true,
-              notCircuitLimit: Math.abs(pct) < 9.8,
-              allPassed: qualified && !halted,
-              blockReasons: halted ? ['2% daily capital loss halt active'] : []
-            },
-            tradeMath: {
-              entry: cHigh,
-              sl,
-              target,
-              orMid: Number(((orh + orl) / 2).toFixed(2)),
-              candleLow: cLow,
-              riskPerShare: risk,
-              qty,
-              capital: this.capital,
-              riskAllocatedRs: Number((this.capital * 0.01).toFixed(2)),
-              rrNumeric,
-              rrRatio: rrNumeric >= 2 ? '1 : 2.00' : '0 : 1',
-              isValidRR: rrNumeric >= 2
-            },
-            isQualifiedTrade: qualified,
-            executionAllowed: qualified && !halted,
-            statusBadge: halted ? 'HALTED (2% LOSS)' : qualified ? 'TAKE TRADE' : score >= 6 ? 'WATCHLIST' : 'BLOCKED'
-          };
-        });
-
-        const eligibleRows = rows.filter(r => Math.abs(Number(r.changePercent) || 0) >= 2.0);
-        const zToA = arr => [...arr].sort((a, b) => String(b.listedAt).localeCompare(String(a.listedAt)) || b.symbol.localeCompare(a.symbol));
-        const qual = eligibleRows.filter(r => r.isQualifiedTrade).sort((a, b) => (b.inBothTopVolAndVal - a.inBothTopVolAndVal) || (b.score - a.score)).slice(0, 15);
-        const overlap = qual.filter(r => r.inBothTopVolAndVal);
-        const watch = eligibleRows.filter(r => !r.isQualifiedTrade).sort((a, b) => b.score - a.score).slice(0, 15);
-
+        const niftyPct = Number((typeof DATA !== 'undefined' && DATA.indices && ((DATA.indices['NSE:NIFTY50-INDEX'] && DATA.indices['NSE:NIFTY50-INDEX'].chp) || (DATA.indices.NIFTY50 && DATA.indices.NIFTY50.pct_change))) || 0);
+        // Honest standby response: zero synthetic 10-point fake signals when backend API is unavailable
         return {
-          status: 'ok',
+          status: 'standby',
           scannerName: 'Claude FNO & (Index Options)',
           istTime: `${ist.dateStr || ''} ${ist.timeStr || ''} IST`,
           isMidnightCleared: false,
@@ -15844,19 +15412,19 @@ ${json.message || 'Unauthorized token.'}`);
           haltReason: halted ? `Stop trading for the day: Daily loss ${this.dailyLossPct.toFixed(2)}% >= 2.00%` : null,
           niftyChangePct: niftyPct,
           universeEvaluated: pool.length,
-          qualifiedCount: qual.length,
-          overlapQualifiedCount: overlap.length,
-          equityQualifiedCount: qual.length,
+          qualifiedCount: 0,
+          overlapQualifiedCount: 0,
+          equityQualifiedCount: 0,
           optionsQualifiedCount: 0,
-          watchlistCount: watch.length,
+          watchlistCount: 0,
           categories: {
-            qualifiedTrades: zToA(qual),
-            topVolAndValueQualified: zToA(overlap),
-            equitiesFno: zToA(qual),
+            qualifiedTrades: [],
+            topVolAndValueQualified: [],
+            equitiesFno: [],
             indexOptions: [],
-            nearMissWatchlist: zToA(watch),
-            topVolumeRankings: [...eligibleRows].sort((a, b) => b.rawVolume - a.rawVolume).slice(0, 15),
-            topValueRankings: [...eligibleRows].sort((a, b) => b.tradedValueCr - a.tradedValueCr).slice(0, 15)
+            nearMissWatchlist: [],
+            topVolumeRankings: [],
+            topValueRankings: []
           }
         };
       },
@@ -15958,7 +15526,7 @@ ${json.message || 'Unauthorized token.'}`);
             const tm = item.tradeMath || {};
             const eg = item.entryGate || {};
             const chg = Number(item.changePercent || 0);
-            const secPct = Number(item.sectorChangePct ?? chg);
+            const secPct = Number(item.sectorChangePct !== undefined ? item.sectorChangePct : (typeof getLiveSectorAvgPct === 'function' ? getLiveSectorAvgPct(item.sector, 0) : 0));
             const ba = Number(item.bidAskRatio || 1.0);
             const baBadge = ba >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (ba <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
             const normCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(item.cycleBuildup, chg, item.oiChangePct, ba) : (item.cycleBuildup || 'Long Buildup');
@@ -15987,7 +15555,7 @@ ${json.message || 'Unauthorized token.'}`);
                 </td>
                 <td class="p-2.5">
                   <div class="text-slate-200 font-bold text-[10.5px]">${item.sector}</div>
-                  <div class="text-[10.5px] font-black ${secPct > 0 ? 'text-emerald-400' : 'text-rose-400'}">${secPct >= 0 ? '+' : ''}${secPct.toFixed(2)}%</div>
+                  <div class="text-[10.5px] font-black ${secPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${secPct >= 0 ? '+' : ''}${secPct.toFixed(2)}%</div>
                   <div class="text-[9px] text-slate-400">Nifty: ${Number(item.niftyChangePct || 0).toFixed(2)}%</div>
                 </td>
                 <td class="p-2.5">
@@ -16026,6 +15594,472 @@ ${json.message || 'Unauthorized token.'}`);
                 <td class="p-2.5 text-right space-y-1">
                   <button onclick="openTradingViewChart('${chartSym}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
                   <button ${halted ? 'disabled' : ''} onclick="openOrderModal('${item.symbol}', 'BUY', ${tm.entry || item.price}, ${chg})" class="px-2 py-1 rounded ${halted ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40 cursor-pointer'} border text-[10px] font-black block w-full text-center transition">${halted ? '🛑 HALTED' : '⚡ BUY (' + (tm.qty || 0) + ')'}</button>
+                </td>
+              </tr>`;
+          });
+        }
+        html += `</tbody>`;
+        if (tableEl._lastHtmlStr !== html) {
+          tableEl._lastHtmlStr = html;
+          tableEl.innerHTML = html;
+        }
+      }
+    };
+
+    // ============================================================
+    // SMART MONEY CONCEPTS (ICT RULEBOOK + LIVE SCANNER ENGINE)
+    // ============================================================
+    const SmartMoneyConceptsEngine = {
+      activeTimeframe: '5m',
+      activeCategory: 'ALL_SETUPS',
+      capital: 100000,
+      riskPct: 1.0,
+      lastReport: null,
+      _timer: null,
+      _rulebookVisible: true,
+      CATEGORY_META: {
+        ALL_SETUPS: { key: 'allSetups', label: 'All SMC Setups (Structure / Sweep / FVG / OB)' },
+        QUALIFIED_5_OF_5: { key: 'qualified5of5', label: '5/5 Checklist Qualified (HTF + Sweep + CHoCH/BOS + OB/FVG + ≥1:2 RR)' },
+        BUY_DISCOUNT: { key: 'buyDiscountSetups', label: 'BUY Setups (Discount Zone + SSL Sweep)' },
+        SELL_PREMIUM: { key: 'sellPremiumSetups', label: 'SELL Setups (Premium Zone + BSL Sweep)' },
+        UNMITIGATED_OB_FVG: { key: 'unmitigatedObFvg', label: 'Unmitigated Order Blocks & Open FVGs' },
+        BOS_CHOCH_BREAKER: { key: 'bosChochBreaker', label: 'BOS / CHoCH & Breaker Blocks' }
+      },
+
+      init() {
+        try {
+          if (typeof localStorage !== 'undefined') {
+            const c = Number(localStorage.getItem('smc_capital'));
+            const r = Number(localStorage.getItem('smc_risk_pct'));
+            const tf = localStorage.getItem('smc_tf');
+            if (Number.isFinite(c) && c >= 5000) this.capital = c;
+            if (Number.isFinite(r) && r >= 0.25 && r <= 10) this.riskPct = r;
+            if (tf && ['5m', '15m', '30m', '1h', 'ALL'].includes(tf)) this.activeTimeframe = tf;
+          }
+        } catch (e) {}
+        const capEl = document.getElementById('smc-capital-input');
+        const riskEl = document.getElementById('smc-risk-input');
+        if (capEl) capEl.value = String(this.capital);
+        if (riskEl) riskEl.value = String(this.riskPct);
+        this.applyTimeframeButtons();
+        this.recalcWidget();
+        this.load(false);
+        if (!this._timer) {
+          let tick = 0;
+          this._timer = setInterval(() => {
+            tick += 1;
+            const pane = document.getElementById('tab-smart-money-concepts');
+            if (pane && !pane.classList.contains('hidden')) {
+              this.load(false);
+            } else if (tick % 12 === 0) {
+              this.load(false);
+            }
+          }, 5000);
+        }
+      },
+
+      toggleRulebook() {
+        this._rulebookVisible = !this._rulebookVisible;
+        const panel = document.getElementById('smc-rulebook-panel');
+        const btn = document.getElementById('smc-rulebook-toggle');
+        if (panel) panel.classList.toggle('hidden', !this._rulebookVisible);
+        if (btn) btn.innerText = this._rulebookVisible ? '📖 Hide Buy vs Sell Rulebook & Calculator' : '📖 Show Buy vs Sell Rulebook & Calculator';
+      },
+
+      loadExample(side) {
+        const sideEl = document.getElementById('smc-calc-side');
+        const lowEl = document.getElementById('smc-calc-low');
+        const highEl = document.getElementById('smc-calc-high');
+        const entryEl = document.getElementById('smc-calc-entry');
+        const slEl = document.getElementById('smc-calc-sl');
+        const tpEl = document.getElementById('smc-calc-tp');
+        if (sideEl) sideEl.value = side;
+        if (lowEl) lowEl.value = '100';
+        if (highEl) highEl.value = '120';
+        if (side === 'BUY') {
+          if (entryEl) entryEl.value = '105.90';
+          if (slEl) slEl.value = '99';
+          if (tpEl) tpEl.value = '120';
+        } else {
+          if (entryEl) entryEl.value = '114.10';
+          if (slEl) slEl.value = '121';
+          if (tpEl) tpEl.value = '100';
+        }
+        this.recalcWidget();
+      },
+
+      recalcWidget() {
+        const out = document.getElementById('smc-calc-output');
+        if (!out) return;
+        const side = document.getElementById('smc-calc-side')?.value || 'BUY';
+        const rawLow = Number(document.getElementById('smc-calc-low')?.value) || 100;
+        const rawHigh = Number(document.getElementById('smc-calc-high')?.value) || 120;
+        const low = Math.min(rawLow, rawHigh);
+        const high = Math.max(rawLow, rawHigh);
+        const span = Math.max(0.01, high - low);
+        const eq = (high + low) / 2;
+        const oteBuy = high - 0.705 * span;
+        const oteSell = low + 0.705 * span;
+        const oteVal = side === 'BUY' ? oteBuy : oteSell;
+
+        const entryInput = Number(document.getElementById('smc-calc-entry')?.value);
+        const entry = Number.isFinite(entryInput) && entryInput > 0 ? entryInput : oteVal;
+        const sl = Number(document.getElementById('smc-calc-sl')?.value) || (side === 'BUY' ? low * 0.99 : high * 1.01);
+        const tp = Number(document.getElementById('smc-calc-tp')?.value) || (side === 'BUY' ? high : low);
+
+        const cap = Math.max(1000, Number(document.getElementById('smc-capital-input')?.value) || this.capital);
+        const riskPct = Math.max(0.1, Number(document.getElementById('smc-risk-input')?.value) || this.riskPct);
+        const riskAmt = cap * (riskPct / 100);
+        const riskUnit = side === 'BUY' ? Math.max(0, entry - sl) : Math.max(0, sl - entry);
+        const rewardUnit = side === 'BUY' ? Math.max(0, tp - entry) : Math.max(0, entry - tp);
+        const rr = riskUnit > 0 ? rewardUnit / riskUnit : 0;
+        const qty = riskUnit > 0 ? Math.floor(riskAmt / riskUnit) : 0;
+        const beWin = rr > 0 ? (1 / (1 + rr)) * 100 : 100;
+        const zoneLabel = entry < eq ? 'DISCOUNT (<50%)' : entry > eq ? 'PREMIUM (>50%)' : 'EQUILIBRIUM';
+
+        out.innerHTML = `
+          <div><div class="text-slate-500">Equilibrium (50%)</div><div class="font-black text-white">₹${eq.toFixed(2)}</div><div class="text-[9px] text-cyan-300">${zoneLabel}</div></div>
+          <div><div class="text-slate-500">OTE 0.705 (${side})</div><div class="font-black text-purple-300">₹${oteVal.toFixed(2)}</div><div class="text-[9px] text-slate-400">61.8–78.6% Fib</div></div>
+          <div><div class="text-slate-500">Risk Budget (${riskPct}%)</div><div class="font-black text-amber-300">₹${riskAmt.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div><div class="text-[9px] text-slate-400">Risk/Unit: ₹${riskUnit.toFixed(2)}</div></div>
+          <div><div class="text-slate-500">Position Size</div><div class="font-black text-cyan-300 text-xs">${qty.toLocaleString('en-IN')} units</div><div class="text-[9px] text-slate-400">RiskAmt / RiskPerUnit</div></div>
+          <div><div class="text-slate-500">Risk : Reward</div><div class="font-black ${rr >= 2 ? 'text-emerald-300' : 'text-rose-400'} text-xs">1 : ${rr.toFixed(2)}</div><div class="text-[9px] ${rr >= 2 ? 'text-emerald-400' : 'text-rose-400'}">${rr >= 2 ? '✔ ≥ 1:2 Rule Pass' : '✕ Below 1:2'}</div></div>
+          <div><div class="text-slate-500">Breakeven Win %</div><div class="font-black text-amber-200">${beWin.toFixed(1)}%</div><div class="text-[9px] text-slate-400">1 / (1 + RR)</div></div>
+        `;
+      },
+
+      onParamsChange() {
+        const capEl = document.getElementById('smc-capital-input');
+        const riskEl = document.getElementById('smc-risk-input');
+        this.capital = Math.max(5000, Number(capEl?.value) || 100000);
+        this.riskPct = Math.max(0.25, Math.min(10, Number(riskEl?.value) || 1.0));
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('smc_capital', String(this.capital));
+            localStorage.setItem('smc_risk_pct', String(this.riskPct));
+          }
+        } catch (e) {}
+        this.recalcWidget();
+        this.load(false);
+      },
+
+      applyTimeframeButtons() {
+        ['5m', '15m', '30m', '1h', 'ALL'].forEach(tf => {
+          const btn = document.getElementById('smc-tf-' + tf);
+          if (!btn) return;
+          const cntEl = document.getElementById('smc-tf-cnt-' + tf);
+          const cnt = cntEl ? cntEl.innerText : '0';
+          if (tf === this.activeTimeframe) {
+            btn.className = 'px-3 py-1 rounded-lg font-black transition cursor-pointer bg-purple-500 text-black shadow-md shadow-purple-500/20';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-black/25 text-black text-[10px] font-black';
+          } else {
+            btn.className = 'px-3 py-1 rounded-lg font-bold transition cursor-pointer bg-[#121a2d] hover:bg-[#192642] text-slate-200 border border-[#23314f]';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-white/10 text-purple-300 text-[10px]';
+          }
+          if (cntEl) cntEl.innerText = cnt;
+        });
+      },
+
+      setTimeframe(tf) {
+        if (!['5m', '15m', '30m', '1h', 'ALL'].includes(tf)) return;
+        this.activeTimeframe = tf;
+        try {
+          if (typeof localStorage !== 'undefined') localStorage.setItem('smc_tf', tf);
+        } catch (e) {}
+        this.applyTimeframeButtons();
+        this.load(true);
+      },
+
+      setCategory(cat) {
+        if (!this.CATEGORY_META[cat]) return;
+        this.activeCategory = cat;
+        Object.keys(this.CATEGORY_META).forEach(k => {
+          const btn = document.getElementById('smc-cat-' + k);
+          if (!btn) return;
+          const cntEl = document.getElementById('smc-cnt-' + k);
+          const cntTxt = cntEl ? cntEl.innerText : '0';
+          if (k === cat) {
+            btn.className = 'px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-purple-500 text-black shadow-md shadow-purple-500/20';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-black/25 text-black text-[10px] font-black';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] hover:bg-[#192642] text-slate-300 border border-[#23314f]';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-white/10 text-purple-300 text-[10px]';
+          }
+          if (cntEl) cntEl.innerText = cntTxt;
+        });
+        this.renderTables();
+      },
+
+      async load(showFeedback = false) {
+        if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+          this.lastReport = {
+            status: 'ok',
+            scannerName: 'Smart Money Concepts',
+            isMidnightCleared: true,
+            istTime: getISTDatePartsNow().timeStr,
+            selectedTimeframe: this.activeTimeframe,
+            timeframeCounts: { '5m': 0, '15m': 0, '30m': 0, '1h': 0 },
+            universeEvaluated: 0,
+            totalSetups: 0,
+            qualifiedCount: 0,
+            buyCount: 0,
+            sellCount: 0,
+            obFvgCount: 0,
+            breakerCount: 0,
+            categories: {
+              allSetups: [],
+              qualified5of5: [],
+              buyDiscountSetups: [],
+              sellPremiumSetups: [],
+              unmitigatedObFvg: [],
+              bosChochBreaker: []
+            }
+          };
+          this.renderTables();
+          return;
+        }
+
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        let report = null;
+        try {
+          const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
+          const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
+          const url = `${base}/api/smart-money-concepts/scan?timeframe=${encodeURIComponent(this.activeTimeframe)}&capital=${encodeURIComponent(this.capital)}&riskPct=${encodeURIComponent(this.riskPct)}`;
+          const res = await fetch(url, { headers });
+          if (res.ok) report = await res.json();
+        } catch (e) {}
+
+        if (!report || !report.categories) {
+          report = {
+            status: 'standby',
+            scannerName: 'Smart Money Concepts',
+            isMidnightCleared: false,
+            istTime: getISTDatePartsNow().timeStr,
+            selectedTimeframe: this.activeTimeframe,
+            timeframeCounts: { '5m': 0, '15m': 0, '30m': 0, '1h': 0 },
+            universeEvaluated: 0,
+            totalSetups: 0,
+            qualifiedCount: 0,
+            buyCount: 0,
+            sellCount: 0,
+            obFvgCount: 0,
+            breakerCount: 0,
+            categories: {
+              allSetups: [],
+              qualified5of5: [],
+              buyDiscountSetups: [],
+              sellPremiumSetups: [],
+              unmitigatedObFvg: [],
+              bosChochBreaker: []
+            }
+          };
+        }
+        this.lastReport = report;
+        const pane = document.getElementById('tab-smart-money-concepts');
+        if ((pane && !pane.classList.contains('hidden')) || !this._renderedOnce) {
+          this._renderedOnce = true;
+          this.renderTables();
+        }
+        if (showFeedback && typeof showToast === 'function') {
+          showToast(`🏛️ Smart Money Concepts (${this.activeTimeframe}): ${report.totalSetups || 0} Setups • ${report.qualifiedCount || 0} Qualified (5/5)`, 'success');
+        }
+      },
+
+      renderTables() {
+        const rpt = this.lastReport;
+        if (!rpt) return;
+        const cats = rpt.categories || {};
+        const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+
+        setEl('smc-kpi-universe', String(rpt.universeEvaluated || 0));
+        setEl('smc-kpi-qualified', `${rpt.qualifiedCount || 0} (5/5)`);
+        setEl('smc-kpi-buy', `${rpt.buyCount || 0} BUY`);
+        setEl('smc-kpi-sell', `${rpt.sellCount || 0} SELL`);
+        setEl('smc-kpi-obfvg', `${rpt.obFvgCount || 0} Active`);
+        setEl('smc-kpi-breaker', `${rpt.breakerCount || 0} Breaker • ${this.activeTimeframe}`);
+
+        const tfCounts = rpt.timeframeCounts || {};
+        ['5m', '15m', '30m', '1h'].forEach(tf => setEl('smc-tf-cnt-' + tf, String(tfCounts[tf] || 0)));
+
+        Object.keys(this.CATEGORY_META).forEach(k => {
+          const m = this.CATEGORY_META[k];
+          const arr = Array.isArray(cats[m.key]) ? cats[m.key] : [];
+          setEl('smc-cnt-' + k, String(arr.length));
+        });
+
+        const tableEl = document.getElementById('table-smart-money-concepts');
+        if (!tableEl) return;
+
+        const meta = this.CATEGORY_META[this.activeCategory] || this.CATEGORY_META.ALL_SETUPS;
+        const titleEl = document.getElementById('smc-table-title');
+        if (titleEl) {
+          titleEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-400 animate-ping"></span> ${meta.label} &bull; TF: ${this.activeTimeframe}`;
+        }
+
+        if (rpt.isMidnightCleared) {
+          setEl('smc-count-badge', '0 setups (Midnight Auto-Flush • Waiting 09:20 AM IST)');
+          tableEl.innerHTML = `<tbody><tr><td colspan="16" class="p-8 text-center text-amber-300 font-mono text-xs">🕛 Midnight Auto-Flush Active &mdash; SMC scan resumes automatically at 09:20 AM IST.</td></tr></tbody>`;
+          return;
+        }
+
+        const q = (document.getElementById('smc-search-input')?.value || '').trim().toUpperCase();
+        const dir = document.getElementById('smc-dir-filter')?.value || 'ALL';
+        const sortBy = document.getElementById('smc-sort-select')?.value || 'listed_desc';
+
+        let rows = (Array.isArray(cats[meta.key]) ? cats[meta.key] : []).filter(r => {
+          if (dir !== 'ALL' && r.side !== dir) return false;
+          if (q && !r.symbol.toUpperCase().includes(q) && !(r.sector || '').toUpperCase().includes(q)) return false;
+          return true;
+        });
+
+        rows = [...rows].sort((a, b) => {
+          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || (b.checklistScore - a.checklistScore);
+          if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt)) || (b.checklistScore - a.checklistScore);
+          if (sortBy === 'score_desc') return (b.checklistScore - a.checklistScore) || ((b.tradeMath?.rrNumeric || 0) - (a.tradeMath?.rrNumeric || 0));
+          if (sortBy === 'rr_desc') return ((b.tradeMath?.rrNumeric || 0) - (a.tradeMath?.rrNumeric || 0));
+          if (sortBy === 'rvol_desc') return (Number(b.rvol) || 0) - (Number(a.rvol) || 0);
+          if (sortBy === 'turnover_desc') return (Number(b.tradedValueCr) || 0) - (Number(a.tradedValueCr) || 0);
+          if (sortBy === 'atr25_desc') return (Number(b.atr25Pct) || 0) - (Number(a.atr25Pct) || 0);
+          if (sortBy === 'rsi_desc') return (Number(b.rsi) || 0) - (Number(a.rsi) || 0);
+          if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
+          return String(b.listedAt).localeCompare(String(a.listedAt));
+        });
+
+        setEl('smc-count-badge', `${rows.length} Setups • Risk ${this.riskPct}% (₹${Math.round(this.capital * this.riskPct / 100).toLocaleString('en-IN')}) • Sorted ${sortBy === 'listed_asc' ? 'A→Z' : 'Z→A'}`);
+
+        let html = `
+          <thead class="bg-[#0a0e18] text-slate-400 text-[10px] uppercase border-b border-[#1c2233]">
+            <tr>
+              <th class="p-2.5"># / Symbol &amp; Side</th>
+              <th class="p-2.5">SECTOR %</th>
+              <th class="p-2.5">RVOL</th>
+              <th class="p-2.5">TURNOVER</th>
+              <th class="p-2.5">ATR-25</th>
+              <th class="p-2.5">BID/ASK RATIO</th>
+              <th class="p-2.5">RSI (14)</th>
+              <th class="p-2.5">VWAP</th>
+              <th class="p-2.5">CYCLE (BUILDUP)</th>
+              <th class="p-2.5">LISTED AT (Z&rarr;A)</th>
+              <th class="p-2.5">MARKET STRUCTURE (BOS / CHoCH)</th>
+              <th class="p-2.5">LIQUIDITY (SWEEP / EQH / EQL)</th>
+              <th class="p-2.5">FVG (CE 50%) &amp; ORDER BLOCK</th>
+              <th class="p-2.5">ZONE &amp; OTE (0.705)</th>
+              <th class="p-2.5">CHECKLIST (5/5) &amp; TRADE MATH</th>
+              <th class="p-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#141c2c]">`;
+
+        if (rows.length === 0) {
+          html += `<tr><td colspan="16" class="p-8 text-center text-slate-400 text-xs">No confirmed SMC structures / sweeps / OBs on <strong>${this.activeTimeframe}</strong> matching active filters. Try switching timeframe or category above.</td></tr>`;
+        } else {
+          rows.forEach((item, idx) => {
+            const tm = item.tradeMath || {};
+            const liq = item.liquidity || {};
+            const pd = item.premiumDiscount || {};
+            const fvg = item.fvg;
+            const ob = item.orderBlock;
+            const isBuy = item.side === 'BUY';
+            const chg = Number(item.changePercent || 0);
+            const secPct = Number(item.sectorChangePct !== undefined ? item.sectorChangePct : (typeof getLiveSectorAvgPct === 'function' ? getLiveSectorAvgPct(item.sector, 0) : 0));
+            const ba = Number(item.bidAskRatio || 1.0);
+            const baBadge = ba >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (ba <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
+            const rvolVal = Number(item.rvol || 1.0);
+            const rvolCls = rvolVal >= 2.0 ? 'bg-amber-500/20 text-amber-300 border-amber-400/40' : (rvolVal >= 1.3 ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
+            const turnCr = Number(item.tradedValueCr || 0);
+            const rawVol = Number(item.rawVolume || 0);
+            const volStr = rawVol >= 1e7 ? (rawVol / 1e7).toFixed(2) + 'Cr' : rawVol >= 1e5 ? (rawVol / 1e5).toFixed(1) + 'L' : rawVol.toLocaleString('en-IN');
+            const atr25Val = Number(item.atr25 || 0);
+            const atr25PctVal = Number(item.atr25Pct || 0);
+            const rsiVal = Number(item.rsi || 50);
+            const rsiCls = rsiVal >= 70 ? 'text-rose-300' : rsiVal >= 55 ? 'text-emerald-300' : rsiVal <= 30 ? 'text-cyan-300' : rsiVal <= 45 ? 'text-amber-300' : 'text-slate-200';
+            const rsiTag = rsiVal >= 70 ? 'Overbought' : rsiVal >= 55 ? 'Bullish' : rsiVal <= 30 ? 'Oversold' : rsiVal <= 45 ? 'Bearish' : 'Neutral';
+            const vwapVal = Number(item.vwap || item.price || 0);
+            const vwapDiff = Number(item.vwapDiffPct || 0);
+            const aboveVwap = item.aboveVwap !== undefined ? Boolean(item.aboveVwap) : (Number(item.price) >= vwapVal);
+            const normCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(item.cycleBuildup, chg, item.oiChangePct, ba) : (item.cycleBuildup || 'Long Buildup');
+            const cyclePill = typeof renderCycleBuildupPill === 'function' ? renderCycleBuildupPill(normCycle) : `<span class="text-[9.5px] font-bold">${normCycle}</span>`;
+            const dots = (item.checklist || []).map(c => `<span title="#${c.number} ${c.label}: ${c.detail}" class="inline-flex items-center justify-center w-4 h-4 rounded text-[9px] font-black ${c.passed ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-400/50' : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'}">${c.number}</span>`).join('');
+            const sideBadgeCls = isBuy ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' : 'bg-rose-500/20 text-rose-300 border-rose-400/40';
+            const structColor = item.structureEvent === 'CHoCH' ? 'text-amber-300' : item.structureEvent === 'BOS' ? 'text-cyan-300' : 'text-slate-400';
+            const zoneBadge = pd.zone === 'DISCOUNT'
+              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+              : pd.zone === 'PREMIUM'
+              ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+              : 'bg-slate-800 text-slate-300 border-slate-700';
+
+            html += `
+              <tr class="hover:bg-[#12182b] transition">
+                <td class="p-2.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-slate-500 text-[10px]">#${idx + 1}</span>
+                    <span class="font-black text-white">${item.symbol}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[8.5px] font-black bg-purple-500/20 text-purple-300">${item.timeframe}</span>
+                    <span class="px-1.5 py-0.2 rounded border text-[9px] font-black ${sideBadgeCls}">${item.side}</span>
+                  </div>
+                  <div class="text-[10px] font-bold mt-1 ${chg >= 0 ? 'text-emerald-300' : 'text-rose-300'}">LTP ₹${Number(item.price).toLocaleString('en-IN')} (${chg >= 0 ? '+' : ''}${chg}%)</div>
+                  <div class="text-[9px] text-slate-400">${item.statusBadge}</div>
+                </td>
+                <td class="p-2.5">
+                  <div class="text-slate-200 font-bold text-[10.5px]">${item.sector}</div>
+                  <div class="text-[10.5px] font-black ${secPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${secPct >= 0 ? '+' : ''}${secPct.toFixed(2)}%</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded border text-[10.5px] font-black ${rvolCls}">${rvolVal.toFixed(2)}x</span>
+                  <div class="text-[9px] text-slate-400 mt-0.5">${rvolVal >= 1.5 ? 'High Vol' : 'Normal Vol'}</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <div class="text-cyan-300 font-black text-[10.5px]">₹${turnCr.toLocaleString('en-IN', { maximumFractionDigits: 2 })} Cr</div>
+                  <div class="text-[9px] text-slate-400 mt-0.5">Vol: ${volStr}</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <div class="text-amber-300 font-black text-[10.5px]">₹${atr25Val.toFixed(2)}</div>
+                  <div class="text-[9px] text-slate-400 mt-0.5">${atr25PctVal.toFixed(2)}% LTP</div>
+                </td>
+                <td class="p-2.5">
+                  <span class="px-2 py-0.5 rounded border text-[10.5px] font-black ${baBadge}">${ba.toFixed(2)}x</span>
+                  <div class="text-[9px] text-slate-400 mt-0.5 truncate max-w-[100px]">${item.orderBookBias || ''}</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <div class="font-black text-[10.5px] ${rsiCls}">${rsiVal.toFixed(1)}</div>
+                  <div class="text-[9px] text-slate-400 mt-0.5">${rsiTag}</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <div class="text-white font-black text-[10.5px]">₹${vwapVal.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
+                  <div class="text-[9px] font-bold mt-0.5 ${aboveVwap ? 'text-emerald-400' : 'text-rose-400'}">${aboveVwap ? '▲' : '▼'} ${vwapDiff >= 0 ? '+' : ''}${vwapDiff.toFixed(2)}%</div>
+                </td>
+                <td class="p-2.5">${cyclePill}<div class="text-[9px] mt-1 ${Number(item.oiChangePct) >= 0 ? 'text-emerald-300' : 'text-rose-300'}">OI ${Number(item.oiChangePct) >= 0 ? '+' : ''}${item.oiChangePct}%</div></td>
+                <td class="p-2.5">
+                  <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[10.5px] font-bold border border-cyan-500/20 whitespace-nowrap">🕒 ${item.listedAt || '--'}</span>
+                  <div class="text-[9px] mt-1 ${item.inEntryWindow ? 'text-emerald-400' : 'text-slate-400'}">${item.inEntryWindow ? '✔ 09:20–14:45' : 'Outside Window'}</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  <div><span class="font-black ${structColor}">${item.structureEvent}</span> ${item.structureTriggerLevel ? '@ ₹' + item.structureTriggerLevel : ''}</div>
+                  <div class="text-slate-300">HTF: <strong class="text-white">${item.htfBias}</strong></div>
+                  <div class="text-slate-400 text-[9px]">${item.ltfTrend}</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  <div class="${liq.sweepType !== 'NONE' ? 'text-amber-300 font-black' : 'text-slate-400'}">${liq.sweepType !== 'NONE' ? liq.sweepType.replace('_', ' ') + ' @ ₹' + liq.sweepLevel : 'No Active Sweep'}</div>
+                  <div class="text-[9px] text-slate-300">BSL: ${liq.bslLevel ? '₹' + liq.bslLevel : '--'} ${liq.eqhDetected ? '<span class="text-amber-300 font-bold">(EQH)</span>' : ''}</div>
+                  <div class="text-[9px] text-slate-300">SSL: ${liq.sslLevel ? '₹' + liq.sslLevel : '--'} ${liq.eqlDetected ? '<span class="text-cyan-300 font-bold">(EQL)</span>' : ''}</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  ${fvg ? `<div class="${fvg.mitigated ? 'text-slate-400' : 'text-cyan-300 font-bold'}">FVG: ₹${fvg.bottom}–₹${fvg.top} (CE ₹${fvg.ce})</div>` : '<div class="text-slate-500">No FVG</div>'}
+                  ${ob ? `<div class="${ob.isBreaker ? 'text-amber-300 font-black' : ob.mitigated ? 'text-slate-400' : 'text-purple-300 font-bold'}">${ob.isBreaker ? '⚡ BREAKER (' + ob.breakerDirection + ')' : (ob.side + ' OB')}: ₹${ob.low}–₹${ob.high} (${ob.validScore}/4)</div>` : '<div class="text-slate-500">No OB</div>'}
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  <span class="px-1.5 py-0.2 rounded border text-[9px] font-black ${zoneBadge}">${pd.zone} (${pd.rangePositionPct}%)</span>
+                  <div class="text-slate-300">Eq: ₹${pd.equilibrium}</div>
+                  <div class="text-purple-300 font-bold">OTE 0.705: ₹${tm.oteEntry}</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  <div class="flex items-center gap-1.5"><span class="px-1.5 py-0.2 rounded text-[9px] font-black ${item.checklistScore === 5 ? 'bg-emerald-500 text-black' : 'bg-purple-500/25 text-purple-200'}">${item.checklistScore}/5</span><div class="flex gap-0.5">${dots}</div></div>
+                  <div class="text-white font-black">Entry: ₹${tm.entry} &bull; <span class="text-rose-300">SL: ₹${tm.stopLoss}</span></div>
+                  <div class="text-emerald-300 font-bold">TP: ₹${tm.target} &bull; R:R ${tm.rrRatio}</div>
+                  <div class="text-cyan-300 text-[9px]">Qty: ${Number(tm.positionSize || 0).toLocaleString('en-IN')} sh &bull; BE Win: ${tm.breakevenWinRatePct}%</div>
+                </td>
+                <td class="p-2.5 text-right space-y-1">
+                  <button onclick="openTradingViewChart('${item.symbol}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
+                  <button onclick="openOrderModal('${item.symbol}', '${item.side}', ${tm.entry || item.price}, ${chg})" class="px-2 py-1 rounded ${isBuy ? 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40' : 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40'} border text-[10px] font-black block w-full text-center transition cursor-pointer">⚡ ${item.side} (${tm.positionSize || 0})</button>
                 </td>
               </tr>`;
           });
@@ -16796,6 +16830,7 @@ ${json.message || 'Unauthorized token.'}`);
         sanitizeDataScannersUniverse();
       }
       try {
+        CyberLivePriceEngine.syncSectorStocksFromAllStocks();
         CyberLivePriceEngine.init();
         MidnightSessionManager.init();
       } catch (e) {
@@ -16818,32 +16853,14 @@ ${json.message || 'Unauthorized token.'}`);
           if (typeof SmartMoneyFlowEngine !== 'undefined') SmartMoneyFlowEngine.init();
           if (typeof MostActiveFnoEngine !== 'undefined') MostActiveFnoEngine.init();
           if (typeof ClaudeFnoEngine !== 'undefined') ClaudeFnoEngine.init();
+          if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.init();
         } catch (e) {
           console.warn('Deferred engine init warning:', e);
         }
 
-        // Populate Sector Filters safely
-        const secSelect = document.getElementById('watchlist-sector-filter');
-        const hmSelect = document.getElementById('heatmap-sector-filter');
-        const uniqueSecs = Array.from(new Set((DATA.sectors || []).map(s => s.name))).sort();
-        const secFrag = document.createDocumentFragment();
-        const hmFrag = document.createDocumentFragment();
-        uniqueSecs.forEach(sec => {
-          if (secSelect) {
-            const opt = document.createElement('option');
-            opt.value = sec;
-            opt.innerText = sec;
-            secFrag.appendChild(opt);
-          }
-          if (hmSelect) {
-            const opt2 = document.createElement('option');
-            opt2.value = sec;
-            opt2.innerText = sec;
-            hmFrag.appendChild(opt2);
-          }
-        });
-        if (secSelect) secSelect.appendChild(secFrag);
-        if (hmSelect) hmSelect.appendChild(hmFrag);
+        if (typeof refreshSectorFilterDropdowns === 'function') {
+          refreshSectorFilterDropdowns();
+        }
 
         renderNews();
         renderJournal();
@@ -17273,20 +17290,10 @@ ${json.message || 'Unauthorized token.'}`);
         else if (pct < -1.5) srZone = 'Below Support S1 (Supply Overhang)';
         else if (pct >= 0) srZone = 'At Central Pivot Floor (Bull Bias)';
 
-        const hasLockedPreOpen = s.entry_locked && Number(s.entry) > 0;
-        const minPreSep = Math.max(0.5, prevClose * 0.0025);
-        const eqEntry = hasLockedPreOpen
-          ? Math.round(Number(s.entry) * 100) / 100
-          : (Math.abs(gapPts) > prevClose * 0.004
-              ? Math.round((prevClose + (isBull ? 1 : -1) * Math.abs(gapPts) * 0.55) * 100) / 100
-              : Math.round((prevClose + (isBull ? minPreSep : -minPreSep)) * 100) / 100);
-        const entryPrice = eqEntry;
-        const target = (hasLockedPreOpen && Number(s.target) > 0)
-          ? Math.round(Number(s.target) * 100) / 100
-          : (isBull ? Math.round((entryPrice * 1.025) * 100) / 100 : Math.round((entryPrice * 0.975) * 100) / 100);
-        const stopLoss = (hasLockedPreOpen && Number(s.stop) > 0)
-          ? Math.round(Number(s.stop) * 100) / 100
-          : (isBull ? Math.round((prevClose * 0.995) * 100) / 100 : Math.round((prevClose * 1.005) * 100) / 100);
+        const hasLockedPreOpen = Number(s.entry) > 0 && s.trade_status !== 'NO_SIGNAL';
+        const entryPrice = hasLockedPreOpen ? Math.round(Number(s.entry) * 100) / 100 : 0;
+        const target = (hasLockedPreOpen && Number(s.target) > 0) ? Math.round(Number(s.target) * 100) / 100 : 0;
+        const stopLoss = (hasLockedPreOpen && Number(s.stop) > 0) ? Math.round(Number(s.stop) * 100) / 100 : 0;
 
         return {
           symbol: s.symbol,
@@ -17308,7 +17315,7 @@ ${json.message || 'Unauthorized token.'}`);
           unmatchedQty,
           unmatchedStr: s.unmatched_str || ((unmatchedQty >= 0 ? '+' : '') + Math.round(unmatchedQty).toLocaleString('en-IN') + (unmatchedQty >= 0 ? ' Buy' : ' Sell')),
           turnoverCr: s.turnover_cr || Math.round((matchedVol * iep / 10000000) * 100) / 100,
-          listedAt: s.listed_at || '09:05:00',
+          listedAt: s.listed_at || '--',
           formulaName: s.formula_name || 'Pre-Open Equilibrium IEP',
           entryPrice,
           target,
@@ -17536,8 +17543,8 @@ ${json.message || 'Unauthorized token.'}`);
               <!-- 13. AI PRE-OPEN TRADE SETUP -->
               <td class="p-2 text-left">
                 <div class="text-[10px] font-mono leading-tight">
-                  <div>Entry: <strong class="text-emerald-400">₹${itm.entryPrice.toLocaleString('en-IN')} 🔒</strong> &bull; Tgt: <strong class="text-cyan-300">₹${itm.target.toLocaleString('en-IN')}</strong></div>
-                  <div>SL: <strong class="text-rose-400">₹${itm.stopLoss.toLocaleString('en-IN')}</strong> &bull; <span class="text-cyan-300">🕒 ${itm.listedAt}</span></div>
+                  <div>Entry: <strong class="text-emerald-400">${itm.entryPrice > 0 ? '₹' + itm.entryPrice.toLocaleString('en-IN') + ' 🔒' : '--'}</strong> &bull; Tgt: <strong class="text-cyan-300">${itm.target > 0 ? '₹' + itm.target.toLocaleString('en-IN') : '--'}</strong></div>
+                  <div>SL: <strong class="text-rose-400">${itm.stopLoss > 0 ? '₹' + itm.stopLoss.toLocaleString('en-IN') : '--'}</strong> &bull; <span class="text-cyan-300">🕒 ${itm.listedAt && itm.listedAt !== '--' ? itm.listedAt : '--'}</span></div>
                 </div>
               </td>
 
@@ -17703,7 +17710,7 @@ ${json.message || 'Unauthorized token.'}`);
             pct_change: s.pct_change || 0,
             high: s.day_high || s.price * 1.015,
             low: s.day_low || s.price * 0.985,
-            listed_at: s.listed_at || sanitizeStockListedTime(s, 0, (s.pct_change || 0) < 0, 25),
+            listed_at: s.listed_at || '--',
             entry: s.entry,
             stop: s.stop,
             target: s.target,
@@ -17722,28 +17729,14 @@ ${json.message || 'Unauthorized token.'}`);
 
       calcLockedSetup(itm) {
         const isBull = (itm.pct_change || 0) >= 0;
-        const minSep = Math.max(0.5, itm.price * 0.0025);
-        let entryPrice;
-        if (itm.entry_locked && Number(itm.entry) > 0) {
-          entryPrice = Math.round(Number(itm.entry) * 100) / 100;
-        } else {
-          // Structural Pivot + S1/R1 Pullback/Trap Entry (never live price * 1.002!)
-          const structAnchor = isBull ? (itm.p * 0.65 + itm.s1 * 0.35) : (itm.p * 0.65 + itm.r1 * 0.35);
-          entryPrice = isBull
-            ? Math.min(itm.price - minSep, structAnchor)
-            : Math.max(itm.price + minSep, structAnchor);
-          entryPrice = Math.round(Math.max(0.05, entryPrice) * 100) / 100;
-        }
-        const stopLoss = (itm.entry_locked && Number(itm.stop) > 0)
-          ? Math.round(Number(itm.stop) * 100) / 100
-          : (isBull ? Math.round((itm.s1 * 0.997) * 100) / 100 : Math.round((itm.r1 * 1.003) * 100) / 100);
-        const target1 = (itm.entry_locked && Number(itm.target) > 0)
-          ? Math.round(Number(itm.target) * 100) / 100
-          : (isBull ? itm.r1 : itm.s1);
-        const target2 = isBull ? itm.r2 : itm.s2;
-        const risk = Math.abs(entryPrice - stopLoss);
-        const reward = Math.abs(target2 - entryPrice);
-        const rr = (risk > 0) ? `1 : ${(reward / risk).toFixed(1)}` : '1 : 2.8';
+        const hasAuthentic = Number(itm.entry) > 0 && itm.trade_status !== 'NO_SIGNAL';
+        const entryPrice = hasAuthentic ? Math.round(Number(itm.entry) * 100) / 100 : 0;
+        const stopLoss = (hasAuthentic && Number(itm.stop) > 0) ? Math.round(Number(itm.stop) * 100) / 100 : 0;
+        const target1 = (hasAuthentic && Number(itm.target) > 0) ? Math.round(Number(itm.target) * 100) / 100 : 0;
+        const target2 = hasAuthentic ? (isBull ? itm.r2 : itm.s2) : 0;
+        const risk = (hasAuthentic && stopLoss > 0) ? Math.abs(entryPrice - stopLoss) : 0;
+        const reward = (hasAuthentic && target2 > 0) ? Math.abs(target2 - entryPrice) : 0;
+        const rr = (risk > 0 && reward > 0) ? `1 : ${(reward / risk).toFixed(1)}` : '--';
         return { isBull, entryPrice, stopLoss, target1, target2, rr };
       },
 
@@ -17917,11 +17910,11 @@ ${json.message || 'Unauthorized token.'}`);
               </div>
 
               <div class="space-y-1 text-[11px] font-mono">
-                <div class="flex justify-between"><span class="text-slate-400">Listed At:</span><span class="text-white font-bold">${itm.listed_at} IST</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Entry Price:</span><span class="text-emerald-400 font-black">₹${entryPrice.toLocaleString('en-IN')} 🔒</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Stop Loss:</span><span class="text-rose-400 font-black">₹${stopLoss.toLocaleString('en-IN')}</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Target 1 &bull; 2:</span><span class="text-cyan-300 font-bold">₹${target1.toLocaleString('en-IN')} / ₹${target2.toLocaleString('en-IN')}</span></div>
-                <div class="flex justify-between"><span class="text-slate-400">Risk : Reward:</span><span class="text-amber-300 font-black">${rr} (${itm.accuracy})</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Listed At:</span><span class="text-white font-bold">${itm.listed_at && itm.listed_at !== '--' ? itm.listed_at + ' IST' : '--'}</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Entry Price:</span><span class="text-emerald-400 font-black">${entryPrice > 0 ? '₹' + entryPrice.toLocaleString('en-IN') + ' 🔒' : '--'}</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Stop Loss:</span><span class="text-rose-400 font-black">${stopLoss > 0 ? '₹' + stopLoss.toLocaleString('en-IN') : '--'}</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Target 1 &bull; 2:</span><span class="text-cyan-300 font-bold">${target1 > 0 ? '₹' + target1.toLocaleString('en-IN') + ' / ₹' + target2.toLocaleString('en-IN') : '--'}</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">Risk : Reward:</span><span class="text-amber-300 font-black">${entryPrice > 0 ? rr + ' (' + itm.accuracy + ')' : '--'}</span></div>
               </div>
 
               <!-- 1-Click Strike Action Buttons -->
@@ -18166,22 +18159,22 @@ ${json.message || 'Unauthorized token.'}`);
               </td>
 
               <!-- 16. LISTED AT -->
-              <td class="p-2 text-slate-300 font-mono text-[10.5px] text-center">${itm.listed_at} IST</td>
+              <td class="p-2 text-slate-300 font-mono text-[10.5px] text-center">${itm.listed_at && itm.listed_at !== '--' ? itm.listed_at + ' IST' : '--'}</td>
 
               <!-- 17. ENTRY PRICE -->
-              <td class="p-2 text-right font-black text-emerald-400 text-[11px]">₹${entryPrice.toLocaleString('en-IN')} 🔒</td>
+              <td class="p-2 text-right font-black text-emerald-400 text-[11px]">${entryPrice > 0 ? '₹' + entryPrice.toLocaleString('en-IN') + ' 🔒' : '--'}</td>
 
               <!-- 18. TARGETS (T1 • T2) -->
               <td class="p-2 text-center">
-                <div class="text-[10.5px] font-bold text-cyan-300">T1: ₹${target1.toLocaleString('en-IN')}</div>
-                <div class="text-[9.5px] text-slate-400">T2: ₹${target2.toLocaleString('en-IN')}</div>
+                <div class="text-[10.5px] font-bold text-cyan-300">${target1 > 0 ? 'T1: ₹' + target1.toLocaleString('en-IN') : '--'}</div>
+                <div class="text-[9.5px] text-slate-400">${target2 > 0 ? 'T2: ₹' + target2.toLocaleString('en-IN') : '--'}</div>
               </td>
 
               <!-- 19. STOP LOSS -->
-              <td class="p-2 text-right font-black text-rose-400 text-[11px]">₹${stopLoss.toLocaleString('en-IN')}</td>
+              <td class="p-2 text-right font-black text-rose-400 text-[11px]">${stopLoss > 0 ? '₹' + stopLoss.toLocaleString('en-IN') : '--'}</td>
 
               <!-- 20. R : R -->
-              <td class="p-2 text-center font-bold text-amber-300 text-[10.5px]">${rr}</td>
+              <td class="p-2 text-center font-bold text-amber-300 text-[10.5px]">${entryPrice > 0 ? rr : '--'}</td>
 
               <!-- 21. ACTIONS -->
               <td class="p-2 text-center" onclick="event.stopPropagation()">

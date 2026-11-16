@@ -126,7 +126,7 @@ export interface GapRsStockData {
   target3Exit: number; // 2R
   riskReward: string;
   exitStatus: 'ACTIVE_HOLD' | 'TARGET_1_HIT' | 'TARGET_2_HIT' | 'TARGET_3_HIT' | 'STOP_LOSS_HIT' | 'CLOSE_AT_315_PM';
-  tradeStatus: 'OPEN' | 'CLOSED_TARGET_1' | 'CLOSED_TARGET_2' | 'CLOSED_TARGET_3' | 'CLOSED_STOP_LOSS';
+  tradeStatus: 'OPEN' | 'NO_SIGNAL' | 'CLOSED_TARGET_1' | 'CLOSED_TARGET_2' | 'CLOSED_TARGET_3' | 'CLOSED_STOP_LOSS';
   isClosed: boolean;
   realizedPoints: number;
   realizedPct: number;
@@ -521,10 +521,12 @@ export function processGapRelativeStrengthScan(stocks: ScannedStock[]): GapRsSto
       gapFilterNotice = '🚨 Gap-Down ≤ -2% Filter: Do NOT sell immediately. Wait for Pullback ➔ VWAP/EMA Resistance ➔ Volume Return ➔ Break Prev Low before SELL.';
     }
 
-    // Entry & Stop Loss & Targets (Fixed at Alert Creation Time)
-    const fixedEntryPrice = Number((item.stock.fixedEntryPrice || item.stock.risk?.entryPrice || item.price).toFixed(2));
+    // Entry & Stop Loss & Targets (Fixed at Alert Creation Time; 0 if NO_SIGNAL)
+    const rawEntry = item.stock.fixedEntryPrice || item.stock.risk?.entryPrice || 0;
+    const isNoSignal = item.stock.tradeStatus === 'NO_SIGNAL' || rawEntry <= 0;
+    const fixedEntryPrice = isNoSignal ? 0 : Number(rawEntry.toFixed(2));
     const slDistance = Math.max(
-      Math.abs(fixedEntryPrice - item.vwap),
+      Math.abs((fixedEntryPrice || item.price) - item.vwap),
       1.0 * item.atr
     );
     const riskPerShare = Number(slDistance.toFixed(2));
@@ -534,28 +536,30 @@ export function processGapRelativeStrengthScan(stocks: ScannedStock[]): GapRsSto
     let target2Exit = 0;
     let target3Exit = 0;
 
-    if (isBullishBias) {
-      stopLossExit = Number((item.stock.fixedStopLoss || item.stock.risk?.stopLoss || (fixedEntryPrice - riskPerShare)).toFixed(2));
-      target1Exit = Number((item.stock.fixedTarget1 || item.stock.risk?.target1 || (fixedEntryPrice + 1.0 * riskPerShare)).toFixed(2)); // T1 = 1R
-      target2Exit = Number((item.stock.fixedTarget2 || item.stock.risk?.target2 || (fixedEntryPrice + 1.5 * riskPerShare)).toFixed(2)); // T2 = 1.5R
-      target3Exit = Number((item.stock.fixedTarget3 || item.stock.risk?.target3 || (fixedEntryPrice + 2.0 * riskPerShare)).toFixed(2)); // T3 = 2.0R
-    } else {
-      stopLossExit = Number((item.stock.fixedStopLoss || item.stock.risk?.stopLoss || (fixedEntryPrice + riskPerShare)).toFixed(2));
-      target1Exit = Number((item.stock.fixedTarget1 || item.stock.risk?.target1 || (fixedEntryPrice - 1.0 * riskPerShare)).toFixed(2)); // T1 = 1R
-      target2Exit = Number((item.stock.fixedTarget2 || item.stock.risk?.target2 || (fixedEntryPrice - 1.5 * riskPerShare)).toFixed(2)); // T2 = 1.5R
-      target3Exit = Number((item.stock.fixedTarget3 || item.stock.risk?.target3 || (fixedEntryPrice - 2.0 * riskPerShare)).toFixed(2)); // T3 = 2.0R
+    if (!isNoSignal) {
+      if (isBullishBias) {
+        stopLossExit = Number((item.stock.fixedStopLoss || item.stock.risk?.stopLoss || (fixedEntryPrice - riskPerShare)).toFixed(2));
+        target1Exit = Number((item.stock.fixedTarget1 || item.stock.risk?.target1 || (fixedEntryPrice + 1.0 * riskPerShare)).toFixed(2)); // T1 = 1R
+        target2Exit = Number((item.stock.fixedTarget2 || item.stock.risk?.target2 || (fixedEntryPrice + 1.5 * riskPerShare)).toFixed(2)); // T2 = 1.5R
+        target3Exit = Number((item.stock.fixedTarget3 || item.stock.risk?.target3 || (fixedEntryPrice + 2.0 * riskPerShare)).toFixed(2)); // T3 = 2.0R
+      } else {
+        stopLossExit = Number((item.stock.fixedStopLoss || item.stock.risk?.stopLoss || (fixedEntryPrice + riskPerShare)).toFixed(2));
+        target1Exit = Number((item.stock.fixedTarget1 || item.stock.risk?.target1 || (fixedEntryPrice - 1.0 * riskPerShare)).toFixed(2)); // T1 = 1R
+        target2Exit = Number((item.stock.fixedTarget2 || item.stock.risk?.target2 || (fixedEntryPrice - 1.5 * riskPerShare)).toFixed(2)); // T2 = 1.5R
+        target3Exit = Number((item.stock.fixedTarget3 || item.stock.risk?.target3 || (fixedEntryPrice - 2.0 * riskPerShare)).toFixed(2)); // T3 = 2.0R
+      }
     }
 
-    const entryMin = Number((isBullishBias ? fixedEntryPrice * 0.998 : fixedEntryPrice * 1.001).toFixed(2));
-    const entryMax = Number((isBullishBias ? fixedEntryPrice * 1.002 : fixedEntryPrice * 0.999).toFixed(2));
+    const entryMin = fixedEntryPrice > 0 ? Number((isBullishBias ? fixedEntryPrice * 0.998 : fixedEntryPrice * 1.001).toFixed(2)) : 0;
+    const entryMax = fixedEntryPrice > 0 ? Number((isBullishBias ? fixedEntryPrice * 1.002 : fixedEntryPrice * 0.999).toFixed(2)) : 0;
 
-    const alertTime = item.stock.alertCreateTime || item.stock.entryTime || '09:20:00 IST';
+    const alertTime = item.stock.alertCreateTime || item.stock.entryTime || '--';
     const entryTime = item.stock.entryTime || alertTime;
 
     let perfectEntryTime = 'Breakout Candle Close + VWAP Confirmation';
     let perfectEntryWindow: 'BREAKOUT_CANDLE_CLOSE' | 'PULLBACK_VWAP' | 'AFTERNOON_EXPANSION' | 'WAIT' = 'BREAKOUT_CANDLE_CLOSE';
 
-    if (isBuySetup || isSellSetup) {
+    if ((isBuySetup || isSellSetup) && !isNoSignal) {
       perfectEntryTime = `🟢 ENTRY SIGNAL: ${entryTime} @ ₹${fixedEntryPrice} (VWAP & Confluence Confirmed)`;
       perfectEntryWindow = 'BREAKOUT_CANDLE_CLOSE';
     } else if (isGapFilterActive) {
@@ -571,7 +575,7 @@ export function processGapRelativeStrengthScan(stocks: ScannedStock[]): GapRsSto
 
     let perfectExitTime = '';
     let exitStatus: 'ACTIVE_HOLD' | 'TARGET_1_HIT' | 'TARGET_2_HIT' | 'TARGET_3_HIT' | 'STOP_LOSS_HIT' | 'CLOSE_AT_315_PM' = 'ACTIVE_HOLD';
-    let tradeStatus: 'OPEN' | 'CLOSED_TARGET_1' | 'CLOSED_TARGET_2' | 'CLOSED_TARGET_3' | 'CLOSED_STOP_LOSS' = item.stock.tradeStatus || 'OPEN';
+    let tradeStatus: 'OPEN' | 'NO_SIGNAL' | 'CLOSED_TARGET_1' | 'CLOSED_TARGET_2' | 'CLOSED_TARGET_3' | 'CLOSED_STOP_LOSS' = isNoSignal ? 'NO_SIGNAL' : (item.stock.tradeStatus || 'OPEN');
     let isClosed = item.stock.isClosed || false;
     let exitTime = item.stock.exitTime;
     let exitPrice = item.stock.exitPrice;
@@ -579,7 +583,13 @@ export function processGapRelativeStrengthScan(stocks: ScannedStock[]): GapRsSto
     let realizedPct = 0;
     let tradeResultLabel = '';
 
-    if (isBullishBias) {
+    if (isNoSignal) {
+      exitStatus = 'ACTIVE_HOLD';
+      tradeStatus = 'NO_SIGNAL';
+      isClosed = false;
+      tradeResultLabel = '⏸ NO TRIGGER';
+      perfectExitTime = 'Awaiting verified breakout candle confirmation';
+    } else if (isBullishBias) {
       if (item.price >= target3Exit) {
         exitStatus = 'TARGET_3_HIT';
         tradeStatus = 'CLOSED_TARGET_3';

@@ -163,11 +163,12 @@ class SentinelAgentService {
         lastChecked: nowIso,
       });
 
-      // 4. Formula Entry Lock & ListedAt Integrity
+      // 4. Formula Entry Lock & ListedAt Integrity (check only actionable BUY/SELL signals)
+      const actionableStocks = stocks.filter((s) => s.signal === 'BUY' || s.signal === 'SELL');
       let lockIssues = 0;
       let mirroredPrices = 0;
-      if (!cleared && stocks.length > 0) {
-        for (const s of stocks) {
+      if (!cleared && actionableStocks.length > 0) {
+        for (const s of actionableStocks) {
           const fe = s.fixedEntryPrice ?? s.risk?.entryPrice ?? 0;
           if (!fe || fe <= 0 || !s.listedAt || !/^\d{2}:\d{2}(:\d{2})?$/.test(s.listedAt)) {
             lockIssues++;
@@ -175,15 +176,15 @@ class SentinelAgentService {
             mirroredPrices++;
           }
         }
-        // Only treat Entry==Live as a systemic mirroring bug if >= 75% of all active stocks match spot simultaneously during open market
-        if (mkt.isOpen && stocks.length >= 20 && mirroredPrices / stocks.length >= 0.75) {
+        // Only treat Entry==Live as a systemic mirroring bug if >= 80% of active actionable signals mirror spot simultaneously during open market
+        if (mkt.isOpen && actionableStocks.length >= 10 && mirroredPrices / actionableStocks.length >= 0.8) {
           lockIssues += Math.max(1, Math.round(mirroredPrices * 0.25));
         }
       }
       let lockStatus: SentinelCheckItem['status'] = lockIssues === 0 ? 'HEALTHY' : 'HEALED';
       let lockDetail =
         lockIssues === 0
-          ? '100% of active stocks hold distinct formula ListedAt & locked Entry Prices'
+          ? `${actionableStocks.length} actionable signals hold authentic bar-locked ListedAt & Entry Prices`
           : `Detected ${lockIssues} uncalibrated entry/timestamp rows; auto-resynced formula ledger`;
       if (lockIssues > 0 && !cleared) {
         await this.providers.triggerSafeRescan();
@@ -195,7 +196,7 @@ class SentinelAgentService {
         name: 'Formula Listed-At & Entry Lock Guard',
         status: lockStatus,
         detail: lockDetail,
-        metricValue: `${stocks.length - lockIssues}/${stocks.length} Locked`,
+        metricValue: `${actionableStocks.length - lockIssues}/${actionableStocks.length} Locked`,
         lastChecked: nowIso,
       });
 

@@ -15,6 +15,7 @@ import { buildClaude10SkillsReport } from './server/claudeSkillsEngine';
 import { buildSmartMoneyFlowReport } from './server/moneyFlowEngine';
 import { buildMostActiveFnoReport } from './server/mostActiveFnoEngine';
 import { buildClaudeFnoReport } from './server/claudeFnoEngine';
+import { buildSmartMoneyConceptsReport, SmcTimeframe } from './server/smartMoneyConceptsEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
@@ -26,12 +27,24 @@ async function startServer() {
   const app = express();
   const httpServer = http.createServer(app);
 
+  // Wire Upstox runtime 401 invalidation handler so expired tokens fall back honestly to Autonomous Feed
+  upstoxService.setAuthInvalidatedHandler((reason) => {
+    const current = scannerService.getBrokerConfig();
+    if (current.status === 'connected') {
+      console.warn(`[Server] ⚠️ Upstox auth invalidated -> falling back to Autonomous Live Engine (${reason})`);
+      scannerService.updateBrokerConfig({
+        upstoxTokenType: 'NONE',
+        status: 'autonomous',
+      });
+    }
+  });
+
   // Auto-load Upstox credentials from environment on startup if configured
   const envUpstoxKey = (process.env.UPSTOX_API_KEY || '').trim();
   const envUpstoxSecret = (process.env.UPSTOX_API_SECRET || '').trim();
   const envUpstoxToken = (process.env.UPSTOX_ACCESS_TOKEN || '').trim();
   if (envUpstoxToken && envUpstoxToken.length > 15) {
-    console.log('[Server] 🟢 Initializing with Upstox API token from environment...');
+    console.log('[Server] 🔍 Checking Upstox API token from environment...');
     scannerService.updateBrokerConfig({
       selectedBroker: 'upstox',
       apiKey: envUpstoxKey,
@@ -40,8 +53,8 @@ async function startServer() {
       upstoxApiKey: envUpstoxKey,
       upstoxApiSecret: envUpstoxSecret,
       upstoxAccessToken: envUpstoxToken,
-      upstoxTokenType: 'USER_ACCESS',
-      status: 'connected',
+      upstoxTokenType: 'NONE',
+      status: 'autonomous',
     });
 
     // Validate Upstox profile asynchronously and hydrate Upstox live quotes immediately
@@ -65,7 +78,14 @@ async function startServer() {
             marketWebSocketServer.refreshUpstreamQuotes(),
           ]);
         } else {
-          console.warn(`[Server] ⚠️ Upstox env token check notice: ${check.message}`);
+          scannerService.updateBrokerConfig({
+            upstoxProfileName: '',
+            upstoxTokenType: 'NONE',
+            status: 'autonomous',
+          });
+          console.warn(
+            `[Server] ⚠️ Upstox token invalid/expired (${check.message}) — running Autonomous Real-Time Market Engine.`
+          );
         }
       })
       .catch(() => {});
@@ -152,7 +172,7 @@ async function startServer() {
           selectedBroker: 'upstox',
           upstoxAccessToken: headerOrParamToken.trim(),
           accessToken: headerOrParamToken.trim(),
-          status: 'connected',
+          status: upstoxService.isTokenVerified(headerOrParamToken.trim()) ? 'connected' : 'autonomous',
         });
         upstoxService.clearQuotesCache();
         marketWebSocketServer.refreshUpstreamQuotes().catch(() => {});
@@ -301,17 +321,28 @@ async function startServer() {
     const broker = scannerService.getBrokerConfig();
     const accessToken = scannerService.getEffectiveUpstoxToken();
     const hasToken = Boolean(accessToken && accessToken.length > 15);
+    const tokenVerified = upstoxService.isTokenVerified(accessToken);
+    const tokenInfo = upstoxService.getTokenVerificationInfo(accessToken);
     const wsStatus = marketWebSocketServer.getStatus();
     const currentMarket = calculateMarketStatus();
 
     res.json({
       status: 'ok',
-      connected: hasToken,
-      upstoxConnected: hasToken,
+      connected: tokenVerified,
+      upstoxConnected: tokenVerified,
+      upstoxConfigured: hasToken,
+      tokenValid: tokenVerified,
+      tokenMessage:
+        tokenInfo?.message ||
+        (hasToken
+          ? tokenVerified
+            ? 'Upstox Live API Verified'
+            : 'Upstox token unverified — Autonomous Live Feed active'
+          : 'No Upstox token configured — Autonomous Live Feed active'),
       autonomousActive: true,
-      feedSource: hasToken ? 'UPSTOX_API_V2_LIVE' : wsStatus.feedSource || 'AUTONOMOUS_LIVE_ENGINE',
-      profileName: broker.upstoxProfileName || 'Upstox Direct Feed',
-      tokenType: broker.upstoxTokenType || (hasToken ? 'USER_ACCESS' : 'NONE'),
+      feedSource: tokenVerified ? 'UPSTOX_API_V2_LIVE' : wsStatus.feedSource || 'AUTONOMOUS_LIVE_ENGINE',
+      profileName: tokenVerified ? broker.upstoxProfileName || 'Upstox Direct Feed' : '',
+      tokenType: tokenVerified ? broker.upstoxTokenType || 'USER_ACCESS' : 'NONE',
       apiKeyConfigured: Boolean(broker.upstoxApiKey || broker.apiKey || process.env.UPSTOX_API_KEY),
       isMarketOpen: currentMarket.isOpen,
       marketStatus: currentMarket.statusLabel,
@@ -633,6 +664,7 @@ async function startServer() {
           name: s.name,
           fyersSymbol: s.fyersSymbol,
           sector: s.sector,
+          sectorChangePercent: s.sectorChangePercent,
           price: s.price,
           change: s.change,
           changePercent: s.changePercent,
@@ -685,6 +717,7 @@ async function startServer() {
           stocks: (data.stocks || []).map(shrinkStock),
           top10Buy: (data.top10Buy || []).map(shrinkStock),
           top10Sell: (data.top10Sell || []).map(shrinkStock),
+          sectorAvgMap: data.sectorAvgMap || {},
           overview: data.overview,
           sessionState: data.sessionState,
         });
@@ -1004,7 +1037,7 @@ async function startServer() {
 
   // Broker Config
   app.post('/api/broker/config', async (req, res) => {
-    const updated = scannerService.updateBrokerConfig(req.body);
+    scannerService.updateBrokerConfig(req.body);
     upstoxService.clearQuotesCache();
     const token = scannerService.getEffectiveUpstoxToken();
     if (token.length > 15) {
@@ -1014,6 +1047,12 @@ async function startServer() {
           upstoxProfileName: check.profile?.user_name || check.profile?.user_id || 'Upstox Live Feed',
           upstoxTokenType: check.tokenType === 'INVALID' ? 'USER_ACCESS' : check.tokenType,
           status: 'connected',
+        });
+      } else {
+        scannerService.updateBrokerConfig({
+          upstoxProfileName: '',
+          upstoxTokenType: 'NONE',
+          status: 'autonomous',
         });
       }
     }
@@ -1279,6 +1318,53 @@ async function startServer() {
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Claude FNO & (Index Options) scan' });
+    }
+  });
+
+  // Smart Money Concepts (ICT Market Structure, Liquidity Sweep, FVG, Order Block, OTE & Position Sizing)
+  app.get('/api/smart-money-concepts/scan', async (req, res) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const accessToken =
+        (req.headers['x-upstox-access-token'] as string) ||
+        scannerService.getEffectiveUpstoxToken();
+
+      const indexSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'INDIAVIX'];
+      const cachedQ = autonomousPriceService.getCachedQuotes();
+      const indexQuotes =
+        cachedQ['NIFTY 50'] && cachedQ['BANKNIFTY']
+          ? cachedQ
+          : await upstoxService.fetchUnifiedMarketQuotes(indexSyms, accessToken).catch(() => cachedQ);
+
+      const rawTf = String(req.query.timeframe || '5m');
+      const timeframe: SmcTimeframe = ['5m', '15m', '30m', '1h', 'ALL'].includes(rawTf)
+        ? (rawTf as SmcTimeframe)
+        : '5m';
+      const capital = Math.max(1000, Number(req.query.capital) || 100000);
+      const riskPct = Math.max(0.1, Math.min(10, Number(req.query.riskPct) || 1.0));
+
+      const report = buildSmartMoneyConceptsReport({
+        stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        indexQuotes,
+        isMidnightCleared: isCleared,
+        isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
+        dayCategory: sessionState?.brokerSchedule?.dayCategory,
+        timeframe,
+        capital,
+        riskPct,
+      });
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Smart Money Concepts scan' });
     }
   });
 
