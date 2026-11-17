@@ -16,6 +16,7 @@ import { buildSmartMoneyFlowReport } from './server/moneyFlowEngine';
 import { buildMostActiveFnoReport } from './server/mostActiveFnoEngine';
 import { buildClaudeFnoReport } from './server/claudeFnoEngine';
 import { buildSmartMoneyConceptsReport, SmcTimeframe } from './server/smartMoneyConceptsEngine';
+import { buildPriceActionReport } from './server/priceActionEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
@@ -1365,6 +1366,48 @@ async function startServer() {
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Smart Money Concepts scan' });
+    }
+  });
+
+  // Price Action (14-Module Multi-Timeframe Structure, Demand/Supply, Liquidity Sweep, VWAP-Free ORB, RVOL, RS & 9-Condition BUY/SELL)
+  app.get('/api/price-action/scan', async (req, res) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const accessToken =
+        (req.headers['x-upstox-access-token'] as string) ||
+        scannerService.getEffectiveUpstoxToken();
+
+      const indexSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'INDIAVIX'];
+      const cachedQ = autonomousPriceService.getCachedQuotes();
+      const indexQuotes =
+        cachedQ['NIFTY 50'] && cachedQ['BANKNIFTY']
+          ? cachedQ
+          : await upstoxService.fetchUnifiedMarketQuotes(indexSyms, accessToken).catch(() => cachedQ);
+
+      const capital = Math.max(1000, Number(req.query.capital) || 100000);
+      const riskPct = Math.max(0.1, Math.min(10, Number(req.query.riskPct) || 1.0));
+
+      const report = buildPriceActionReport({
+        stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        indexQuotes,
+        isMidnightCleared: isCleared,
+        isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
+        dayCategory: sessionState?.brokerSchedule?.dayCategory,
+        capital,
+        riskPct,
+      });
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Price Action scan' });
     }
   });
 
