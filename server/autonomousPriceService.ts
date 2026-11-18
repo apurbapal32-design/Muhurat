@@ -303,7 +303,7 @@ class AutonomousPriceService {
     if (this.yahooInFlightPromise) {
       await Promise.race([
         this.yahooInFlightPromise,
-        new Promise<void>((resolve) => setTimeout(resolve, 12000)),
+        new Promise<void>((resolve) => setTimeout(resolve, 22000)),
       ]);
     }
   }
@@ -958,7 +958,7 @@ class AutonomousPriceService {
     ];
 
     let cursor = 0;
-    const workerCount = 10;
+    const workerCount = 20;
 
     const runOne = async (job: { sym: string; yf: string; exchange: 'NSE' | 'BSE'; isIdx: boolean }) => {
       try {
@@ -994,7 +994,9 @@ class AutonomousPriceService {
         const closes: number[] = Array.isArray(q0.close) ? q0.close : [];
         const vols: number[] = Array.isArray(q0.volume) ? q0.volume : [];
 
-        const bars: IntradayCandleBar[] = [];
+        // Bucket onto canonical 5-minute IST boundaries so trailing unaligned 0-volume quote ticks
+        // merge cleanly into their active 5m bar rather than creating a phantom zero-volume tail candle.
+        const bucketMap = new Map<string, IntradayCandleBar>();
         for (let i = 0; i < rawTs.length; i++) {
           const tsSec = Number(rawTs[i] || 0);
           const c = Number(closes[i]);
@@ -1007,18 +1009,32 @@ class AutonomousPriceService {
           const istP = getISTPartsFromEpochSec(tsSec);
           if (istP.secIST < 9 * 3600 + 15 * 60 || istP.secIST > 15 * 3600 + 30 * 60) continue;
 
-          bars.push({
-            tsSec,
-            dateIST: istP.dateIST,
-            timeIST: istP.timeIST,
-            secIST: istP.secIST,
-            open: Number(o.toFixed(2)),
-            high: Number(h.toFixed(2)),
-            low: Number(l.toFixed(2)),
-            close: Number(c.toFixed(2)),
-            volume: v,
-          });
+          const bucketSec = Math.floor(istP.secIST / 300) * 300;
+          const bh = String(Math.floor(bucketSec / 3600)).padStart(2, '0');
+          const bm = String(Math.floor((bucketSec % 3600) / 60)).padStart(2, '0');
+          const bucketKey = `${istP.dateIST}|${bucketSec}`;
+          const existing = bucketMap.get(bucketKey);
+
+          if (!existing) {
+            bucketMap.set(bucketKey, {
+              tsSec: tsSec - (istP.secIST - bucketSec),
+              dateIST: istP.dateIST,
+              timeIST: `${bh}:${bm}:00`,
+              secIST: bucketSec,
+              open: Number(o.toFixed(2)),
+              high: Number(Math.max(o, h, c).toFixed(2)),
+              low: Number(Math.min(o, l, c).toFixed(2)),
+              close: Number(c.toFixed(2)),
+              volume: v,
+            });
+          } else {
+            existing.high = Number(Math.max(existing.high, h, c).toFixed(2));
+            existing.low = Number(Math.min(existing.low, l, c).toFixed(2));
+            existing.close = Number(c.toFixed(2));
+            existing.volume = Math.max(existing.volume, v);
+          }
         }
+        const bars: IntradayCandleBar[] = Array.from(bucketMap.values()).sort((a, b) => a.tsSec - b.tsSec);
 
         const todayBars = bars.filter((b) => b.dateIST === todayDateIST);
         const latestBarDate = bars.length > 0 ? bars[bars.length - 1].dateIST : todayDateIST;

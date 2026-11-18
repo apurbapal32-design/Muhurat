@@ -395,13 +395,94 @@ export class ScannerService {
       triggerSource: 'NONE',
     };
 
+    const realBars: IntradayCandleBar[] = Array.isArray(q?.intradayBars) ? q!.intradayBars! : [];
+    const hasRealBars = realBars.length >= 4;
+    const dailyStartSec = 9 * 3600 + 20 * 60; // 09:20:00 IST
+    const curSec = istHour * 3600 + istMin * 60 + istSec;
+
+    const barConfirmSec = (b: IntradayCandleBar) => {
+      const closeSec = b.secIST + 300;
+      if (isMarketOpen) {
+        return Math.max(dailyStartSec, Math.min(curSec, closeSec));
+      }
+      return Math.max(dailyStartSec, Math.min(15 * 3600 + 30 * 60, closeSec));
+    };
+
     if (scannedStock.signal !== 'BUY' && scannedStock.signal !== 'SELL') {
+      let hadChanged = false;
       if (this.dailySignalLedger.entries[sym]) {
         delete this.dailySignalLedger.entries[sym];
         this.ledgerDirty = true;
-        return { entry: emptyNeutral, changed: true };
+        hadChanged = true;
       }
-      return { entry: emptyNeutral, changed: false };
+
+      // For genuine active movers (e.g. Custom Tables >= ±2% / Momentum >= ±1.5%), resolve
+      // the authentic 5m intraday bar timestamp where the move or ORB/RVOL expansion occurred
+      // WITHOUT fabricating any BUY/SELL signal or fake entry price.
+      const absChgPct = Math.abs(Number(scannedStock.changePercent) || 0);
+      if (absChgPct >= 1.5 && (hasRealBars || marketSession === 'PRE_OPEN')) {
+        if (marketSession === 'PRE_OPEN') {
+          const preOpenSec = Math.max(9 * 3600, Math.min(9 * 3600 + 14 * 60 + 55, curSec));
+          return {
+            entry: {
+              ...emptyNeutral,
+              listedAt: this.formatSecToHHMMSS(preOpenSec),
+              triggerSource: 'PRE_OPEN_IEP',
+            },
+            changed: hadChanged,
+          };
+        }
+
+        const isUpMove = (Number(scannedStock.changePercent) || 0) >= 0;
+        const orbBarsM = realBars.slice(0, Math.min(3, realBars.length));
+        const orbHighM = Math.max(...orbBarsM.map((b) => b.high));
+        const orbLowM = Math.min(...orbBarsM.map((b) => b.low));
+
+        // 1. First bar after 09:15 crossing >= 1.5% directional move from prevClose
+        const moverThresholdIdx = realBars.findIndex((b) => {
+          if (prevClose <= 0) return false;
+          const bPct = ((b.close - prevClose) / prevClose) * 100;
+          return isUpMove ? bPct >= 1.5 : bPct <= -1.5;
+        });
+        // 2. ORB 15m breakout bar
+        const orbIdxM = realBars.findIndex(
+          (b, i) => i >= 3 && b.secIST >= 9 * 3600 + 15 * 60 && (isUpMove ? b.close > orbHighM : b.close < orbLowM)
+        );
+        // 3. Peak directional expansion bar in today's session
+        let bestMoveIdx = -1;
+        let bestMoveMag = -1;
+        for (let i = 0; i < realBars.length; i++) {
+          const b = realBars[i];
+          const aligned = isUpMove ? b.close >= b.open : b.close <= b.open;
+          const mag = aligned ? Math.abs(b.close - b.open) : 0;
+          if (mag > bestMoveMag) {
+            bestMoveMag = mag;
+            bestMoveIdx = i;
+          }
+        }
+        const chosenIdx =
+          orbIdxM >= 3
+            ? orbIdxM
+            : moverThresholdIdx >= 0
+            ? moverThresholdIdx
+            : bestMoveIdx >= 0
+            ? bestMoveIdx
+            : realBars.length - 1;
+        const tb = realBars[chosenIdx];
+        if (tb) {
+          const moverSec = barConfirmSec(tb);
+          return {
+            entry: {
+              ...emptyNeutral,
+              listedAt: this.formatSecToHHMMSS(moverSec),
+              triggerSource: 'INTRADAY_5M_BAR',
+            },
+            changed: hadChanged,
+          };
+        }
+      }
+
+      return { entry: emptyNeutral, changed: hadChanged };
     }
 
     const effSignal: 'BUY' | 'SELL' = scannedStock.signal;
@@ -411,9 +492,6 @@ export class ScannerService {
     const atr = Math.max(0.5, scannedStock.indicators.atr || lp * 0.009);
     const turnoverCr = ((scannedStock.volume || 100000) * lp) / 1e7;
     const openP = q?.open && q.open > 0 ? q.open : prevClose;
-
-    const realBars: IntradayCandleBar[] = Array.isArray(q?.intradayBars) ? q!.intradayBars! : [];
-    const hasRealBars = realBars.length >= 4;
 
     if (!hasRealBars && marketSession !== 'PRE_OPEN') {
       return { entry: emptyNeutral, changed: false };
@@ -433,9 +511,6 @@ export class ScannerService {
         return { entry: existing, changed: false };
       }
     }
-
-    const dailyStartSec = 9 * 3600 + 20 * 60; // 09:20:00 IST
-    const curSec = istHour * 3600 + istMin * 60 + istSec;
 
     let formulaCode: FormulaCode = 'NONE';
     let formulaName = 'No Active Formula Signal';
@@ -467,14 +542,6 @@ export class ScannerService {
         vwapAt.push(cumPV / cumV);
         avgVolAt.push(cumV / (i + 1));
       }
-
-      const barConfirmSec = (b: IntradayCandleBar) => {
-        const closeSec = b.secIST + 300;
-        if (isMarketOpen) {
-          return Math.max(dailyStartSec, Math.min(curSec, closeSec));
-        }
-        return Math.max(dailyStartSec, Math.min(15 * 3600 + 30 * 60, closeSec));
-      };
 
       const orbBreakIdx = realBars.findIndex(
         (b, i) => i >= 3 && b.secIST >= 9 * 3600 + 15 * 60 && (isBull ? b.close > orbHigh : b.close < orbLow)
@@ -1712,6 +1779,9 @@ export class ScannerService {
           }));
           // Prepend prevClose warm-up anchors only if session just started (< 18 bars) so EMA/RSI stabilize cleanly
           if (liveBars.length < 18) {
+            const realVols = liveBars.map((b) => b.volume).filter((v) => v > 100);
+            const sortedVols = [...realVols].sort((a, b) => a - b);
+            const medianVol = sortedVols.length > 0 ? sortedVols[Math.floor(sortedVols.length / 2)] : 1000;
             const padCount = 18 - liveBars.length;
             const pads = Array.from({ length: padCount }, () => ({
               time: '09:15:00',
@@ -1719,7 +1789,7 @@ export class ScannerService {
               high: prevClose,
               low: prevClose,
               close: prevClose,
-              volume: 10000,
+              volume: Math.max(100, medianVol),
             }));
             candles = [...pads, ...liveBars];
           } else {
@@ -1817,8 +1887,12 @@ export class ScannerService {
           scannedStock.risk.target1 = 0;
           scannedStock.risk.target2 = 0;
           scannedStock.risk.target3 = 0;
-          scannedStock.listedAt = '--';
-          scannedStock.signalListedAt = '--';
+          const validMoverListedAt =
+            locked.listedAt && locked.listedAt !== '--' && /^\d{2}:\d{2}(:\d{2})?$/.test(locked.listedAt)
+              ? locked.listedAt
+              : '--';
+          scannedStock.listedAt = validMoverListedAt;
+          scannedStock.signalListedAt = validMoverListedAt;
           scannedStock.entryTime = '--';
         } else {
           scannedStock.fixedEntryPrice = locked.entryPrice;
@@ -2096,8 +2170,14 @@ export class ScannerService {
       if (stock.signal !== 'BUY' && stock.signal !== 'SELL') {
         stock.tradeStatus = 'NO_SIGNAL';
         stock.isClosed = false;
-        stock.listedAt = '--';
-        stock.signalListedAt = '--';
+        const keepMoverTime =
+          Math.abs(Number(stock.changePercent) || 0) >= 1.5 &&
+          stock.listedAt &&
+          /^\d{2}:\d{2}(:\d{2})?$/.test(stock.listedAt);
+        if (!keepMoverTime) {
+          stock.listedAt = '--';
+          stock.signalListedAt = '--';
+        }
         stock.entryTime = '--';
         stock.exitTime = undefined;
         stock.exitPrice = undefined;

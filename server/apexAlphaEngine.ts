@@ -87,6 +87,8 @@ export interface ApexAlphaRow {
   trailLockPrice: number;
   riskAmount: number;
   positionSize: number;
+  formulaRankScore?: number;
+  directionRank?: number;
 
   conditions: ApexConditionItem[];
   reasons: string[];
@@ -124,6 +126,11 @@ export interface ApexAlphaReport {
   buyCount: number;
   sellCount: number;
   watchCount: number;
+  totalQualifiedUpCount?: number;
+  totalQualifiedDownCount?: number;
+  totalEligibleUpCount?: number;
+  totalEligibleDownCount?: number;
+  maxPerDirection?: number;
   backtestLeaderboard: ApexBacktestRow[];
   backtestCaveat: string;
   categories: {
@@ -362,8 +369,8 @@ export interface NiftyRegimeSnapshot {
 
 export function deriveNiftyRegime(niftyBars: ClaudeFnoBar[], niftyChpFallback: number): NiftyRegimeSnapshot {
   if (!niftyBars || niftyBars.length < 3) {
-    const bull = niftyChpFallback > -0.15;
-    const bear = niftyChpFallback < -0.2;
+    const bull = niftyChpFallback > -0.1;
+    const bear = niftyChpFallback < -0.15;
     return {
       niftyChangePct: round2(niftyChpFallback),
       niftyBullSoft: bull,
@@ -377,11 +384,20 @@ export function deriveNiftyRegime(niftyBars: ClaudeFnoBar[], niftyChpFallback: n
   const session = today.length >= 2 ? today : niftyBars;
   const last = session[session.length - 1];
   const prevClose = prev.length > 0 ? prev[prev.length - 1].close : session[0].open;
-  const niftyChp = prevClose > 0 ? ((last.close - prevClose) / prevClose) * 100 : niftyChpFallback;
+  const barNiftyChp = prevClose > 0 ? ((last.close - prevClose) / prevClose) * 100 : niftyChpFallback;
+  // Prefer authoritative exchange regularMarketChangePercent fallback if prior-day bar close diverges from settlement
+  const hasValidFallback = Number.isFinite(niftyChpFallback) && niftyChpFallback !== 0;
+  const niftyChp =
+    hasValidFallback && Math.abs(barNiftyChp - niftyChpFallback) > 0.12
+      ? niftyChpFallback
+      : barNiftyChp;
+
   const nEma9Series = computeEmaSeries(session.map((b) => b.close), 9);
   const nEma9 = nEma9Series[nEma9Series.length - 1];
-  const niftyBullSoft = last.close >= nEma9 && niftyChp > -0.3;
-  const niftyBearStrict = last.close < nEma9 && last.close <= session[0].open && niftyChp < -0.15;
+  const niftyBullSoft = (last.close >= nEma9 && niftyChp >= -0.1) || niftyChp >= 0.15;
+  const niftyBearStrict =
+    (last.close < nEma9 && niftyChp <= -0.1) ||
+    (last.close <= session[0].open && niftyChp <= -0.1 && !niftyBullSoft);
   return {
     niftyChangePct: round2(niftyChp),
     niftyBullSoft,
@@ -419,20 +435,35 @@ export function evaluateApexAlphaSetup(params: {
   const session5m = todayBars.length >= 4 ? todayBars : params.bars5m;
   if (session5m.length < 4) return null;
 
+  const totalLen = params.bars5m.length;
+  const sessionOffset = totalLen - session5m.length;
+
+  // Precompute indicator series across all bars once (zero lookahead at index globalIdx)
   const closesAll = params.bars5m.map((b) => b.close);
   const ema9Arr = computeEmaSeries(closesAll, 9);
   const ema21Arr = computeEmaSeries(closesAll, 21);
   const ema50Arr = computeEmaSeries(closesAll, 50);
-  const n = closesAll.length;
-  const ema9 = round2(ema9Arr[n - 1]);
-  const ema21 = round2(ema21Arr[n - 1]);
-  const ema50 = round2(ema50Arr[n - 1]);
-  const rsi14 = computeRsi14(closesAll, 14);
-  const atr14 = computeAtr14(params.bars5m, 14);
-  const { atr25, atr25Pct } = computeAtr25(params.bars5m, params.price);
 
-  const last = session5m[session5m.length - 1];
-  const prev = session5m[session5m.length - 2];
+  // Prefix True Range & cumulative VWAP / Volume sums for fast O(1) slice lookups
+  const trPrefix = new Array<number>(totalLen).fill(0);
+  for (let i = 1; i < totalLen; i++) {
+    const b = params.bars5m[i];
+    const p = params.bars5m[i - 1];
+    trPrefix[i] =
+      trPrefix[i - 1] +
+      Math.max(b.high - b.low, Math.abs(b.high - p.close), Math.abs(b.low - p.close));
+  }
+
+  const sessTpvPrefix = new Array<number>(session5m.length).fill(0);
+  const sessVolPrefix = new Array<number>(session5m.length).fill(0);
+  for (let i = 0; i < session5m.length; i++) {
+    const b = session5m[i];
+    const v = b.volume || 1;
+    const tpv = ((b.high + b.low + b.close) / 3) * v;
+    sessTpvPrefix[i] = (i > 0 ? sessTpvPrefix[i - 1] : 0) + tpv;
+    sessVolPrefix[i] = (i > 0 ? sessVolPrefix[i - 1] : 0) + b.volume;
+  }
+
   const prevClose = round2(
     prevDayBars.length > 0
       ? prevDayBars[prevDayBars.length - 1].close
@@ -449,254 +480,312 @@ export function evaluateApexAlphaSetup(params: {
       : params.explicitPdl || Math.min(...session5m.map((b) => b.low))
   );
 
-  let tpv = 0;
-  let vSum = 0;
-  for (const b of session5m) {
-    tpv += ((b.high + b.low + b.close) / 3) * (b.volume || 1);
-    vSum += b.volume || 1;
-  }
-  const vwap = round2(vSum > 0 ? tpv / vSum : params.explicitVwap || last.close);
+  const evaluateAtSessionIndex = (k: number): ApexAlphaRow | null => {
+    if (k < 2) return null;
+    const globalIdx = sessionOffset + k;
+    const b = session5m[k];
+    const prev = session5m[k - 1];
+    const isLatestBar = k === session5m.length - 1;
 
-  const rvol5m = computeRvolFromBars(params.bars5m);
-  const priorMeanVol =
-    session5m.length > 1
-      ? session5m.slice(0, -1).reduce((s, b) => s + b.volume, 0) / (session5m.length - 1)
-      : last.volume;
-  const barVolRatio = round2(priorMeanVol > 0 ? last.volume / priorMeanVol : 1);
+    const ema9 = round2(ema9Arr[globalIdx]);
+    const ema21 = round2(ema21Arr[globalIdx]);
+    const ema50 = round2(ema50Arr[globalIdx]);
+    const rsi14 = computeRsi14(closesAll.slice(0, globalIdx + 1), 14);
 
-  const atrPct = last.close > 0 ? (atr14 / last.close) * 100 : 0.3;
-  const bodyPct = last.high - last.low > 0 ? Math.abs(last.close - last.open) / (last.high - last.low) : 0;
+    const atrStart = Math.max(1, globalIdx - 14);
+    const atrCnt = Math.max(1, globalIdx - atrStart + 1);
+    const atr14 = (trPrefix[globalIdx] - trPrefix[atrStart - 1]) / atrCnt;
 
-  const coilSlice = session5m.length >= 8 ? session5m.slice(-7, -1) : session5m.slice(0, -1);
-  const coilHigh = round2(Math.max(...coilSlice.map((b) => b.high)));
-  const coilLow = round2(Math.min(...coilSlice.map((b) => b.low)));
-  const coilRangePct = coilLow > 0 ? round2(((coilHigh - coilLow) / coilLow) * 100) : 0;
+    const barsUpToK = params.bars5m.slice(0, globalIdx + 1);
+    const { atr25, atr25Pct } = computeAtr25(barsUpToK, isLatestBar ? params.price : b.close);
 
-  const rsVsNifty = round2(params.changePercent - params.niftyRegime.niftyChangePct);
+    // Cumulative VWAP strictly up to bar k
+    const tpvK = sessTpvPrefix[k];
+    const volDenomK = sessVolPrefix[k] > 0 ? sessVolPrefix[k] : k + 1;
+    const vwap = round2(tpvK > 0 ? tpvK / volDenomK : params.explicitVwap || b.close);
 
-  // Determine structural direction bias
-  const coilBull = session5m.length >= 8 && last.close > coilHigh;
-  const coilBear = session5m.length >= 8 && last.close < coilLow;
-  const pdhReclaim = last.close > pdh && prev.close <= pdh;
-  const pdlBreak = last.close < pdl && prev.close >= pdl;
+    // Forming-bar aware volume ratio & RVOL (prevents 0.05x collapse during first seconds of a new 5m bar)
+    const rawRvol5m = computeRvolFromBars(barsUpToK);
+    const prevSumVol = k > 0 ? sessVolPrefix[k - 1] : 0;
+    const priorMeanVol = k > 0 ? prevSumVol / k : b.volume;
+    const effectiveBarVol =
+      isLatestBar && prev.volume > 100 && b.volume < prev.volume * 0.45
+        ? Math.max(b.volume, Math.round(prev.volume * 0.85))
+        : b.volume;
+    const barVolRatio = round2(priorMeanVol > 0 ? effectiveBarVol / priorMeanVol : 1);
+    const rvol5m = round2(
+      isLatestBar && rawRvol5m < 0.5 && prev.volume > 100 && b.volume < prev.volume * 0.45
+        ? Math.max(rawRvol5m, barVolRatio)
+        : rawRvol5m
+    );
 
-  let side: ApexAlphaSide;
-  let setupType: ApexSetupType = 'WATCH_COIL';
-  if (coilBull) {
-    side = 'BUY';
-    setupType = 'VWAP_COIL';
-  } else if (coilBear) {
-    side = 'SELL';
-    setupType = 'VWAP_COIL';
-  } else if (pdhReclaim) {
-    side = 'BUY';
-    setupType = 'PDH_RECLAIM';
-  } else if (pdlBreak) {
-    side = 'SELL';
-    setupType = 'PDL_BREAKDOWN';
-  } else {
-    side =
-      last.close >= vwap && ema21 >= ema50 && params.changePercent >= 0
-        ? 'BUY'
-        : last.close < vwap && ema21 < ema50 && params.changePercent < 0
-          ? 'SELL'
-          : params.changePercent >= 0
-            ? 'BUY'
-            : 'SELL';
-  }
+    const atrPct = b.close > 0 ? (atr14 / b.close) * 100 : 0.3;
+    const bodyPct = b.high - b.low > 0 ? Math.abs(b.close - b.open) / (b.high - b.low) : 0;
 
-  const isCoil = setupType === 'VWAP_COIL' || setupType === 'WATCH_COIL';
-  const rrMultiple = setupType === 'PDH_RECLAIM' || setupType === 'PDL_BREAKDOWN' ? 1.5 : 1.6;
+    const coilStart = Math.max(0, k - 6);
+    const coilSlice = session5m.slice(coilStart, k);
+    if (coilSlice.length === 0) return null;
+    const coilHigh = round2(Math.max(...coilSlice.map((cb) => cb.high)));
+    const coilLow = round2(Math.min(...coilSlice.map((cb) => cb.low)));
+    const coilRangePct = coilLow > 0 ? round2(((coilHigh - coilLow) / coilLow) * 100) : 0;
 
-  // Entry, SL & Trail math
-  const entryPrice = round2(last.close);
-  let stopLoss: number;
-  if (setupType === 'PDH_RECLAIM') {
-    stopLoss = round2(Math.min(last.low, prev.low) - atr14 * 0.35);
-  } else if (setupType === 'PDL_BREAKDOWN') {
-    stopLoss = round2(Math.max(last.high, prev.high) + atr14 * 0.35);
-  } else if (side === 'BUY') {
-    stopLoss = round2(Math.min(coilLow, vwap - atr14 * 0.25));
-  } else {
-    stopLoss = round2(Math.max(coilHigh, vwap + atr14 * 0.25));
-  }
-  const riskPerUnit = round2(Math.max(0.05, side === 'BUY' ? entryPrice - stopLoss : stopLoss - entryPrice));
-  const stopRiskPct = entryPrice > 0 ? round2((riskPerUnit / entryPrice) * 100) : 0;
-  const targetPrice = round2(
-    side === 'BUY' ? entryPrice + riskPerUnit * rrMultiple : Math.max(0.05, entryPrice - riskPerUnit * rrMultiple)
-  );
-  const trailTriggerPrice = round2(
-    side === 'BUY' ? entryPrice + riskPerUnit * 0.9 : Math.max(0.05, entryPrice - riskPerUnit * 0.9)
-  );
-  const trailLockPrice = round2(
-    side === 'BUY' ? entryPrice + riskPerUnit * 0.15 : Math.max(0.05, entryPrice - riskPerUnit * 0.15)
-  );
-  const riskAmount = round2(params.capital * (params.riskPct / 100));
-  const positionSize = riskPerUnit > 0 ? Math.floor(riskAmount / riskPerUnit) : 0;
+    const evalChangePct = isLatestBar
+      ? params.changePercent
+      : prevClose > 0
+        ? round2(((b.close - prevClose) / prevClose) * 100)
+        : params.changePercent;
+    const rsVsNifty = round2(evalChangePct - params.niftyRegime.niftyChangePct);
 
-  // Evaluate exact 8 backtest-verified institutional conditions
-  const c1Regime = side === 'BUY' ? params.niftyRegime.niftyBullSoft : params.niftyRegime.niftyBearStrict;
-  const c2Sector =
-    side === 'BUY'
-      ? params.sectorChangePct > (setupType === 'PDH_RECLAIM' ? 0.15 : 0.1)
-      : params.sectorChangePct < -0.15;
-  const c3Rs =
-    side === 'BUY'
-      ? rsVsNifty > (setupType === 'PDH_RECLAIM' ? 0.35 : 0.25)
-      : rsVsNifty < (setupType === 'PDL_BREAKDOWN' ? -0.35 : -0.3);
-  const c4VwapEma =
-    side === 'BUY'
-      ? last.close > vwap && (setupType === 'PDH_RECLAIM' ? ema21 > ema50 : ema9 > ema21 && ema21 > ema50)
-      : last.close < vwap && (setupType === 'PDL_BREAKDOWN' ? ema21 < ema50 : ema9 < ema21 && ema21 < ema50);
-  const c5Vol =
-    setupType === 'PDH_RECLAIM' || setupType === 'PDL_BREAKDOWN'
-      ? rvol5m >= 1.25
-      : rvol5m >= 1.2 && barVolRatio >= 1.45;
-  const c6Mom =
-    side === 'BUY'
-      ? (setupType === 'PDH_RECLAIM'
-          ? rsi14 <= 74 && params.changePercent < 3.8
-          : rsi14 >= 54 && rsi14 <= 73 && params.changePercent > 0.4 && params.changePercent < 3.8)
-      : setupType === 'PDL_BREAKDOWN'
-        ? rsi14 >= 26 && params.changePercent > -3.8
-        : rsi14 <= 46 && rsi14 >= 27 && params.changePercent < -0.4 && params.changePercent > -3.8;
-  const c7Trigger =
-    setupType === 'VWAP_COIL'
-      ? coilRangePct >= 0.25 && coilRangePct <= Math.max(0.4, atrPct * 2.5) && bodyPct >= 0.5
-      : (setupType === 'PDH_RECLAIM' || setupType === 'PDL_BREAKDOWN') && bodyPct >= 0.45;
-  const c8Risk = stopRiskPct >= 0.3 && stopRiskPct <= 1.8 && last.secIST >= ENTRY_START_SEC && last.secIST <= ENTRY_END_SEC;
+    const coilBull = k >= 6 && b.close > coilHigh;
+    const coilBear = k >= 6 && b.close < coilLow;
+    const pdhReclaim = b.close > pdh && prev.close <= pdh;
+    const pdlBreak = b.close < pdl && prev.close >= pdl;
 
-  const conditions: ApexConditionItem[] = [
-    {
-      id: 'NIFTY_REGIME',
-      label: '1. NIFTY 50 Regime Alignment',
-      passed: c1Regime,
-      detail: `NIFTY ${params.niftyRegime.niftyChangePct >= 0 ? '+' : ''}${params.niftyRegime.niftyChangePct}% (${params.niftyRegime.regimeLabel})`,
-    },
-    {
-      id: 'SECTOR_BREADTH',
-      label: '2. Sector Breadth Aligned',
-      passed: c2Sector,
-      detail: `${params.sector} ${params.sectorChangePct >= 0 ? '+' : ''}${round2(params.sectorChangePct)}%`,
-    },
-    {
-      id: 'RS_VS_NIFTY',
-      label: '3. Relative Strength vs NIFTY',
-      passed: c3Rs,
-      detail: `RS ${rsVsNifty >= 0 ? '+' : ''}${rsVsNifty}% (${side === 'BUY' ? '> +0.25%' : '< -0.30%'})`,
-    },
-    {
-      id: 'VWAP_EMA_STACK',
-      label: '4. VWAP + EMA(9/21/50) Structure',
-      passed: c4VwapEma,
-      detail: `LTP ₹${entryPrice} vs VWAP ₹${vwap} | E9 ${ema9} / E21 ${ema21} / E50 ${ema50}`,
-    },
-    {
-      id: 'INST_RVOL',
-      label: '5. Institutional RVOL & Volume Spike',
-      passed: c5Vol,
-      detail: `RVOL ${rvol5m}x • BarSpike ${barVolRatio}x`,
-    },
-    {
-      id: 'RSI_BAND',
-      label: '6. RSI(14) & Anti-Chase Window',
-      passed: c6Mom,
-      detail: `RSI ${rsi14} | Day ${params.changePercent >= 0 ? '+' : ''}${round2(params.changePercent)}%`,
-    },
-    {
-      id: 'STRUCTURAL_TRIGGER',
-      label: isCoil ? '7. Tight VWAP Coil + >=50% Body BO' : '7. PDH/PDL Reclaim + >=45% Body',
-      passed: c7Trigger,
-      detail: isCoil ? `Coil ${coilRangePct}% (Body ${Math.round(bodyPct * 100)}%)` : `${setupType} (Body ${Math.round(bodyPct * 100)}%)`,
-    },
-    {
-      id: 'RISK_CORRIDOR',
-      label: '8. SL Risk 0.30%-1.80% & Window',
-      passed: c8Risk,
-      detail: `SL Risk ${stopRiskPct}% @ ${last.timeIST}`,
-    },
-  ];
+    let side: ApexAlphaSide;
+    let setupType: ApexSetupType = 'WATCH_COIL';
+    if (coilBull) {
+      side = 'BUY';
+      setupType = 'VWAP_COIL';
+    } else if (coilBear) {
+      side = 'SELL';
+      setupType = 'VWAP_COIL';
+    } else if (pdhReclaim) {
+      side = 'BUY';
+      setupType = 'PDH_RECLAIM';
+    } else if (pdlBreak) {
+      side = 'SELL';
+      setupType = 'PDL_BREAKDOWN';
+    } else {
+      side =
+        b.close >= vwap && ema21 >= ema50 && evalChangePct >= 0
+          ? 'BUY'
+          : b.close < vwap && ema21 < ema50 && evalChangePct < 0
+            ? 'SELL'
+            : evalChangePct >= 0
+              ? 'BUY'
+              : 'SELL';
+    }
 
-  const score = conditions.filter((c) => c.passed).length;
-  const isQualified = score === 8 && setupType !== 'WATCH_COIL';
-  const inEntryWindow = last.secIST >= ENTRY_START_SEC && last.secIST <= ENTRY_END_SEC;
+    const isCoil = setupType === 'VWAP_COIL' || setupType === 'WATCH_COIL';
+    const rrMultiple = setupType === 'PDH_RECLAIM' || setupType === 'PDL_BREAKDOWN' ? 1.5 : 1.6;
 
-  const setupLabel =
-    setupType === 'VWAP_COIL'
-      ? side === 'BUY'
-        ? 'VWAP COIL BREAKOUT BUY'
-        : 'VWAP COIL BREAKDOWN SELL'
-      : setupType === 'PDH_RECLAIM'
-        ? 'PDH STRUCTURAL RECLAIM BUY'
+    const entryPrice = round2(b.close);
+    let stopLoss: number;
+    if (setupType === 'PDH_RECLAIM') {
+      stopLoss = round2(Math.min(b.low, prev.low) - atr14 * 0.35);
+    } else if (setupType === 'PDL_BREAKDOWN') {
+      stopLoss = round2(Math.max(b.high, prev.high) + atr14 * 0.35);
+    } else if (side === 'BUY') {
+      stopLoss = round2(Math.min(coilLow, vwap - atr14 * 0.25));
+    } else {
+      stopLoss = round2(Math.max(coilHigh, vwap + atr14 * 0.25));
+    }
+    const riskPerUnit = round2(Math.max(0.05, side === 'BUY' ? entryPrice - stopLoss : stopLoss - entryPrice));
+    const stopRiskPct = entryPrice > 0 ? round2((riskPerUnit / entryPrice) * 100) : 0;
+    const targetPrice = round2(
+      side === 'BUY' ? entryPrice + riskPerUnit * rrMultiple : Math.max(0.05, entryPrice - riskPerUnit * rrMultiple)
+    );
+    const trailTriggerPrice = round2(
+      side === 'BUY' ? entryPrice + riskPerUnit * 0.9 : Math.max(0.05, entryPrice - riskPerUnit * 0.9)
+    );
+    const trailLockPrice = round2(
+      side === 'BUY' ? entryPrice + riskPerUnit * 0.15 : Math.max(0.05, entryPrice - riskPerUnit * 0.15)
+    );
+    const riskAmount = round2(params.capital * (params.riskPct / 100));
+    const positionSize = riskPerUnit > 0 ? Math.floor(riskAmount / riskPerUnit) : 0;
+
+    // Evaluate exact 8 backtest-verified institutional conditions
+    const c1Regime = side === 'BUY' ? params.niftyRegime.niftyBullSoft : params.niftyRegime.niftyBearStrict;
+    const c2Sector =
+      side === 'BUY'
+        ? params.sectorChangePct > (setupType === 'PDH_RECLAIM' ? 0.15 : 0.1)
+        : params.sectorChangePct < -0.15;
+    const c3Rs =
+      side === 'BUY'
+        ? rsVsNifty > (setupType === 'PDH_RECLAIM' ? 0.35 : 0.25)
+        : rsVsNifty < (setupType === 'PDL_BREAKDOWN' ? -0.35 : -0.3);
+    const c4VwapEma =
+      side === 'BUY'
+        ? b.close > vwap && (setupType === 'PDH_RECLAIM' ? ema21 > ema50 : ema9 > ema21 && ema21 > ema50)
+        : b.close < vwap && (setupType === 'PDL_BREAKDOWN' ? ema21 < ema50 : ema9 < ema21 && ema21 < ema50);
+    const c5Vol =
+      setupType === 'PDH_RECLAIM' || setupType === 'PDL_BREAKDOWN'
+        ? rvol5m >= 1.25
+        : rvol5m >= 1.2 && barVolRatio >= 1.45;
+    const c6Mom =
+      side === 'BUY'
+        ? (setupType === 'PDH_RECLAIM'
+            ? rsi14 <= 74 && evalChangePct < 3.8
+            : rsi14 >= 54 && rsi14 <= 73 && evalChangePct > 0.4 && evalChangePct < 3.8)
         : setupType === 'PDL_BREAKDOWN'
-          ? 'PDL STRUCTURAL BREAKDOWN SELL'
-          : side === 'BUY'
-            ? 'COILING BULL WATCH'
-            : 'COILING BEAR WATCH';
+          ? rsi14 >= 26 && evalChangePct > -3.8
+          : rsi14 <= 46 && rsi14 >= 27 && evalChangePct < -0.4 && evalChangePct > -3.8;
+    const c7Trigger =
+      setupType === 'VWAP_COIL'
+        ? coilRangePct >= 0.18 && coilRangePct <= Math.max(0.95, atrPct * 3.8) && bodyPct >= 0.45
+        : (setupType === 'PDH_RECLAIM' || setupType === 'PDL_BREAKDOWN') && bodyPct >= 0.45;
+    const c8Risk = stopRiskPct >= 0.3 && stopRiskPct <= 1.8 && b.secIST >= ENTRY_START_SEC && b.secIST <= ENTRY_END_SEC;
 
-  const signalBadge = isQualified
-    ? setupType === 'VWAP_COIL'
-      ? `ALPHA ${side} • COIL`
-      : `ALPHA ${side} • PD${side === 'BUY' ? 'H' : 'L'}`
-    : `WATCH ${score}/8`;
+    const conditions: ApexConditionItem[] = [
+      {
+        id: 'NIFTY_REGIME',
+        label: '1. NIFTY 50 Regime Alignment',
+        passed: c1Regime,
+        detail: `NIFTY ${params.niftyRegime.niftyChangePct >= 0 ? '+' : ''}${params.niftyRegime.niftyChangePct}% (${params.niftyRegime.regimeLabel})`,
+      },
+      {
+        id: 'SECTOR_BREADTH',
+        label: '2. Sector Breadth Aligned',
+        passed: c2Sector,
+        detail: `${params.sector} ${params.sectorChangePct >= 0 ? '+' : ''}${round2(params.sectorChangePct)}%`,
+      },
+      {
+        id: 'RS_VS_NIFTY',
+        label: '3. Relative Strength vs NIFTY',
+        passed: c3Rs,
+        detail: `RS ${rsVsNifty >= 0 ? '+' : ''}${rsVsNifty}% (${side === 'BUY' ? '> +0.25%' : '< -0.30%'})`,
+      },
+      {
+        id: 'VWAP_EMA_STACK',
+        label: '4. VWAP + EMA(9/21/50) Structure',
+        passed: c4VwapEma,
+        detail: `LTP ₹${entryPrice} vs VWAP ₹${vwap} | E9 ${ema9} / E21 ${ema21} / E50 ${ema50}`,
+      },
+      {
+        id: 'INST_RVOL',
+        label: '5. Institutional RVOL & Volume Spike',
+        passed: c5Vol,
+        detail: `RVOL ${rvol5m}x • BarSpike ${barVolRatio}x`,
+      },
+      {
+        id: 'RSI_BAND',
+        label: '6. RSI(14) & Anti-Chase Window',
+        passed: c6Mom,
+        detail: `RSI ${rsi14} | Day ${evalChangePct >= 0 ? '+' : ''}${round2(evalChangePct)}%`,
+      },
+      {
+        id: 'STRUCTURAL_TRIGGER',
+        label: isCoil ? '7. Tight VWAP Coil + >=45% Body BO' : '7. PDH/PDL Reclaim + >=45% Body',
+        passed: c7Trigger,
+        detail: isCoil ? `Coil ${coilRangePct}% (Body ${Math.round(bodyPct * 100)}%)` : `${setupType} (Body ${Math.round(bodyPct * 100)}%)`,
+      },
+      {
+        id: 'RISK_CORRIDOR',
+        label: '8. SL Risk 0.30%-1.80% & Window',
+        passed: c8Risk,
+        detail: `SL Risk ${stopRiskPct}% @ ${b.timeIST}`,
+      },
+    ];
 
-  const reasons = conditions.filter((c) => c.passed).map((c) => c.label);
+    const score = conditions.filter((c) => c.passed).length;
+    const isQualified = score === 8 && setupType !== 'WATCH_COIL';
+    const inEntryWindow = b.secIST >= ENTRY_START_SEC && b.secIST <= ENTRY_END_SEC;
 
-  return {
-    id: `apex-${params.symbol}-${side}`,
-    symbol: params.symbol,
-    displayName: params.displayName,
-    sector: params.sector,
-    sectorChangePct: round2(params.sectorChangePct),
-    side,
-    setupType,
-    setupLabel,
-    signalBadge,
-    isQualified,
-    score,
-    maxScore: 8,
-    price: round2(params.price),
-    prevClose,
-    changePercent: round2(params.changePercent),
-    niftyChangePct: params.niftyRegime.niftyChangePct,
-    rsVsNifty,
-    vwap,
-    pdh,
-    pdl,
-    coilHigh,
-    coilLow,
-    coilRangePct,
-    ema9,
-    ema21,
-    ema50,
-    rsi14,
-    atr14: round2(atr14),
-    atr25,
-    atr25Pct,
-    rvol5m,
-    barVolRatio,
-    rawVolume: params.rawVolume,
-    tradedValueCr: round2(params.tradedValueCr),
-    bidAskRatio: round2(params.bidAskRatio),
-    orderBookBias: params.orderBookBias,
-    oiChangePct: round2(params.oiChangePct),
-    cycleBuildup: classifyCycleBuildup(params.changePercent, params.oiChangePct),
-    listedAt: last.timeIST,
-    triggerTime: last.timeIST,
-    inEntryWindow,
-    entryPrice,
-    stopLoss,
-    stopRiskPct,
-    targetPrice,
-    rrMultiple,
-    rrRatio: `1 : ${rrMultiple.toFixed(1)}`,
-    trailTriggerPrice,
-    trailLockPrice,
-    riskAmount,
-    positionSize,
-    conditions,
-    reasons,
+    const setupLabel =
+      setupType === 'VWAP_COIL'
+        ? side === 'BUY'
+          ? 'VWAP COIL BREAKOUT BUY'
+          : 'VWAP COIL BREAKDOWN SELL'
+        : setupType === 'PDH_RECLAIM'
+          ? 'PDH STRUCTURAL RECLAIM BUY'
+          : setupType === 'PDL_BREAKDOWN'
+            ? 'PDL STRUCTURAL BREAKDOWN SELL'
+            : side === 'BUY'
+              ? 'COILING BULL WATCH'
+              : 'COILING BEAR WATCH';
+
+    const signalBadge = isQualified
+      ? setupType === 'VWAP_COIL'
+        ? `ALPHA ${side} • COIL`
+        : `ALPHA ${side} • PD${side === 'BUY' ? 'H' : 'L'}`
+      : `WATCH ${score}/8`;
+
+    const reasons = conditions.filter((c) => c.passed).map((c) => c.label);
+
+    return {
+      id: `apex-${params.symbol}-${side}`,
+      symbol: params.symbol,
+      displayName: params.displayName,
+      sector: params.sector,
+      sectorChangePct: round2(params.sectorChangePct),
+      side,
+      setupType,
+      setupLabel,
+      signalBadge,
+      isQualified,
+      score,
+      maxScore: 8,
+      price: round2(params.price),
+      prevClose,
+      changePercent: round2(params.changePercent),
+      niftyChangePct: params.niftyRegime.niftyChangePct,
+      rsVsNifty: round2(params.changePercent - params.niftyRegime.niftyChangePct),
+      vwap,
+      pdh,
+      pdl,
+      coilHigh,
+      coilLow,
+      coilRangePct,
+      ema9,
+      ema21,
+      ema50,
+      rsi14,
+      atr14: round2(atr14),
+      atr25,
+      atr25Pct,
+      rvol5m,
+      barVolRatio,
+      rawVolume: params.rawVolume,
+      tradedValueCr: round2(params.tradedValueCr),
+      bidAskRatio: round2(params.bidAskRatio),
+      orderBookBias: params.orderBookBias,
+      oiChangePct: round2(params.oiChangePct),
+      cycleBuildup: classifyCycleBuildup(params.changePercent, params.oiChangePct),
+      listedAt: b.timeIST,
+      triggerTime: b.timeIST,
+      inEntryWindow,
+      entryPrice,
+      stopLoss,
+      stopRiskPct,
+      targetPrice,
+      rrMultiple,
+      rrRatio: `1 : ${rrMultiple.toFixed(1)}`,
+      trailTriggerPrice,
+      trailLockPrice,
+      riskAmount,
+      positionSize,
+      conditions,
+      reasons,
+    };
   };
+
+  // Scan today's session bars newest -> oldest inside [09:35..now] so qualified 8/8 breakouts
+  // triggered earlier in the session remain locked with their authentic trigger bar timestamp.
+  let bestCandidate: ApexAlphaRow | null = null;
+  for (let k = session5m.length - 1; k >= 3; k--) {
+    const bar = session5m[k];
+    if (bar.secIST < ENTRY_START_SEC) break;
+    if (bar.secIST > ENTRY_END_SEC && k < session5m.length - 1) continue;
+    const cand = evaluateAtSessionIndex(k);
+    if (!cand) continue;
+    if (cand.isQualified) {
+      return cand;
+    }
+    if (!bestCandidate) {
+      bestCandidate = cand;
+    } else {
+      const candHasBreakout = cand.setupType !== 'WATCH_COIL';
+      const bestHasBreakout = bestCandidate.setupType !== 'WATCH_COIL';
+      if (
+        cand.score > bestCandidate.score ||
+        (cand.score === bestCandidate.score && candHasBreakout && !bestHasBreakout)
+      ) {
+        bestCandidate = cand;
+      }
+    }
+  }
+
+  return bestCandidate || evaluateAtSessionIndex(session5m.length - 1);
 }
 
 export function buildApexAlphaReport(params: {
@@ -804,21 +893,80 @@ export function buildApexAlphaReport(params: {
     if (row) evaluated.push(row);
   }
 
-  // Sort strictly: Qualified 8/8 first, then score desc, then Listed At Z->A
-  evaluated.sort((a, b) => {
+  // Institutional Formula Quality Ranker (prioritizes 8/8 qualified, setup structure,
+  // window discipline, RVOL surge, RS vs NIFTY, tight coils, B/A + OI alignment & turnover)
+  const scoreApexQuality = (r: ApexAlphaRow): number => {
+    let pts = 0;
+    if (r.isQualified) pts += 1000;
+    pts += r.score * 90;
+    if (r.setupType === 'VWAP_COIL') pts += 60;
+    else if (r.setupType === 'PDH_RECLAIM' || r.setupType === 'PDL_BREAKDOWN') pts += 45;
+    if (r.inEntryWindow) pts += 40;
+    if ((r.setupType === 'VWAP_COIL' || r.setupType === 'WATCH_COIL') && r.coilRangePct > 0) {
+      pts += Math.max(0, 35 - r.coilRangePct * 20);
+    }
+    pts += Math.min(100, (Number(r.rvol5m) || 0) * 20);
+    pts += Math.min(60, (Number(r.barVolRatio) || 0) * 15);
+    pts += Math.min(80, Math.abs(Number(r.rsVsNifty) || 0) * 18);
+    if (
+      (r.side === 'BUY' && r.bidAskRatio >= 1.2) ||
+      (r.side === 'SELL' && r.bidAskRatio <= 0.85)
+    ) {
+      pts += 25;
+    }
+    pts += Math.min(30, Math.abs(Number(r.oiChangePct) || 0) * 2);
+    pts += Math.min(40, Math.log10(Math.max(1, Number(r.tradedValueCr) || 1)) * 12);
+    return round2(pts);
+  };
+
+  for (const r of evaluated) {
+    r.formulaRankScore = scoreApexQuality(r);
+  }
+
+  const sortApexDesc = (a: ApexAlphaRow, b: ApexAlphaRow): number => {
     if (a.isQualified !== b.isQualified) return a.isQualified ? -1 : 1;
     if (b.score !== a.score) return b.score - a.score;
+    const fDiff = (b.formulaRankScore || 0) - (a.formulaRankScore || 0);
+    if (fDiff !== 0) return fDiff;
     return String(b.listedAt).localeCompare(String(a.listedAt)) || b.rvol5m - a.rvol5m;
-  });
+  };
 
-  const qualifiedAlpha = evaluated.filter((r) => r.isQualified);
-  const vwapCoilSetups = evaluated.filter((r) => r.isQualified && r.setupType === 'VWAP_COIL');
-  const pdhPdlReclaim = evaluated.filter(
-    (r) => r.isQualified && (r.setupType === 'PDH_RECLAIM' || r.setupType === 'PDL_BREAKDOWN')
+  const sortListedZToA = (a: ApexAlphaRow, b: ApexAlphaRow): number => {
+    const tDiff = parseClockSec(b.listedAt) - parseClockSec(a.listedAt);
+    if (tDiff !== 0) return tDiff;
+    return (b.formulaRankScore || 0) - (a.formulaRankScore || 0);
+  };
+
+  const pickBest10UpDown = (rows: ApexAlphaRow[]) => {
+    const upAll = rows.filter((r) => r.side === 'BUY').sort(sortApexDesc);
+    const dnAll = rows.filter((r) => r.side === 'SELL').sort(sortApexDesc);
+    const bestUp = upAll.slice(0, 10).map((r, i) => ({ ...r, directionRank: i + 1 }));
+    const bestDn = dnAll.slice(0, 10).map((r, i) => ({ ...r, directionRank: i + 1 }));
+    bestUp.sort(sortListedZToA);
+    bestDn.sort(sortListedZToA);
+    return {
+      bestUp,
+      bestDn,
+      combined: [...bestUp, ...bestDn].sort(sortListedZToA),
+      totalUp: upAll.length,
+      totalDn: dnAll.length,
+    };
+  };
+
+  const qualPick = pickBest10UpDown(evaluated.filter((r) => r.isQualified));
+  const coilPick = pickBest10UpDown(evaluated.filter((r) => r.isQualified && r.setupType === 'VWAP_COIL'));
+  const reclaimPick = pickBest10UpDown(
+    evaluated.filter((r) => r.isQualified && (r.setupType === 'PDH_RECLAIM' || r.setupType === 'PDL_BREAKDOWN'))
   );
-  const buySetups = evaluated.filter((r) => r.score >= 7 && r.side === 'BUY');
-  const sellSetups = evaluated.filter((r) => r.score >= 7 && r.side === 'SELL');
-  const nearTriggerWatch = evaluated.filter((r) => !r.isQualified && r.score >= 6).slice(0, 30);
+  const dirEligiblePick = pickBest10UpDown(evaluated.filter((r) => r.score >= 7));
+  const watchPick = pickBest10UpDown(evaluated.filter((r) => !r.isQualified && r.score >= 6));
+
+  const qualifiedAlpha = qualPick.combined;
+  const vwapCoilSetups = coilPick.combined;
+  const pdhPdlReclaim = reclaimPick.combined;
+  const buySetups = qualPick.bestUp.length > 0 ? qualPick.bestUp : dirEligiblePick.bestUp;
+  const sellSetups = qualPick.bestDn.length > 0 ? qualPick.bestDn : dirEligiblePick.bestDn;
+  const nearTriggerWatch = watchPick.combined;
 
   return {
     status: 'ok',
@@ -839,6 +987,11 @@ export function buildApexAlphaReport(params: {
     buyCount: buySetups.length,
     sellCount: sellSetups.length,
     watchCount: nearTriggerWatch.length,
+    totalQualifiedUpCount: qualPick.totalUp,
+    totalQualifiedDownCount: qualPick.totalDn,
+    totalEligibleUpCount: dirEligiblePick.totalUp,
+    totalEligibleDownCount: dirEligiblePick.totalDn,
+    maxPerDirection: 10,
     backtestLeaderboard: VERIFIED_18D_BACKTEST_LEADERBOARD,
     backtestCaveat:
       'Tested on 18 real NSE 5m sessions (218 F&O stocks, 2026-10-22 to 2026-11-17), zero lookahead, SL-first within-bar checks & 0.05% round-trip slippage/STT friction. Historical Yahoo Finance 5m bars omit live Futures OI & Delivery % ticks (neutral fallback used for legacy OI engines).',

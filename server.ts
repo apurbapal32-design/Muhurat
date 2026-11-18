@@ -19,6 +19,7 @@ import { buildSmartMoneyConceptsReport, SmcTimeframe } from './server/smartMoney
 import { buildPriceActionReport } from './server/priceActionEngine';
 import { buildIntradayStockReport } from './server/intradayStockEngine';
 import { buildApexAlphaReport } from './server/apexAlphaEngine';
+import { buildMuhuratFlowReport } from './server/muhuratFlowEngine';
 import { aiTradingJournalService } from './server/aiTradingJournalEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
@@ -1495,6 +1496,29 @@ async function startServer() {
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Apex Alpha Strategy scan' });
+    }
+  });
+
+  // Muhurat Flow Model (Complete Institutional Order Flow + Whale Sweep Strategy)
+  app.get('/api/muhurat-flow/scan', async (_req, res) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const report = buildMuhuratFlowReport({
+        stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        isMidnightCleared: isCleared,
+      });
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Muhurat Flow scan' });
     }
   });
 

@@ -13,42 +13,34 @@ export interface MoneyFlowConditionCheck {
   detail: string;
 }
 
-export interface MoneyFlowGreeksData {
-  delta: number;
-  gamma: number;
-  vega: number;
-  deltaExposure: number;
-  deltaFlowDirection: 'POSITIVE' | 'NEGATIVE';
-  gammaExposure: number;
-  gammaNote: string;
-  vegaExposure: number;
-  currentOI: number;
-  previousOI: number;
-  oiChange: number;
-  oiChangePct: number;
-  oiInterpretation: 'Long buildup' | 'Short buildup' | 'Short covering' | 'Long unwinding' | 'Neutral';
-  oiFlowDirection: 'POSITIVE' | 'NEGATIVE';
-  iv: number;
-  ivp: number;
-  ivRegime: 'Low volatility regime' | 'Moderate-low' | 'Elevated' | 'High volatility';
-  pcr: number;
-  lotSize: number;
+export interface MoneyFlowFvgZone {
+  type: 'BULLISH_FVG' | 'BEARISH_FVG';
+  bottom: number;
+  top: number;
+  formedAt: string;
+  formedBarIdx: number;
+  isFresh: boolean;
+  retested: boolean;
+  invalidated: boolean;
 }
 
-export interface SmartMoneyFilterSummary {
-  niftyTrend: 'ABOVE_VWAP' | 'BELOW_VWAP';
-  adx14: number;
-  rsi14: number;
-  rvol: number;
-  futuresOiBuildup: string;
-  oiFlow: 'POSITIVE' | 'NEGATIVE';
-  deltaFlow: 'POSITIVE' | 'NEGATIVE';
-  smcStructure: string;
-  hullSlope: 'RISING' | 'FALLING';
-  dualFlowAligned: boolean;
-  specialFilterPassed: boolean;
-  specialFilterNote: string;
+export interface MoneyFlowScoreBreakdown {
+  htfTrendConfirmation: number; // /20
+  hmaDirectionAndSlope: number; // /20
+  fvgQualityAndRetest: number; // /25
+  relativeVolume: number; // /20
+  supertrendConfirmation: number; // /15
+  total: number; // /100
 }
+
+export type MoneyFlowClassification =
+  | 'Strong BUY'
+  | 'Strong SELL'
+  | 'Good opportunity'
+  | 'Watchlist'
+  | 'No trade';
+
+export type RvolInterpretation = 'Weak' | 'Normal' | 'Good' | 'Strong' | 'Very strong';
 
 export interface MoneyFlowSignalRow {
   symbol: string;
@@ -56,15 +48,21 @@ export interface MoneyFlowSignalRow {
   sector: string;
   sectorChangePct?: number;
   direction: 'BUY' | 'SELL';
-  grade: 'STRICT 22/22' | 'HIGH SURGE' | 'SETUP';
+  grade: '6/6 CONFIRMED' | 'STRONG' | 'GOOD' | 'WATCHLIST';
+  classification: MoneyFlowClassification;
+  allSixMet: boolean;
   conditionsMet: number;
-  totalConditions: 22;
+  totalConditions: 6;
   listedAt: string;
   price: number;
   entryPrice: number;
   stopLoss: number;
   target1: number;
   target2: number;
+  target3: number;
+  riskR: number;
+  rrRatio: string;
+  atr14: number;
   changePercent: number;
   hlc3: number;
   vwap: number;
@@ -72,44 +70,53 @@ export interface MoneyFlowSignalRow {
   pdl: number;
   dayHigh: number;
   dayLow: number;
-  orHigh: number;
-  orLow: number;
-  rangePosPct: number;
   moneyFlowRs: number;
   moneyFlowCr: number;
   avgMoneyFlowCr: number;
+  rvol: number;
+  rvolInterpretation: RvolInterpretation;
   speed: number;
   glowSurge: number;
-  buyingPressurePct: number;
-  sellingPressurePct: number;
   bidAskRatio: number;
+  rejectionCandle: {
+    timeIST: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    isGreen: boolean;
+    bodyPct: number;
+    wickRejectionPct: number;
+    strongRejection: boolean;
+  };
   supertrend: {
     direction: 'BULLISH' | 'BEARISH';
+    prevCompletedDirection: 'BULLISH' | 'BEARISH';
     value: number;
     atr10: number;
     justTurned: boolean;
+  };
+  supertrend15m: {
+    direction: 'BULLISH' | 'BEARISH';
+    value: number;
   };
   hullSuite: {
     hma55: number;
     periodUsed: number;
     position: 'ABOVE' | 'BELOW';
     slope: 'UP' | 'DOWN';
+    slopeStrengthening: boolean;
   };
-  structure: {
-    tag: 'BULLISH BOS' | 'BULLISH CHoCH' | 'BEARISH BOS' | 'BEARISH CHoCH' | 'RANGE';
-    swingLevel: number;
+  hma15m: {
+    hma55: number;
+    periodUsed: number;
+    slope: 'RISING' | 'FALLING';
   };
-  orderBlock: {
-    type: 'BULLISH OB' | 'BEARISH OB';
-    low: number;
-    high: number;
-    time: string;
-    breakConfirmed: boolean;
-  };
-  greeksAndDerivatives: MoneyFlowGreeksData;
-  smartMoneyFilters: SmartMoneyFilterSummary;
+  fvg: MoneyFlowFvgZone | null;
+  scoreBreakdown: MoneyFlowScoreBreakdown;
   conditions: MoneyFlowConditionCheck[];
-  score: number;
+  score: number; // 0..100
+  tradeManagement: string[];
 }
 
 export interface MoneyFlowNiftyRegime {
@@ -122,22 +129,25 @@ export interface MoneyFlowNiftyRegime {
 
 export interface MoneyFlowScanReport {
   status: 'ok';
+  strategyName: string;
   generatedAt: string;
   istTime: string;
   isMidnightCleared: boolean;
   universeEvaluated: number;
+  confirmedBuyCount: number;
+  confirmedSellCount: number;
+  strongBuyCount: number;
+  strongSellCount: number;
   strictBuyCount: number;
   strictSellCount: number;
   niftyRegime: MoneyFlowNiftyRegime;
-  specialFilterStats: {
-    blockedContraBuys: number;
-    blockedContraSells: number;
-    ruleSummary: string;
-  };
-  indicatorSpecs: Array<{
-    component: string;
-    formula: string;
-    purpose: string;
+  indicatorSettings: Array<{
+    indicator: string;
+    setting: string;
+  }>;
+  tradeManagementRules: Array<{
+    situation: string;
+    action: string;
   }>;
   buySignals: MoneyFlowSignalRow[];
   sellSignals: MoneyFlowSignalRow[];
@@ -158,7 +168,7 @@ const INDEX_BLACKLIST = new Set([
   'NIFTYFPI',
 ]);
 
-interface WorkBar {
+export interface MoneyFlowWorkBar {
   timeIST: string;
   dateIST: string;
   secIST: number;
@@ -167,6 +177,10 @@ interface WorkBar {
   low: number;
   close: number;
   volume: number;
+}
+
+function round2(n: number): number {
+  return Number((Number(n) || 0).toFixed(2));
 }
 
 function parseTimeToSec(t?: string): number {
@@ -185,9 +199,9 @@ function formatSecToHHMMSS(sec: number): string {
 }
 
 /**
- * Weighted Moving Average series (Pine `ta.wma` equivalent).
+ * Weighted Moving Average series: WMA(values, period).
  */
-function computeWMA(values: number[], period: number): number[] {
+export function computeWMA(values: number[], period: number): number[] {
   const n = Math.max(1, Math.floor(period));
   const out = new Array<number>(values.length).fill(values[0] || 0);
   for (let i = 0; i < values.length; i++) {
@@ -204,10 +218,12 @@ function computeWMA(values: number[], period: number): number[] {
 }
 
 /**
- * Hull Moving Average (HMA 55, Close): WMA(2 * WMA(n/2) - WMA(n), round(sqrt(n))).
+ * Hull Moving Average: HMA(n) = WMA(2 * WMA(C, n/2) - WMA(C, n), round(sqrt(n))).
  */
-function computeHMA(closes: number[], targetPeriod: number = 55): { series: number[]; periodUsed: number } {
-  const periodUsed = closes.length >= targetPeriod + 8 ? targetPeriod : Math.max(9, Math.min(targetPeriod, closes.length - 5));
+export function computeHMA(closes: number[], targetPeriod: number = 55): { series: number[]; periodUsed: number } {
+  if (closes.length === 0) return { series: [], periodUsed: targetPeriod };
+  const periodUsed =
+    closes.length >= targetPeriod + 4 ? targetPeriod : Math.max(9, Math.min(targetPeriod, closes.length));
   const halfLen = Math.max(2, Math.floor(periodUsed / 2));
   const sqrtLen = Math.max(2, Math.round(Math.sqrt(periodUsed)));
   const wmaHalf = computeWMA(closes, halfLen);
@@ -216,290 +232,34 @@ function computeHMA(closes: number[], targetPeriod: number = 55): { series: numb
   return { series: computeWMA(diff, sqrtLen), periodUsed };
 }
 
-function computeRSISeries(closes: number[], period: number = 14): number[] {
-  const out = new Array<number>(closes.length).fill(50);
-  if (closes.length < 3) return out;
-  let avgGain = 0;
-  let avgLoss = 0;
-  const initLen = Math.min(period, closes.length - 1);
-  for (let i = 1; i <= initLen; i++) {
-    const d = closes[i] - closes[i - 1];
-    if (d > 0) avgGain += d;
-    else avgLoss -= d;
-  }
-  avgGain /= Math.max(1, initLen);
-  avgLoss /= Math.max(1, initLen);
-  for (let i = 1; i < closes.length; i++) {
-    if (i > initLen) {
-      const d = closes[i] - closes[i - 1];
-      avgGain = (avgGain * (period - 1) + (d > 0 ? d : 0)) / period;
-      avgLoss = (avgLoss * (period - 1) + (d < 0 ? -d : 0)) / period;
-    }
-    if (avgLoss <= 1e-8) {
-      out[i] = avgGain > 0 ? 85 : 50;
+/**
+ * Wilder ATR series (for both ATR 10 and ATR 14).
+ */
+export function computeAtrSeries(bars: MoneyFlowWorkBar[], period: number = 14): number[] {
+  const len = bars.length;
+  const out = new Array<number>(len).fill(0);
+  if (len === 0) return out;
+  for (let i = 0; i < len; i++) {
+    const b = bars[i];
+    if (i === 0) {
+      out[i] = Math.max(0.05, b.high - b.low);
     } else {
-      const rs = avgGain / avgLoss;
-      out[i] = Number((100 - 100 / (1 + rs)).toFixed(2));
+      const pc = bars[i - 1].close;
+      const tr = Math.max(b.high - b.low, Math.abs(b.high - pc), Math.abs(b.low - pc));
+      out[i] = (out[i - 1] * (period - 1) + tr) / period;
     }
   }
   return out;
-}
-
-function computeADXSeries(bars: WorkBar[], period: number = 14): number[] {
-  const n = bars.length;
-  const out = new Array<number>(n).fill(22);
-  if (n < period + 2) return out;
-
-  const tr = new Array<number>(n).fill(0);
-  const plusDM = new Array<number>(n).fill(0);
-  const minusDM = new Array<number>(n).fill(0);
-  for (let i = 1; i < n; i++) {
-    const h = bars[i].high;
-    const l = bars[i].low;
-    const pc = bars[i - 1].close;
-    tr[i] = Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc));
-    const upMove = h - bars[i - 1].high;
-    const dnMove = bars[i - 1].low - l;
-    plusDM[i] = upMove > dnMove && upMove > 0 ? upMove : 0;
-    minusDM[i] = dnMove > upMove && dnMove > 0 ? dnMove : 0;
-  }
-
-  let sTR = 0;
-  let sPDM = 0;
-  let sMDM = 0;
-  const dx = new Array<number>(n).fill(20);
-  for (let i = 1; i < n; i++) {
-    if (i <= period) {
-      sTR += tr[i];
-      sPDM += plusDM[i];
-      sMDM += minusDM[i];
-      if (i === period && sTR > 0) {
-        const pdi = (100 * sPDM) / sTR;
-        const mdi = (100 * sMDM) / sTR;
-        dx[i] = pdi + mdi > 0 ? (100 * Math.abs(pdi - mdi)) / (pdi + mdi) : 0;
-      }
-    } else {
-      sTR = sTR - sTR / period + tr[i];
-      sPDM = sPDM - sPDM / period + plusDM[i];
-      sMDM = sMDM - sMDM / period + minusDM[i];
-      const pdi = sTR > 0 ? (100 * sPDM) / sTR : 0;
-      const mdi = sTR > 0 ? (100 * sMDM) / sTR : 0;
-      dx[i] = pdi + mdi > 0 ? (100 * Math.abs(pdi - mdi)) / (pdi + mdi) : 0;
-    }
-  }
-
-  let adxVal = 20;
-  for (let i = period; i < n; i++) {
-    if (i < period * 2) {
-      let sum = 0;
-      let c = 0;
-      for (let k = period; k <= i; k++) {
-        sum += dx[k];
-        c++;
-      }
-      adxVal = c > 0 ? sum / c : 20;
-    } else {
-      adxVal = (adxVal * (period - 1) + dx[i]) / period;
-    }
-    out[i] = Number(adxVal.toFixed(2));
-  }
-  return out;
-}
-
-function normPdf(x: number): number {
-  return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
-}
-
-function normCdf(x: number): number {
-  const sign = x < 0 ? -1 : 1;
-  const ax = Math.abs(x) / Math.sqrt(2);
-  const t = 1 / (1 + 0.3275911 * ax);
-  const y =
-    1 -
-    (((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t) *
-      Math.exp(-ax * ax);
-  return 0.5 * (1 + sign * y);
-}
-
-function blackScholesGreeks(spot: number, strike: number, sigma: number, T: number, r: number = 0.068) {
-  const s = Math.max(1, spot);
-  const k = Math.max(1, strike);
-  const sig = Math.max(0.08, Math.min(1.5, sigma));
-  const t = Math.max(1 / 365, T);
-  const sqrtT = Math.sqrt(t);
-  const d1 = (Math.log(s / k) + (r + 0.5 * sig * sig) * t) / (sig * sqrtT);
-  const callDelta = normCdf(d1);
-  const putDelta = callDelta - 1;
-  const pdf = normPdf(d1);
-  const gamma = pdf / (s * sig * sqrtT);
-  const vega = (s * pdf * sqrtT) / 100;
-  return { callDelta, putDelta, gamma, vega };
-}
-
-function computeGreeksAndDerivatives(stock: ScannedStock, bars: WorkBar[], istDateStr: string): MoneyFlowGreeksData {
-  const spot = Math.max(1, Number(stock.price) || Number(stock.indicators?.close) || 100);
-  const chp = Number(stock.changePercent || 0);
-  const lotSize = stock.lotSize || (spot > 3000 ? 125 : spot > 1000 ? 250 : 500);
-
-  // Realized historical volatility from intraday bars to calibrate current IV + 252-session IVP
-  const logRets: number[] = [];
-  for (let i = 1; i < bars.length; i++) {
-    if (bars[i - 1].close > 0 && bars[i].close > 0) {
-      logRets.push(Math.log(bars[i].close / bars[i - 1].close));
-    }
-  }
-  let realizedAnnVol = 22;
-  const rollingVols: number[] = [];
-  if (logRets.length >= 10) {
-    for (let end = 10; end <= logRets.length; end++) {
-      const win = logRets.slice(end - 10, end);
-      const mean = win.reduce((a, b) => a + b, 0) / win.length;
-      const varSum = win.reduce((a, b) => a + (b - mean) * (b - mean), 0) / Math.max(1, win.length - 1);
-      const ann = Math.sqrt(varSum * 75 * 252) * 100;
-      rollingVols.push(Math.max(10, Math.min(85, ann)));
-    }
-    realizedAnnVol = rollingVols[rollingVols.length - 1] || 22;
-  }
-
-  const baseChainIv = Number(stock.greeks?.iv || stock.oiData?.optionChain?.[3]?.callIv || 0);
-  const iv = Number(
-    Math.max(11, Math.min(80, baseChainIv > 5 ? baseChainIv * 0.55 + realizedAnnVol * 0.45 : realizedAnnVol)).toFixed(2)
-  );
-
-  // Build 252-session reference distribution around baseline HV + rolling windows
-  let symHash = 0;
-  for (let i = 0; i < stock.symbol.length; i++) {
-    symHash = (symHash << 5) - symHash + stock.symbol.charCodeAt(i);
-    symHash |= 0;
-  }
-  const baseMedianVol = 15 + (Math.abs(symHash) % 14);
-  let belowCount = 0;
-  for (let d = 0; d < 252; d++) {
-    const refSample =
-      d < rollingVols.length
-        ? rollingVols[d]
-        : baseMedianVol + Math.sin((d + (Math.abs(symHash) % 37)) * 0.19) * 6.5 + Math.cos(d * 0.07) * 3.0;
-    if (refSample < iv) belowCount++;
-  }
-  const ivp = Number(((belowCount / 252) * 100).toFixed(1));
-  const ivRegime: MoneyFlowGreeksData['ivRegime'] =
-    ivp < 20 ? 'Low volatility regime' : ivp < 50 ? 'Moderate-low' : ivp <= 80 ? 'Elevated' : 'High volatility';
-
-  // Remaining expiry days (weekly/monthly horizon capped 3..25 trading days)
-  const dayOfMonth = Number(istDateStr.split('-')[2] || 12);
-  const daysToExpiry = Math.max(3, 28 - (dayOfMonth % 25));
-  const T = daysToExpiry / 365;
-  const sigma = iv / 100;
-
-  const currentOI = Number(stock.oiData?.openInterest || 14.5); // Lakhs
-  const oiChange = Number(stock.oiData?.changeInOI || 0);
-  const previousOI = Number(Math.max(0.1, currentOI - oiChange).toFixed(2));
-  const oiChangePct = Number(
-    (stock.oiData?.changeInOIPercent ?? (previousOI > 0 ? (oiChange / previousOI) * 100 : 0)).toFixed(2)
-  );
-  const pcr = Number((stock.oiData?.pcr || 1.0).toFixed(2));
-
-  let oiInterpretation: MoneyFlowGreeksData['oiInterpretation'] = 'Neutral';
-  if (chp > 0.1 && oiChange > 0) oiInterpretation = 'Long buildup';
-  else if (chp < -0.1 && oiChange > 0) oiInterpretation = 'Short buildup';
-  else if (chp > 0.1 && oiChange < 0) oiInterpretation = 'Short covering';
-  else if (chp < -0.1 && oiChange < 0) oiInterpretation = 'Long unwinding';
-  else if (stock.oiData?.buildup === 'LONG_BUILDUP') oiInterpretation = 'Long buildup';
-  else if (stock.oiData?.buildup === 'SHORT_BUILDUP') oiInterpretation = 'Short buildup';
-  else if (stock.oiData?.buildup === 'SHORT_COVERING') oiInterpretation = 'Short covering';
-  else if (stock.oiData?.buildup === 'LONG_UNWINDING') oiInterpretation = 'Long unwinding';
-
-  const step = spot > 5000 ? 100 : spot > 2500 ? 50 : spot > 1000 ? 20 : spot > 400 ? 10 : 5;
-  const atm = Math.round(spot / step) * step;
-  const chain =
-    stock.oiData?.optionChain && stock.oiData.optionChain.length > 0
-      ? stock.oiData.optionChain
-      : [-2, -1, 0, 1, 2].map((off) => ({
-          strike: atm + off * step,
-          callOI: Number((currentOI * 0.15).toFixed(2)),
-          callChangeOI: Number((oiChange * (chp >= 0 ? -0.1 : 0.18)).toFixed(2)),
-          putOI: Number((currentOI * 0.15 * pcr).toFixed(2)),
-          putChangeOI: Number((oiChange * (chp >= 0 ? 0.18 : -0.1)).toFixed(2)),
-          callLtp: Math.max(1, spot - (atm + off * step) + spot * 0.01),
-          putLtp: Math.max(1, atm + off * step - spot + spot * 0.01),
-        }));
-
-  // Compute Σ(OI * Greek * LotSize) across CE & PE strikes with signed Call (+Delta) & Put (-|Delta|)
-  let sumSignedDE = 0;
-  let sumActiveFlowDE = 0;
-  let sumGEX = 0;
-  let sumVEX = 0;
-  let atmDelta = 0.5;
-  let atmGamma = 0;
-  let atmVega = 0;
-  let minAtmDist = Infinity;
-
-  for (const row of chain) {
-    const g = blackScholesGreeks(spot, row.strike, sigma, T);
-    const d = Math.abs(row.strike - spot);
-    if (d < minAtmDist) {
-      minAtmDist = d;
-      atmDelta = Number(g.callDelta.toFixed(3));
-      atmGamma = Number(g.gamma.toFixed(5));
-      atmVega = Number(g.vega.toFixed(2));
-    }
-
-    // Standard contract-scaled OI (Lakhs * 1000 normalized exposure units so DE/GEX/VEX remain readable)
-    const callContracts = row.callOI * 1000;
-    const putContracts = row.putOI * 1000;
-    sumSignedDE += (callContracts * g.callDelta + putContracts * g.putDelta) * lotSize;
-    sumGEX += (callContracts + putContracts) * g.gamma * lotSize;
-    sumVEX += (callContracts + putContracts) * g.vega * lotSize;
-
-    // Net directional Delta Flow: Call covering (-dCallOI * +delta) + Put support writing (-dPutOI * -|delta|)
-    const callFlowDelta = -(Number(row.callChangeOI) || 0) * 1000 * g.callDelta;
-    const putFlowDelta = -(Number(row.putChangeOI) || 0) * 1000 * g.putDelta;
-    sumActiveFlowDE += (callFlowDelta + putFlowDelta) * lotSize;
-  }
-
-  // Combine Chain Delta Flow with futures OI directional delta and order-book delta bias
-  const futuresDeltaComponent =
-    (oiInterpretation === 'Long buildup'
-      ? Math.abs(oiChange)
-      : oiInterpretation === 'Short buildup'
-      ? -Math.abs(oiChange)
-      : oiInterpretation === 'Short covering'
-      ? Math.abs(oiChange) * 0.65
-      : -Math.abs(oiChange) * 0.65) *
-    1000 *
-    lotSize;
-  const combinedDeltaExposure = Number(((sumActiveFlowDE * 0.65 + futuresDeltaComponent * 0.35 + sumSignedDE * 0.08) / 1e5).toFixed(2));
-  const deltaFlowDirection: 'POSITIVE' | 'NEGATIVE' = combinedDeltaExposure >= 0 ? 'POSITIVE' : 'NEGATIVE';
-  const oiFlowDirection: 'POSITIVE' | 'NEGATIVE' =
-    oiInterpretation === 'Long buildup' || oiInterpretation === 'Short covering' ? 'POSITIVE' : 'NEGATIVE';
-
-  return {
-    delta: atmDelta,
-    gamma: atmGamma,
-    vega: atmVega,
-    deltaExposure: combinedDeltaExposure,
-    deltaFlowDirection,
-    gammaExposure: Number((sumGEX / 1e5).toFixed(2)),
-    gammaNote: 'Gamma sensitivity only (raw OI cannot reveal net dealer long/short gamma)',
-    vegaExposure: Number((sumVEX / 1e5).toFixed(2)),
-    currentOI: Number(currentOI.toFixed(2)),
-    previousOI,
-    oiChange: Number(oiChange.toFixed(2)),
-    oiChangePct,
-    oiInterpretation,
-    oiFlowDirection,
-    iv,
-    ivp,
-    ivRegime,
-    pcr,
-    lotSize,
-  };
 }
 
 /**
- * Wilder ATR(10) + Supertrend(10, 2).
+ * Supertrend(ATR 10, Multiplier 2.0) — standard non-repainting closed-bar band progression.
  */
-function computeSupertrend(bars: WorkBar[], atrLen: number = 10, mult: number = 2): {
+export function computeSupertrend(
+  bars: MoneyFlowWorkBar[],
+  atrLen: number = 10,
+  mult: number = 2.0
+): {
   dir: Array<1 | -1>;
   line: number[];
   atr: number[];
@@ -507,8 +267,7 @@ function computeSupertrend(bars: WorkBar[], atrLen: number = 10, mult: number = 
   turnedBear: boolean[];
 } {
   const len = bars.length;
-  const tr = new Array<number>(len).fill(0);
-  const atr = new Array<number>(len).fill(0);
+  const atr = computeAtrSeries(bars, atrLen);
   const dir = new Array<1 | -1>(len).fill(1);
   const finalUpper = new Array<number>(len).fill(0);
   const finalLower = new Array<number>(len).fill(0);
@@ -518,15 +277,6 @@ function computeSupertrend(bars: WorkBar[], atrLen: number = 10, mult: number = 
 
   for (let i = 0; i < len; i++) {
     const b = bars[i];
-    if (i === 0) {
-      tr[i] = Math.max(0.05, b.high - b.low);
-      atr[i] = tr[i];
-    } else {
-      const pc = bars[i - 1].close;
-      tr[i] = Math.max(b.high - b.low, Math.abs(b.high - pc), Math.abs(b.low - pc));
-      atr[i] = (atr[i - 1] * (atrLen - 1) + tr[i]) / atrLen;
-    }
-
     const hl2 = (b.high + b.low) / 2;
     const basicUpper = hl2 + mult * atr[i];
     const basicLower = hl2 - mult * atr[i];
@@ -563,8 +313,149 @@ function computeSupertrend(bars: WorkBar[], atrLen: number = 10, mult: number = 
 }
 
 /**
- * Simple Moving Average over trailing `period` elements up to index `i`.
+ * Resample 5-minute OHLCV bars into exact NSE 15-minute buckets (09:15, 09:30, 09:45...).
  */
+export function resampleBarsTo15m(bars5m: MoneyFlowWorkBar[]): Array<MoneyFlowWorkBar & { bucketEndSecIST: number }> {
+  const buckets = new Map<string, MoneyFlowWorkBar & { bucketEndSecIST: number }>();
+  const startOfDaySec = 9 * 3600 + 15 * 60;
+
+  for (const b of bars5m) {
+    const slot = Math.max(0, Math.floor((b.secIST - startOfDaySec) / 900));
+    const bucketSec = startOfDaySec + slot * 900;
+    const key = `${b.dateIST}_${bucketSec}`;
+    const existing = buckets.get(key);
+    if (!existing) {
+      buckets.set(key, {
+        dateIST: b.dateIST,
+        timeIST: formatSecToHHMMSS(bucketSec),
+        secIST: bucketSec,
+        bucketEndSecIST: b.secIST,
+        open: b.open,
+        high: b.high,
+        low: b.low,
+        close: b.close,
+        volume: b.volume,
+      });
+    } else {
+      existing.high = Math.max(existing.high, b.high);
+      existing.low = Math.min(existing.low, b.low);
+      existing.close = b.close;
+      existing.volume += b.volume;
+      existing.bucketEndSecIST = Math.max(existing.bucketEndSecIST, b.secIST);
+    }
+  }
+
+  return Array.from(buckets.values()).sort(
+    (a, b) => a.dateIST.localeCompare(b.dateIST) || a.secIST - b.secIST
+  );
+}
+
+/**
+ * Detect latest active (unmitigated preferred) 3-candle Fair Value Gap prior to bar index `trigIdx`.
+ * Bullish FVG: Low(Candle3) > High(Candle1) -> Bottom = High(C1), Top = Low(C3)
+ * Bearish FVG: High(Candle3) < Low(Candle1) -> Bottom = High(C3), Top = Low(C1)
+ */
+export function findBestPriorFvg(
+  bars: MoneyFlowWorkBar[],
+  trigIdx: number,
+  side: 'BUY' | 'SELL',
+  lookbackBars: number = 40
+): MoneyFlowFvgZone | null {
+  const bTrig = bars[trigIdx];
+  const minEndIdx = Math.max(2, trigIdx - lookbackBars);
+  let fallbackMitigated: MoneyFlowFvgZone | null = null;
+
+  for (let c3Idx = trigIdx - 1; c3Idx >= minEndIdx; c3Idx--) {
+    const c1 = bars[c3Idx - 2];
+    const c3 = bars[c3Idx];
+    if (!c1 || !c3) continue;
+
+    if (side === 'BUY') {
+      if (c3.low <= c1.high) continue;
+      const bottom = round2(c1.high);
+      const top = round2(c3.low);
+
+      // Check bars between c3Idx + 1 and trigIdx - 1 for invalidation or prior mitigation
+      let invalidated = false;
+      let priorTouched = false;
+      for (let m = c3Idx + 1; m < trigIdx; m++) {
+        if (bars[m].close < bottom) {
+          invalidated = true;
+          break;
+        }
+        if (bars[m].low <= top) {
+          priorTouched = true;
+        }
+      }
+      if (invalidated) continue;
+
+      const retestedNow = bTrig.low <= top && bTrig.close >= bottom;
+      const zone: MoneyFlowFvgZone = {
+        type: 'BULLISH_FVG',
+        bottom,
+        top,
+        formedAt: c3.timeIST,
+        formedBarIdx: c3Idx,
+        isFresh: !priorTouched,
+        retested: retestedNow,
+        invalidated: bTrig.close < bottom,
+      };
+      if (retestedNow && !priorTouched) return zone;
+      if (retestedNow && !fallbackMitigated) fallbackMitigated = zone;
+      else if (!fallbackMitigated) fallbackMitigated = zone;
+    } else {
+      if (c3.high >= c1.low) continue;
+      const bottom = round2(c3.high);
+      const top = round2(c1.low);
+
+      let invalidated = false;
+      let priorTouched = false;
+      for (let m = c3Idx + 1; m < trigIdx; m++) {
+        if (bars[m].close > top) {
+          invalidated = true;
+          break;
+        }
+        if (bars[m].high >= bottom) {
+          priorTouched = true;
+        }
+      }
+      if (invalidated) continue;
+
+      const retestedNow = bTrig.high >= bottom && bTrig.close <= top;
+      const zone: MoneyFlowFvgZone = {
+        type: 'BEARISH_FVG',
+        bottom,
+        top,
+        formedAt: c3.timeIST,
+        formedBarIdx: c3Idx,
+        isFresh: !priorTouched,
+        retested: retestedNow,
+        invalidated: bTrig.close > top,
+      };
+      if (retestedNow && !priorTouched) return zone;
+      if (retestedNow && !fallbackMitigated) fallbackMitigated = zone;
+      else if (!fallbackMitigated) fallbackMitigated = zone;
+    }
+  }
+
+  return fallbackMitigated;
+}
+
+export function classifyRvol(rvol: number): RvolInterpretation {
+  if (rvol >= 2.0) return 'Very strong';
+  if (rvol >= 1.5) return 'Strong';
+  if (rvol >= 1.3) return 'Good';
+  if (rvol >= 1.0) return 'Normal';
+  return 'Weak';
+}
+
+export function classifyFinUrlScore(score: number, side: 'BUY' | 'SELL'): MoneyFlowClassification {
+  if (score >= 85) return side === 'BUY' ? 'Strong BUY' : 'Strong SELL';
+  if (score >= 75) return 'Good opportunity';
+  if (score >= 60) return 'Watchlist';
+  return 'No trade';
+}
+
 function smaAt(values: number[], idx: number, period: number): number {
   const start = Math.max(0, idx - period + 1);
   let sum = 0;
@@ -576,126 +467,13 @@ function smaAt(values: number[], idx: number, period: number): number {
   return cnt > 0 ? sum / cnt : values[idx] || 0;
 }
 
-interface StructureSnapshot {
-  tag: 'BULLISH BOS' | 'BULLISH CHoCH' | 'BEARISH BOS' | 'BEARISH CHoCH' | 'RANGE';
-  swingLevel: number;
-  bullOB: { low: number; high: number; time: string } | null;
-  bearOB: { low: number; high: number; time: string } | null;
-}
-
-/**
- * Computes bar-by-bar Market Structure (BOS / CHoCH) & Order Blocks (last opposite candle before BOS).
- */
-function computeStructureTimeline(bars: WorkBar[]): StructureSnapshot[] {
-  const len = bars.length;
-  const out: StructureSnapshot[] = new Array(len);
-
-  let marketBias: 1 | -1 = 1;
-  let swingHigh = bars[0]?.high || 0;
-  let swingHighIdx = 0;
-  let swingLow = bars[0]?.low || 0;
-  let swingLowIdx = 0;
-  let bullOB: { low: number; high: number; time: string } | null = null;
-  let bearOB: { low: number; high: number; time: string } | null = null;
-  let activeTag: StructureSnapshot['tag'] = 'RANGE';
-  let activeSwing = bars[0]?.close || 0;
-
-  for (let i = 0; i < len; i++) {
-    // Update fractal pivot confirmed 2 bars ago (no look-ahead leak)
-    if (i >= 4) {
-      const p = i - 2;
-      const pb = bars[p];
-      if (
-        pb.high >= bars[p - 1].high &&
-        pb.high >= bars[p - 2].high &&
-        pb.high >= bars[p + 1].high &&
-        pb.high >= bars[p + 2].high
-      ) {
-        swingHigh = pb.high;
-        swingHighIdx = p;
-      }
-      if (
-        pb.low <= bars[p - 1].low &&
-        pb.low <= bars[p - 2].low &&
-        pb.low <= bars[p + 1].low &&
-        pb.low <= bars[p + 2].low
-      ) {
-        swingLow = pb.low;
-        swingLowIdx = p;
-      }
-    }
-
-    const cur = bars[i];
-    if (cur.close > swingHigh && i - swingHighIdx >= 2) {
-      activeTag = marketBias === -1 ? 'BULLISH CHoCH' : 'BULLISH BOS';
-      activeSwing = swingHigh;
-      marketBias = 1;
-      // Find last bearish candle before the bullish displacement leg
-      for (let back = i - 1; back >= Math.max(0, i - 10); back--) {
-        if (bars[back].close < bars[back].open) {
-          bullOB = {
-            low: bars[back].low,
-            high: bars[back].high,
-            time: bars[back].timeIST,
-          };
-          break;
-        }
-      }
-      if (!bullOB) {
-        const ref = bars[Math.max(0, swingLowIdx)];
-        bullOB = { low: ref.low, high: ref.high, time: ref.timeIST };
-      }
-      swingHigh = cur.high;
-      swingHighIdx = i;
-    } else if (cur.close < swingLow && i - swingLowIdx >= 2) {
-      activeTag = marketBias === 1 ? 'BEARISH CHoCH' : 'BEARISH BOS';
-      activeSwing = swingLow;
-      marketBias = -1;
-      // Find last bullish candle before the bearish displacement leg
-      for (let back = i - 1; back >= Math.max(0, i - 10); back--) {
-        if (bars[back].close > bars[back].open) {
-          bearOB = {
-            low: bars[back].low,
-            high: bars[back].high,
-            time: bars[back].timeIST,
-          };
-          break;
-        }
-      }
-      if (!bearOB) {
-        const ref = bars[Math.max(0, swingHighIdx)];
-        bearOB = { low: ref.low, high: ref.high, time: ref.timeIST };
-      }
-      swingLow = cur.low;
-      swingLowIdx = i;
-    }
-
-    // Also maintain rolling demand/supply OB from nearest recent opposite swing candle if not triggered yet
-    if (!bullOB && cur.close > cur.open && i >= 1 && bars[i - 1].close < bars[i - 1].open) {
-      bullOB = { low: bars[i - 1].low, high: bars[i - 1].high, time: bars[i - 1].timeIST };
-    }
-    if (!bearOB && cur.close < cur.open && i >= 1 && bars[i - 1].close > bars[i - 1].open) {
-      bearOB = { low: bars[i - 1].low, high: bars[i - 1].high, time: bars[i - 1].timeIST };
-    }
-
-    out[i] = {
-      tag: activeTag,
-      swingLevel: Number(activeSwing.toFixed(2)),
-      bullOB: bullOB ? { ...bullOB } : null,
-      bearOB: bearOB ? { ...bearOB } : null,
-    };
-  }
-
-  return out;
-}
-
 function buildWorkBars(
   stock: ScannedStock,
   extendedBars: IntradayCandleBar[] | undefined,
   fallbackCandles: Candle[] | undefined,
   todayDateIST: string
-): WorkBar[] {
-  let raw: WorkBar[] = [];
+): MoneyFlowWorkBar[] {
+  let raw: MoneyFlowWorkBar[] = [];
 
   if (Array.isArray(extendedBars) && extendedBars.length >= 6) {
     raw = extendedBars.map((b) => ({
@@ -725,11 +503,8 @@ function buildWorkBars(
     });
   }
 
-  if (raw.length === 0) {
-    return [];
-  }
+  if (raw.length === 0) return [];
 
-  // Sync live price onto the trailing bar accurately
   const last = raw[raw.length - 1];
   const lp = Number(stock.price) || last.close;
   raw[raw.length - 1] = {
@@ -742,9 +517,384 @@ function buildWorkBars(
   return raw;
 }
 
-/**
- * Evaluates all NSE F&O stocks against the Smart Money Flow + Supertrend(10,2) + Hull Suite(HMA 55) + BOS/CHoCH + Order Block formula.
- */
+const TRADE_MANAGEMENT_RULES = [
+  { situation: 'Entry triggered', action: 'Open position above rejection High (BUY) / below Low (SELL)' },
+  { situation: 'Target 1 reached (+1R)', action: 'Book 50% quantity' },
+  { situation: 'Target 2 reached (+2R)', action: 'Book 30% quantity (1:2 target)' },
+  { situation: 'Target 3 reached (+3R)', action: 'Exit remaining 20% quantity' },
+  { situation: 'Supertrend reverses', action: 'Exit remaining position immediately' },
+  { situation: 'Stop-loss hit', action: 'Exit immediately (min(FVG Bottom, Low) - 0.1*ATR14)' },
+  { situation: 'FVG invalidated before entry', action: 'Cancel setup before entry trigger' },
+];
+
+const INDICATOR_SETTINGS = [
+  { indicator: 'HMA', setting: '55  |  WMA(2·WMA(C, n/2) − WMA(C, n), √n)' },
+  { indicator: 'FVG', setting: '3-candle imbalance (C3.Low > C1.High Bull | C3.High < C1.Low Bear)' },
+  { indicator: 'Volume SMA', setting: '20 bars (RelativeVolume = CurrentVol / SMA(Vol, 20))' },
+  { indicator: 'Volume spike', setting: '1.5× (Strong ≥1.5× | Very strong ≥2.0×)' },
+  { indicator: 'Supertrend ATR / Mult', setting: 'ATR 10 • Multiplier 2.0 (Prev completed bar anti-repaint)' },
+  { indicator: 'Timeframes', setting: '5m Entry + 15m Trend Confirmation (Min 1:2 R:R)' },
+];
+
+export function evaluateStockFinUrlStrategy(params: {
+  stock: ScannedStock;
+  bars: MoneyFlowWorkBar[];
+  sectorChangePct: number;
+  istDateStr: string;
+  istTimeStr: string;
+}): { buyRow: MoneyFlowSignalRow | null; sellRow: MoneyFlowSignalRow | null } {
+  const { stock, bars, sectorChangePct, istDateStr, istTimeStr } = params;
+  if (bars.length < 10) return { buyRow: null, sellRow: null };
+
+  const closes5 = bars.map((b) => b.close);
+  const hlc3 = bars.map((b) => (b.high + b.low + b.close) / 3);
+  const vols5 = bars.map((b) => b.volume);
+  const mf5 = bars.map((b, i) => b.volume * hlc3[i]);
+
+  const atr14Arr = computeAtrSeries(bars, 14);
+  const st5 = computeSupertrend(bars, 10, 2.0);
+  const { series: hma5, periodUsed: hma5Period } = computeHMA(closes5, 55);
+
+  const bars15m = resampleBarsTo15m(bars);
+  const closes15 = bars15m.map((b) => b.close);
+  const st15 = computeSupertrend(bars15m, 10, 2.0);
+  const { series: hma15, periodUsed: hma15Period } = computeHMA(closes15, 55);
+
+  const lastDate = bars[bars.length - 1].dateIST;
+  const firstTodayIdx = bars.findIndex((b) => b.dateIST === lastDate);
+  const scanStartIdx = Math.max(3, firstTodayIdx >= 0 ? firstTodayIdx : bars.length - 10);
+
+  const priorDayBars = bars.filter((b) => b.dateIST < lastDate);
+  const priorDate = priorDayBars.length > 0 ? priorDayBars[priorDayBars.length - 1].dateIST : '';
+  const prevSess = priorDate ? priorDayBars.filter((b) => b.dateIST === priorDate) : [];
+  const pdh = round2(prevSess.length > 0 ? Math.max(...prevSess.map((b) => b.high)) : bars[scanStartIdx].high);
+  const pdl = round2(prevSess.length > 0 ? Math.min(...prevSess.map((b) => b.low)) : bars[scanStartIdx].low);
+
+  // Build running 5m VWAP + Day High/Low up to bar i
+  const vwapSeries = new Array<number>(bars.length).fill(hlc3[0]);
+  const dayHighSeries = new Array<number>(bars.length).fill(bars[0].high);
+  const dayLowSeries = new Array<number>(bars.length).fill(bars[0].low);
+  let cumTPV = 0;
+  let cumVol = 0;
+  let rHigh = bars[scanStartIdx].high;
+  let rLow = bars[scanStartIdx].low;
+  for (let k = scanStartIdx; k < bars.length; k++) {
+    if (bars[k].high > rHigh) rHigh = bars[k].high;
+    if (bars[k].low < rLow) rLow = bars[k].low;
+    cumTPV += hlc3[k] * bars[k].volume;
+    cumVol += bars[k].volume;
+    dayHighSeries[k] = rHigh;
+    dayLowSeries[k] = rLow;
+    vwapSeries[k] = cumVol > 0 ? cumTPV / cumVol : Number(stock.indicators?.vwap) || hlc3[k];
+  }
+
+  // Helper: map 5m bar index `i` to the most recent completed/active 15m bar index (anti-repainting: prefer previous completed 15m bar when available)
+  let ptr15 = 0;
+  const map15mIndex = (i5: number): number => {
+    const b5 = bars[i5];
+    while (
+      ptr15 + 1 < bars15m.length &&
+      (bars15m[ptr15 + 1].dateIST < b5.dateIST ||
+        (bars15m[ptr15 + 1].dateIST === b5.dateIST && bars15m[ptr15 + 1].secIST <= b5.secIST))
+    ) {
+      ptr15++;
+    }
+    return ptr15;
+  };
+
+  const evaluateSideAtBar = (i: number, side: 'BUY' | 'SELL'): MoneyFlowSignalRow | null => {
+    const b = bars[i];
+    const prev = bars[i - 1];
+    const isLatestBar = i === bars.length - 1;
+    const h15Idx = map15mIndex(i);
+    // Use completed 15m bar direction to avoid intrabar repainting when available
+    const completed15Idx =
+      h15Idx >= 1 && b.secIST - bars15m[h15Idx].secIST < 600 ? h15Idx - 1 : h15Idx;
+
+    // 1. 15-minute HMA 55 rising/falling
+    const hma15Cur = hma15[h15Idx] ?? b.close;
+    const hma15Prev = hma15[Math.max(0, h15Idx - 1)] ?? hma15Cur;
+    const hma15Rising = hma15Cur > hma15Prev;
+    const hma15Falling = hma15Cur < hma15Prev;
+    const cond1HtfHma = side === 'BUY' ? hma15Rising : hma15Falling;
+
+    // 2. 15-minute Supertrend(10, 2.0) bullish/bearish (non-repainting)
+    const st15Dir = st15.dir[completed15Idx] ?? 1;
+    const cond2HtfSt = side === 'BUY' ? st15Dir === 1 : st15Dir === -1;
+
+    // 3. 5-minute close vs HMA 55 & 5m HMA direction/slope
+    const hma5Cur = hma5[i];
+    const hma5Prev = hma5[i - 1] ?? hma5Cur;
+    const hma5Prev2 = hma5[Math.max(0, i - 2)] ?? hma5Prev;
+    const slope1 = hma5Cur - hma5Prev;
+    const slope0 = hma5Prev - hma5Prev2;
+    const hma5BiasOk = side === 'BUY' ? b.close > hma5Cur && slope1 > 0 : b.close < hma5Cur && slope1 < 0;
+    const slopeStrengthening =
+      side === 'BUY' ? slope1 > 0 && slope1 >= slope0 : slope1 < 0 && slope1 <= slope0;
+    const cond3Hma5 = hma5BiasOk;
+
+    // 4 & 5. Fair Value Gap formed & retested
+    const fvg = findBestPriorFvg(bars, i, side, 40);
+    const cond4FvgFormed = Boolean(fvg && !fvg.invalidated);
+    const cond5FvgRetest = Boolean(fvg && fvg.retested && !fvg.invalidated);
+
+    // 6. Rejection candle + Volume RVOL >= 1.5x + 5m Supertrend non-repainting bullish/bearish
+    const avgVol20 = smaAt(vols5, Math.max(0, i - 1), 20);
+    const avgMf20 = smaAt(mf5, Math.max(0, i - 1), 20);
+    const effectiveVol =
+      isLatestBar && prev && prev.volume > 100 && b.volume < prev.volume * 0.4
+        ? Math.max(b.volume, Math.round(prev.volume * 0.9))
+        : b.volume;
+    const rvol = round2(avgVol20 > 0 ? effectiveVol / avgVol20 : Number(stock.indicators?.rvol || 1));
+    const speed = rvol;
+    const glowSurge = round2(avgMf20 > 0 ? (effectiveVol * hlc3[i]) / avgMf20 : speed);
+
+    const range = Math.max(0.05, b.high - b.low);
+    const bodyPct = Math.round((Math.abs(b.close - b.open) / range) * 100);
+    const lowerWickPct = Math.round(((Math.min(b.open, b.close) - b.low) / range) * 100);
+    const upperWickPct = Math.round(((b.high - Math.max(b.open, b.close)) / range) * 100);
+    const wickRejectionPct = side === 'BUY' ? lowerWickPct : upperWickPct;
+
+    const isGreen = b.close > b.open;
+    const isRed = b.close < b.open;
+    const strongRejection =
+      side === 'BUY'
+        ? isGreen && (wickRejectionPct >= 22 || (b.close - b.low) / range >= 0.65)
+        : isRed && (wickRejectionPct >= 22 || (b.high - b.close) / range >= 0.65);
+
+    // Non-repainting Supertrend check: previous completed candle and current bar aligned
+    const st5PrevDir = st5.dir[Math.max(0, i - 1)];
+    const st5CurDir = st5.dir[i];
+    const st5Aligned =
+      side === 'BUY' ? st5CurDir === 1 && st5PrevDir === 1 : st5CurDir === -1 && st5PrevDir === -1;
+
+    const cond6RejectVolSt =
+      (side === 'BUY' ? isGreen : isRed) && rvol >= 1.5 && st5Aligned;
+
+    // 100-Point FinURL Smart Money Scoring System
+    const htfTrendConfirmation = cond1HtfHma && cond2HtfSt ? 20 : cond1HtfHma || cond2HtfSt ? 10 : 0;
+    const hmaDirectionAndSlope =
+      (cond3Hma5 ? 10 : (side === 'BUY' ? b.close > hma5Cur : b.close < hma5Cur) ? 5 : 0) +
+      (slopeStrengthening ? 10 : (side === 'BUY' ? slope1 > 0 : slope1 < 0) ? 5 : 0);
+    const fvgQualityAndRetest =
+      (cond4FvgFormed ? (fvg!.isFresh ? 10 : 6) : 0) +
+      (cond5FvgRetest ? 10 : 0) +
+      (strongRejection ? 5 : (side === 'BUY' ? isGreen : isRed) ? 2 : 0);
+    const relativeVolume = rvol >= 2.0 ? 20 : rvol >= 1.5 ? 15 : rvol >= 1.3 ? 10 : rvol >= 1.0 ? 5 : 0;
+    const supertrendConfirmation = st5Aligned ? 15 : st5CurDir === (side === 'BUY' ? 1 : -1) ? 8 : 0;
+
+    const score =
+      htfTrendConfirmation +
+      hmaDirectionAndSlope +
+      fvgQualityAndRetest +
+      relativeVolume +
+      supertrendConfirmation;
+
+    const conditions: MoneyFlowConditionCheck[] = [
+      {
+        step: 1,
+        label: `15m HMA(55) ${side === 'BUY' ? 'Rising' : 'Falling'}`,
+        passed: cond1HtfHma,
+        detail: `15m HMA ₹${round2(hma15Cur)} vs prev ₹${round2(hma15Prev)}`,
+      },
+      {
+        step: 2,
+        label: `15m Supertrend(10,2) ${side === 'BUY' ? 'Bullish' : 'Bearish'}`,
+        passed: cond2HtfSt,
+        detail: `15m ST ${st15Dir === 1 ? 'BULLISH' : 'BEARISH'} @ ₹${round2(st15.line[completed15Idx] || b.close)}`,
+      },
+      {
+        step: 3,
+        label: `5m Close ${side === 'BUY' ? '>' : '<'} HMA(${hma5Period})`,
+        passed: cond3Hma5,
+        detail: `Close ₹${round2(b.close)} vs HMA ₹${round2(hma5Cur)}`,
+      },
+      {
+        step: 4,
+        label: `${side === 'BUY' ? 'Bullish' : 'Bearish'} FVG Formed`,
+        passed: cond4FvgFormed,
+        detail: fvg
+          ? `FVG ₹${fvg.bottom}–₹${fvg.top} (${fvg.isFresh ? 'Unmitigated' : 'Tested'} @ ${fvg.formedAt})`
+          : 'No unmitigated 3-candle FVG in last 40 bars',
+      },
+      {
+        step: 5,
+        label: `Retrace into ${side === 'BUY' ? 'Bullish' : 'Bearish'} FVG Zone`,
+        passed: cond5FvgRetest,
+        detail: cond5FvgRetest && fvg ? `Retested ₹${fvg.bottom}–₹${fvg.top}` : 'Awaiting FVG pullback retest',
+      },
+      {
+        step: 6,
+        label: `${side === 'BUY' ? 'Bullish' : 'Bearish'} Rejection + RVOL >= 1.5x + 5m ST`,
+        passed: cond6RejectVolSt,
+        detail: `${isGreen ? 'Green' : isRed ? 'Red' : 'Doji'} • RVOL ${rvol}x (${classifyRvol(rvol)}) • 5m ST ${st5CurDir === 1 ? 'BULL' : 'BEAR'}`,
+      },
+    ];
+
+    const conditionsMet = conditions.filter((c) => c.passed).length;
+    const allSixMet = conditionsMet === 6;
+
+    // Exact Entry, Stop Loss & T1/T2/T3 Targets
+    const atr14 = Math.max(0.1, atr14Arr[i] || b.close * 0.005);
+    let entryPrice: number;
+    let stopLoss: number;
+    if (side === 'BUY') {
+      entryPrice = round2(b.high);
+      const slBase = fvg ? Math.min(fvg.bottom, b.low) : b.low;
+      stopLoss = round2(Math.max(0.05, slBase - 0.1 * atr14));
+    } else {
+      entryPrice = round2(b.low);
+      const slBase = fvg ? Math.max(fvg.top, b.high) : b.high;
+      stopLoss = round2(slBase + 0.1 * atr14);
+    }
+
+    const riskR = round2(Math.max(0.05, side === 'BUY' ? entryPrice - stopLoss : stopLoss - entryPrice));
+    const target1 = round2(side === 'BUY' ? entryPrice + riskR : Math.max(0.05, entryPrice - riskR));
+    const target2 = round2(side === 'BUY' ? entryPrice + 2 * riskR : Math.max(0.05, entryPrice - 2 * riskR));
+    const target3 = round2(side === 'BUY' ? entryPrice + 3 * riskR : Math.max(0.05, entryPrice - 3 * riskR));
+
+    // Authentic trigger bar confirmation timestamp capped at current IST time
+    const barConfirmSec = Math.min(15 * 3600 + 29 * 60 + 55, b.secIST + 299);
+    const nowParts = istTimeStr.split(':').map((x) => parseInt(x, 10) || 0);
+    const nowSec = (nowParts[0] || 0) * 3600 + (nowParts[1] || 0) * 60 + (nowParts[2] || 0);
+    const isMarketToday = b.dateIST === istDateStr && nowSec >= 9 * 3600 + 15 * 60 && nowSec <= 15 * 3600 + 30 * 60;
+    const listedAt = formatSecToHHMMSS(isMarketToday ? Math.min(nowSec, barConfirmSec) : barConfirmSec);
+
+    const livePrice = round2(Number(stock.price) || b.close);
+    const classification = classifyFinUrlScore(score, side);
+    const grade: MoneyFlowSignalRow['grade'] = allSixMet
+      ? '6/6 CONFIRMED'
+      : score >= 85
+        ? 'STRONG'
+        : score >= 75
+          ? 'GOOD'
+          : 'WATCHLIST';
+
+    return {
+      symbol: stock.symbol,
+      name: stock.name,
+      sector: stock.sector || 'NSE F&O',
+      sectorChangePct: round2(sectorChangePct),
+      direction: side,
+      grade,
+      classification,
+      allSixMet,
+      conditionsMet,
+      totalConditions: 6,
+      listedAt,
+      price: livePrice,
+      entryPrice,
+      stopLoss,
+      target1,
+      target2,
+      target3,
+      riskR,
+      rrRatio: '1:2 / 1:3',
+      atr14: round2(atr14),
+      changePercent: round2(Number(stock.changePercent) || 0),
+      hlc3: round2(hlc3[i]),
+      vwap: round2(vwapSeries[i] || livePrice),
+      pdh,
+      pdl,
+      dayHigh: round2(dayHighSeries[i] || livePrice),
+      dayLow: round2(dayLowSeries[i] || livePrice),
+      moneyFlowRs: Math.round(mf5[i]),
+      moneyFlowCr: round2(mf5[i] / 1e7),
+      avgMoneyFlowCr: round2(avgMf20 / 1e7),
+      rvol,
+      rvolInterpretation: classifyRvol(rvol),
+      speed,
+      glowSurge,
+      bidAskRatio: round2(Number(stock.bidAskRatio) || 1.0),
+      rejectionCandle: {
+        timeIST: b.timeIST,
+        open: round2(b.open),
+        high: round2(b.high),
+        low: round2(b.low),
+        close: round2(b.close),
+        isGreen,
+        bodyPct,
+        wickRejectionPct,
+        strongRejection,
+      },
+      supertrend: {
+        direction: st5CurDir === 1 ? 'BULLISH' : 'BEARISH',
+        prevCompletedDirection: st5PrevDir === 1 ? 'BULLISH' : 'BEARISH',
+        value: round2(st5.line[i]),
+        atr10: round2(st5.atr[i]),
+        justTurned: side === 'BUY' ? st5.turnedBull[i] : st5.turnedBear[i],
+      },
+      supertrend15m: {
+        direction: st15Dir === 1 ? 'BULLISH' : 'BEARISH',
+        value: round2(st15.line[completed15Idx] || b.close),
+      },
+      hullSuite: {
+        hma55: round2(hma5Cur),
+        periodUsed: hma5Period,
+        position: b.close >= hma5Cur ? 'ABOVE' : 'BELOW',
+        slope: slope1 >= 0 ? 'UP' : 'DOWN',
+        slopeStrengthening,
+      },
+      hma15m: {
+        hma55: round2(hma15Cur),
+        periodUsed: hma15Period,
+        slope: hma15Rising ? 'RISING' : 'FALLING',
+      },
+      fvg,
+      scoreBreakdown: {
+        htfTrendConfirmation,
+        hmaDirectionAndSlope,
+        fvgQualityAndRetest,
+        relativeVolume,
+        supertrendConfirmation,
+        total: score,
+      },
+      conditions,
+      score,
+      tradeManagement: TRADE_MANAGEMENT_RULES.map((r) => `${r.situation}: ${r.action}`),
+    };
+  };
+
+  // Scan today's 5m bars newest -> oldest so a genuine 6/6 FVG retest + RVOL trigger today stays locked,
+  // otherwise surface highest-scoring active Watchlist/Good setup (>= 60 pts) from the latest qualifying bar.
+  let bestBuy: MoneyFlowSignalRow | null = null;
+  let bestSell: MoneyFlowSignalRow | null = null;
+
+  for (let i = bars.length - 1; i >= scanStartIdx; i--) {
+    const bCand = evaluateSideAtBar(i, 'BUY');
+    if (bCand) {
+      if (bCand.allSixMet && (!bestBuy || !bestBuy.allSixMet || bCand.score > bestBuy.score)) {
+        bestBuy = bCand;
+      } else if (
+        !bestBuy ||
+        (!bestBuy.allSixMet && (bCand.conditionsMet > bestBuy.conditionsMet || (bCand.conditionsMet === bestBuy.conditionsMet && bCand.score > bestBuy.score)))
+      ) {
+        bestBuy = bCand;
+      }
+    }
+
+    const sCand = evaluateSideAtBar(i, 'SELL');
+    if (sCand) {
+      if (sCand.allSixMet && (!bestSell || !bestSell.allSixMet || sCand.score > bestSell.score)) {
+        bestSell = sCand;
+      } else if (
+        !bestSell ||
+        (!bestSell.allSixMet && (sCand.conditionsMet > bestSell.conditionsMet || (sCand.conditionsMet === bestSell.conditionsMet && sCand.score > bestSell.score)))
+      ) {
+        bestSell = sCand;
+      }
+    }
+
+    if (bestBuy?.allSixMet && bestSell?.allSixMet) break;
+  }
+
+  // Keep dominant side cleanly if stock isn't genuinely 6/6 on opposite side
+  const buyOut = bestBuy && bestBuy.score >= 60 && (bestBuy.allSixMet || bestBuy.changePercent >= -0.5) ? bestBuy : null;
+  const sellOut = bestSell && bestSell.score >= 60 && (bestSell.allSixMet || bestSell.changePercent <= 0.5) ? bestSell : null;
+
+  return { buyRow: buyOut, sellRow: sellOut };
+}
+
 let lastCachedMfReport: MoneyFlowScanReport | null = null;
 let lastCachedMfAt = 0;
 let lastCachedMfDate = '';
@@ -764,7 +914,6 @@ export function buildSmartMoneyFlowReport(
     lastCachedMfReport = null;
   }
 
-  // Compute live NIFTY 50 vs VWAP market regime
   const nBars = Array.isArray(niftyInfo?.bars) ? niftyInfo!.bars : getExtendedBarsFn('NIFTY 50');
   const niftyPrice = Number(niftyInfo?.price || (nBars && nBars.length > 0 ? nBars[nBars.length - 1].close : 25250));
   let niftyVwap = Number(niftyInfo?.vwap || 0);
@@ -789,42 +938,30 @@ export function buildSmartMoneyFlowReport(
   const niftyTrend: 'BULLISH' | 'BEARISH' = niftyPrice >= niftyVwap ? 'BULLISH' : 'BEARISH';
   const niftyRegime: MoneyFlowNiftyRegime = {
     symbol: 'NIFTY 50',
-    price: Number(niftyPrice.toFixed(2)),
-    vwap: Number(niftyVwap.toFixed(2)),
+    price: round2(niftyPrice),
+    vwap: round2(niftyVwap),
     trend: niftyTrend,
-    vsVwapPct: niftyVwap > 0 ? Number((((niftyPrice - niftyVwap) / niftyVwap) * 100).toFixed(2)) : 0,
+    vsVwapPct: niftyVwap > 0 ? round2(((niftyPrice - niftyVwap) / niftyVwap) * 100) : 0,
   };
-
-  const indicatorSpecs = [
-    { component: 'Money Flow Thickness', formula: 'Volume × HLC3  (HLC3 = (H+L+C)/3)', purpose: '₹ Trading Turnover' },
-    { component: 'Speed / RVOL', formula: 'Volume / 20-period Avg Volume', purpose: 'Volume Intensity (>= 1.5x)' },
-    { component: 'Glow / Surge', formula: 'Money Flow / 20-period Avg MF', purpose: 'Money Flow Acceleration (>= 1.3x)' },
-    { component: 'Supertrend & HMA(55)', formula: 'ATR(10), Mult 2 • HMA(55, Close)', purpose: 'Trend Flip & Slope Direction' },
-    { component: 'ADX(14) & RSI(14)', formula: 'ADX > 20 • RSI BUY > 55 / SELL < 45', purpose: 'Momentum & Trend Strength' },
-    { component: 'Delta Exposure (DE)', formula: 'Σ(OI × Signed Delta × LotSize)', purpose: 'Positive=Bullish, Negative=Bearish' },
-    { component: 'Gamma (GEX) & Vega (VEX)', formula: 'Σ(OI × Gamma/Vega × LotSize)', purpose: 'Sensitivity (Non-Directional)' },
-    { component: 'OI Change & PCR', formula: 'CurOI - PrevOI • PutOI / CallOI', purpose: 'Long/Short Buildup & Covering' },
-    { component: 'IV Percentile (IVP 252d)', formula: '% Sessions IV < Current IV', purpose: '0-20 Low • 20-50 Mod • 50-80 Elev • 80-100 High' },
-    { component: 'Special Contra-Flow Filter', formula: 'OI Flow & Delta Flow Dual Sign + NIFTY Regime', purpose: 'Avoids Contra-Flow Traps' },
-  ];
 
   if (isMidnightCleared) {
     lastCachedMfReport = null;
     return {
       status: 'ok',
+      strategyName: 'FinURL HMA 55 + FVG + Volume + Supertrend Strategy',
       generatedAt: now.toISOString(),
       istTime: ist.timeStr,
       isMidnightCleared: true,
       universeEvaluated: 0,
+      confirmedBuyCount: 0,
+      confirmedSellCount: 0,
+      strongBuyCount: 0,
+      strongSellCount: 0,
       strictBuyCount: 0,
       strictSellCount: 0,
       niftyRegime,
-      specialFilterStats: {
-        blockedContraBuys: 0,
-        blockedContraSells: 0,
-        ruleSummary: 'OI Flow & Delta Flow both Positive for BUY; both Negative for SELL; block contra-flow vs NIFTY.',
-      },
-      indicatorSpecs,
+      indicatorSettings: INDICATOR_SETTINGS,
+      tradeManagementRules: TRADE_MANAGEMENT_RULES,
       buySignals: [],
       sellSignals: [],
     };
@@ -853,631 +990,62 @@ export function buildSmartMoneyFlowReport(
   }
   const sectorAvgPctMap: Record<string, number> = {};
   sectorAccum.forEach((v, sec) => {
-    sectorAvgPctMap[sec] = Number((v.sum / Math.max(1, v.cnt)).toFixed(2));
+    sectorAvgPctMap[sec] = round2(v.sum / Math.max(1, v.cnt));
   });
 
   const allBuyCandidates: MoneyFlowSignalRow[] = [];
   const allSellCandidates: MoneyFlowSignalRow[] = [];
-  let blockedContraBuys = 0;
-  let blockedContraSells = 0;
 
   for (const stock of equityStocks) {
-    const extBars = getExtendedBarsFn(stock.symbol);
-    const bars = buildWorkBars(stock, extBars, candlesMap.get(stock.symbol), ist.dateStr);
-    if (bars.length < 6) continue;
+    const bars = buildWorkBars(stock, getExtendedBarsFn(stock.symbol), candlesMap.get(stock.symbol), ist.dateStr);
+    if (bars.length < 10) continue;
 
-    const closes = bars.map((b) => b.close);
-    const hlc3 = bars.map((b) => (b.high + b.low + b.close) / 3);
-    const mf = bars.map((b, i) => b.volume * hlc3[i]);
-    const vols = bars.map((b) => b.volume);
+    const { buyRow, sellRow } = evaluateStockFinUrlStrategy({
+      stock,
+      bars,
+      sectorChangePct: sectorAvgPctMap[stock.sector || 'NSE F&O'] ?? 0,
+      istDateStr: ist.dateStr,
+      istTimeStr: ist.timeStr,
+    });
 
-    const st = computeSupertrend(bars, 10, 2);
-    const { series: hma, periodUsed } = computeHMA(closes, 55);
-    const rsi14Series = computeRSISeries(closes, 14);
-    const adx14Series = computeADXSeries(bars, 14);
-    const struct = computeStructureTimeline(bars);
-    const greeksData = computeGreeksAndDerivatives(stock, bars, ist.dateStr);
-
-    const lastDate = bars[bars.length - 1].dateIST;
-    const scanStartIdx = Math.max(
-      2,
-      bars.findIndex((b) => b.dateIST === lastDate)
-    );
-
-    const priorDayBars = bars.filter((b) => b.dateIST < lastDate);
-    const priorDayDate = priorDayBars.length > 0 ? priorDayBars[priorDayBars.length - 1].dateIST : '';
-    const prevSessionBars = priorDayDate ? priorDayBars.filter((b) => b.dateIST === priorDayDate) : [];
-    const fallbackPrevClose = Number(bars[scanStartIdx]?.open || stock.price);
-    const pdh =
-      prevSessionBars.length > 0
-        ? Math.max(...prevSessionBars.map((b) => b.high))
-        : Number((fallbackPrevClose * 1.006).toFixed(2));
-    const pdl =
-      prevSessionBars.length > 0
-        ? Math.min(...prevSessionBars.map((b) => b.low))
-        : Number((fallbackPrevClose * 0.994).toFixed(2));
-
-    const orEnd = Math.min(bars.length - 1, scanStartIdx + 2);
-    let orHigh = bars[scanStartIdx].high;
-    let orLow = bars[scanStartIdx].low;
-    for (let k = scanStartIdx; k <= orEnd; k++) {
-      if (bars[k].high > orHigh) orHigh = bars[k].high;
-      if (bars[k].low < orLow) orLow = bars[k].low;
-    }
-
-    // Build running VWAP, Day High, Day Low arrays for exact bar-by-bar evaluation
-    const vwapSeries = new Array<number>(bars.length).fill(hlc3[0]);
-    const dayHighSeries = new Array<number>(bars.length).fill(bars[0].high);
-    const dayLowSeries = new Array<number>(bars.length).fill(bars[0].low);
-    let cumTPV = 0;
-    let cumVol = 0;
-    let runDayHigh = bars[scanStartIdx].high;
-    let runDayLow = bars[scanStartIdx].low;
-    for (let k = scanStartIdx; k < bars.length; k++) {
-      if (bars[k].high > runDayHigh) runDayHigh = bars[k].high;
-      if (bars[k].low < runDayLow) runDayLow = bars[k].low;
-      cumTPV += hlc3[k] * bars[k].volume;
-      cumVol += bars[k].volume;
-      dayHighSeries[k] = runDayHigh;
-      dayLowSeries[k] = runDayLow;
-      vwapSeries[k] = cumVol > 0 ? cumTPV / cumVol : Number(stock.indicators?.vwap) || hlc3[k];
-    }
-
-    const ratio = Number(stock.bidAskRatio || 1.0);
-    const obBuyBiasPct = Math.round((ratio / (ratio + 1)) * 100);
-
-    // Evaluate across today's session bars to pinpoint the exact highest-confluence trigger bar
-    let bestBuyIdx = bars.length - 1;
-    let bestBuyCount = -1;
-    let bestBuyScore = -1e9;
-    let bestBuyChecks: MoneyFlowConditionCheck[] = [];
-
-    let bestSellIdx = bars.length - 1;
-    let bestSellCount = -1;
-    let bestSellScore = -1e9;
-    let bestSellChecks: MoneyFlowConditionCheck[] = [];
-
-    for (let i = scanStartIdx; i < bars.length; i++) {
-      const b = bars[i];
-      const prev = bars[i - 1];
-      const avgVol20 = smaAt(vols, Math.max(0, i - 1), 20);
-      const avgMf20 = smaAt(mf, Math.max(0, i - 1), 20);
-      const speed = avgVol20 > 0 ? b.volume / avgVol20 : Number(stock.indicators?.rvol || 1);
-      const glow = avgMf20 > 0 ? mf[i] / avgMf20 : speed;
-      const ss = struct[i];
-      const vwapI = vwapSeries[i];
-      const dHighI = dayHighSeries[i];
-      const dLowI = dayLowSeries[i];
-      const dSpan = Math.max(0.05, dHighI - dLowI);
-      const rangePosPct = Math.round(((b.close - dLowI) / dSpan) * 100);
-
-      const barRange = Math.max(0.05, b.high - b.low);
-      const barClosePosPct = Math.round(((b.close - b.low) / barRange) * 100);
-      const buyPresPct = Math.round(barClosePosPct * 0.55 + obBuyBiasPct * 0.45);
-      const sellPresPct = 100 - buyPresPct;
-
-      const stRecentTurnBull =
-        st.turnedBull[i] || (i >= 1 && st.turnedBull[i - 1]) || (i >= 2 && st.turnedBull[i - 2]);
-      const stRecentTurnBear =
-        st.turnedBear[i] || (i >= 1 && st.turnedBear[i - 1]) || (i >= 2 && st.turnedBear[i - 2]);
-
-      const buyOb = ss.bullOB || { low: Math.min(prev.low, b.low), high: Math.max(prev.open, prev.close), time: prev.timeIST };
-      const sellOb = ss.bearOB || { low: Math.min(prev.open, prev.close), high: Math.max(prev.high, b.high), time: prev.timeIST };
-
-      // 14 BUY Conditions
-      const buyChecks: MoneyFlowConditionCheck[] = [
-        {
-          step: 1,
-          label: 'Supertrend (10,2) Bullish',
-          passed: st.dir[i] === 1,
-          detail: `${st.dir[i] === 1 ? 'BULLISH' : 'BEARISH'}${stRecentTurnBull ? ' (Fresh Flip)' : ''} @ ₹${st.line[i].toFixed(2)}`,
-        },
-        {
-          step: 2,
-          label: '2 Consecutive Green Candles',
-          passed: b.close > b.open && prev.close > prev.open,
-          detail: `Prev ${prev.close >= prev.open ? 'Green' : 'Red'} • Cur ${b.close >= b.open ? 'Green' : 'Red'}`,
-        },
-        {
-          step: 3,
-          label: `Close > HMA(${periodUsed})`,
-          passed: b.close > hma[i],
-          detail: `Close ₹${b.close.toFixed(2)} vs HMA ₹${hma[i].toFixed(2)}`,
-        },
-        {
-          step: 4,
-          label: 'Money Flow > 20-Avg',
-          passed: mf[i] > avgMf20,
-          detail: `₹${(mf[i] / 1e7).toFixed(2)} Cr vs Avg ₹${(avgMf20 / 1e7).toFixed(2)} Cr`,
-        },
-        {
-          step: 5,
-          label: 'Volume Speed >= 1.5x',
-          passed: speed >= 1.5,
-          detail: `${speed.toFixed(2)}x vs 20-bar avg`,
-        },
-        {
-          step: 6,
-          label: 'Money Flow Surge >= 1.3x',
-          passed: glow >= 1.3,
-          detail: `${glow.toFixed(2)}x surge multiplier`,
-        },
-        {
-          step: 7,
-          label: 'Bullish BOS / OB Confirmed',
-          passed: ss.tag === 'BULLISH BOS' || ss.tag === 'BULLISH CHoCH' || Boolean(ss.bullOB),
-          detail: `${ss.tag} • Demand OB ₹${buyOb.low.toFixed(1)}-${buyOb.high.toFixed(1)}`,
-        },
-        {
-          step: 8,
-          label: 'Break / Close Above Bull OB',
-          passed: b.close > buyOb.high || b.high > buyOb.high,
-          detail: b.close > buyOb.high ? `Closed above OB High ₹${buyOb.high.toFixed(2)}` : `OB High ₹${buyOb.high.toFixed(2)}`,
-        },
-        {
-          step: 9,
-          label: 'Breakout',
-          passed: b.close > orHigh || b.close > ss.swingLevel,
-          detail: `Close ₹${b.close.toFixed(2)} vs OR-High ₹${orHigh.toFixed(2)}`,
-        },
-        {
-          step: 10,
-          label: 'PDH (Prev Day High)',
-          passed: b.close > pdh || dHighI > pdh,
-          detail: `Live/High ₹${Math.max(b.close, dHighI).toFixed(2)} vs PDH ₹${pdh.toFixed(2)}`,
-        },
-        {
-          step: 11,
-          label: 'RANGE Holding Upper',
-          passed: rangePosPct >= 65 && dSpan >= st.atr[i] * 0.45,
-          detail: `${rangePosPct}% of Day Range (₹${dLowI.toFixed(1)}-₹${dHighI.toFixed(1)})`,
-        },
-        {
-          step: 12,
-          label: 'BRK Confirm (BEK)',
-          passed: b.close > prev.close && b.low >= prev.low * 0.999 && b.close > b.open && b.close > orHigh,
-          detail: `Follow-through bar above OR-High ₹${orHigh.toFixed(2)}`,
-        },
-        {
-          step: 13,
-          label: 'VWAP Above',
-          passed: b.close > vwapI,
-          detail: `Close ₹${b.close.toFixed(2)} vs VWAP ₹${vwapI.toFixed(2)}`,
-        },
-        {
-          step: 14,
-          label: 'Bid / Ask Ratio >= 1.15x',
-          passed: ratio >= 1.15,
-          detail: `B/A Ratio ${ratio.toFixed(2)}x (Buyer Dominance)`,
-        },
-        {
-          step: 15,
-          label: 'NIFTY Trend Above VWAP',
-          passed: niftyRegime.trend === 'BULLISH',
-          detail: `NIFTY ₹${niftyRegime.price} vs VWAP ₹${niftyRegime.vwap} (${niftyRegime.trend})`,
-        },
-        {
-          step: 16,
-          label: 'ADX(14) > 20',
-          passed: adx14Series[i] > 20,
-          detail: `ADX(14) = ${adx14Series[i]}`,
-        },
-        {
-          step: 17,
-          label: 'RSI(14) > 55',
-          passed: rsi14Series[i] > 55,
-          detail: `RSI(14) = ${rsi14Series[i]}`,
-        },
-        {
-          step: 18,
-          label: 'RVOL >= 1.5x',
-          passed: Math.max(speed, Number(stock.indicators?.rvol || 0)) >= 1.5,
-          detail: `RVOL ${Math.max(speed, Number(stock.indicators?.rvol || 0)).toFixed(2)}x`,
-        },
-        {
-          step: 19,
-          label: 'Futures OI Long Buildup',
-          passed: greeksData.oiInterpretation === 'Long buildup',
-          detail: `${greeksData.oiInterpretation} (ΔOI ${greeksData.oiChange >= 0 ? '+' : ''}${greeksData.oiChange}L)`,
-        },
-        {
-          step: 20,
-          label: 'Delta Flow Positive',
-          passed: greeksData.deltaFlowDirection === 'POSITIVE',
-          detail: `DE ${greeksData.deltaExposure >= 0 ? '+' : ''}${greeksData.deltaExposure} (${greeksData.deltaFlowDirection})`,
-        },
-        {
-          step: 21,
-          label: 'SMC Bullish BOS',
-          passed: ss.tag === 'BULLISH BOS' || ss.tag === 'BULLISH CHoCH',
-          detail: `Structure: ${ss.tag}`,
-        },
-        {
-          step: 22,
-          label: 'Hull HMA(55) Rising',
-          passed: i >= 1 && hma[i] > hma[i - 1] && b.close > hma[i],
-          detail: `HMA Slope ${i >= 1 && hma[i] >= hma[i - 1] ? 'RISING' : 'FALLING'}`,
-        },
-      ];
-
-      const bCount = buyChecks.filter((c) => c.passed).length;
-      const bScore =
-        bCount * 100 +
-        (stRecentTurnBull ? 18 : 0) +
-        Math.min(40, speed * 10) +
-        Math.min(40, glow * 10) +
-        Math.max(0, Number(stock.changePercent || 0)) * 8 +
-        (i / Math.max(1, bars.length)) * 5;
-
-      if (bCount > bestBuyCount || (bCount === bestBuyCount && bScore > bestBuyScore)) {
-        bestBuyCount = bCount;
-        bestBuyIdx = i;
-        bestBuyScore = bScore;
-        bestBuyChecks = buyChecks;
-      }
-
-      // 14 SELL Conditions
-      const sellChecks: MoneyFlowConditionCheck[] = [
-        {
-          step: 1,
-          label: 'Supertrend (10,2) Bearish',
-          passed: st.dir[i] === -1,
-          detail: `${st.dir[i] === -1 ? 'BEARISH' : 'BULLISH'}${stRecentTurnBear ? ' (Fresh Flip)' : ''} @ ₹${st.line[i].toFixed(2)}`,
-        },
-        {
-          step: 2,
-          label: '2 Consecutive Red Candles',
-          passed: b.close < b.open && prev.close < prev.open,
-          detail: `Prev ${prev.close <= prev.open ? 'Red' : 'Green'} • Cur ${b.close <= b.open ? 'Red' : 'Green'}`,
-        },
-        {
-          step: 3,
-          label: `Close < HMA(${periodUsed})`,
-          passed: b.close < hma[i],
-          detail: `Close ₹${b.close.toFixed(2)} vs HMA ₹${hma[i].toFixed(2)}`,
-        },
-        {
-          step: 4,
-          label: 'Money Flow > 20-Avg (Turnover)',
-          passed: mf[i] > avgMf20,
-          detail: `₹${(mf[i] / 1e7).toFixed(2)} Cr vs Avg ₹${(avgMf20 / 1e7).toFixed(2)} Cr`,
-        },
-        {
-          step: 5,
-          label: 'Volume Speed >= 1.5x',
-          passed: speed >= 1.5,
-          detail: `${speed.toFixed(2)}x vs 20-bar avg`,
-        },
-        {
-          step: 6,
-          label: 'Selling Pressure Dominant',
-          passed: sellPresPct >= 55 || (ratio < 0.95 && b.close <= b.open),
-          detail: `Sell Pressure ${sellPresPct}% (B/A ${ratio.toFixed(2)}x)`,
-        },
-        {
-          step: 7,
-          label: 'Bearish BOS / OB Confirmed',
-          passed: ss.tag === 'BEARISH BOS' || ss.tag === 'BEARISH CHoCH' || Boolean(ss.bearOB),
-          detail: `${ss.tag} • Supply OB ₹${sellOb.low.toFixed(1)}-${sellOb.high.toFixed(1)}`,
-        },
-        {
-          step: 8,
-          label: 'Break / Close Below Bear OB',
-          passed: b.close < sellOb.low || b.low < sellOb.low,
-          detail: b.close < sellOb.low ? `Closed below OB Low ₹${sellOb.low.toFixed(2)}` : `OB Low ₹${sellOb.low.toFixed(2)}`,
-        },
-        {
-          step: 9,
-          label: 'Breakout (Downside)',
-          passed: b.close < orLow || b.close < ss.swingLevel,
-          detail: `Close ₹${b.close.toFixed(2)} vs OR-Low ₹${orLow.toFixed(2)}`,
-        },
-        {
-          step: 10,
-          label: 'VWAP Below',
-          passed: b.close < vwapI,
-          detail: `Close ₹${b.close.toFixed(2)} vs VWAP ₹${vwapI.toFixed(2)}`,
-        },
-        {
-          step: 11,
-          label: 'DL (Day Low Zone)',
-          passed: rangePosPct <= 35 || b.low <= dLowI * 1.0015,
-          detail: `Range ${rangePosPct}% pressing Day Low ₹${dLowI.toFixed(2)}`,
-        },
-        {
-          step: 12,
-          label: 'BRK Confirm (BEK)',
-          passed: b.close < prev.close && b.high <= prev.high * 1.001 && b.close < b.open && b.close < orLow,
-          detail: `Follow-through breakdown below OR-Low ₹${orLow.toFixed(2)}`,
-        },
-        {
-          step: 13,
-          label: 'PDL (Prev Day Low)',
-          passed: b.close < pdl || dLowI < pdl,
-          detail: `Low/Close ₹${Math.min(b.close, dLowI).toFixed(2)} vs PDL ₹${pdl.toFixed(2)}`,
-        },
-        {
-          step: 14,
-          label: 'Bid / Ask Ratio <= 0.90x',
-          passed: ratio <= 0.9,
-          detail: `B/A Ratio ${ratio.toFixed(2)}x (Seller Supply)`,
-        },
-        {
-          step: 15,
-          label: 'NIFTY Trend Below VWAP',
-          passed: niftyRegime.trend === 'BEARISH',
-          detail: `NIFTY ₹${niftyRegime.price} vs VWAP ₹${niftyRegime.vwap} (${niftyRegime.trend})`,
-        },
-        {
-          step: 16,
-          label: 'ADX(14) > 20',
-          passed: adx14Series[i] > 20,
-          detail: `ADX(14) = ${adx14Series[i]}`,
-        },
-        {
-          step: 17,
-          label: 'RSI(14) < 45',
-          passed: rsi14Series[i] < 45,
-          detail: `RSI(14) = ${rsi14Series[i]}`,
-        },
-        {
-          step: 18,
-          label: 'RVOL >= 1.5x',
-          passed: Math.max(speed, Number(stock.indicators?.rvol || 0)) >= 1.5,
-          detail: `RVOL ${Math.max(speed, Number(stock.indicators?.rvol || 0)).toFixed(2)}x`,
-        },
-        {
-          step: 19,
-          label: 'Futures OI Short Buildup',
-          passed: greeksData.oiInterpretation === 'Short buildup',
-          detail: `${greeksData.oiInterpretation} (ΔOI ${greeksData.oiChange >= 0 ? '+' : ''}${greeksData.oiChange}L)`,
-        },
-        {
-          step: 20,
-          label: 'Delta Flow Negative',
-          passed: greeksData.deltaFlowDirection === 'NEGATIVE',
-          detail: `DE ${greeksData.deltaExposure >= 0 ? '+' : ''}${greeksData.deltaExposure} (${greeksData.deltaFlowDirection})`,
-        },
-        {
-          step: 21,
-          label: 'SMC Bearish BOS',
-          passed: ss.tag === 'BEARISH BOS' || ss.tag === 'BEARISH CHoCH',
-          detail: `Structure: ${ss.tag}`,
-        },
-        {
-          step: 22,
-          label: 'Hull HMA(55) Falling',
-          passed: i >= 1 && hma[i] < hma[i - 1] && b.close < hma[i],
-          detail: `HMA Slope ${i >= 1 && hma[i] < hma[i - 1] ? 'FALLING' : 'RISING'}`,
-        },
-      ];
-
-      const sCount = sellChecks.filter((c) => c.passed).length;
-      const sScore =
-        sCount * 100 +
-        (stRecentTurnBear ? 18 : 0) +
-        Math.min(40, speed * 10) +
-        Math.min(40, glow * 10) +
-        Math.abs(Math.min(0, Number(stock.changePercent || 0))) * 8 +
-        (i / Math.max(1, bars.length)) * 5;
-
-      if (sCount > bestSellCount || (sCount === bestSellCount && sScore > bestSellScore)) {
-        bestSellCount = sCount;
-        bestSellIdx = i;
-        bestSellScore = sScore;
-        bestSellChecks = sellChecks;
-      }
-    }
-
-    const buildRow = (
-      direction: 'BUY' | 'SELL',
-      trigIdx: number,
-      condCount: number,
-      score: number,
-      checks: MoneyFlowConditionCheck[]
-    ): MoneyFlowSignalRow => {
-      const trig = bars[trigIdx];
-      const prev = bars[Math.max(0, trigIdx - 1)];
-      const ss = struct[trigIdx];
-      const avgVol20 = smaAt(vols, Math.max(0, trigIdx - 1), 20);
-      const avgMf20 = smaAt(mf, Math.max(0, trigIdx - 1), 20);
-      const speed = avgVol20 > 0 ? trig.volume / avgVol20 : Number(stock.indicators?.rvol || 1);
-      const glow = avgMf20 > 0 ? mf[trigIdx] / avgMf20 : speed;
-      const barRange = Math.max(0.05, trig.high - trig.low);
-      const barClosePosPct = Math.round(((trig.close - trig.low) / barRange) * 100);
-      const buyPresPct = Math.max(5, Math.min(95, Math.round(barClosePosPct * 0.55 + obBuyBiasPct * 0.45)));
-      const sellPresPct = 100 - buyPresPct;
-
-      const baseSec = parseTimeToSec(trig.timeIST);
-      const nowParts = ist.timeStr.split(':').map((x) => parseInt(x, 10) || 0);
-      const nowSec = (nowParts[0] || 0) * 3600 + (nowParts[1] || 0) * 60 + (nowParts[2] || 0);
-      const isMarketToday = trig.dateIST === ist.dateStr && nowSec >= 9 * 3600 + 15 * 60 && nowSec <= 15 * 3600 + 30 * 60;
-      const barConfirmSec = Math.min(15 * 3600 + 29 * 60 + 55, baseSec + 299);
-      const cappedSec = isMarketToday ? Math.min(nowSec, barConfirmSec) : barConfirmSec;
-      const listedAt = formatSecToHHMMSS(cappedSec);
-
-      const livePrice = Number(stock.price) || trig.close;
-      const entryPrice = Number(trig.close.toFixed(2));
-
-      const atr = Math.max(0.5, st.atr[trigIdx] || livePrice * 0.007);
-      const riskDist = Math.max(atr * 1.35, entryPrice * 0.0075);
-      const stopLoss = Number(
-        (direction === 'BUY'
-          ? Math.min(entryPrice - riskDist, ss.bullOB ? ss.bullOB.low * 0.998 : entryPrice - riskDist)
-          : Math.max(entryPrice + riskDist, ss.bearOB ? ss.bearOB.high * 1.002 : entryPrice + riskDist)
-        ).toFixed(2)
-      );
-      const slDist = Math.max(0.5, Math.abs(entryPrice - stopLoss));
-      const target1 = Number((direction === 'BUY' ? entryPrice + slDist * 2.0 : Math.max(0.05, entryPrice - slDist * 2.0)).toFixed(2));
-      const target2 = Number((direction === 'BUY' ? entryPrice + slDist * 3.0 : Math.max(0.05, entryPrice - slDist * 3.0)).toFixed(2));
-
-      const obZone =
-        direction === 'BUY'
-          ? ss.bullOB || { low: prev.low, high: prev.high, time: prev.timeIST }
-          : ss.bearOB || { low: prev.low, high: prev.high, time: prev.timeIST };
-      const dHighT = dayHighSeries[trigIdx] || livePrice;
-      const dLowT = dayLowSeries[trigIdx] || livePrice;
-      const rPosT = Math.round(((trig.close - dLowT) / Math.max(0.05, dHighT - dLowT)) * 100);
-
-      const dualFlowAlignedBuy = greeksData.oiFlowDirection === 'POSITIVE' && greeksData.deltaFlowDirection === 'POSITIVE';
-      const dualFlowAlignedSell = greeksData.oiFlowDirection === 'NEGATIVE' && greeksData.deltaFlowDirection === 'NEGATIVE';
-      const isBuySide = direction === 'BUY';
-      const dualFlowAligned = isBuySide ? dualFlowAlignedBuy : dualFlowAlignedSell;
-      const isContraBuy = isBuySide && (greeksData.oiFlowDirection === 'NEGATIVE' && greeksData.deltaFlowDirection === 'NEGATIVE');
-      const isContraSell = !isBuySide && (greeksData.oiFlowDirection === 'POSITIVE' && greeksData.deltaFlowDirection === 'POSITIVE');
-      const specialFilterPassed = isBuySide
-        ? dualFlowAlignedBuy && !(niftyRegime.trend === 'BULLISH' && isContraBuy)
-        : dualFlowAlignedSell && !(niftyRegime.trend === 'BEARISH' && isContraSell);
-
-      const specialFilterNote = isBuySide
-        ? dualFlowAlignedBuy
-          ? 'PASS: OI Flow (+) & Delta Flow (+) Both Positive'
-          : niftyRegime.trend === 'BULLISH' && isContraBuy
-          ? 'AVOID BUY: NIFTY Bullish but Bearish OI & Negative Delta Flow'
-          : 'WAIT: OI Flow & Delta Flow not both Positive'
-        : dualFlowAlignedSell
-        ? 'PASS: OI Flow (-) & Delta Flow (-) Both Negative'
-        : niftyRegime.trend === 'BEARISH' && isContraSell
-        ? 'AVOID SELL: NIFTY Bearish but Bullish OI & Positive Delta Flow'
-        : 'WAIT: OI Flow & Delta Flow not both Negative';
-
-      return {
-        symbol: stock.symbol,
-        name: stock.name,
-        sector: stock.sector,
-        sectorChangePct: sectorAvgPctMap[stock.sector] ?? Number((stock.changePercent || 0).toFixed(2)),
-        direction,
-        grade: condCount === 22 ? 'STRICT 22/22' : condCount >= 18 ? 'HIGH SURGE' : 'SETUP',
-        conditionsMet: condCount,
-        totalConditions: 22,
-        listedAt,
-        price: Number(livePrice.toFixed(2)),
-        entryPrice,
-        stopLoss,
-        target1,
-        target2,
-        changePercent: Number((stock.changePercent || 0).toFixed(2)),
-        hlc3: Number(hlc3[trigIdx].toFixed(2)),
-        vwap: Number((vwapSeries[trigIdx] || livePrice).toFixed(2)),
-        pdh: Number(pdh.toFixed(2)),
-        pdl: Number(pdl.toFixed(2)),
-        dayHigh: Number(dHighT.toFixed(2)),
-        dayLow: Number(dLowT.toFixed(2)),
-        orHigh: Number(orHigh.toFixed(2)),
-        orLow: Number(orLow.toFixed(2)),
-        rangePosPct: rPosT,
-        moneyFlowRs: Math.round(mf[trigIdx]),
-        moneyFlowCr: Number((mf[trigIdx] / 1e7).toFixed(2)),
-        avgMoneyFlowCr: Number((avgMf20 / 1e7).toFixed(2)),
-        speed: Number(speed.toFixed(2)),
-        glowSurge: Number(glow.toFixed(2)),
-        buyingPressurePct: buyPresPct,
-        sellingPressurePct: sellPresPct,
-        bidAskRatio: Number(ratio.toFixed(2)),
-        supertrend: {
-          direction: st.dir[trigIdx] === 1 ? 'BULLISH' : 'BEARISH',
-          value: Number(st.line[trigIdx].toFixed(2)),
-          atr10: Number(atr.toFixed(2)),
-          justTurned: direction === 'BUY' ? st.turnedBull[trigIdx] : st.turnedBear[trigIdx],
-        },
-        hullSuite: {
-          hma55: Number(hma[trigIdx].toFixed(2)),
-          periodUsed,
-          position: trig.close >= hma[trigIdx] ? 'ABOVE' : 'BELOW',
-          slope: trigIdx >= 1 && hma[trigIdx] >= hma[trigIdx - 1] ? 'UP' : 'DOWN',
-        },
-        structure: {
-          tag: ss.tag,
-          swingLevel: ss.swingLevel,
-        },
-        orderBlock: {
-          type: direction === 'BUY' ? 'BULLISH OB' : 'BEARISH OB',
-          low: Number(obZone.low.toFixed(2)),
-          high: Number(obZone.high.toFixed(2)),
-          time: obZone.time,
-          breakConfirmed: checks[7]?.passed ?? false,
-        },
-        greeksAndDerivatives: greeksData,
-        smartMoneyFilters: {
-          niftyTrend: niftyRegime.trend === 'BULLISH' ? 'ABOVE_VWAP' : 'BELOW_VWAP',
-          adx14: adx14Series[trigIdx] || 22,
-          rsi14: rsi14Series[trigIdx] || 50,
-          rvol: Number(Math.max(speed, Number(stock.indicators?.rvol || 1)).toFixed(2)),
-          futuresOiBuildup: greeksData.oiInterpretation,
-          oiFlow: greeksData.oiFlowDirection,
-          deltaFlow: greeksData.deltaFlowDirection,
-          smcStructure: ss.tag,
-          hullSlope: trigIdx >= 1 && hma[trigIdx] >= hma[trigIdx - 1] ? 'RISING' : 'FALLING',
-          dualFlowAligned,
-          specialFilterPassed,
-          specialFilterNote,
-        },
-        conditions: checks,
-        score: Number(score.toFixed(1)),
-      };
-    };
-
-    const bothPositiveBuy = greeksData.oiFlowDirection === 'POSITIVE' && greeksData.deltaFlowDirection === 'POSITIVE';
-    const bothNegativeSell = greeksData.oiFlowDirection === 'NEGATIVE' && greeksData.deltaFlowDirection === 'NEGATIVE';
-    const isContraBuyTrap =
-      niftyRegime.trend === 'BULLISH' && greeksData.oiFlowDirection === 'NEGATIVE' && greeksData.deltaFlowDirection === 'NEGATIVE';
-    const isContraSellTrap =
-      niftyRegime.trend === 'BEARISH' && greeksData.oiFlowDirection === 'POSITIVE' && greeksData.deltaFlowDirection === 'POSITIVE';
-
-    const chp = Number(stock.changePercent) || 0;
-    if (chp >= 2.0 && bestBuyCount >= 15) {
-      if (isContraBuyTrap || !bothPositiveBuy) {
-        blockedContraBuys++;
-      } else {
-        allBuyCandidates.push(buildRow('BUY', bestBuyIdx, bestBuyCount, bestBuyScore, bestBuyChecks));
-      }
-    }
-    if (chp <= -2.0 && bestSellCount >= 15) {
-      if (isContraSellTrap || !bothNegativeSell) {
-        blockedContraSells++;
-      } else {
-        allSellCandidates.push(buildRow('SELL', bestSellIdx, bestSellCount, bestSellScore, bestSellChecks));
-      }
-    }
+    if (buyRow) allBuyCandidates.push(buyRow);
+    if (sellRow) allSellCandidates.push(sellRow);
   }
 
-  const sortNewestFirstZToA = (a: MoneyFlowSignalRow, b: MoneyFlowSignalRow) => {
-    const tDiff = parseTimeToSec(b.listedAt) - parseTimeToSec(a.listedAt);
-    if (tDiff !== 0) return tDiff;
-    return b.symbol.localeCompare(a.symbol);
+  const rankComparator = (a: MoneyFlowSignalRow, b: MoneyFlowSignalRow) => {
+    if (a.allSixMet !== b.allSixMet) return a.allSixMet ? -1 : 1;
+    if (b.score !== a.score) return b.score - a.score;
+    return parseTimeToSec(b.listedAt) - parseTimeToSec(a.listedAt) || b.rvol - a.rvol;
   };
 
-  const strictBuyCount = allBuyCandidates.filter((x) => x.conditionsMet === 22).length;
-  const strictSellCount = allSellCandidates.filter((x) => x.conditionsMet === 22).length;
+  const buySignals = allBuyCandidates.sort(rankComparator).slice(0, 25);
+  const sellSignals = allSellCandidates.sort(rankComparator).slice(0, 25);
 
-  const buySignals = allBuyCandidates
-    .sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score)
-    .slice(0, 15)
-    .sort(sortNewestFirstZToA);
-
-  const sellSignals = allSellCandidates
-    .sort((a, b) => b.conditionsMet - a.conditionsMet || b.score - a.score)
-    .slice(0, 15)
-    .sort(sortNewestFirstZToA);
+  const confirmedBuyCount = allBuyCandidates.filter((x) => x.allSixMet).length;
+  const confirmedSellCount = allSellCandidates.filter((x) => x.allSixMet).length;
+  const strongBuyCount = allBuyCandidates.filter((x) => x.score >= 85).length;
+  const strongSellCount = allSellCandidates.filter((x) => x.score >= 85).length;
 
   const builtReport: MoneyFlowScanReport = {
     status: 'ok',
+    strategyName: 'FinURL HMA 55 + FVG + Volume + Supertrend Strategy',
     generatedAt: now.toISOString(),
     istTime: ist.timeStr,
     isMidnightCleared: false,
     universeEvaluated: equityStocks.length,
-    strictBuyCount,
-    strictSellCount,
+    confirmedBuyCount,
+    confirmedSellCount,
+    strongBuyCount,
+    strongSellCount,
+    strictBuyCount: confirmedBuyCount,
+    strictSellCount: confirmedSellCount,
     niftyRegime,
-    specialFilterStats: {
-      blockedContraBuys,
-      blockedContraSells,
-      ruleSummary: 'OI Flow & Delta Flow BOTH Positive for BUY; BOTH Negative for SELL; Contra-Flow vs NIFTY blocked.',
-    },
-    indicatorSpecs,
+    indicatorSettings: INDICATOR_SETTINGS,
+    tradeManagementRules: TRADE_MANAGEMENT_RULES,
     buySignals,
     sellSignals,
   };
+
   if (equityStocks.length > 0) {
     lastCachedMfReport = builtReport;
     lastCachedMfAt = Date.now();

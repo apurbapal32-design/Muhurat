@@ -268,17 +268,26 @@ export function evaluateStockScanner(
   const atr = calculateATR(candles, 14);
   const { bbUpper, bbMiddle, bbLower } = calculateBollingerBands(closes, 20, 2);
 
-  // Volume metrics: 20-period completed candles average volume
+  // Volume metrics: 20-period completed candles average volume (excluding warm-up placeholder bars when real bars exist)
   const prev20Candles = candles.slice(Math.max(0, candles.length - 21), candles.length - 1);
-  const prev20Volumes = prev20Candles.map((c) => c.volume);
+  const meaningfulPrevVols = prev20Candles.map((c) => c.volume).filter((v) => v > 100);
+  const prev20Volumes =
+    meaningfulPrevVols.length >= 4 ? meaningfulPrevVols : prev20Candles.map((c) => c.volume);
   const avgVolume20 =
     prev20Volumes.length > 0
       ? prev20Volumes.reduce((a, b) => a + b, 0) / prev20Volumes.length
       : volumes.reduce((a, b) => a + b, 0) / (volumes.length || 1);
 
-  const volRatio = Number((currentCandle.volume / (avgVolume20 || 1)).toFixed(2));
+  // During the opening seconds/minutes of a new 5m bar, currentCandle.volume is partial;
+  // blend with previous completed bar's activity so genuine movers are not throttled to ~0.05x RVOL.
+  const effectiveCurrentVolume =
+    candles.length >= 2 && prevCandle.volume > 100 && currentCandle.volume < prevCandle.volume * 0.45
+      ? Math.max(currentCandle.volume, Math.round(prevCandle.volume * 0.85))
+      : currentCandle.volume;
+
+  const volRatio = Number((effectiveCurrentVolume / (avgVolume20 || 1)).toFixed(2));
   const rvol = volRatio;
-  const volumeBreakout = currentCandle.volume > 1.5 * avgVolume20;
+  const volumeBreakout = effectiveCurrentVolume > 1.5 * avgVolume20;
 
   // CPR & Pivots
   const prevDayHigh = pdh || Math.max(...candles.slice(0, -5).map((c) => c.high));
@@ -305,19 +314,56 @@ export function evaluateStockScanner(
   else if (gapPct <= -1.0) gapType = 'GAP_DOWN';
 
   // --------------------------------------------------------------------------
-  // V1 - ATR / FOX-TREND STYLE TRAILING STOP
+  // V1 - ITERATIVE ATR / FOX-TREND SUPERTREND TRAILING STOP
   // --------------------------------------------------------------------------
-  const hl2 = (currentCandle.high + currentCandle.low) / 2;
-  const basicLower = hl2 - 3.0 * atr;
-  const basicUpper = hl2 + 3.0 * atr;
-  const foxTrend = price >= basicLower ? 1 : -1;
+  const stMult = 2.2;
+  const effAtr = Math.max(atr, price * 0.0022, 0.05);
+  let stTrend: 1 | -1 = price >= ema21 ? 1 : -1;
+  let finalUpper = (currentCandle.high + currentCandle.low) / 2 + stMult * effAtr;
+  let finalLower = (currentCandle.high + currentCandle.low) / 2 - stMult * effAtr;
+
+  if (candles.length >= 3) {
+    const firstMid = (candles[0].high + candles[0].low) / 2;
+    let prevUpper = firstMid + stMult * effAtr;
+    let prevLower = firstMid - stMult * effAtr;
+    stTrend = candles[1].close >= candles[0].close ? 1 : -1;
+
+    for (let i = 1; i < candles.length; i++) {
+      const c = candles[i];
+      const prevC = candles[i - 1];
+      const hl2i = (c.high + c.low) / 2;
+      const trI = Math.max(
+        c.high - c.low,
+        Math.abs(c.high - prevC.close),
+        Math.abs(c.low - prevC.close)
+      );
+      const localAtr = Math.max(effAtr * 0.7 + trI * 0.3, price * 0.0018, 0.05);
+      const basicUpperI = hl2i + stMult * localAtr;
+      const basicLowerI = hl2i - stMult * localAtr;
+
+      finalUpper = basicUpperI < prevUpper || prevC.close > prevUpper ? basicUpperI : prevUpper;
+      finalLower = basicLowerI > prevLower || prevC.close < prevLower ? basicLowerI : prevLower;
+
+      if (stTrend === 1 && c.close < finalLower) {
+        stTrend = -1;
+      } else if (stTrend === -1 && c.close > finalUpper) {
+        stTrend = 1;
+      }
+
+      prevUpper = finalUpper;
+      prevLower = finalLower;
+    }
+  }
+
+  const foxTrend = stTrend;
   const foxTrendStatus: 'BULLISH' | 'BEARISH' = foxTrend === 1 ? 'BULLISH' : 'BEARISH';
 
-  // Supertrend approximation
+  // Supertrend value & direction
   const supertrendDirection: 'BUY' | 'SELL' = foxTrend === 1 ? 'BUY' : 'SELL';
-  const supertrend = supertrendDirection === 'BUY'
-    ? Number(basicLower.toFixed(2))
-    : Number(basicUpper.toFixed(2));
+  const supertrend =
+    supertrendDirection === 'BUY'
+      ? Number(finalLower.toFixed(2))
+      : Number(finalUpper.toFixed(2));
 
   // Open Interest Data & Change %
   const changePercent = Number((((price - prevDayClose) / (prevDayClose || 1)) * 100).toFixed(2));
@@ -372,11 +418,11 @@ export function evaluateStockScanner(
   let buyOptionsScore = 5;
   let sellOptionsScore = 5;
 
-  if (pcr >= 1.05 || (changePercent >= 0 && oiChangePct > 0)) {
+  if ((pcr >= 1.05 && changePercent >= -0.25) || (changePercent >= 0.3 && oiChangePct > 0)) {
     optionState = 'BULLISH_OPTIONS';
     buyOptionsScore = 10;
     sellOptionsScore = 0;
-  } else if (pcr <= 0.85 || (changePercent < 0 && oiChangePct > 0)) {
+  } else if (pcr <= 0.90 || (changePercent <= -0.3 && (oiChangePct > 0 || rvol >= 1.2))) {
     optionState = 'BEARISH_OPTIONS';
     sellOptionsScore = 10;
     buyOptionsScore = 0;
@@ -573,14 +619,26 @@ export function evaluateStockScanner(
     price >= vwap * 0.998 &&
     ema13 >= ema21 &&
     foxTrend !== -1 &&
-    marketState !== 'BEARISH';
+    (marketState !== 'BEARISH' ||
+      (changePercent >= 1.0 &&
+        price > vwap &&
+        ema13 > ema21 &&
+        foxTrend === 1 &&
+        rvol >= 1.15 &&
+        (sectorState !== 'BEARISH' || changePercent >= 2.0)));
 
   const isSellValid =
     hasAdequateLiquidity &&
     price <= vwap * 1.002 &&
     ema13 <= ema21 &&
     foxTrend !== 1 &&
-    marketState !== 'BULLISH';
+    (marketState !== 'BULLISH' ||
+      (changePercent <= -1.0 &&
+        price < vwap &&
+        ema13 < ema21 &&
+        foxTrend === -1 &&
+        rvol >= 1.15 &&
+        (sectorState !== 'BULLISH' || changePercent <= -2.0)));
 
   if (passHardBuy || (buyFinalScore > sellFinalScore && buyFinalScore >= 85 && isBuyValid)) {
     signal = 'BUY';

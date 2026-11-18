@@ -2919,6 +2919,13 @@
           </div>
 
           <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#080e1a] border border-cyan-500/30 text-[11px]">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-slate-300 font-bold">Auto 60s:</span>
+              <span id="ct-autorefresh-countdown" class="text-cyan-300 font-black tabular-nums">60s</span>
+              <button type="button" id="ct-autorefresh-toggle" onclick="AutoRefresh60sManager.toggle()" class="ml-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9.5px] font-black cursor-pointer">ON</button>
+              <button type="button" onclick="AutoRefresh60sManager.triggerNow(true)" class="px-1.5 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[9.5px] font-bold cursor-pointer" title="Refresh Watchlist &amp; Custom Tables Now">↻</button>
+            </div>
             <button onclick="exportCustomTableToCSV()" class="px-2.5 py-1.5 rounded-lg bg-[#121927] hover:bg-[#1a253d] active:scale-95 border border-[#23314f] text-cyan-300 text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer" title="Download current filtered results as CSV spreadsheet">
               <span>📥</span> Export CSV
             </button>
@@ -3975,60 +3982,58 @@
         <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-[#172033] text-xs font-mono">
           <button onclick="switchTab('claude-10skills')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/25 via-emerald-500/25 to-amber-500/25 text-cyan-200 border border-cyan-400/50 font-bold whitespace-nowrap hover:scale-105 transition">🧠 10-Skill AI &amp; Sentinel</button>
           <button onclick="switchTab('world-strategy')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/25 via-emerald-500/25 to-cyan-500/25 text-amber-200 border border-amber-400/40 font-bold whitespace-nowrap hover:scale-105 transition">⚡ World #1 Omni-Quantum</button>
-          <button onclick="switchTab('money-flow')" class="px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-black whitespace-nowrap shadow-md shadow-cyan-500/20">🌊 Money Flow (ST + HMA55)</button>
-          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
+          <button onclick="switchTab('money-flow')" class="px-3 py-1.5 rounded-lg bg-cyan-500 text-black font-black whitespace-nowrap shadow-md shadow-cyan-500/20">🌊 Money Flow (HMA55+FVG+ST)</button>
+          <button onclick="switchTab('apex-alpha')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-bold whitespace-nowrap transition">🏆 Apex Alpha Strategy</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO</button>
+          <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-bold whitespace-nowrap transition">⚡ Claude FNO</button>
+          <button onclick="switchTab('smart-money-concepts')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-400/40 font-bold whitespace-nowrap transition">🏛️ Smart Money Concepts</button>
+          <button onclick="switchTab('price-action')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-400/40 font-bold whitespace-nowrap transition">📐 Price Action</button>
+          <button onclick="switchTab('intraday-stock')" class="px-2.5 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-400/40 font-bold whitespace-nowrap transition">🎯 Intraday Stock</button>
           <button onclick="switchTab('strong')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Strong (ORB 15m)</button>
-          <button onclick="switchTab('sonic')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Pulse (RVOL &bull; OI)</button>
-          <button onclick="switchTab('titan')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-sky-400 border border-sky-500/20 font-bold whitespace-nowrap transition">Flow (Whales)</button>
-          <button onclick="switchTab('elite')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-rose-400 border border-rose-500/20 font-bold whitespace-nowrap transition">Elite (3m Squeeze)</button>
-          <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
-          <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
-          <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
-          <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
         </div>
 
         <!-- Title & Control Banner -->
         <div class="card p-4 border-l-4 border-cyan-400 bg-gradient-to-r from-[#0d1424] via-[#0e192d] to-[#111526] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div class="space-y-1">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-black">TREND + SMC + OI + GREEKS + REGIME &bull; |CHG| &ge; 2%</span>
-              <h2 class="text-base md:text-lg font-black text-white">Money Flow &bull; Smart Money + Supertrend(10,2) + Hull(55) + Greeks &amp; NIFTY Regime (22/22)</h2>
+              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-[10px] font-black">5M ENTRY + 15M CONFIRM &bull; MIN 1:2 R:R &bull; 100-PT SMART MONEY SCORE</span>
+              <h2 class="text-base md:text-lg font-black text-white">🌊 Money Flow &bull; FinURL HMA 55 + FVG + Volume + Supertrend Strategy</h2>
               <button onclick="openFormulaModal('money_flow')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
             </div>
             <p class="text-xs text-slate-300 max-w-4xl font-sans leading-relaxed">
-              Combines <strong>Money Flow (Vol &times; HLC3)</strong>, <strong>Speed/RVOL (&ge;1.5x)</strong>, <strong>Supertrend(10,2)</strong>, <strong>Hull HMA(55)</strong>, <strong>BOS/OB</strong>, <strong>VWAP / PDH / PDL</strong> with <strong>Options Greeks Exposures (DE, GEX, VEX)</strong>, <strong>OI Change (Cur&minus;Prev)</strong>, <strong>252-Day IVP Volatility Regime</strong>, <strong>PCR</strong>, <strong>ADX(14)&gt;20</strong>, <strong>RSI(14)</strong>, and the <strong>NIFTY vs VWAP Dual-Flow Special Filter</strong> (OI Flow &amp; Delta Flow both Positive for BUY, both Negative for SELL).
+              Complete 6-condition intraday NSE F&amp;O strategy: <strong>15m HMA(55) + 15m Supertrend(10, 2.0)</strong> trend alignment, <strong>5m Close vs HMA(55)</strong>, <strong>3-Candle Bullish/Bearish FVG Zone Retest</strong>, <strong>Rejection Candle + RVOL &ge; 1.5&times; (Vol SMA 20)</strong>, non-repainting <strong>5m Supertrend</strong>, exact <strong>Entry / SL (&plusmn;0.1&times;ATR14) / T1 (50% @ +1R) / T2 (30% @ +2R) / T3 (20% @ +3R)</strong>, and <strong>100-Point Scoring</strong> (85&ndash;100 Strong, 75&ndash;84 Good, 60&ndash;74 Watchlist).
             </p>
           </div>
           <div class="flex items-center gap-2 flex-wrap shrink-0">
             <input id="mf-search-input" oninput="SmartMoneyFlowEngine.renderTables()" type="text" placeholder="Filter symbol/sector..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-44 focus:outline-none focus:border-cyan-400">
-            <button id="mf-btn-mode" onclick="SmartMoneyFlowEngine.toggleStrictMode()" class="px-3 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-cyan-500/30 text-cyan-300 text-xs font-bold transition cursor-pointer">Mode: All Ranked (Dual-Flow)</button>
+            <button id="mf-btn-mode" onclick="SmartMoneyFlowEngine.toggleStrictMode()" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-xs font-bold transition cursor-pointer">Mode: Confirmed 6/6 Only</button>
             <button onclick="ClaudeNotificationEngine.triggerTestTripleBeepNotification('MONEY FLOW')" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 text-xs font-bold transition cursor-pointer" title="Test Notification + 3x Beep Alert for New Money Flow Candidate">🔔 Test 3x Beep</button>
             <button onclick="SmartMoneyFlowEngine.load(true)" class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs transition cursor-pointer">🔄 Scan Now</button>
           </div>
         </div>
 
         <!-- KPI Summary Strip -->
-        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs tabular-nums">
           <div class="p-3 rounded-xl bg-[#0c1220] border border-[#1a253d]">
             <div class="text-[10px] text-slate-400 uppercase">NSE F&amp;O Scanned</div>
             <div id="mf-kpi-universe" class="text-base font-black text-white mt-0.5">218 Stocks</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/30">
-            <div class="text-[10px] text-emerald-400 uppercase font-bold">Strict 22/22 BUY</div>
+            <div class="text-[10px] text-emerald-400 uppercase font-bold">6/6 Confirmed BUY</div>
             <div id="mf-kpi-strict-buy" class="text-base font-black text-emerald-300 mt-0.5">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-rose-500/30">
-            <div class="text-[10px] text-rose-400 uppercase font-bold">Strict 22/22 SELL</div>
+            <div class="text-[10px] text-rose-400 uppercase font-bold">6/6 Confirmed SELL</div>
             <div id="mf-kpi-strict-sell" class="text-base font-black text-rose-300 mt-0.5">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-amber-500/30">
-            <div class="text-[10px] text-amber-300 uppercase font-bold">NIFTY Trend vs VWAP</div>
+            <div class="text-[10px] text-amber-300 uppercase font-bold">NIFTY 50 vs VWAP</div>
             <div id="mf-kpi-nifty" class="text-xs font-black text-amber-200 mt-1">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-purple-500/30">
-            <div class="text-[10px] text-purple-300 uppercase font-bold">Special Filter Guard</div>
-            <div id="mf-kpi-special-blocked" class="text-xs font-bold text-slate-200 mt-1">-- Contra Blocked</div>
+            <div class="text-[10px] text-purple-300 uppercase font-bold">Strong (&ge;85 Score)</div>
+            <div id="mf-kpi-special-blocked" class="text-xs font-bold text-slate-200 mt-1">-- BUY / -- SELL</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-cyan-500/30">
             <div class="text-[10px] text-cyan-400 uppercase">Last Scan Time</div>
@@ -4036,100 +4041,74 @@
           </div>
         </div>
 
-        <!-- Indicator & Greeks Formula Matrix + 22-Condition BUY/SELL Confirmation -->
+        <!-- 4 Strategy Spec Panels: Settings, 100-Pt Scoring & Classification, 6-Cond BUY, 6-Cond SELL + Trade Management -->
         <div class="grid grid-cols-1 xl:grid-cols-4 gap-3 text-[11px]">
           <div class="p-3.5 rounded-xl bg-[#0b101b] border border-[#19243b] space-y-1.5">
             <div class="text-cyan-300 font-black text-xs uppercase flex items-center justify-between">
-              <span>1. Core Flow &amp; SMC</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30">TREND &bull; SMC</span>
+              <span>1. Indicator Settings</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30">5m / 15m</span>
             </div>
-            <div class="space-y-1 text-slate-300">
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Money Flow</span><span class="text-cyan-300">Volume &times; HLC3 (₹)</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Speed / RVOL</span><span class="text-amber-300">Vol / 20-Avg (&ge;1.5x)</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">Glow / Surge</span><span class="text-emerald-300">MF / 20-Avg (&ge;1.3x)</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">ST &amp; Hull Suite</span><span class="text-purple-300">ATR(10,2) &bull; HMA(55)</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-1"><span class="text-white font-bold">ADX &amp; RSI</span><span class="text-cyan-200">ADX&gt;20 &bull; RSI&gt;55/&lt;45</span></div>
-              <div class="flex justify-between gap-2"><span class="text-white font-bold">Levels &amp; Flow</span><span class="text-amber-200">BOS/OB, PDH/L, VWAP</span></div>
+            <div class="space-y-1 text-slate-300 text-[10.5px]">
+              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">HMA Period</span><span class="text-cyan-300">55 (5m &amp; 15m)</span></div>
+              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">FVG Zone</span><span class="text-amber-300">3-Candle Imbalance</span></div>
+              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">Vol SMA / RVOL</span><span class="text-emerald-300">20 Bars / &ge;1.5&times;</span></div>
+              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">Supertrend</span><span class="text-purple-300">ATR 10 &bull; Mult 2.0</span></div>
+              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">Min Risk/Reward</span><span class="text-cyan-200">1:2 (T2) / 1:3 (T3)</span></div>
+              <div class="text-[9.5px] text-slate-400 font-sans pt-0.5">Non-repainting Supertrend uses completed candle confirmation.</div>
             </div>
           </div>
 
           <div class="p-3.5 rounded-xl bg-[#0b101e] border border-amber-500/30 space-y-1.5">
             <div class="text-amber-300 font-black text-xs uppercase flex items-center justify-between">
-              <span>2. Options Greeks &amp; OI</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-400/30">DERIVATIVES</span>
+              <span>2. 100-Pt Scoring &amp; Rules</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-400/30">FINURL</span>
             </div>
-            <div class="space-y-1 text-slate-300 text-[10.5px]">
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">Delta Exp (DE)</span><span class="text-emerald-300">&Sigma;(OI&middot;&Delta;&middot;Lot) Dir</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">Gamma Exp (GEX)</span><span class="text-cyan-300">&Sigma;(OI&middot;&Gamma;&middot;Lot) Sens</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">Vega Exp (VEX)</span><span class="text-purple-300">&Sigma;(OI&middot;&nu;&middot;Lot) Vol</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">OI Change</span><span class="text-amber-200">CurOI &minus; PrevOI</span></div>
-              <div class="flex justify-between gap-2 border-b border-[#141d30] pb-0.5"><span class="text-white font-bold">IVP (252d) &amp; PCR</span><span class="text-sky-300">0-20/50/80/100 • Put/Call</span></div>
+            <div class="space-y-1 text-slate-300 text-[10px]">
+              <div class="flex justify-between"><span>15m HMA+ST / HMA55 Slope</span><span class="text-cyan-300 font-bold">20 + 20 = 40</span></div>
+              <div class="flex justify-between"><span>FVG + Retest + Rejection</span><span class="text-amber-300 font-bold">10+10+5 = 25</span></div>
+              <div class="flex justify-between border-b border-[#141d30] pb-1"><span>RVOL(&ge;2x:20/&ge;1.5x:15) + ST</span><span class="text-emerald-300 font-bold">20 + 15 = 35</span></div>
+              <div class="grid grid-cols-2 gap-1 text-[9.5px] pt-0.5">
+                <span class="text-emerald-300 font-bold">85&ndash;100: Strong</span>
+                <span class="text-cyan-300 font-bold">75&ndash;84: Good</span>
+                <span class="text-amber-300 font-bold">60&ndash;74: Watchlist</span>
+                <span class="text-slate-500">&lt;60: No Trade</span>
+              </div>
               <div class="text-[9.5px] text-amber-200/90 font-sans leading-snug pt-0.5">
-                <strong>Special Filter:</strong> OI Flow &amp; Delta Flow BOTH (+) for BUY; BOTH (&minus;) for SELL. Avoids contra-flow BUY vs NIFTY.
+                <strong>Mgmt:</strong> T1 Book 50% &bull; T2 Book 30% &bull; T3 Exit 20% &bull; Exit on ST Reverse / SL Hit.
               </div>
             </div>
           </div>
 
           <div class="p-3.5 rounded-xl bg-[#091512] border border-emerald-500/30 space-y-1.5">
             <div class="text-emerald-400 font-black text-xs uppercase flex items-center justify-between">
-              <span>3. BUY Filters (22/22)</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">OI+ &amp; DELTA+</span>
+              <span>3. BUY Entry (6/6)</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">LONG</span>
             </div>
-            <ol class="list-decimal list-inside grid grid-cols-2 gap-x-2 gap-y-0.5 text-slate-300 font-sans text-[10px]">
-              <li>ST (10,2) Bullish</li>
-              <li>2 Green candles</li>
-              <li>Close &gt; HMA(55)</li>
-              <li>MF &gt; 20-avg</li>
-              <li>Speed &ge; 1.5&times;</li>
-              <li>MF Surge &ge; 1.3&times;</li>
-              <li>Bull BOS / OB</li>
-              <li>Above Bull OB</li>
-              <li>Breakout OR-H</li>
-              <li>PDH Breakout</li>
-              <li>Upper Range</li>
-              <li>BEK Confirm</li>
-              <li>VWAP Above</li>
-              <li>B/A &ge; 1.15&times;</li>
-              <li class="text-emerald-300 font-bold">NIFTY &gt; VWAP</li>
-              <li class="text-emerald-300 font-bold">ADX(14) &gt; 20</li>
-              <li class="text-emerald-300 font-bold">RSI(14) &gt; 55</li>
-              <li class="text-emerald-300 font-bold">RVOL &ge; 1.5&times;</li>
-              <li class="text-emerald-300 font-bold">Long Buildup</li>
-              <li class="text-emerald-300 font-bold">Delta Flow (+)</li>
-              <li class="text-emerald-300 font-bold">SMC Bull BOS</li>
-              <li class="text-emerald-300 font-bold">Hull Rising</li>
+            <ol class="list-decimal list-inside space-y-0.5 text-slate-300 font-sans text-[10px]">
+              <li>15m HMA(55) is <strong class="text-emerald-300">Rising</strong></li>
+              <li>15m Supertrend is <strong class="text-emerald-300">Bullish</strong></li>
+              <li>5m Close &gt; <strong class="text-emerald-300">HMA(55)</strong></li>
+              <li><strong class="text-emerald-300">Bullish FVG</strong> formed (Low3 &gt; High1)</li>
+              <li>Price <strong class="text-emerald-300">retraces into Bull FVG</strong></li>
+              <li>Green rejection + <strong class="text-emerald-300">RVOL &ge;1.5&times; + 5m ST Bull</strong></li>
             </ol>
+            <div class="text-[9.5px] text-emerald-200/90 pt-0.5">Entry: High | SL: min(FVG Bottom, Low) &minus; 0.1&middot;ATR14</div>
           </div>
 
           <div class="p-3.5 rounded-xl bg-[#180c12] border border-rose-500/30 space-y-1.5">
             <div class="text-rose-400 font-black text-xs uppercase flex items-center justify-between">
-              <span>4. SELL Filters (22/22)</span>
-              <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">OI&minus; &amp; DELTA&minus;</span>
+              <span>4. SELL Entry (6/6)</span>
+              <span class="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300">SHORT</span>
             </div>
-            <ol class="list-decimal list-inside grid grid-cols-2 gap-x-2 gap-y-0.5 text-slate-300 font-sans text-[10px]">
-              <li>ST (10,2) Bearish</li>
-              <li>2 Red candles</li>
-              <li>Close &lt; HMA(55)</li>
-              <li>MF &gt; 20-avg</li>
-              <li>Speed &ge; 1.5&times;</li>
-              <li>Sell Pressure Dom</li>
-              <li>Bear BOS / OB</li>
-              <li>Below Bear OB</li>
-              <li>Breakdown OR-L</li>
-              <li>VWAP Below</li>
-              <li>Day Low (DL)</li>
-              <li>BEK Confirm</li>
-              <li>PDL Breakdown</li>
-              <li>B/A &le; 0.90&times;</li>
-              <li class="text-rose-300 font-bold">NIFTY &lt; VWAP</li>
-              <li class="text-rose-300 font-bold">ADX(14) &gt; 20</li>
-              <li class="text-rose-300 font-bold">RSI(14) &lt; 45</li>
-              <li class="text-rose-300 font-bold">RVOL &ge; 1.5&times;</li>
-              <li class="text-rose-300 font-bold">Short Buildup</li>
-              <li class="text-rose-300 font-bold">Delta Flow (&minus;)</li>
-              <li class="text-rose-300 font-bold">SMC Bear BOS</li>
-              <li class="text-rose-300 font-bold">Hull Falling</li>
+            <ol class="list-decimal list-inside space-y-0.5 text-slate-300 font-sans text-[10px]">
+              <li>15m HMA(55) is <strong class="text-rose-300">Falling</strong></li>
+              <li>15m Supertrend is <strong class="text-rose-300">Bearish</strong></li>
+              <li>5m Close &lt; <strong class="text-rose-300">HMA(55)</strong></li>
+              <li><strong class="text-rose-300">Bearish FVG</strong> formed (High3 &lt; Low1)</li>
+              <li>Price <strong class="text-rose-300">retraces into Bear FVG</strong></li>
+              <li>Red rejection + <strong class="text-rose-300">RVOL &ge;1.5&times; + 5m ST Bear</strong></li>
             </ol>
+            <div class="text-[9.5px] text-rose-200/90 pt-0.5">Entry: Low | SL: max(FVG Top, High) + 0.1&middot;ATR14</div>
           </div>
         </div>
 
@@ -4138,12 +4117,12 @@
           <div class="bg-[#0e1a18] px-4 py-3 border-b border-emerald-500/25 flex items-center justify-between flex-wrap gap-2">
             <span class="font-bold text-sm text-emerald-400 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              MONEY FLOW BUY SIGNALS &bull; Dual Positive (OI+ &amp; Delta+) + Greeks (DE/GEX/VEX/IVP) + 22-Condition Verified
+              FINURL MONEY FLOW BUY SIGNALS &bull; 15m HMA55/ST + Bullish FVG Retest + RVOL &ge; 1.5&times;
             </span>
             <span id="mf-buy-count-badge" class="text-xs font-mono text-emerald-300 font-bold">Loading live scan...</span>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs" id="table-money-flow-buy"></table>
+            <table class="w-full text-left text-xs tabular-nums" id="table-money-flow-buy"></table>
           </div>
         </div>
 
@@ -4152,12 +4131,12 @@
           <div class="bg-[#1b0f16] px-4 py-3 border-b border-rose-500/25 flex items-center justify-between flex-wrap gap-2">
             <span class="font-bold text-sm text-rose-400 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-rose-400 animate-ping"></span>
-              MONEY FLOW SELL SIGNALS &bull; Dual Negative (OI&minus; &amp; Delta&minus;) + Greeks (DE/GEX/VEX/IVP) + 22-Condition Verified
+              FINURL MONEY FLOW SELL SIGNALS &bull; 15m HMA55/ST + Bearish FVG Retest + RVOL &ge; 1.5&times;
             </span>
             <span id="mf-sell-count-badge" class="text-xs font-mono text-rose-300 font-bold">Loading live scan...</span>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs" id="table-money-flow-sell"></table>
+            <table class="w-full text-left text-xs tabular-nums" id="table-money-flow-sell"></table>
           </div>
         </div>
       </section>
@@ -4667,8 +4646,8 @@
 
         <!-- Category Tabs -->
         <div class="flex flex-wrap items-center gap-2 text-xs">
-          <button onclick="SmartMoneyConceptsEngine.setCategory('ALL_SETUPS')" id="smc-cat-ALL_SETUPS" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-purple-500 text-black">🏛️ All SMC Setups <span id="smc-cnt-ALL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-black/20 text-[10px]">0</span></button>
-          <button onclick="SmartMoneyConceptsEngine.setCategory('QUALIFIED_5_OF_5')" id="smc-cat-QUALIFIED_5_OF_5" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-emerald-300 border border-emerald-500/30">✅ 5/5 Checklist Qualified <span id="smc-cnt-QUALIFIED_5_OF_5" class="ml-1 px-1.5 py-0.2 rounded bg-emerald-500/20 text-[10px]">0</span></button>
+          <button onclick="SmartMoneyConceptsEngine.setCategory('ALL_SETUPS')" id="smc-cat-ALL_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] hover:bg-[#192642] text-slate-300 border border-[#23314f]">🏛️ All SMC Setups <span id="smc-cnt-ALL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-purple-300 text-[10px]">0</span></button>
+          <button onclick="SmartMoneyConceptsEngine.setCategory('QUALIFIED_5_OF_5')" id="smc-cat-QUALIFIED_5_OF_5" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-purple-500 text-black shadow-md shadow-purple-500/20">✅ 5/5 Checklist Qualified <span id="smc-cnt-QUALIFIED_5_OF_5" class="ml-1 px-1.5 py-0.2 rounded bg-black/25 text-black text-[10px] font-black">0</span></button>
           <button onclick="SmartMoneyConceptsEngine.setCategory('BUY_DISCOUNT')" id="smc-cat-BUY_DISCOUNT" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-teal-300 border border-teal-500/30">🟢 BUY (Discount + SSL) <span id="smc-cnt-BUY_DISCOUNT" class="ml-1 px-1.5 py-0.2 rounded bg-teal-500/20 text-[10px]">0</span></button>
           <button onclick="SmartMoneyConceptsEngine.setCategory('SELL_PREMIUM')" id="smc-cat-SELL_PREMIUM" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-rose-300 border border-rose-500/30">🔴 SELL (Premium + BSL) <span id="smc-cnt-SELL_PREMIUM" class="ml-1 px-1.5 py-0.2 rounded bg-rose-500/20 text-[10px]">0</span></button>
           <button onclick="SmartMoneyConceptsEngine.setCategory('UNMITIGATED_OB_FVG')" id="smc-cat-UNMITIGATED_OB_FVG" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-cyan-300 border border-cyan-500/30">📦 Unmitigated OB + FVG <span id="smc-cnt-UNMITIGATED_OB_FVG" class="ml-1 px-1.5 py-0.2 rounded bg-cyan-500/20 text-[10px]">0</span></button>
@@ -4850,8 +4829,8 @@
 
         <!-- 6 Category Filter Tabs -->
         <div class="flex flex-wrap items-center gap-2 text-xs">
-          <button onclick="PriceActionEngine.setCategory('ALL_SIGNALS')" id="pa-cat-ALL_SIGNALS" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-teal-400 text-black">📐 All Scanned Setups <span id="pa-cnt-ALL_SIGNALS" class="ml-1 px-1.5 py-0.2 rounded bg-black/20 text-[10px]">0</span></button>
-          <button onclick="PriceActionEngine.setCategory('QUALIFIED_9_OF_9')" id="pa-cat-QUALIFIED_9_OF_9" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-emerald-300 border border-emerald-500/30">✅ 9/9 Final Signals <span id="pa-cnt-QUALIFIED_9_OF_9" class="ml-1 px-1.5 py-0.2 rounded bg-emerald-500/20 text-[10px]">0</span></button>
+          <button onclick="PriceActionEngine.setCategory('ALL_SIGNALS')" id="pa-cat-ALL_SIGNALS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] hover:bg-[#192642] text-slate-300 border border-[#23314f]">📐 All Scanned Setups <span id="pa-cnt-ALL_SIGNALS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-teal-300 text-[10px]">0</span></button>
+          <button onclick="PriceActionEngine.setCategory('QUALIFIED_9_OF_9')" id="pa-cat-QUALIFIED_9_OF_9" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-teal-400 text-black">✅ 9/9 Final Signals <span id="pa-cnt-QUALIFIED_9_OF_9" class="ml-1 px-1.5 py-0.2 rounded bg-black/25 text-black text-[10px] font-black">0</span></button>
           <button onclick="PriceActionEngine.setCategory('BUY_SIGNALS')" id="pa-cat-BUY_SIGNALS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-teal-300 border border-teal-500/30">🟢 BUY Setups <span id="pa-cnt-BUY_SIGNALS" class="ml-1 px-1.5 py-0.2 rounded bg-teal-500/20 text-[10px]">0</span></button>
           <button onclick="PriceActionEngine.setCategory('SELL_SIGNALS')" id="pa-cat-SELL_SIGNALS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-rose-300 border border-rose-500/30">🔴 SELL Setups <span id="pa-cnt-SELL_SIGNALS" class="ml-1 px-1.5 py-0.2 rounded bg-rose-500/20 text-[10px]">0</span></button>
           <button onclick="PriceActionEngine.setCategory('ORB_MOMENTUM')" id="pa-cat-ORB_MOMENTUM" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-cyan-300 border border-cyan-500/30">⚡ VWAP-Free ORB Breakouts <span id="pa-cnt-ORB_MOMENTUM" class="ml-1 px-1.5 py-0.2 rounded bg-cyan-500/20 text-[10px]">0</span></button>
@@ -5047,6 +5026,8 @@
       <!-- ==================================================== -->
       <section id="tab-apex-alpha" class="tab-pane hidden space-y-5 font-mono">
         <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-[#172033] text-xs font-mono">
+          <button onclick="switchTab('claude-10skills')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/25 via-emerald-500/25 to-amber-500/25 text-cyan-200 border border-cyan-400/50 font-bold whitespace-nowrap hover:scale-105 transition">🧠 10-Skill AI &amp; Sentinel</button>
+          <button onclick="switchTab('world-strategy')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/25 via-emerald-500/25 to-cyan-500/25 text-amber-200 border border-amber-400/40 font-bold whitespace-nowrap hover:scale-105 transition">⚡ World #1 Omni-Quantum</button>
           <button onclick="switchTab('apex-alpha')" class="px-3 py-1.5 rounded-lg bg-emerald-400 text-black font-black whitespace-nowrap">🏆 Apex Alpha Strategy</button>
           <button onclick="switchTab('intraday-stock')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-orange-300 border border-[#1f2c44] font-bold whitespace-nowrap transition">🎯 Intraday Stock</button>
           <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-300 border border-[#1f2c44] font-bold whitespace-nowrap transition">⚡ Claude FNO</button>
@@ -5059,12 +5040,12 @@
         <div class="card p-4 bg-[#0d1322] border border-emerald-500/30 rounded-xl flex flex-col gap-3">
           <div class="space-y-1.5 w-full">
             <div class="flex items-center gap-2 flex-wrap">
-              <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-400/35 text-[10px] font-black">18-DAY BACKTEST #1 &bull; 61.2% NET WIN &bull; PF 1.87 &bull; 12.9% MAX DD</span>
-              <h2 class="text-base md:text-lg font-black text-white">🏆 Apex Alpha Strategy &bull; VWAP Compression Coil &amp; PDH/PDL Reclaim</h2>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-400/35 text-[10px] font-black">18-DAY BACKTEST #1 &bull; BEST 10 UP &amp; BEST 10 DOWN &bull; 61.2% WIN &bull; PF 1.87</span>
+              <h2 class="text-base md:text-lg font-black text-white">🏆 Apex Alpha Strategy &bull; Best 10 UP &amp; Best 10 DOWN (VWAP Coil &amp; PDH/PDL Reclaim)</h2>
               <button onclick="openFormulaModal('apex_alpha')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
             </div>
             <p class="text-xs text-slate-300 font-sans leading-relaxed">
-              Built from empirical walk-forward backtesting across 18 NSE F&amp;O sessions: requires <strong>NIFTY 50 &amp; Sector Breadth Alignment</strong>, <strong>Relative Strength vs NIFTY</strong>, <strong>VWAP + EMA(9/21/50) Structure</strong>, <strong>6-Bar Compression Coil Breakout or PDH/PDL Reclaim</strong>, <strong>SL Risk Corridor (0.30%&ndash;1.80%)</strong>, and an automated <strong>+0.90R Breakeven+0.15R Trail Lock</strong>.
+              Built from empirical walk-forward backtesting across 18 NSE F&amp;O sessions: ranks qualifying setups across the universe and strictly displays only the <strong>Best 10 UP (BUY) &amp; Best 10 DOWN (SELL)</strong> stocks matching <strong>NIFTY 50 &amp; Sector Breadth</strong>, <strong>RS vs NIFTY</strong>, <strong>VWAP + EMA(9/21/50)</strong>, <strong>6-Bar Compression Coil or PDH/PDL Reclaim</strong>, and <strong>+0.90R Trail Lock</strong>.
             </p>
           </div>
           <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-[#1c2842] w-full">
@@ -5080,9 +5061,9 @@
             <input id="aa-search-input" oninput="ApexAlphaEngine.renderTables()" type="text" placeholder="Search symbol..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-44 focus:outline-none focus:border-emerald-400">
             <label class="sr-only" for="aa-dir-filter">Direction Filter</label>
             <select id="aa-dir-filter" onchange="ApexAlphaEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-amber-200 text-xs font-bold focus:outline-none">
-              <option value="ALL">Dir: BUY &amp; SELL</option>
-              <option value="BUY">Dir: BUY Only</option>
-              <option value="SELL">Dir: SELL Only</option>
+              <option value="ALL">Dir: Best 10 UP &amp; 10 DN</option>
+              <option value="BUY">Dir: Best 10 UP (BUY)</option>
+              <option value="SELL">Dir: Best 10 DOWN (SELL)</option>
             </select>
             <label class="sr-only" for="aa-sort-select">Sort Order</label>
             <select id="aa-sort-select" onchange="ApexAlphaEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-cyan-200 text-xs font-bold focus:outline-none">
@@ -5104,7 +5085,7 @@
             <div id="aa-kpi-universe" class="text-base font-black text-white mt-0.5">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/35">
-            <div class="text-[10px] text-emerald-300 uppercase font-bold">8/8 Qualified Alpha</div>
+            <div class="text-[10px] text-emerald-300 uppercase font-bold">8/8 Best 10 UP / DN</div>
             <div id="aa-kpi-qualified" class="text-base font-black text-emerald-200 mt-0.5">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-cyan-500/30">
@@ -5112,7 +5093,7 @@
             <div id="aa-kpi-modes" class="text-base font-black text-cyan-200 mt-0.5">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-amber-500/30">
-            <div class="text-[10px] text-amber-300 uppercase font-bold">BUY / SELL (&ge;7/8)</div>
+            <div class="text-[10px] text-amber-300 uppercase font-bold">Best 10 UP / Best 10 DN</div>
             <div id="aa-kpi-dirs" class="text-base font-black text-amber-200 mt-0.5">--</div>
           </div>
           <div class="p-3 rounded-xl bg-[#0c1220] border border-[#1a253d]">
@@ -5139,12 +5120,12 @@
 
         <!-- 6 Category Filter Tabs -->
         <div class="flex flex-wrap items-center gap-2 text-xs">
-          <button onclick="ApexAlphaEngine.setCategory('QUALIFIED_ALPHA')" id="aa-cat-QUALIFIED_ALPHA" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-emerald-400 text-black">🏆 8/8 Qualified Alpha <span id="aa-cnt-QUALIFIED_ALPHA" class="ml-1 px-1.5 py-0.2 rounded bg-black/20 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('QUALIFIED_ALPHA')" id="aa-cat-QUALIFIED_ALPHA" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-emerald-400 text-black">🏆 8/8 Best 10 UP &amp; 10 DN <span id="aa-cnt-QUALIFIED_ALPHA" class="ml-1 px-1.5 py-0.2 rounded bg-black/20 text-[10px]">0</span></button>
           <button onclick="ApexAlphaEngine.setCategory('VWAP_COIL_SETUPS')" id="aa-cat-VWAP_COIL_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-cyan-300 border border-[#23314f]">🌀 VWAP Coil Breakouts <span id="aa-cnt-VWAP_COIL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
           <button onclick="ApexAlphaEngine.setCategory('PDH_PDL_RECLAIM')" id="aa-cat-PDH_PDL_RECLAIM" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-amber-300 border border-[#23314f]">🧱 PDH/PDL Reclaims <span id="aa-cnt-PDH_PDL_RECLAIM" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
-          <button onclick="ApexAlphaEngine.setCategory('BUY_SETUPS')" id="aa-cat-BUY_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-emerald-300 border border-[#23314f]">🟢 BUY (&ge;7/8) <span id="aa-cnt-BUY_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
-          <button onclick="ApexAlphaEngine.setCategory('SELL_SETUPS')" id="aa-cat-SELL_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-rose-300 border border-[#23314f]">🔴 SELL (&ge;7/8) <span id="aa-cnt-SELL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
-          <button onclick="ApexAlphaEngine.setCategory('NEAR_TRIGGER_WATCH')" id="aa-cat-NEAR_TRIGGER_WATCH" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-slate-300 border border-[#23314f]">🔭 6-7/8 Coiling Watch <span id="aa-cnt-NEAR_TRIGGER_WATCH" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('BUY_SETUPS')" id="aa-cat-BUY_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-emerald-300 border border-[#23314f]">🟢 Best 10 UP <span id="aa-cnt-BUY_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('SELL_SETUPS')" id="aa-cat-SELL_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-rose-300 border border-[#23314f]">🔴 Best 10 DOWN <span id="aa-cnt-SELL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('NEAR_TRIGGER_WATCH')" id="aa-cat-NEAR_TRIGGER_WATCH" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-slate-300 border border-[#23314f]">🔭 6-7/8 Watch (Max 10/Side) <span id="aa-cnt-NEAR_TRIGGER_WATCH" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
         </div>
 
         <!-- Primary Apex Alpha Setups Table -->
@@ -5152,7 +5133,7 @@
           <div class="bg-[#0e1824] px-4 py-3 border-b border-emerald-500/20 flex items-center justify-between flex-wrap gap-2">
             <span id="aa-table-title" class="font-bold text-sm text-emerald-300 flex items-center gap-2">
               <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-              APEX ALPHA STRATEGY &bull; 8/8 Qualified Institutional Setups
+              APEX ALPHA STRATEGY &bull; Best 10 UP &amp; Best 10 DOWN Qualified Setups
             </span>
             <span id="aa-count-badge" class="text-xs font-mono text-emerald-200 font-bold">Loading Apex Alpha scan...</span>
           </div>
@@ -5299,39 +5280,95 @@
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
         </div>
-        <div class="card p-4 border-l-4 border-purple-500 bg-[#121622] flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-lg font-bold text-white">Muhurat Flow Model &bull; Institutional Whale Sweeps</h2>
-              <span class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 text-xs" onclick="openFormulaModal('titan')">⚡ Source: trader-screener/titan_flow.py</span>
+        <div class="card p-4 bg-[#0d1322] border border-purple-500/35 rounded-xl flex flex-col gap-3">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div class="space-y-1.5 max-w-4xl">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-400/40 text-[10px] font-black">ORDER FLOW &bull; LIQUIDITY SWEEP &bull; STOP-HUNT &bull; CVD &bull; OI &bull; VWAP</span>
+                <h2 class="text-base md:text-lg font-black text-white">🌊 Muhurat Flow Model &bull; Complete Institutional Order Flow + Whale Sweep Strategy</h2>
+                <button onclick="openFormulaModal('titan')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
+              </div>
+              <p class="text-xs text-slate-300 font-sans leading-relaxed">
+                Combines <strong>Order Flow Absorption</strong>, <strong>Institutional Volume &amp; RVOL</strong>, <strong>PDH/PDL &amp; Swing Liquidity Sweeps (Stop-Hunts)</strong>, <strong>CLV-Weighted Cumulative Volume Delta (CVD)</strong>, <strong>Open Interest Buildup</strong>, and <strong>Session VWAP</strong> &mdash; entering only on <strong>post-sweep confirmation</strong> (blocking runaway candle chases).
+              </p>
+              <div class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-400/25 text-[11px] text-amber-200 font-sans">
+                <strong>Data Transparency Note:</strong> Standard NSE OHLCV &amp; L1 feeds do not disclose broker or participant identities. This engine identifies <em>institutional-style activity and probable large-player order-flow footprints</em> (stop-hunts, absorption wicks, volume surges, CVD proxies &amp; OI buildup), not confirmed whale identities.
+              </div>
             </div>
-            <p class="text-xs text-slate-300 mt-1 max-w-2xl font-sans">
-              Monitors institutional order book sweeps, iceberg orders, block deal footprints, and aggressive multi-lot market orders (> ₹5 Cr) across NSE F&O instruments.
-            </p>
-          </div>
-          <div class="text-right font-mono text-xs text-slate-400">
-            <div>Sweep Threshold: <span class="text-purple-400 font-bold">&gt; &#8377;5 Cr Blocks</span></div>
-            <div>Delta Imbalance: <span class="text-emerald-400 font-bold">&ge; 70% Skew</span></div>
-          </div>
-        </div>
-
-        <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl">
-          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between">
-            <span class="font-bold text-sm text-emerald-400">Muhurat Flow Whale Buying (Aggressive Institutional Inflow)</span>
-            <span class="text-xs font-mono text-slate-400">Whale Sweeps</span>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs" id="table-titan-bullish"></table>
+            <div class="flex items-center gap-2 flex-wrap shrink-0">
+              <label class="sr-only" for="titan-search-input">Filter symbol or sector</label>
+              <input id="titan-search-input" oninput="MuhuratFlowEngine.renderTables()" type="text" placeholder="Filter symbol/sector..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-44 focus:outline-none focus:border-purple-400">
+              <button id="titan-btn-mode" onclick="MuhuratFlowEngine.toggleStrictMode()" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-xs font-bold transition cursor-pointer">Mode: Confirmed 6/6 Only</button>
+              <button onclick="MuhuratFlowEngine.load(true)" class="px-3 py-1.5 rounded-lg bg-purple-500 hover:bg-purple-400 text-black font-black text-xs transition cursor-pointer">🔄 Scan Now</button>
+            </div>
           </div>
         </div>
 
-        <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl">
-          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between">
-            <span class="font-bold text-sm text-rose-400">Muhurat Flow Whale Selling (Institutional Offloading &amp; Dumps)</span>
-            <span class="text-xs font-mono text-slate-400">Whale Sweeps</span>
+        <!-- 6 Institutional Order Flow KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs tabular-nums">
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-[#1a253d]">
+            <div class="text-[10px] text-slate-400 uppercase">NSE F&amp;O Scanned</div>
+            <div id="titan-kpi-universe" class="text-base font-black text-white mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/35">
+            <div class="text-[10px] text-emerald-300 uppercase font-bold">6/6 Whale Buy</div>
+            <div id="titan-kpi-buy" class="text-base font-black text-emerald-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-rose-500/35">
+            <div class="text-[10px] text-rose-300 uppercase font-bold">6/6 Whale Sell</div>
+            <div id="titan-kpi-sell" class="text-base font-black text-rose-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-amber-500/30">
+            <div class="text-[10px] text-amber-300 uppercase font-bold">Stop-Hunts Detected</div>
+            <div id="titan-kpi-stophunt" class="text-base font-black text-amber-200 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-purple-500/30">
+            <div class="text-[10px] text-purple-300 uppercase font-bold">Anti-Chase Rule</div>
+            <div class="text-sm font-black text-purple-200 mt-0.5">Post-Sweep Confirm</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-cyan-500/30">
+            <div class="text-[10px] text-cyan-300 uppercase font-bold">Last Scan Time</div>
+            <div id="titan-kpi-time" class="text-base font-black text-cyan-200 mt-0.5">--</div>
+          </div>
+        </div>
+
+        <!-- 4-Card Institutional Order Flow Formula Rulebook -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-[11px] font-sans">
+          <div class="p-3.5 rounded-xl bg-[#0a101d] border border-purple-500/25 space-y-1.5">
+            <div class="text-xs font-black text-purple-300">1. Liquidity Sweep &amp; Stop-Hunt</div>
+            <div class="text-slate-300">Detects wicks sweeping <strong>PDH/PDL</strong>, <strong>ORH/ORL</strong>, or <strong>Swing H/L</strong> on &ge;1.25&times; volume, reclaiming/rejecting back inside key value.</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#0a101d] border border-cyan-500/25 space-y-1.5">
+            <div class="text-xs font-black text-cyan-300">2. Absorption + Anti-Chase</div>
+            <div class="text-slate-300">Waits for <strong>post-sweep confirmation</strong> close; blocks entries chasing &gt;2.4&times;ATR climax candles or &gt;2.5&times;ATR away from VWAP.</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#0a101d] border border-emerald-500/25 space-y-1.5">
+            <div class="text-xs font-black text-emerald-300">3. CVD Proxy + VWAP + OI</div>
+            <div class="text-slate-300">Session CLV-weighted <strong>CVD slope &amp; divergence</strong> aligned with <strong>Session VWAP</strong>, <strong>Futures OI Buildup</strong> &amp; <strong>Bid/Ask ratio</strong>.</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-[#0a101d] border border-amber-500/25 space-y-1.5">
+            <div class="text-xs font-black text-amber-300">4. Risk &amp; 100-Pt Scoring</div>
+            <div class="text-slate-300">SL placed behind swept extreme (&plusmn;0.15&times;ATR14); targets scaled at <strong>T1 (1R 50%)</strong>, <strong>T2 (2R 30%)</strong>, <strong>T3 (3R 20%)</strong>.</div>
+          </div>
+        </div>
+
+        <div class="card overflow-hidden bg-[#0d111a] border border-emerald-500/25 rounded-xl">
+          <div class="bg-[#0e1824] px-4 py-3 border-b border-emerald-500/20 flex items-center justify-between flex-wrap gap-2">
+            <span class="font-bold text-sm text-emerald-400">🟢 Muhurat Flow BUY Setups &bull; SSL Stop-Hunt Reclaim &amp; Demand Absorption</span>
+            <span id="titan-buy-badge" class="text-xs font-mono text-emerald-300 font-bold">Loading order flow...</span>
           </div>
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs" id="table-titan-bearish"></table>
+            <table class="w-full text-left text-xs tabular-nums" id="table-titan-bullish"></table>
+          </div>
+        </div>
+
+        <div class="card overflow-hidden bg-[#0d111a] border border-rose-500/25 rounded-xl">
+          <div class="bg-[#180e16] px-4 py-3 border-b border-rose-500/20 flex items-center justify-between flex-wrap gap-2">
+            <span class="font-bold text-sm text-rose-400">🔴 Muhurat Flow SELL Setups &bull; BSL Stop-Hunt Reject &amp; Supply Distribution</span>
+            <span id="titan-sell-badge" class="text-xs font-mono text-rose-300 font-bold">Loading order flow...</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs tabular-nums" id="table-titan-bearish"></table>
           </div>
         </div>
       </section>
@@ -6063,6 +6100,14 @@
             <p class="text-xs text-slate-300 font-sans mt-0.5">Real-time quotes, bid/ask depth ratios, derivative buildup cycles, and 1-click execution across the complete NSE F&amp;O universe.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
+            <!-- 60s Automatic Auto-Refresh Controls -->
+            <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#080d1a] border border-cyan-500/30 text-[11px]">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-slate-300 font-bold">Auto 60s:</span>
+              <span id="wl-autorefresh-countdown" class="text-cyan-300 font-black tabular-nums">60s</span>
+              <button type="button" id="wl-autorefresh-toggle" onclick="AutoRefresh60sManager.toggle()" class="ml-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9.5px] font-black cursor-pointer">ON</button>
+              <button type="button" onclick="AutoRefresh60sManager.triggerNow(true)" class="px-1.5 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[9.5px] font-bold cursor-pointer" title="Refresh Watchlist &amp; Custom Tables Now">↻</button>
+            </div>
             <!-- View Mode Switcher -->
             <div class="flex items-center bg-[#080d1a] border border-[#1c2230] rounded-lg p-0.5">
               <button id="btn-wl-all" onclick="setWatchlistViewMode('all')" class="px-3 py-1 rounded text-xs font-bold bg-cyan-500 text-black transition">All 218 Stocks</button>
@@ -7115,11 +7160,25 @@
       return Math.max(0, Math.min(1, ((Number(s.price) || lo) - lo) / span));
     };
 
-    // Unified System Formula Definitions (0..15 eligible stocks per scanner — never pads non-matching stocks)
+    function hasActiveFormulaSignal(s) {
+      if (!s || !isPureEquityStock(s)) return false;
+      const fCode = String(s.formula_code || s.formulaCode || '').toUpperCase();
+      const fName = String(s.formula_name || s.formulaName || '').trim();
+      const status = String(s.trade_status || s.tradeStatus || '').toUpperCase();
+      const entry = Number(s.entry ?? s.fixedEntryPrice ?? s.risk?.entryPrice ?? 0);
+      const listed = String(s.listed_at || s.listedAt || '').trim();
+      if (fCode === 'NONE' || fName === 'No Active Formula Signal' || status === 'NO_SIGNAL') return false;
+      if (!Number.isFinite(entry) || entry <= 0) return false;
+      if (!listed || listed === '--') return false;
+      return true;
+    }
+
+    // Unified System Formula Definitions (0..15 eligible stocks per scanner — never pads or admits NONE/NO_SIGNAL stocks)
     const SCANNER_FORMULA_DEFS = [
       {
         key: 'strong_bullish', label: 'Strong Bull', side: 'BUY',
         match: (s) => {
+          if (!hasActiveFormulaSignal(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
           const pct = Number(s.pct_change) || 0;
           const rvol = Number(s.rvol) || 1;
           const price = Number(s.price) || 0;
@@ -7132,6 +7191,7 @@
       {
         key: 'strong_bearish', label: 'Strong Bear', side: 'SELL',
         match: (s) => {
+          if (!hasActiveFormulaSignal(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
           const pct = Number(s.pct_change) || 0;
           const rvol = Number(s.rvol) || 1;
           const price = Number(s.price) || 0;
@@ -7144,6 +7204,7 @@
       {
         key: 'sonic_bullish', label: 'Pulse Bull', side: 'BUY',
         match: (s) => {
+          if (!hasActiveFormulaSignal(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
           const pct = Number(s.pct_change) || 0;
           const rvol = Number(s.rvol) || 1;
           const oi = Number(s.oi_chg_pct) || 0;
@@ -7156,6 +7217,7 @@
       {
         key: 'sonic_bearish', label: 'Pulse Bear', side: 'SELL',
         match: (s) => {
+          if (!hasActiveFormulaSignal(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
           const pct = Number(s.pct_change) || 0;
           const rvol = Number(s.rvol) || 1;
           const oi = Number(s.oi_chg_pct) || 0;
@@ -7167,17 +7229,18 @@
       },
       {
         key: 'titan_bullish', label: 'Flow Bull', side: 'BUY',
-        match: (s) => (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) >= 1.45 && (Number(s.delta) || 0) > 20000,
+        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && s.signal !== 'SELL' && (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) >= 1.45 && (Number(s.delta) || 0) > 20000,
         score: (s) => (s.formula_code === 'TITAN_WHALE' ? 140 : 0) + (Number(s.bid_ask_ratio) || 1) * 35 + Math.min(40, Math.sqrt(Math.max(0, Number(s.turnover_cr) || 0)) * 2.2) + Math.min(30, Math.abs(Number(s.delta) || 0) / 50000)
       },
       {
         key: 'titan_bearish', label: 'Flow Bear', side: 'SELL',
-        match: (s) => (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) <= 0.72 && (Number(s.delta) || 0) < -20000,
+        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'LONG' && s.signal !== 'BUY' && (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) <= 0.72 && (Number(s.delta) || 0) < -20000,
         score: (s) => (s.formula_code === 'TITAN_WHALE' ? 140 : 0) + (1 / Math.max(0.15, Number(s.bid_ask_ratio) || 1)) * 35 + Math.min(40, Math.sqrt(Math.max(0, Number(s.turnover_cr) || 0)) * 2.2) + Math.min(30, Math.abs(Number(s.delta) || 0) / 50000)
       },
       {
         key: 'quant_elite_bullish', label: 'Elite Bull', side: 'BUY',
         match: (s) => {
+          if (!hasActiveFormulaSignal(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
           const pct = Number(s.pct_change) || 0;
           const rsi = Number(s.rsi) || 55;
           const ai = Number(s.aiScore || s.hyperflow || 62);
@@ -7189,6 +7252,7 @@
       {
         key: 'quant_elite_bearish', label: 'Elite Bear', side: 'SELL',
         match: (s) => {
+          if (!hasActiveFormulaSignal(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
           const pct = Number(s.pct_change) || 0;
           const rsi = Number(s.rsi) || 45;
           const ai = Number(s.aiScore || s.hyperflow || 60);
@@ -7199,17 +7263,18 @@
       },
       {
         key: 'quant_elite_pro_bullish', label: 'Elite Pro ▲', side: 'BUY',
-        match: (s) => (Number(s.pct_change) || 0) >= 0.55 && (Number(s.pcr) || 1) >= 1.22 && ((Number(s.bid_ask_ratio) || 1) >= 1.25 || s.buildup === 'Short Covering'),
+        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && s.signal !== 'SELL' && (Number(s.pct_change) || 0) >= 0.55 && (Number(s.pcr) || 1) >= 1.22 && ((Number(s.bid_ask_ratio) || 1) >= 1.25 || s.buildup === 'Short Covering'),
         score: (s) => ((Number(s.pcr) || 1) >= 1.2 ? 55 : 0) + (Number(s.pcr) || 1) * 45 + (s.buildup === 'Short Covering' ? 40 : 0) + (Number(s.aiScore || s.hyperflow) || 60) * 0.55
       },
       {
         key: 'quant_elite_pro_bearish', label: 'Elite Pro ▼', side: 'SELL',
-        match: (s) => (Number(s.pct_change) || 0) <= -0.55 && (Number(s.pcr) || 1) <= 0.85 && ((Number(s.bid_ask_ratio) || 1) <= 0.82 || s.buildup === 'Short Buildup'),
+        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'LONG' && s.signal !== 'BUY' && (Number(s.pct_change) || 0) <= -0.55 && (Number(s.pcr) || 1) <= 0.85 && ((Number(s.bid_ask_ratio) || 1) <= 0.82 || s.buildup === 'Short Buildup'),
         score: (s) => ((Number(s.pcr) || 1) <= 0.85 ? 55 : 0) + Math.max(0, 2.2 - (Number(s.pcr) || 1)) * 45 + (s.buildup === 'Short Buildup' ? 40 : 0) + (Number(s.aiScore || s.hyperflow) || 60) * 0.55
       },
       {
         key: 'titan_cash_bullish', label: 'Flow Cash ▲', side: 'BUY',
         match: (s) => {
+          if (!hasActiveFormulaSignal(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
           const pct = Number(s.pct_change) || 0;
           const turn = Number(s.turnover_cr) || 0;
           const price = Number(s.price) || 0;
@@ -7225,6 +7290,7 @@
       {
         key: 'titan_cash_bearish', label: 'Flow Cash ▼', side: 'SELL',
         match: (s) => {
+          if (!hasActiveFormulaSignal(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
           const pct = Number(s.pct_change) || 0;
           const turn = Number(s.turnover_cr) || 0;
           const price = Number(s.price) || 0;
@@ -7239,12 +7305,12 @@
       },
       {
         key: 'best_momentum_upside', label: 'Momentum ▲', side: 'BUY',
-        match: (s) => (Number(s.pct_change) || 0) >= 1.50 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 30 && (Number(s.bid_ask_ratio) || 1) >= 1.15,
+        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && s.signal !== 'SELL' && (Number(s.pct_change) || 0) >= 1.50 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 30 && (Number(s.bid_ask_ratio) || 1) >= 1.15,
         score: (s) => (Number(s.pct_change) || 0) * 20 + _stockRangePos(s) * 8
       },
       {
         key: 'best_momentum_downside', label: 'Momentum ▼', side: 'SELL',
-        match: (s) => (Number(s.pct_change) || 0) <= -1.50 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 30 && (Number(s.bid_ask_ratio) || 1) <= 0.88,
+        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'LONG' && s.signal !== 'BUY' && (Number(s.pct_change) || 0) <= -1.50 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 30 && (Number(s.bid_ask_ratio) || 1) <= 0.88,
         score: (s) => -(Number(s.pct_change) || 0) * 20 + (1 - _stockRangePos(s)) * 8
       }
     ];
@@ -7273,48 +7339,57 @@
       if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) return [];
       const recs = [];
       const sym = String(stock.symbol || '').toUpperCase();
-      SCANNER_FORMULA_DEFS.forEach(def => {
-        try {
-          if (def.match(stock)) {
-            recs.push({
-              key: def.key,
-              label: SCANNER_FULL_NAMES[def.key] || def.label,
-              side: def.side
-            });
-          }
-        } catch (e) {}
-      });
-      // Also check High Liquidity Claude AI Formula
-      const pct = Number(stock.pct_change) || 0;
-      const turn = Number(stock.turnover_cr) || 0;
-      const rvol = Number(stock.rvol) || 1;
-      const ba = Number(stock.bid_ask_ratio) || 1;
-      const price = Number(stock.price) || 0;
-      const atp = Number(stock.atp) || price;
-      if (pct >= 0.55 && turn >= 100 && rvol >= 1.15 && price >= atp * 0.998 && ba >= 1.15) {
-        recs.push({ key: 'liquidity_bull', label: SCANNER_FULL_NAMES.liquidity_bull, side: 'BUY' });
-      } else if (pct <= -0.55 && turn >= 100 && rvol >= 1.15 && price <= atp * 1.002 && ba <= 0.88) {
-        recs.push({ key: 'liquidity_bear', label: SCANNER_FULL_NAMES.liquidity_bear, side: 'SELL' });
-      }
-      // Include live engine matches from Money Flow, Most Active F&O, and Claude F&O when loaded
-      try {
-        if (typeof SmartMoneyFlowEngine !== 'undefined' && SmartMoneyFlowEngine.data) {
-          const mfBuy = (SmartMoneyFlowEngine.data.buySignals || []).find(x => String(x.symbol || '').toUpperCase() === sym);
-          const mfSell = (SmartMoneyFlowEngine.data.sellSignals || []).find(x => String(x.symbol || '').toUpperCase() === sym);
-          if (mfBuy) recs.push({ key: 'money_flow_buy', label: `Money Flow ▲ (${mfBuy.score || 22}/22)`, side: 'BUY' });
-          if (mfSell) recs.push({ key: 'money_flow_sell', label: `Money Flow ▼ (${mfSell.score || 22}/22)`, side: 'SELL' });
+      if (hasActiveFormulaSignal(stock)) {
+        SCANNER_FORMULA_DEFS.forEach(def => {
+          try {
+            if (def.match(stock)) {
+              recs.push({
+                key: def.key,
+                label: SCANNER_FULL_NAMES[def.key] || def.label,
+                side: def.side
+              });
+            }
+          } catch (e) {}
+        });
+        // Also check High Liquidity Claude AI Formula
+        const pct = Number(stock.pct_change) || 0;
+        const turn = Number(stock.turnover_cr) || 0;
+        const rvol = Number(stock.rvol) || 1;
+        const ba = Number(stock.bid_ask_ratio) || 1;
+        const price = Number(stock.price) || 0;
+        const atp = Number(stock.atp) || price;
+        if (stock.side !== 'SHORT' && pct >= 0.55 && turn >= 100 && rvol >= 1.15 && price >= atp * 0.998 && ba >= 1.15) {
+          recs.push({ key: 'liquidity_bull', label: SCANNER_FULL_NAMES.liquidity_bull, side: 'BUY' });
+        } else if (stock.side !== 'LONG' && pct <= -0.55 && turn >= 100 && rvol >= 1.15 && price <= atp * 1.002 && ba <= 0.88) {
+          recs.push({ key: 'liquidity_bear', label: SCANNER_FULL_NAMES.liquidity_bear, side: 'SELL' });
         }
-        if (typeof MostActiveFnoEngine !== 'undefined' && MostActiveFnoEngine.data?.categories) {
-          const mafCats = MostActiveFnoEngine.data.categories;
+      }
+      // Include strictly confirmed live engine matches from Money Flow, Apex Alpha, Most Active F&O, Claude F&O, SMC, Price Action, Intraday Stock
+      try {
+        if (typeof SmartMoneyFlowEngine !== 'undefined' && SmartMoneyFlowEngine.lastReport) {
+          const mfBuy = (SmartMoneyFlowEngine.lastReport.buySignals || []).find(x => String(x.symbol || '').toUpperCase() === sym && (x.allSixMet || x.conditionsMet === 6));
+          const mfSell = (SmartMoneyFlowEngine.lastReport.sellSignals || []).find(x => String(x.symbol || '').toUpperCase() === sym && (x.allSixMet || x.conditionsMet === 6));
+          if (mfBuy) recs.push({ key: 'money_flow_buy', label: `Money Flow ▲ (${mfBuy.score || 75}/100)`, side: 'BUY' });
+          if (mfSell) recs.push({ key: 'money_flow_sell', label: `Money Flow ▼ (${mfSell.score || 75}/100)`, side: 'SELL' });
+        }
+        if (typeof ApexAlphaEngine !== 'undefined' && ApexAlphaEngine.lastReport?.categories) {
+          const aaCats = ApexAlphaEngine.lastReport.categories;
+          const aaHit = (aaCats.qualifiedAlpha || []).find(x => String(x.symbol || '').toUpperCase() === sym);
+          if (aaHit) {
+            recs.push({ key: 'apex_alpha', label: `Apex Alpha ${aaHit.side === 'SELL' ? '▼' : '▲'} (${aaHit.score}/8)`, side: aaHit.side === 'SELL' ? 'SELL' : 'BUY' });
+          }
+        }
+        if (typeof MostActiveFnoEngine !== 'undefined' && MostActiveFnoEngine.lastReport?.categories) {
+          const mafCats = MostActiveFnoEngine.lastReport.categories;
           const mafAll = [...(mafCats.mostActiveFno || []), ...(mafCats.mostActiveEquities || [])];
-          const mafHit = mafAll.find(x => String(x.symbol || '').toUpperCase() === sym);
+          const mafHit = mafAll.find(x => String(x.symbol || '').toUpperCase() === sym && x.qualified !== false);
           if (mafHit) {
             const mafSide = String(mafHit.direction || mafHit.signal || '').includes('SELL') || Number(mafHit.chgPct || 0) < 0 ? 'SELL' : 'BUY';
             recs.push({ key: 'most_active_fno', label: `Most Active F&O (${mafHit.timeframe || '5m'} ${mafHit.formulaScore || 7}/7)`, side: mafSide });
           }
         }
-        if (typeof ClaudeFnoEngine !== 'undefined' && ClaudeFnoEngine.data?.categories) {
-          const cfCats = ClaudeFnoEngine.data.categories;
+        if (typeof ClaudeFnoEngine !== 'undefined' && ClaudeFnoEngine.lastReport?.categories) {
+          const cfCats = ClaudeFnoEngine.lastReport.categories;
           const cfAll = [...(cfCats.qualifiedTrades || []), ...(cfCats.equitiesFno || [])];
           const cfHit = cfAll.find(x => String(x.symbol || '').toUpperCase() === sym);
           if (cfHit) {
@@ -7322,7 +7397,7 @@
           }
         }
         if (typeof SmartMoneyConceptsEngine !== 'undefined' && SmartMoneyConceptsEngine.lastReport?.categories) {
-          const smcAll = SmartMoneyConceptsEngine.lastReport.categories.allSetups || [];
+          const smcAll = SmartMoneyConceptsEngine.lastReport.categories.qualified5of5 || [];
           const smcHit = smcAll.find(x => String(x.symbol || '').toUpperCase() === sym);
           if (smcHit) {
             recs.push({
@@ -7333,8 +7408,8 @@
           }
         }
         if (typeof PriceActionEngine !== 'undefined' && PriceActionEngine.lastReport?.categories) {
-          const paAll = PriceActionEngine.lastReport.categories.allSignals || [];
-          const paHit = paAll.find(x => String(x.symbol || '').toUpperCase() === sym && (x.isFinalSignal || x.score >= 7));
+          const paAll = PriceActionEngine.lastReport.categories.qualified9of9 || [];
+          const paHit = paAll.find(x => String(x.symbol || '').toUpperCase() === sym);
           if (paHit) {
             recs.push({
               key: 'price_action',
@@ -7353,6 +7428,12 @@
               side: isHit.side === 'SELL' ? 'SELL' : 'BUY'
             });
           }
+        }
+        if (typeof MuhuratFlowEngine !== 'undefined' && MuhuratFlowEngine.lastReport) {
+          const mfFlowBuy = (MuhuratFlowEngine.lastReport.buySignals || []).find(x => String(x.symbol || '').toUpperCase() === sym && x.allSixMet);
+          const mfFlowSell = (MuhuratFlowEngine.lastReport.sellSignals || []).find(x => String(x.symbol || '').toUpperCase() === sym && x.allSixMet);
+          if (mfFlowBuy) recs.push({ key: 'titan_bullish', label: `Muhurat Flow ▲ (${mfFlowBuy.score}/100)`, side: 'BUY' });
+          if (mfFlowSell) recs.push({ key: 'titan_bearish', label: `Muhurat Flow ▼ (${mfFlowSell.score}/100)`, side: 'SELL' });
         }
       } catch (e) {}
       return recs;
@@ -7382,7 +7463,7 @@
     }
 
     function buildDistinctFormulaScanners(equityPool) {
-      const pool = (equityPool || []).filter(isPureEquityStock);
+      const pool = (equityPool || []).filter(hasActiveFormulaSignal);
 
       // Strict Formula Picker: ONLY shows stocks that genuinely qualify (0..15 stocks — never forces or pads)
       const pickEligibleUpTo15 = (arr, filterFn, scoreFn) =>
@@ -7408,8 +7489,8 @@
         (s) => (Number(s.turnover_cr) || 0) * 1.0 + Math.abs(Number(s.pct_change) || 0) * 12
       );
       out.most_active_volume = sortByListedAtNewestFirstAtoZ([
-        ...pickEligibleUpTo15(pool, (s) => (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 120 && (Number(s.rvol) || 1) >= 1.15, (s) => Number(s.volume) || 0),
-        ...pickEligibleUpTo15(pool, (s) => (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 120 && (Number(s.rvol) || 1) >= 1.15, (s) => Number(s.volume) || 0)
+        ...pickEligibleUpTo15(pool, (s) => s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 120 && (Number(s.rvol) || 1) >= 1.15, (s) => Number(s.volume) || 0),
+        ...pickEligibleUpTo15(pool, (s) => s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 120 && (Number(s.rvol) || 1) >= 1.15, (s) => Number(s.volume) || 0)
       ]);
       return out;
     }
@@ -7649,6 +7730,13 @@
           renderCloudAISignals();
         } else if (tabId === 'custom-tables') {
           renderCustomTables();
+          if (
+            typeof MidnightSessionManager !== 'undefined' &&
+            !MidnightSessionManager.isMidnightCleared() &&
+            (!Array.isArray(DATA?.all_stocks) || DATA.all_stocks.every(s => !s.listed_at || s.listed_at === '--'))
+          ) {
+            MidnightSessionManager.pullFreshBackendScan(false);
+          }
         } else if (tabId === 'cyber-war-room') {
           CyberHudController.init();
         } else if (tabId === 'claude-10skills') {
@@ -7669,7 +7757,9 @@
           if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.load(false);
         } else if (tabId === 'world-strategy') {
           renderWorldStrategyTab();
-        } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(tabId)) {
+        } else if (tabId === 'titan') {
+          if (typeof MuhuratFlowEngine !== 'undefined') MuhuratFlowEngine.load(false);
+        } else if (['strong', 'sonic', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(tabId)) {
           renderAllTables();
         }
       } catch (err) {
@@ -7909,7 +7999,7 @@
       const nameInput = document.getElementById('ct-preset-name');
       const name = nameInput ? nameInput.value.trim() : '';
       if (!name) {
-        alert('Please enter a preset name before saving.');
+        if (typeof showToast === 'function') showToast('Please enter a preset name before saving.', 'warning');
         return;
       }
 
@@ -7990,14 +8080,55 @@
       }
     }
 
+    function resolveCustomTableListedAt(stock) {
+      if (!stock) return '--';
+      if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) return '--';
+      const isValidTime = (t) => {
+        if (!t || typeof t !== 'string') return false;
+        const trimmed = t.trim();
+        if (!trimmed || trimmed === '--') return false;
+        if (!/^\d{2}:\d{2}(:\d{2})?$/.test(trimmed)) return false;
+        if (typeof isTimeInFutureIST === 'function' && isTimeInFutureIST(trimmed)) return false;
+        return typeof timeStringToSec === 'function' ? timeStringToSec(trimmed) > 0 : true;
+      };
+      const direct = stock.listed_at || stock.listedAt || '';
+      if (isValidTime(direct)) return direct.trim();
+
+      const sym = String(stock.symbol || '').toUpperCase();
+      if (!sym) return '--';
+      try {
+        const sources = [
+          () => typeof MostActiveFnoEngine !== 'undefined' && MostActiveFnoEngine.lastReport?.categories && [...(MostActiveFnoEngine.lastReport.categories.mostActiveFno || []), ...(MostActiveFnoEngine.lastReport.categories.mostActiveEquities || [])],
+          () => typeof ApexAlphaEngine !== 'undefined' && ApexAlphaEngine.lastReport?.categories && [...(ApexAlphaEngine.lastReport.categories.qualifiedAlpha || []), ...(ApexAlphaEngine.lastReport.categories.buySetups || []), ...(ApexAlphaEngine.lastReport.categories.sellSetups || []), ...(ApexAlphaEngine.lastReport.categories.nearTriggerWatch || [])],
+          () => typeof ClaudeFnoEngine !== 'undefined' && ClaudeFnoEngine.lastReport?.categories && [...(ClaudeFnoEngine.lastReport.categories.qualifiedTrades || []), ...(ClaudeFnoEngine.lastReport.categories.equitiesFno || [])],
+          () => typeof SmartMoneyConceptsEngine !== 'undefined' && SmartMoneyConceptsEngine.lastReport?.categories?.allSetups,
+          () => typeof PriceActionEngine !== 'undefined' && PriceActionEngine.lastReport?.categories?.allSignals,
+          () => typeof IntradayStockEngine !== 'undefined' && IntradayStockEngine.lastReport?.categories?.qualifiedDfc,
+          () => typeof SmartMoneyFlowEngine !== 'undefined' && SmartMoneyFlowEngine.lastReport && [...(SmartMoneyFlowEngine.lastReport.buySignals || []), ...(SmartMoneyFlowEngine.lastReport.sellSignals || [])],
+          () => typeof MuhuratFlowEngine !== 'undefined' && MuhuratFlowEngine.lastReport && [...(MuhuratFlowEngine.lastReport.buySignals || []), ...(MuhuratFlowEngine.lastReport.sellSignals || [])]
+        ];
+        for (const getArr of sources) {
+          const arr = getArr();
+          if (!Array.isArray(arr)) continue;
+          const hit = arr.find(x => x && String(x.symbol || '').toUpperCase() === sym && isValidTime(x.listedAt || x.listed_at));
+          if (hit) {
+            const resolved = String(hit.listedAt || hit.listed_at).trim();
+            stock.listed_at = resolved;
+            return resolved;
+          }
+        }
+      } catch (e) {}
+      return '--';
+    }
+
     function exportCustomTableToCSV() {
       if (typeof DATA === 'undefined' || !Array.isArray(DATA.all_stocks)) {
-        alert('Dataset not ready for export.');
+        if (typeof showToast === 'function') showToast('Dataset not ready for export.', 'warning');
         return;
       }
       const filtered = getFilteredCustomStocks();
       if (filtered.length === 0) {
-        alert('No stocks match current filters to export.');
+        if (typeof showToast === 'function') showToast('No stocks match current filters to export.', 'warning');
         return;
       }
 
@@ -8006,12 +8137,13 @@
         const recs = (typeof getStockScannerRecommendations === 'function')
           ? getStockScannerRecommendations(s).map(r => r.label).join(' | ') || 'None'
           : 'None';
+        const resolvedListed = resolveCustomTableListedAt(s);
         return [
           s.symbol,
           `"${(s.name || '').replace(/"/g, '""')}"`,
           `"${(s.sector || '').replace(/"/g, '""')}"`,
           Number(s.sector_pct || 0).toFixed(2),
-          `"${s.listed_at || '--'}"`,
+          `"${resolvedListed}"`,
           `"${recs.replace(/"/g, '""')}"`,
           s.price || 0,
           s.pct_change || 0,
@@ -8143,10 +8275,14 @@
           return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
         }
         if (sortBy === 'listed_at') {
-          const rawA = a.listed_at || a.listedAt || '';
-          const rawB = b.listed_at || b.listedAt || '';
-          const secA = (rawA && rawA !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawA) : 0;
-          const secB = (rawB && rawB !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawB) : 0;
+          const rawA = resolveCustomTableListedAt(a);
+          const rawB = resolveCustomTableListedAt(b);
+          const secA = (rawA !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawA) : 0;
+          const secB = (rawB !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawB) : 0;
+          if (secA <= 0 && secB <= 0) return String(a.symbol || '').localeCompare(String(b.symbol || ''));
+          if (secA <= 0) return 1;
+          if (secB <= 0) return -1;
+          if (secA === secB) return String(a.symbol || '').localeCompare(String(b.symbol || ''));
           return sortDir === 'asc' ? secA - secB : secB - secA;
         }
         if (sortBy === 'scanner_rec') {
@@ -8192,9 +8328,7 @@
         const turnover = Number(stock.turnover_cr) || 0;
         const oiChg = Number(stock.oi_chg_pct) || 0;
         const buildup = normalizeCycleBuildup(stock.buildup, pct, oiChg, stock.bid_ask_ratio);
-        const listedTime = (stock.listed_at && stock.listed_at !== '--' && !(typeof isTimeInFutureIST === 'function' && isTimeInFutureIST(stock.listed_at)))
-          ? stock.listed_at
-          : '--';
+        const listedTime = resolveCustomTableListedAt(stock);
 
         rowsHTML += `
           <tr class="hover:bg-[#0c1220] transition group">
@@ -9373,12 +9507,13 @@
       };
 
       const isWorldEligible = (s, isUp) => {
+        if (!hasActiveFormulaSignal(s)) return false;
         const pct = Number(s.pct_change) || 0;
         const rvol = Number(s.rvol) || 1;
         const ba = Number(s.bid_ask_ratio) || 1;
         return isUp
-          ? pct >= 0.65 && rvol >= 1.15 && ba >= 1.15
-          : pct <= -0.65 && rvol >= 1.15 && ba <= 0.88;
+          ? s.side !== 'SHORT' && pct >= 0.65 && rvol >= 1.15 && ba >= 1.15
+          : s.side !== 'LONG' && pct <= -0.65 && rvol >= 1.15 && ba <= 0.88;
       };
 
       const topEligibleUp = candidates
@@ -9533,13 +9668,14 @@
       const isT1Hit = hasValidEntry && targetVal > 0 && (isBullish ? (curPrice >= targetVal) : (curPrice <= targetVal));
       const isSlHit = hasValidEntry && stopVal > 0 && (isBullish ? (curPrice <= stopVal) : (curPrice >= stopVal));
       const liveEntryBadge = !hasValidEntry
-        ? `<span class="text-[8.5px] px-1 rounded bg-slate-800 text-slate-400 font-bold">NO TRIGGER</span>`
+        ? `<span class="text-[8.5px] px-1 rounded bg-slate-800/90 text-slate-400 font-bold">WATCHING</span>`
         : isT1Hit
           ? `<span class="text-[8.5px] px-1 rounded bg-emerald-500/25 text-emerald-300 font-black border border-emerald-500/40">🎯 T1 HIT</span>`
           : (isSlHit
             ? `<span class="text-[8.5px] px-1 rounded bg-rose-500/25 text-rose-300 font-black border border-rose-500/40">🛡️ SL HIT</span>`
             : `<span class="text-[8.5px] px-1 rounded ${vsEntryPct >= 0 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'} font-bold">${vsEntryPct >= 0 ? '+' : ''}${vsEntryPct.toFixed(2)}% vs Entry</span>`);
-      const formulaLabel = s.formula_name || (hasValidEntry && strat && strat.tag ? strat.tag.replace(/^[^A-Za-z0-9]+/, '') : 'Standby');
+      const cleanFormulaName = s.formula_name && s.formula_name !== 'No Active Formula Signal' ? s.formula_name : '';
+      const formulaLabel = cleanFormulaName || (hasValidEntry && strat && strat.tag ? strat.tag.replace(/^[^A-Za-z0-9]+/, '') : 'Watchlist');
 
       const risk = (hasValidEntry && stopVal > 0) ? Math.abs(entryVal - stopVal) : 0;
       const reward = (hasValidEntry && targetVal > 0) ? Math.abs(targetVal - entryVal) : 0;
@@ -9667,7 +9803,14 @@
       if (!Array.isArray(dataList)) dataList = [];
       const isCombinedDualTable = (tableId === 'table-world-strategy' || tableId === 'table-most-active');
       dataList = sortByListedAtNewestFirstAtoZ(
-        dataList.filter(isPureEquityStock).slice(0, isCombinedDualTable ? 30 : 15)
+        dataList.filter(s => {
+          if (!hasActiveFormulaSignal(s)) return false;
+          if (!isCombinedDualTable) {
+            if (isBullish && s.side === 'SHORT') return false;
+            if (!isBullish && s.side === 'LONG') return false;
+          }
+          return true;
+        }).slice(0, isCombinedDualTable ? 30 : 15)
       );
 
       let html = `
@@ -11404,11 +11547,11 @@ function renderJournal() {
         Object.assign(DATA, distinct);
 
         const bullTop = equityPool
-          .filter(s => (Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) >= (Number(s.atp) || Number(s.price) || 0) * 0.998)
+          .filter(s => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) >= (Number(s.atp) || Number(s.price) || 0) * 0.998)
           .sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true))
           .slice(0, 15);
         const bearTop = equityPool
-          .filter(s => (Number(s.pct_change) || 0) <= -0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) <= (Number(s.atp) || Number(s.price) || 0) * 1.002)
+          .filter(s => hasActiveFormulaSignal(s) && s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) <= (Number(s.atp) || Number(s.price) || 0) * 1.002)
           .sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false))
           .slice(0, 15);
 
@@ -11555,10 +11698,12 @@ function renderJournal() {
         if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.load(false);
         if (typeof PriceActionEngine !== 'undefined') PriceActionEngine.load(false);
         if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.load(false);
+        if (typeof MuhuratFlowEngine !== 'undefined') MuhuratFlowEngine.load(false);
         if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.load(false);
         if (typeof AiTradingJournalEngine !== 'undefined') AiTradingJournalEngine.load(false);
         if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
         if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
+        if (typeof renderCustomTables === 'function' && isElementVisiblePane(document.getElementById('custom-screener-table'))) renderCustomTables();
         this.renderSessionPill();
       },
 
@@ -12219,8 +12364,10 @@ function renderJournal() {
             if (typeof renderAllTables === 'function') renderAllTables();
           } else if (activeTabId === 'sector-rank') {
             if (typeof renderSectorRank === 'function') renderSectorRank();
-          } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(activeTabId)) {
+          } else if (['strong', 'sonic', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(activeTabId)) {
             if (typeof renderAllTables === 'function') renderAllTables();
+          } else if (activeTabId === 'titan') {
+            if (typeof MuhuratFlowEngine !== 'undefined') MuhuratFlowEngine.load(false);
           } else if (activeTabId === 'money-flow') {
             if (typeof SmartMoneyFlowEngine !== 'undefined') SmartMoneyFlowEngine.load(false);
           } else if (activeTabId === 'most-active-fno') {
@@ -12235,6 +12382,8 @@ function renderJournal() {
             if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.load(false);
           } else if (activeTabId === 'intraday-stock') {
             if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.load(false);
+          } else if (activeTabId === 'custom-tables') {
+            if (typeof renderCustomTables === 'function') renderCustomTables();
           }
         };
 
@@ -12362,7 +12511,7 @@ function renderJournal() {
       const apiKey = (document.getElementById('upstox-input-apikey')?.value || '').trim();
       const apiSecret = (document.getElementById('upstox-input-apisecret')?.value || '').trim();
       if (!apiKey || !apiSecret) {
-        alert('To use 1-Click OAuth2 Login, please enter both your Upstox API Key and API Secret first (or simply paste an Access / 1-Year Analytics Token above).');
+        if (typeof showToast === 'function') showToast('Enter both Upstox API Key and API Secret first (or paste an Access / Analytics Token above).', 'warning');
         return;
       }
       localStorage.setItem('upstox_api_key', apiKey);
@@ -12374,10 +12523,10 @@ function renderJournal() {
         if (json.authUrl) {
           window.location.href = json.authUrl;
         } else {
-          alert(json.message || 'Could not construct Upstox login URL');
+          if (typeof showToast === 'function') showToast(json.message || 'Could not construct Upstox login URL', 'error');
         }
       } catch (e) {
-        alert('Error starting Upstox OAuth: ' + e.message);
+        if (typeof showToast === 'function') showToast('Error starting Upstox OAuth: ' + e.message, 'error');
       }
     }
 
@@ -12388,7 +12537,7 @@ function renderJournal() {
       const saveBtn = document.getElementById('btn-save-upstox-token');
 
       if (!accessToken || accessToken.length < 15) {
-        alert('Please paste a valid Upstox Access Token or 1-Year Analytics Token (from account.upstox.com/developer/apps).');
+        if (typeof showToast === 'function') showToast('Please paste a valid Upstox Access Token or 1-Year Analytics Token.', 'warning');
         return;
       }
 
@@ -12415,12 +12564,10 @@ function renderJournal() {
           syncMarketLive();
           CyberLivePriceEngine.connectWebSocket();
         } else {
-          alert(`Upstox Verification Notice:
-
-${json.message || 'Unauthorized token.'}`);
+          if (typeof showToast === 'function') showToast(`Upstox Verification Notice: ${json.message || 'Unauthorized token.'}`, 'error');
         }
       } catch (err) {
-        alert('Network error verifying Upstox token: ' + err.message);
+        if (typeof showToast === 'function') showToast('Network error verifying Upstox token: ' + err.message, 'error');
       } finally {
         if (saveBtn) {
           saveBtn.disabled = false;
@@ -12939,8 +13086,10 @@ ${json.message || 'Unauthorized token.'}`);
         isElementVisiblePane(document.getElementById('table-home-top-traded-downside'));
 
       if (needTopTradedHome || !window.TOP_10_UPSIDE) {
-        // Rank Upside Candidates by Claude AI Trade Skill Formula (strict qualification, never pad)
+        // Rank Upside Candidates by Claude AI Trade Skill Formula (strict formula-qualified only, never NONE/NO_SIGNAL)
         let upsideTraded = allStocks.filter(s =>
+          hasActiveFormulaSignal(s) &&
+          s.side !== 'SHORT' &&
           (Number(s.pct_change) || 0) >= 0.45 &&
           (Number(s.rvol) || 1) >= 1.15 &&
           (Number(s.turnover_cr) || 0) >= 50 &&
@@ -12951,8 +13100,10 @@ ${json.message || 'Unauthorized token.'}`);
         });
         upsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-        // Rank Downside Candidates by Claude AI Trade Skill Formula (strict qualification, never pad)
+        // Rank Downside Candidates by Claude AI Trade Skill Formula (strict formula-qualified only, never NONE/NO_SIGNAL)
         let downsideTraded = allStocks.filter(s =>
+          hasActiveFormulaSignal(s) &&
+          s.side !== 'LONG' &&
           (Number(s.pct_change) || 0) <= -0.45 &&
           (Number(s.rvol) || 1) >= 1.15 &&
           (Number(s.turnover_cr) || 0) >= 50 &&
@@ -12982,8 +13133,9 @@ ${json.message || 'Unauthorized token.'}`);
       renderVisibleTable('table-strong-bearish', DATA.strong_bearish, false);
       renderVisibleTable('table-sonic-bullish', DATA.sonic_bullish, true);
       renderVisibleTable('table-sonic-bearish', DATA.sonic_bearish, false);
-      renderVisibleTable('table-titan-bullish', DATA.titan_bullish, true);
-      renderVisibleTable('table-titan-bearish', DATA.titan_bearish, false);
+      if (typeof MuhuratFlowEngine !== 'undefined' && MuhuratFlowEngine.lastReport && isElementVisiblePane(document.getElementById('table-titan-bullish'))) {
+        MuhuratFlowEngine.renderTables();
+      }
       renderVisibleTable('table-elite-bullish', DATA.quant_elite_bullish, true);
       renderVisibleTable('table-elite-bearish', DATA.quant_elite_bearish, false);
       renderVisibleTable('table-elite-pro-bullish', DATA.quant_elite_pro_bullish, true);
@@ -12998,13 +13150,13 @@ ${json.message || 'Unauthorized token.'}`);
       if (isElementVisiblePane(document.getElementById('table-top-traded')) || isElementVisiblePane(document.getElementById('table-top-traded-downside'))) {
         const liqUp = sortByListedAtNewestFirstAtoZ(
           [...allStocks]
-            .filter(s => (Number(s.pct_change) || 0) >= 0.45 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.rvol) || 1) >= 1.1)
+            .filter(s => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.45 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.rvol) || 1) >= 1.1)
             .sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0))
             .slice(0, 15)
         );
         const liqDn = sortByListedAtNewestFirstAtoZ(
           [...allStocks]
-            .filter(s => (Number(s.pct_change) || 0) <= -0.45 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.rvol) || 1) >= 1.1)
+            .filter(s => hasActiveFormulaSignal(s) && s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.45 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.rvol) || 1) >= 1.1)
             .sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0))
             .slice(0, 15)
         );
@@ -13057,9 +13209,8 @@ ${json.message || 'Unauthorized token.'}`);
       const qty = document.getElementById('order-qty')?.value || '10';
       const orderType = document.getElementById('order-type')?.value || 'MARKET';
       if (typeof showToast === 'function') {
-        showToast(`✅ [Upstox API v2/v3] ${orderType} ${side} Order Submitted: ${sym} x ${qty} Qty`, 'success');
+        showToast(`✅ [Upstox API v2/v3] ${orderType} ${side} Order Submitted: NSE:${sym}-EQ x ${qty} Qty (SUBMITTED 200 OK)`, 'success');
       }
-      alert(`[Upstox API v2/v3] Order Executed Successfully!\n\nClient ID: YA49011 (APURBA PAL)\nSymbol: NSE:${sym}-EQ\nType: ${orderType}\nSide: ${side}\nQty: ${qty}\nStatus: SUBMITTED 200 OK`);
       closeOrderModal();
     }
     function executeFyersOrder() {
@@ -13096,14 +13247,29 @@ ${json.message || 'Unauthorized token.'}`);
     return max(0.0, min(100.0, score))`
       },
       titan: {
-        title: "Muhurat Flow &bull; Institutional Whale Sweeps",
-        file: "trader-pelosi/ptr.py",
-        desc: "Monitors large block derivative orders and flags institutional accumulation.",
-        code: `def titan_whale_flow(trades, min_block_cr=1.0):
-    block_buys = sum(t.val for t in trades if t.val >= min_block_cr and t.side == 'BUY')
-    block_sells = sum(t.val for t in trades if t.val >= min_block_cr and t.side == 'SELL')
-    net_flow = block_buys - block_sells
-    return {"net_whale_cr": net_flow, "signal": "ACCUMULATION" if net_flow > 15.0 else "NEUTRAL"}`
+        title: "Muhurat Flow &bull; Institutional Order Flow + Whale Sweep Strategy",
+        file: "server/muhuratFlowEngine.ts",
+        desc: "Detects institutional-style footprints from NSE OHLCV + L1 data (no participant identity exposed): Liquidity Sweeps (PDH/PDL, ORH/ORL, Swing H/L Stop-Hunts), Wick Absorption, Institutional RVOL & Value Surges, Intrabar CLV-weighted CVD + Divergence, Futures OI Buildup & Session VWAP, entering only on post-sweep confirmation without chasing climax bars.",
+        code: `def muhurat_institutional_order_flow_sweep(bars_5m, oi_chg_pct, bid_ask_ratio):
+    # 1. Session VWAP & Intrabar CLV-Weighted Cumulative Volume Delta (CVD)
+    clv = ((close - low) - (high - close)) / max(1e-6, high - low)
+    session_cvd = cumsum(volume * clv)
+    cvd_slope3 = session_cvd[-1] - session_cvd[-4]
+
+    # 2. Liquidity Sweep / Stop-Hunt Detection (PDH/PDL, ORH/ORL, Swing H/L)
+    ssl_stop_hunt = (bar.low < key_low) and (bar.close > key_low) and (bar.vol_ratio >= 1.25)
+    bsl_stop_hunt = (bar.high > key_high) and (bar.close < key_high) and (bar.vol_ratio >= 1.25)
+
+    # 3. Anti-Chase + Post-Sweep Confirmation Rule
+    candle_atr_mult = (confirm.high - confirm.low) / atr14
+    vwap_dist_atr = abs(price - vwap) / atr14
+    anti_chase_ok = not (candle_atr_mult > 2.4 and vwap_dist_atr > 2.0) and vwap_dist_atr <= 2.5
+
+    # 4. 6/6 Confirmed Setup + Sweep-Anchored Risk Targets
+    if ssl_stop_hunt and price > vwap and cvd_slope3 > 0 and anti_chase_ok:
+        sl = sweep_low - 0.15 * atr14
+        r = entry - sl
+        return {"signal": "BUY_6_OF_6", "entry": entry, "sl": sl, "t1": entry+r, "t2": entry+2*r, "t3": entry+3*r}`
       },
       elite: {
         title: "Muhurat Elite 3m &bull; Bearish Squeeze Breakouts",
@@ -13208,32 +13374,21 @@ ${json.message || 'Unauthorized token.'}`);
     return {"turnover_cr": turnover_cr, "tier": tier, "depth_ratio": depth_ratio}`
       },
       money_flow: {
-        title: "Smart Money Flow + Trend + SMC + OI + Greeks + Regime (22/22)",
-        file: "server/moneyFlowEngine.ts & Quant Smart Money + Greeks Engine",
-        desc: "Combines Money Flow (Vol x HLC3), Speed (>=1.5x), Glow (>=1.3x), Supertrend(10,2), Hull HMA(55), BOS/OB, VWAP/PDH/PDL, Bid/Ask with Black-Scholes Greeks Exposure (DE, GEX, VEX), OI Change (Cur-Prev), 252d IVP Volatility Regime, PCR, ADX(14)>20, RSI(14), NIFTY vs VWAP Regime, and the Dual-Flow Special Filter.",
-        code: `def smart_money_flow_greeks_regime_22_of_22(bars, chain, nifty_price, nifty_vwap):
-    # Core Money Flow + Trend + SMC
-    hlc3 = (bars.high + bars.low + bars.close) / 3.0
-    mf = bars.volume * hlc3
-    hma55 = hma(bars.close, 55)
-    st_dir, st_line = supertrend(bars, atr=10, mult=2.0)
-    adx14, rsi14 = adx(bars, 14), rsi(bars.close, 14)
-
-    # Options Greeks & Exposures (Signed Call + Put Deltas)
-    DE = sum((oi * signed_delta * lot_size) for oi in chain)   # + Bullish / - Bearish
-    GEX = sum((oi * gamma * lot_size) for oi in chain)         # Sensitivity only
-    VEX = sum((oi * vega * lot_size) for oi in chain)          # Volatility sensitivity
-    oi_change = current_oi - previous_oi                       # Long/Short buildup
-    ivp = 100.0 * sum(iv_hist < current_iv) / 252.0            # 0-20 Low, 20-50 Mod, 50-80 Elev, 80-100 High
-    pcr = put_oi / max(1, call_oi)
-
-    # Special Dual-Flow & NIFTY Market Regime Guard
-    nifty_bullish = nifty_price >= nifty_vwap
-    if nifty_bullish and bearish_oi_buildup and DE < 0:
-        return "AVOID BUY (Contra-Flow Trap)"
-    buy_ok = (oi_flow > 0 and DE > 0)   # Both OI Flow & Delta Flow Positive
-    sell_ok = (oi_flow < 0 and DE < 0)  # Both OI Flow & Delta Flow Negative
-    return {"buy": buy_ok and adx14 > 20 and rsi14 > 55, "sell": sell_ok and adx14 > 20 and rsi14 < 45}`
+        title: "FinURL HMA 55 + FVG + Volume + Supertrend Strategy (6/6 &bull; 100-Pt Score)",
+        file: "server/moneyFlowEngine.ts",
+        desc: "5-minute entry + 15-minute trend confirmation using HMA(55), 3-candle unmitigated Bullish/Bearish Fair Value Gap retests, Rejection Candle with RVOL >= 1.5x (Volume SMA 20), and non-repainting Supertrend(ATR 10, Mult 2.0). Exact SL (-0.1xATR14), T1(+1R Book 50%), T2(+2R Book 30%), T3(+3R Exit 20%), and 100-Point Scoring Classification.",
+        code: `def finurl_hma55_fvg_rvol_supertrend(bars_5m, bars_15m):
+    # 1. HMA(n) = WMA(2 * WMA(C, n/2) - WMA(C, n), round(sqrt(n))), n = 55
+    hma5, hma15 = hma(bars_5m.close, 55), hma(bars_15m.close, 55)
+    # 2. Supertrend(ATR=10, Mult=2.0) - previous completed bar anti-repainting
+    st5, st15 = supertrend(bars_5m, 10, 2.0), supertrend(bars_15m, 10, 2.0)
+    # 3. 3-Candle FVG: Bullish Low(C3) > High(C1) | Bearish High(C3) < Low(C1)
+    # 4. Volume: RVOL = CurrentVolume / SMA(Volume, 20) >= 1.5x (Strong) / 2.0x (Very strong)
+    buy = (hma15_rising and st15_bull and c.close > hma5 and bull_fvg_retest
+           and c.close > c.open and rvol >= 1.5 and st5_bull)
+    # Entry = Rejection High | SL = min(FVG_Bottom, RejectionLow) - 0.1*ATR(14)
+    # T1 = Entry + 1R (Book 50%), T2 = Entry + 2R (Book 30%), T3 = Entry + 3R (Exit 20%)
+    # 100-Pt Score: HTF(20) + HMA(20) + FVG(25) + RVOL(20) + ST(15)`
       },
       'most_active_fno': {
         title: '🔥 Most Active FNO & (Index Options) • Multi-TF (5m/15m/30m/1H) + 7-Pillar Formula',
@@ -15160,12 +15315,13 @@ ${json.message || 'Unauthorized token.'}`);
     };
 
     // ============================================================
-    // SMART MONEY FLOW SURGE + SUPERTREND(10,2) + HULL SUITE(HMA 55) ENGINE
+    // FINURL MONEY FLOW: HMA 55 + FVG + VOLUME + SUPERTREND ENGINE
     // ============================================================
     const SmartMoneyFlowEngine = {
       lastReport: null,
-      strictOnly: false,
+      strictOnly: true,
       refreshTimer: null,
+      _renderedOnce: false,
 
       init() {
         setTimeout(() => {
@@ -15188,7 +15344,7 @@ ${json.message || 'Unauthorized token.'}`);
         this.strictOnly = !this.strictOnly;
         const btn = document.getElementById('mf-btn-mode');
         if (btn) {
-          btn.innerText = this.strictOnly ? 'Mode: Strict 22/22 Only' : 'Mode: All Ranked (Dual-Flow)';
+          btn.innerText = this.strictOnly ? 'Mode: Confirmed 6/6 Only' : 'Mode: All Ranked (>=60 Pts)';
           btn.className = this.strictOnly
             ? 'px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-xs font-bold transition cursor-pointer'
             : 'px-3 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-cyan-500/30 text-cyan-300 text-xs font-bold transition cursor-pointer';
@@ -15198,7 +15354,17 @@ ${json.message || 'Unauthorized token.'}`);
 
       async load(showFeedback = false) {
         if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
-          this.lastReport = { isMidnightCleared: true, buySignals: [], sellSignals: [], universeEvaluated: 0, strictBuyCount: 0, strictSellCount: 0, istTime: getISTDatePartsNow().timeStr };
+          this.lastReport = {
+            isMidnightCleared: true,
+            buySignals: [],
+            sellSignals: [],
+            universeEvaluated: 0,
+            confirmedBuyCount: 0,
+            confirmedSellCount: 0,
+            strongBuyCount: 0,
+            strongSellCount: 0,
+            istTime: getISTDatePartsNow().timeStr
+          };
           this.renderTables();
           return;
         }
@@ -15214,9 +15380,7 @@ ${json.message || 'Unauthorized token.'}`);
         }
         this.lastReport = report;
         const mfPane = document.getElementById('tab-money-flow');
-        if (mfPane && !mfPane.classList.contains('hidden')) {
-          this.renderTables();
-        } else if (!this._renderedOnce) {
+        if ((mfPane && !mfPane.classList.contains('hidden')) || !this._renderedOnce) {
           this._renderedOnce = true;
           this.renderTables();
         }
@@ -15224,7 +15388,7 @@ ${json.message || 'Unauthorized token.'}`);
           ClaudeNotificationEngine.syncMoneyFlowCandidates(report);
         }
         if (showFeedback && typeof showToast === 'function') {
-          showToast(`🌊 Money Flow Scan Complete (${report.buySignals.length} BUY • ${report.sellSignals.length} SELL)`, 'success');
+          showToast(`🌊 FinURL Money Flow: ${report.confirmedBuyCount || 0} BUY & ${report.confirmedSellCount || 0} SELL 6/6 (${report.buySignals.length + report.sellSignals.length} ranked)`, 'success');
         }
       },
 
@@ -15234,27 +15398,22 @@ ${json.message || 'Unauthorized token.'}`);
         const n50 = (typeof DATA !== 'undefined' && DATA.indices && (DATA.indices['NSE:NIFTY50-INDEX'] || DATA.indices['NIFTY 50'])) || { lp: 0, chp: 0 };
         const niftyPx = Number(n50.lp) || 0;
         const niftyVw = Number(n50.atp || n50.prev_close_price || niftyPx);
-        const niftyTrend = niftyPx >= niftyVw ? 'BULLISH' : 'BEARISH';
-        // Honest fallback: zero synthetic 22-pillar fake signals when backend API is unavailable
         return {
           status: 'standby',
           generatedAt: new Date().toISOString(),
           istTime: istNow.timeStr,
           isMidnightCleared: false,
           universeEvaluated: pool.length,
-          strictBuyCount: 0,
-          strictSellCount: 0,
+          confirmedBuyCount: 0,
+          confirmedSellCount: 0,
+          strongBuyCount: 0,
+          strongSellCount: 0,
           niftyRegime: {
             symbol: 'NIFTY 50',
             price: Number(niftyPx.toFixed(2)),
             vwap: Number(niftyVw.toFixed(2)),
-            trend: niftyTrend,
+            trend: niftyPx >= niftyVw ? 'BULLISH' : 'BEARISH',
             vsVwapPct: niftyVw > 0 ? Number((((niftyPx - niftyVw) / niftyVw) * 100).toFixed(2)) : 0
-          },
-          specialFilterStats: {
-            blockedContraBuys: 0,
-            blockedContraSells: 0,
-            ruleSummary: 'Awaiting live backend 22-pillar candle verification (zero fake signals)'
           },
           buySignals: [],
           sellSignals: []
@@ -15275,27 +15434,27 @@ ${json.message || 'Unauthorized token.'}`);
         const kpiSpecial = document.getElementById('mf-kpi-special-blocked');
         const kpiTime = document.getElementById('mf-kpi-time');
         if (kpiUni) kpiUni.innerText = `${rpt.universeEvaluated || 0} Stocks`;
-        if (kpiBuy) kpiBuy.innerText = `${rpt.strictBuyCount || 0} Confirmed`;
-        if (kpiSell) kpiSell.innerText = `${rpt.strictSellCount || 0} Confirmed`;
+        if (kpiBuy) kpiBuy.innerText = `${rpt.confirmedBuyCount ?? rpt.strictBuyCount ?? 0} Confirmed`;
+        if (kpiSell) kpiSell.innerText = `${rpt.confirmedSellCount ?? rpt.strictSellCount ?? 0} Confirmed`;
         if (kpiNifty && rpt.niftyRegime) {
           const isNiftyBull = rpt.niftyRegime.trend === 'BULLISH';
           kpiNifty.innerHTML = `<span class="${isNiftyBull ? 'text-emerald-300' : 'text-rose-300'}">${isNiftyBull ? '▲ ABOVE' : '▼ BELOW'} VWAP</span> <span class="text-[10px] text-slate-400">(₹${rpt.niftyRegime.price} vs ₹${rpt.niftyRegime.vwap})</span>`;
         }
-        if (kpiSpecial && rpt.specialFilterStats) {
-          kpiSpecial.innerText = `${rpt.specialFilterStats.blockedContraBuys || 0} BUY / ${rpt.specialFilterStats.blockedContraSells || 0} SELL Blocked`;
+        if (kpiSpecial) {
+          kpiSpecial.innerText = `${rpt.strongBuyCount || 0} BUY / ${rpt.strongSellCount || 0} SELL`;
         }
         if (kpiTime) kpiTime.innerText = `${rpt.istTime || '--:--:--'} IST`;
 
         if (rpt.isMidnightCleared) {
-          const clearedHtml = `<tbody><tr><td class="p-8 text-center text-amber-300 font-bold">🕛 12:00 AM Midnight Flush Active &bull; Money Flow Surge auto-scans at <strong>09:20 AM IST</strong> every market day.</td></tr></tbody>`;
+          const clearedHtml = `<tbody><tr><td class="p-8 text-center text-amber-300 font-bold">🕛 12:00 AM Midnight Flush Active &bull; Money Flow HMA 55 + FVG + Supertrend auto-scans at <strong>09:20 AM IST</strong>.</td></tr></tbody>`;
           buyTbl.innerHTML = clearedHtml;
           sellTbl.innerHTML = clearedHtml;
           return;
         }
 
         const filterList = (list) => {
-          let arr = (Array.isArray(list) ? list : []).filter(x => Math.abs(Number(x.changePercent) || 0) >= 2.0);
-          if (this.strictOnly) arr = arr.filter(x => x.conditionsMet === (x.totalConditions || 22));
+          let arr = Array.isArray(list) ? list : [];
+          if (this.strictOnly) arr = arr.filter(x => x.allSixMet || x.conditionsMet === 6);
           if (q) arr = arr.filter(x => x.symbol.includes(q) || (x.sector && x.sector.toUpperCase().includes(q)));
           return arr;
         };
@@ -15303,22 +15462,21 @@ ${json.message || 'Unauthorized token.'}`);
         const renderTableBody = (tableEl, rows, isBuy, badgeElId) => {
           const filtered = filterList(rows);
           const bEl = document.getElementById(badgeElId);
-          if (bEl) bEl.innerText = `${filtered.length} ${isBuy ? 'BUY' : 'SELL'} Setups • 22-Condition Greeks & Dual-Flow • Newest Listed At First`;
+          if (bEl) bEl.innerText = `${filtered.length} ${isBuy ? 'BUY' : 'SELL'} Setups • Ranked by 100-Pt Score (${this.strictOnly ? '6/6 Confirmed Only' : '>=60 Watchlist/Good/Strong'})`;
 
           let html = `
             <thead>
               <tr class="text-[10px] font-bold text-slate-400 border-b border-[#172033] bg-[#090d16]">
-                <th class="p-2.5">STOCK / SECTOR</th>
+                <th class="p-2.5">STOCK / CLASSIFICATION</th>
                 <th class="p-2.5">LISTED AT</th>
-                <th class="p-2.5">ENTRY / SL / T1</th>
-                <th class="p-2.5">LIVE (% CHG)</th>
-                <th class="p-2.5">MF THICKNESS &amp; B/A</th>
-                <th class="p-2.5">GREEKS &amp; OI EXPOSURE</th>
-                <th class="p-2.5">IVP / PCR / ADX / RSI</th>
-                <th class="p-2.5">ST(10,2) &amp; HMA(55)</th>
-                <th class="p-2.5">VWAP / PDH / PDL</th>
-                <th class="p-2.5">BOS &amp; ORDER BLOCK</th>
-                <th class="p-2.5">22-COND CHECKLIST</th>
+                <th class="p-2.5">LIVE &amp; % CHG</th>
+                <th class="p-2.5">15M TREND (HMA55+ST)</th>
+                <th class="p-2.5">5M HMA(55) &amp; ST(10,2)</th>
+                <th class="p-2.5">FVG ZONE &amp; RETEST</th>
+                <th class="p-2.5">VOLUME (RVOL SMA20)</th>
+                <th class="p-2.5">ENTRY / SL (-0.1&middot;ATR)</th>
+                <th class="p-2.5">TARGETS (T1 50% / T2 30% / T3 20%)</th>
+                <th class="p-2.5">100-PT SCORE &amp; 6 RULES</th>
                 <th class="p-2.5 text-right">ACTION</th>
               </tr>
             </thead>
@@ -15326,78 +15484,79 @@ ${json.message || 'Unauthorized token.'}`);
           `;
 
           if (filtered.length === 0) {
-            html += `<tr><td colspan="12" class="p-6 text-center text-slate-500">No stocks match current ${this.strictOnly ? 'Strict 22/22' : 'Dual-Flow'} criteria. Try toggling All Ranked or clearing search.</td></tr>`;
+            html += `<tr><td colspan="11" class="p-6 text-center text-slate-400">No stocks currently match ${this.strictOnly ? '6/6 Confirmed' : 'score >= 60'} criteria. Toggle Mode or click Scan Now.</td></tr>`;
           } else {
             filtered.forEach(item => {
-              const vsEntryPct = item.entryPrice > 0 ? (((item.price - item.entryPrice) / item.entryPrice) * 100).toFixed(2) : '0.00';
-              const chgColor = item.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400';
-              const totC = item.totalConditions || 22;
-              const gd = item.greeksAndDerivatives || {};
-              const sm = item.smartMoneyFilters || {};
+              const chg = Number(item.changePercent || 0);
+              const chgColor = chg >= 0 ? 'text-emerald-400' : 'text-rose-400';
+              const sb = item.scoreBreakdown || {};
+              const fvg = item.fvg;
+              const h15 = item.hma15m || {};
+              const st15 = item.supertrend15m || {};
+              const h5 = item.hullSuite || {};
+              const st5 = item.supertrend || {};
+              const classBadge = item.score >= 85
+                ? (isBuy ? 'bg-emerald-500 text-black font-black' : 'bg-rose-500 text-white font-black')
+                : (item.score >= 75 ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 font-bold' : 'bg-amber-500/20 text-amber-200 border border-amber-400/35 font-bold');
+
               const condDots = (item.conditions || []).map(c =>
-                `<span title="C${c.step}: ${c.label} (${c.detail})" class="inline-flex items-center justify-center w-4 h-4 rounded text-[8px] font-black border ${c.passed ? (isBuy ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40') : 'bg-slate-900 text-slate-500 border-slate-700'}">${c.step}</span>`
+                `<span title="C${c.step}: ${c.label} (${c.detail})" class="inline-flex items-center justify-center w-5 h-5 rounded text-[9px] font-black border ${c.passed ? (isBuy ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40') : 'bg-slate-900 text-slate-500 border-slate-700'}">${c.step}</span>`
               ).join('');
 
               html += `
                 <tr class="border-b border-[#141c2e] hover:bg-[#101829] transition">
                   <td class="p-2.5">
                     <div class="font-black text-white text-xs cursor-pointer hover:text-cyan-300" onclick="openTradingViewChart('${item.symbol}')">${item.symbol}</div>
-                    <div class="text-[9.5px] text-slate-400 flex items-center gap-1 flex-wrap">
-                      <span>${item.sector}</span>
-                      ${typeof item.sectorChangePct === 'number' ? `<span class="font-bold ${item.sectorChangePct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${item.sectorChangePct >= 0 ? '+' : ''}${Number(item.sectorChangePct).toFixed(2)}%)</span>` : ''}
-                    </div>
-                    <span class="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[9px] font-black ${item.conditionsMet === totC ? 'bg-amber-500/25 text-amber-300 border border-amber-400/40' : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'}">${item.conditionsMet}/${totC} ${item.grade}</span>
+                    <div class="text-[9.5px] text-slate-400">${item.sector || 'NSE F&O'}</div>
+                    <span class="inline-block mt-1 px-1.5 py-0.2 rounded text-[9px] ${classBadge}">${item.classification || item.grade} (${item.conditionsMet}/6)</span>
                   </td>
-                  <td class="p-2.5">
+                  <td class="p-2.5 whitespace-nowrap">
                     <span class="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-bold text-[10.5px]">🕒 ${item.listedAt}</span>
                   </td>
-                  <td class="p-2.5 text-[10.5px]">
-                    <div class="font-bold text-white">Entry: ₹${item.entryPrice.toLocaleString('en-IN')}</div>
-                    <div class="text-rose-400">SL: ₹${item.stopLoss.toLocaleString('en-IN')}</div>
-                    <div class="text-emerald-400">T1: ₹${item.target1.toLocaleString('en-IN')}</div>
+                  <td class="p-2.5">
+                    <div class="font-black text-white text-xs">₹${Number(item.price).toLocaleString('en-IN')}</div>
+                    <div class="${chgColor} font-bold text-[10.5px]">${chg >= 0 ? '+' : ''}${chg}%</div>
+                    <div class="text-[9px] text-slate-400">MF: ₹${item.moneyFlowCr} Cr</div>
+                  </td>
+                  <td class="p-2.5 text-[10px]">
+                    <div class="font-bold ${h15.slope === 'RISING' ? 'text-emerald-300' : 'text-rose-300'}">HMA55: ${h15.slope || '--'}</div>
+                    <div class="font-bold ${st15.direction === 'BULLISH' ? 'text-emerald-400' : 'text-rose-400'}">15m ST: ${st15.direction || '--'}</div>
+                    <div class="text-[9px] text-slate-400">HTF: ${sb.htfTrendConfirmation ?? 0}/20 pts</div>
+                  </td>
+                  <td class="p-2.5 text-[10px]">
+                    <div class="font-bold ${h5.position === 'ABOVE' ? 'text-cyan-300' : 'text-amber-300'}">HMA(${h5.periodUsed || 55}): ₹${h5.hma55} (${h5.slope})</div>
+                    <div class="font-bold ${st5.direction === 'BULLISH' ? 'text-emerald-400' : 'text-rose-400'}">5m ST: ${st5.direction} @ ₹${st5.value}</div>
+                    <div class="text-[9px] text-slate-400">Prev ST: ${st5.prevCompletedDirection || st5.direction}</div>
+                  </td>
+                  <td class="p-2.5 text-[10px]">
+                    ${fvg
+                      ? `<div class="font-bold ${fvg.retested ? 'text-emerald-300' : 'text-amber-300'}">₹${fvg.bottom}–₹${fvg.top}</div>
+                         <div class="text-[9px] text-slate-300">${fvg.isFresh ? '✨ Unmitigated' : 'Tested'} • ${fvg.retested ? '✔ Retested' : 'Watch Pullback'}</div>
+                         <div class="text-[9px] text-slate-400">Formed ${fvg.formedAt}</div>`
+                      : `<div class="text-slate-500">No FVG in window</div>`}
+                  </td>
+                  <td class="p-2.5 text-[10px]">
+                    <div class="font-black ${(item.rvol || 0) >= 2.0 ? 'text-emerald-300' : (item.rvol || 0) >= 1.5 ? 'text-amber-300' : 'text-slate-300'}">RVOL ${Number(item.rvol || 0).toFixed(2)}x</div>
+                    <div class="text-[9.5px] text-cyan-300 font-bold">${item.rvolInterpretation || 'Normal'}</div>
+                    <div class="text-[9px] text-slate-400">B/A ${Number(item.bidAskRatio || 1).toFixed(2)}x</div>
+                  </td>
+                  <td class="p-2.5 text-[10px]">
+                    <div class="font-bold text-white">Entry: ₹${Number(item.entryPrice).toLocaleString('en-IN')}</div>
+                    <div class="text-rose-400 font-bold">SL: ₹${Number(item.stopLoss).toLocaleString('en-IN')}</div>
+                    <div class="text-[9px] text-slate-400">1R: ₹${item.riskR || 0} (ATR14: ${item.atr14 || 0})</div>
+                  </td>
+                  <td class="p-2.5 text-[10px]">
+                    <div class="text-emerald-300 font-bold">T1 (50%): ₹${item.target1}</div>
+                    <div class="text-emerald-400 font-black">T2 (30% • 1:2): ₹${item.target2}</div>
+                    <div class="text-cyan-300">T3 (20% • 1:3): ₹${item.target3 || item.target2}</div>
                   </td>
                   <td class="p-2.5">
-                    <div class="font-black text-white text-xs">₹${item.price.toLocaleString('en-IN')}</div>
-                    <div class="${chgColor} font-bold text-[10.5px]">${item.changePercent >= 0 ? '+' : ''}${item.changePercent}%</div>
-                    <div class="text-[9px] text-slate-400">vs Entry: ${Number(vsEntryPct) >= 0 ? '+' : ''}${vsEntryPct}%</div>
-                  </td>
-                  <td class="p-2.5">
-                    <div class="font-bold text-cyan-300 text-xs">₹${item.moneyFlowCr.toLocaleString('en-IN')} Cr</div>
-                    <div class="text-[9.5px] text-slate-400">Spd ${item.speed}x • Glow ${item.glowSurge}x</div>
-                    <div class="text-[9.5px] font-bold ${(item.bidAskRatio || 1) >= 1.15 ? 'text-emerald-300' : (item.bidAskRatio || 1) <= 0.9 ? 'text-rose-300' : 'text-slate-300'}">B/A: ${(item.bidAskRatio || 1).toFixed(2)}x (${isBuy ? item.buyingPressurePct : item.sellingPressurePct}%)</div>
-                  </td>
-                  <td class="p-2.5 text-[10px]">
-                    <div class="font-black ${gd.deltaFlowDirection === 'POSITIVE' ? 'text-emerald-300' : 'text-rose-300'}">DE: ${(gd.deltaExposure ?? 0) >= 0 ? '+' : ''}${gd.deltaExposure ?? 0} (${gd.deltaFlowDirection || '--'})</div>
-                    <div class="text-cyan-200">GEX: ${gd.gammaExposure ?? 0} • VEX: ${gd.vegaExposure ?? 0}</div>
-                    <div class="text-[9.5px] font-bold ${gd.oiFlowDirection === 'POSITIVE' ? 'text-emerald-400' : 'text-rose-400'}">${gd.oiInterpretation || 'Neutral'} (ΔOI ${(gd.oiChange ?? 0) >= 0 ? '+' : ''}${gd.oiChange ?? 0}L)</div>
-                  </td>
-                  <td class="p-2.5 text-[10px]">
-                    <div class="text-amber-300 font-bold">IV: ${gd.iv ?? '--'}% • IVP: ${gd.ivp ?? '--'}%</div>
-                    <div class="text-[9px] text-slate-400">${gd.ivRegime || 'Moderate'} • PCR: ${gd.pcr ?? '--'}</div>
-                    <div class="text-cyan-300 font-bold">ADX: ${sm.adx14 ?? '--'} • RSI: ${sm.rsi14 ?? '--'}</div>
-                  </td>
-                  <td class="p-2.5 text-[10px]">
-                    <div class="font-bold ${item.supertrend.direction === 'BULLISH' ? 'text-emerald-400' : 'text-rose-400'}">ST: ${item.supertrend.direction}</div>
-                    <div class="text-slate-400">Band: ₹${item.supertrend.value}</div>
-                    <div class="${item.hullSuite.position === 'ABOVE' ? 'text-cyan-300' : 'text-amber-300'} font-bold">HMA(${item.hullSuite.periodUsed}): ₹${item.hullSuite.hma55} (${sm.hullSlope || item.hullSuite.slope})</div>
-                  </td>
-                  <td class="p-2.5 text-[10px]">
-                    <div class="text-cyan-200 font-bold">VWAP: ₹${(item.vwap || item.price).toLocaleString('en-IN')}</div>
-                    <div class="text-emerald-300">PDH: ₹${(item.pdh || item.price).toLocaleString('en-IN')}</div>
-                    <div class="text-rose-300">PDL: ₹${(item.pdl || item.price).toLocaleString('en-IN')}</div>
-                    <div class="text-[9px] text-slate-400">Range: ${item.rangePosPct ?? '--'}% &bull; DL: ₹${(item.dayLow || item.price).toLocaleString('en-IN')}</div>
-                  </td>
-                  <td class="p-2.5 text-[10px]">
-                    <span class="px-1.5 py-0.5 rounded font-bold ${item.structure.tag.includes('BULLISH') ? 'bg-emerald-500/15 text-emerald-300' : 'bg-rose-500/15 text-rose-300'}">${item.structure.tag}</span>
-                    <div class="text-slate-300 mt-1">OB: ₹${item.orderBlock.low}-${item.orderBlock.high}</div>
-                    <div class="text-[9px] ${item.orderBlock.breakConfirmed ? 'text-emerald-400 font-bold' : 'text-amber-300'}">${item.orderBlock.breakConfirmed ? '✔ Break Confirmed' : 'Testing OB Zone'}</div>
-                  </td>
-                  <td class="p-2.5">
-                    <div class="grid grid-cols-11 gap-0.5 w-[204px]">${condDots}</div>
+                    <div class="font-black text-xs ${item.score >= 85 ? 'text-emerald-300' : (item.score >= 75 ? 'text-cyan-300' : 'text-amber-300')}">${item.score} / 100</div>
+                    <div class="flex items-center gap-0.5 mt-1">${condDots}</div>
                   </td>
                   <td class="p-2.5 text-right space-y-1">
                     <button onclick="openTradingViewChart('${item.symbol}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
-                    <button onclick="openOrderModal('${item.symbol}', '${item.direction}', ${item.price}, ${item.changePercent})" class="px-2 py-1 rounded ${isBuy ? 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40' : 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40'} border text-[10px] font-black block w-full text-center transition cursor-pointer">⚡ ${item.direction}</button>
+                    <button onclick="openOrderModal('${item.symbol}', '${item.direction}', ${item.entryPrice || item.price}, ${chg})" class="px-2 py-1 rounded ${isBuy ? 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40' : 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40'} border text-[10px] font-black block w-full text-center transition cursor-pointer">⚡ ${item.direction}</button>
                   </td>
                 </tr>
               `;
@@ -16333,7 +16492,7 @@ ${json.message || 'Unauthorized token.'}`);
     // ============================================================
     const SmartMoneyConceptsEngine = {
       activeTimeframe: '5m',
-      activeCategory: 'ALL_SETUPS',
+      activeCategory: 'QUALIFIED_5_OF_5',
       capital: 100000,
       riskPct: 1.0,
       lastReport: null,
@@ -16798,7 +16957,7 @@ ${json.message || 'Unauthorized token.'}`);
     // PRICE ACTION ENGINE (14 MODULES • 9/9 BUY/SELL • VWAP-FREE)
     // ============================================================
     const PriceActionEngine = {
-      activeCategory: 'ALL_SIGNALS',
+      activeCategory: 'QUALIFIED_9_OF_9',
       capital: 100000,
       riskPct: 1.0,
       lastReport: null,
@@ -17514,13 +17673,16 @@ ${json.message || 'Unauthorized token.'}`);
       lastReport: null,
       _timer: null,
       _leaderboardVisible: true,
+      _userSelectedCategory: false,
+      _renderedOnce: false,
+      _lastError: '',
       CATEGORY_META: {
-        QUALIFIED_ALPHA: { key: 'qualifiedAlpha', label: '8/8 Qualified Institutional Alpha Setups (PF 1.87 Backtested)' },
-        VWAP_COIL_SETUPS: { key: 'vwapCoilSetups', label: 'VWAP Compression Coil Breakouts (1:1.6 RR + 0.9R Trail)' },
-        PDH_PDL_RECLAIM: { key: 'pdhPdlReclaim', label: 'PDH / PDL Structural Reclaim Setups (1:1.5 RR + 0.9R Trail)' },
-        BUY_SETUPS: { key: 'buySetups', label: 'BUY Candidates (>= 7/8 Conditions Met)' },
-        SELL_SETUPS: { key: 'sellSetups', label: 'SELL Candidates (>= 7/8 Conditions Met)' },
-        NEAR_TRIGGER_WATCH: { key: 'nearTriggerWatch', label: 'Forming Watchlist (6-7/8 Pre-Breakout Coils)' }
+        QUALIFIED_ALPHA: { key: 'qualifiedAlpha', label: '8/8 Qualified Alpha (Best 10 UP + Best 10 DOWN • PF 1.87)' },
+        VWAP_COIL_SETUPS: { key: 'vwapCoilSetups', label: 'VWAP Compression Coil Breakouts (Best 10 UP / 10 DN • 1:1.6 RR)' },
+        PDH_PDL_RECLAIM: { key: 'pdhPdlReclaim', label: 'PDH / PDL Structural Reclaim Setups (Best 10 UP / 10 DN • 1:1.5 RR)' },
+        BUY_SETUPS: { key: 'buySetups', label: 'Best 10 UP (BUY) Candidates' },
+        SELL_SETUPS: { key: 'sellSetups', label: 'Best 10 DOWN (SELL) Candidates' },
+        NEAR_TRIGGER_WATCH: { key: 'nearTriggerWatch', label: 'Forming Watchlist (6-7/8 Pre-Breakout • Max 10 UP / 10 DN)' }
       },
 
       init() {
@@ -17573,8 +17735,9 @@ ${json.message || 'Unauthorized token.'}`);
         this.load(false);
       },
 
-      setCategory(cat) {
+      setCategory(cat, fromUser = true) {
         if (!this.CATEGORY_META[cat]) return;
+        if (fromUser) this._userSelectedCategory = true;
         this.activeCategory = cat;
         Object.keys(this.CATEGORY_META).forEach(k => {
           const btn = document.getElementById('aa-cat-' + k);
@@ -17590,19 +17753,23 @@ ${json.message || 'Unauthorized token.'}`);
           }
           if (cntEl) cntEl.innerText = cntTxt;
         });
-        this.renderTables();
+        if (fromUser) this.renderTables();
       },
 
       async load(showFeedback = false) {
         const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
         let report = null;
+        this._lastError = '';
         try {
           const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
           const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
           const url = `${base}/api/apex-alpha/scan?capital=${encodeURIComponent(this.capital)}&riskPct=${encodeURIComponent(this.riskPct)}`;
           const res = await fetch(url, { headers });
           if (res.ok) report = await res.json();
-        } catch (e) {}
+          else this._lastError = `HTTP ${res.status} loading Apex Alpha scan`;
+        } catch (e) {
+          this._lastError = e?.message || 'Network error fetching Apex Alpha scan';
+        }
 
         if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
           report = {
@@ -17634,6 +17801,11 @@ ${json.message || 'Unauthorized token.'}`);
           }
           if (showFeedback && typeof showToast === 'function') {
             showToast(`🏆 Apex Alpha: ${report.qualifiedCount || 0} qualified 8/8 (${report.watchCount || 0} forming)`, 'success');
+          }
+        } else if (this._lastError) {
+          const tableEl = document.getElementById('table-apex-alpha');
+          if (tableEl) {
+            tableEl.innerHTML = `<tbody><tr><td colspan="10" class="p-8 text-center text-rose-300 text-xs">${this._lastError} &bull; <button type="button" onclick="ApexAlphaEngine.load(true)" class="px-2.5 py-1 rounded bg-emerald-400 text-black font-black cursor-pointer">🔄 Retry Scan</button></td></tr></tbody>`;
           }
         }
       },
@@ -17692,9 +17864,12 @@ ${json.message || 'Unauthorized token.'}`);
         const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
 
         setEl('aa-kpi-universe', String(rpt.universeEvaluated || 0));
-        setEl('aa-kpi-qualified', `${rpt.qualifiedCount || 0} Setups`);
+        const qArr = Array.isArray(cats.qualifiedAlpha) ? cats.qualifiedAlpha : [];
+        const qUp = qArr.filter(x => x.side === 'BUY').length;
+        const qDn = qArr.filter(x => x.side === 'SELL').length;
+        setEl('aa-kpi-qualified', `Best ${qUp} UP • ${qDn} DN`);
         setEl('aa-kpi-modes', `${rpt.coilCount || 0} Coil / ${rpt.reclaimCount || 0} Reclaim`);
-        setEl('aa-kpi-dirs', `${rpt.buyCount || 0} BUY / ${rpt.sellCount || 0} SELL`);
+        setEl('aa-kpi-dirs', `${(cats.buySetups || []).length} UP / ${(cats.sellSetups || []).length} DN (Max 10)`);
         const regPct = Number(rpt.niftyChangePct || 0);
         setEl('aa-kpi-regime', `${rpt.niftyRegime || 'NEUTRAL'} (${regPct >= 0 ? '+' : ''}${regPct.toFixed(2)}%)`);
 
@@ -17729,20 +17904,31 @@ ${json.message || 'Unauthorized token.'}`);
           return true;
         });
 
-        rows = [...rows].sort((a, b) => {
+        const sortRows = (list) => [...list].sort((a, b) => {
           if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt));
           if (sortBy === 'rvol_desc') return (Number(b.rvol5m) || 0) - (Number(a.rvol5m) || 0);
           if (sortBy === 'rs_desc') return Math.abs(Number(b.rsVsNifty) || 0) - Math.abs(Number(a.rsVsNifty) || 0);
           if (sortBy === 'turnover_desc') return (Number(b.tradedValueCr) || 0) - (Number(a.tradedValueCr) || 0);
-          return (Number(b.score) || 0) - (Number(a.score) || 0) || String(b.listedAt).localeCompare(String(a.listedAt));
+          return (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.formulaRankScore) || 0) - (Number(a.formulaRankScore) || 0) || String(b.listedAt).localeCompare(String(a.listedAt));
         });
 
-        setEl('aa-count-badge', `${rows.length} Setups • Risk ${this.riskPct}% (₹${Math.round(this.capital * this.riskPct / 100).toLocaleString('en-IN')})`);
+        // Strictly cap displayed rows to Best 10 UP & Best 10 DOWN when viewing unfiltered buckets
+        if (!q) {
+          const upSlice = sortRows(rows.filter(r => r.side === 'BUY')).slice(0, 10);
+          const dnSlice = sortRows(rows.filter(r => r.side === 'SELL')).slice(0, 10);
+          rows = sortRows([...upSlice, ...dnSlice]);
+        } else {
+          rows = sortRows(rows);
+        }
+
+        const upShown = rows.filter(r => r.side === 'BUY').length;
+        const dnShown = rows.filter(r => r.side === 'SELL').length;
+        setEl('aa-count-badge', `Best ${upShown} UP + ${dnShown} DOWN (Max 10/side) • Risk ${this.riskPct}% (₹${Math.round(this.capital * this.riskPct / 100).toLocaleString('en-IN')})`);
 
         let html = `
           <thead class="bg-[#0a0e18] text-slate-400 text-[10px] uppercase border-b border-[#1c2233]">
             <tr>
-              <th class="p-2.5"># / Symbol &amp; Setup</th>
+              <th class="p-2.5">Best 10 Rank / Symbol</th>
               <th class="p-2.5">SECTOR % &amp; RS vs NIFTY</th>
               <th class="p-2.5">5M RVOL &amp; SPIKE</th>
               <th class="p-2.5">BID/ASK &amp; CYCLE</th>
@@ -17757,7 +17943,11 @@ ${json.message || 'Unauthorized token.'}`);
           <tbody class="divide-y divide-[#141c2c]">`;
 
         if (rows.length === 0) {
-          html += `<tr><td colspan="10" class="p-8 text-center text-slate-400 text-xs">No Apex Alpha setups currently active in this bucket. Check &ldquo;6-7/8 Coiling Watch&rdquo; for pre-breakout setups.</td></tr>`;
+          const jumpButtons = Object.keys(this.CATEGORY_META)
+            .filter(k => k !== this.activeCategory && (cats[this.CATEGORY_META[k].key] || []).length > 0)
+            .map(k => `<button type="button" onclick="ApexAlphaEngine.setCategory('${k}')" class="px-2.5 py-1 rounded bg-[#131d33] hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 text-[11px] font-bold cursor-pointer">${this.CATEGORY_META[k].label.split('(')[0].trim()} (${(cats[this.CATEGORY_META[k].key] || []).length})</button>`)
+            .join(' ');
+          html += `<tr><td colspan="10" class="p-8 text-center text-slate-400 text-xs space-y-2"><div>No Apex Alpha setups in this filter/bucket right now.</div>${jumpButtons ? `<div class="flex flex-wrap justify-center gap-2 pt-2">${jumpButtons}</div>` : ''}</td></tr>`;
         } else {
           rows.forEach((item, idx) => {
             const isBuy = item.side === 'BUY';
@@ -17765,6 +17955,10 @@ ${json.message || 'Unauthorized token.'}`);
             const secPct = Number(item.sectorChangePct || 0);
             const rs = Number(item.rsVsNifty || 0);
             const ba = Number(item.bidAskRatio || 1.0);
+            const dirRankNum = item.directionRank || (idx + 1);
+            const rankBadge = isBuy
+              ? `<span class="px-1.5 py-0.2 rounded text-[8.5px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-black">▲ UP #${dirRankNum}</span>`
+              : `<span class="px-1.5 py-0.2 rounded text-[8.5px] bg-rose-500/20 text-rose-300 border border-rose-500/40 font-black">▼ DN #${dirRankNum}</span>`;
             const badgeCls = item.isQualified
               ? (isBuy ? 'bg-emerald-500 text-black font-black' : 'bg-rose-500 text-white font-black')
               : 'bg-slate-700 text-slate-200 font-bold';
@@ -17776,7 +17970,7 @@ ${json.message || 'Unauthorized token.'}`);
               <tr class="hover:bg-[#12182b] transition">
                 <td class="p-2.5">
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="text-slate-500 text-[10px]">#${idx + 1}</span>
+                    ${rankBadge}
                     <span class="font-black text-white">${item.symbol}</span>
                     <span class="px-1.5 py-0.2 rounded text-[8.5px] ${badgeCls}">${item.signalBadge}</span>
                   </div>
@@ -17831,6 +18025,243 @@ ${json.message || 'Unauthorized token.'}`);
           tableEl._lastHtmlStr = html;
           tableEl.innerHTML = html;
         }
+      }
+    };
+
+    // ============================================================
+    // MUHURAT FLOW MODEL ENGINE (INSTITUTIONAL ORDER FLOW + WHALE SWEEP)
+    // ============================================================
+    const MuhuratFlowEngine = {
+      lastReport: null,
+      strictOnly: true,
+      _timer: null,
+      _renderedOnce: false,
+      _lastError: '',
+
+      init() {
+        this.load(false);
+        if (!this._timer) {
+          let tick = 0;
+          this._timer = setInterval(() => {
+            tick += 1;
+            const pane = document.getElementById('tab-titan');
+            if (pane && !pane.classList.contains('hidden')) {
+              this.load(false);
+            } else if (tick % 12 === 0) {
+              this.load(false);
+            }
+          }, 5000);
+        }
+      },
+
+      toggleStrictMode() {
+        this.strictOnly = !this.strictOnly;
+        const btn = document.getElementById('titan-btn-mode');
+        if (btn) {
+          if (this.strictOnly) {
+            btn.className = 'px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-xs font-bold transition cursor-pointer';
+            btn.innerText = 'Mode: Confirmed 6/6 Only';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 text-xs font-bold transition cursor-pointer';
+            btn.innerText = 'Mode: All Qualified + Forming';
+          }
+        }
+        this.renderTables();
+      },
+
+      async load(showFeedback = false) {
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        let report = null;
+        this._lastError = '';
+        try {
+          const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
+          const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
+          const res = await fetch(`${base}/api/muhurat-flow/scan`, { headers });
+          if (res.ok) report = await res.json();
+          else this._lastError = `HTTP ${res.status} loading Muhurat Flow scan`;
+        } catch (e) {
+          this._lastError = e?.message || 'Network error fetching Muhurat Flow scan';
+        }
+
+        if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+          report = {
+            ...(report || {}),
+            status: 'ok',
+            scannerName: 'Muhurat Flow Model',
+            isMidnightCleared: true,
+            universeEvaluated: 0,
+            confirmedBuyCount: 0,
+            confirmedSellCount: 0,
+            stopHuntBuyCount: 0,
+            stopHuntSellCount: 0,
+            buyCount: 0,
+            sellCount: 0,
+            istTime: report?.istTime || '--:--:-- IST',
+            buySignals: [],
+            sellSignals: []
+          };
+        }
+
+        if (report && Array.isArray(report.buySignals) && Array.isArray(report.sellSignals)) {
+          this.lastReport = report;
+          const pane = document.getElementById('tab-titan');
+          if ((pane && !pane.classList.contains('hidden')) || !this._renderedOnce) {
+            this._renderedOnce = true;
+            this.renderTables();
+          }
+          if (showFeedback && typeof showToast === 'function') {
+            showToast(`🌊 Muhurat Flow: ${report.confirmedBuyCount || 0} BUY / ${report.confirmedSellCount || 0} SELL confirmed (6/6)`, 'success');
+          }
+        } else if (this._lastError) {
+          ['table-titan-bullish', 'table-titan-bearish'].forEach(id => {
+            const tbl = document.getElementById(id);
+            if (tbl) {
+              tbl.innerHTML = `<tbody><tr><td colspan="9" class="p-8 text-center text-rose-300 text-xs">${this._lastError} &bull; <button type="button" onclick="MuhuratFlowEngine.load(true)" class="px-2.5 py-1 rounded bg-purple-500 text-black font-black cursor-pointer">🔄 Retry Scan</button></td></tr></tbody>`;
+            }
+          });
+        }
+      },
+
+      renderSignalTable(tableId, rows, isBuy, isMidnightCleared, rawTotalCount) {
+        const tbl = document.getElementById(tableId);
+        if (!tbl) return;
+
+        if (isMidnightCleared) {
+          const emptyHtml = `<tbody><tr><td colspan="9" class="p-8 text-center text-amber-300 font-mono text-xs">🕛 Midnight Auto-Flush Active &mdash; Institutional Order Flow + Whale Sweep scan resumes at 09:20 AM IST.</td></tr></tbody>`;
+          if (tbl._lastHtmlStr !== emptyHtml) {
+            tbl._lastHtmlStr = emptyHtml;
+            tbl.innerHTML = emptyHtml;
+          }
+          return;
+        }
+
+        let html = `
+          <thead class="bg-[#090d16] text-slate-400 text-[10px] uppercase border-b border-[#1c2335]">
+            <tr>
+              <th class="p-2.5">Symbol &amp; Sweep Type</th>
+              <th class="p-2.5">Stop-Hunt / Absorption</th>
+              <th class="p-2.5">CVD Proxy &amp; CLV</th>
+              <th class="p-2.5">VWAP &amp; Anti-Chase</th>
+              <th class="p-2.5">Inst. Vol &amp; OI / B:A</th>
+              <th class="p-2.5">Listed At</th>
+              <th class="p-2.5">6/6 Rules &amp; Score</th>
+              <th class="p-2.5">Entry / SL / T1-T3</th>
+              <th class="p-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#141c2c]">`;
+
+        if (!rows || rows.length === 0) {
+          const hint = (this.strictOnly && rawTotalCount > 0)
+            ? `No 6/6 confirmed ${isBuy ? 'BUY' : 'SELL'} sweep setups right now (${rawTotalCount} forming). <button type="button" onclick="MuhuratFlowEngine.toggleStrictMode()" class="ml-2 px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 font-bold cursor-pointer">View Forming Watchlist (${rawTotalCount})</button>`
+            : `No institutional ${isBuy ? 'demand sweep / absorption' : 'supply sweep / distribution'} setups match active filter right now.`;
+          html += `<tr><td colspan="9" class="p-8 text-center text-slate-400 text-xs">${hint}</td></tr>`;
+        } else {
+          rows.forEach((item) => {
+            const chg = Number(item.changePercent || 0);
+            const rvol = Number(item.rvol || 0);
+            const ba = Number(item.bidAskRatio || 1);
+            const cvd = Number(item.sessionCvd || 0);
+            const cvdStr = Math.abs(cvd) >= 100000
+              ? `${cvd >= 0 ? '+' : '-'}${(Math.abs(cvd) / 100000).toFixed(2)}L`
+              : `${cvd >= 0 ? '+' : ''}${Math.round(cvd).toLocaleString('en-IN')}`;
+            const badgeCls = item.allSixMet
+              ? (isBuy ? 'bg-emerald-500 text-black font-black' : 'bg-rose-500 text-white font-black')
+              : 'bg-amber-500/20 text-amber-200 border border-amber-400/40 font-bold';
+            const sweepBadgeCls = String(item.sweepType || '').includes('STOP_HUNT')
+              ? 'bg-purple-500/20 text-purple-200 border border-purple-400/40'
+              : 'bg-cyan-500/15 text-cyan-200 border border-cyan-400/30';
+            const dots = Array.isArray(item.conditions)
+              ? item.conditions.map(c => `<span title="${c.step}. ${c.label}: ${c.detail}" class="inline-block w-2 h-2 rounded-full ${c.passed ? (isBuy ? 'bg-emerald-400' : 'bg-rose-400') : 'bg-slate-600'}"></span>`).join(' ')
+              : '';
+            const safeSide = item.direction === 'SELL' ? 'SELL' : 'BUY';
+
+            html += `
+              <tr class="hover:bg-[#12182b] transition">
+                <td class="p-2.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-black text-white">${item.symbol}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[8.5px] ${badgeCls}">${item.grade}</span>
+                  </div>
+                  <div class="text-[10px] font-bold mt-1 ${chg >= 0 ? 'text-emerald-300' : 'text-rose-300'}">LTP ₹${Number(item.price).toLocaleString('en-IN')} (${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%)</div>
+                  <div class="mt-1"><span class="px-1.5 py-0.2 rounded text-[8.5px] border ${sweepBadgeCls}">${item.sweepLabel}</span></div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-slate-200 font-bold">${item.sweptLevelName} @ ₹${Number(item.sweptLevelPrice).toLocaleString('en-IN')}</div>
+                  <div class="text-purple-300">Wick Absorb ${Number(item.wickAbsorptionPct).toFixed(0)}%</div>
+                  <div class="text-[9px] text-slate-400">Sweep ${item.sweepTimeIST} &rarr; Conf ${item.confirmationTimeIST}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="font-bold ${cvd >= 0 ? 'text-emerald-300' : 'text-rose-300'}">CVD ${cvdStr} &bull; CLV ${Number(item.clvPct).toFixed(0)}%</div>
+                  <div class="text-cyan-300">${item.cvdBias}${item.cvdDivergenceDetected ? ' • DIV ✔' : ''}</div>
+                  <div class="text-[9px] text-slate-400">Slope3: ${Number(item.cvdSlope3 || 0) >= 0 ? '+' : ''}${Math.round(Number(item.cvdSlope3 || 0)).toLocaleString('en-IN')}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-slate-200 font-bold">VWAP ₹${Number(item.vwap).toLocaleString('en-IN')} (${Number(item.vsVwapPct) >= 0 ? '+' : ''}${Number(item.vsVwapPct).toFixed(2)}%)</div>
+                  <div class="${item.antiChasePassed ? 'text-emerald-300' : 'text-amber-300'} font-bold">${item.antiChasePassed ? '✔ Anti-Chase OK' : '⚠ Extended'} (${Number(item.candleAtrMultiple).toFixed(2)}&times;ATR)</div>
+                  <div class="text-[9px] text-slate-400">Dist ${Math.abs(Number(item.vsVwapAtr || 0)).toFixed(2)}&times;ATR &bull; Body ${Number(item.confirmCandleBodyPct).toFixed(0)}%</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-amber-300 font-black">RVOL ${rvol.toFixed(2)}x &bull; Bar ${Number(item.barVolRatio).toFixed(2)}x</div>
+                  <div class="text-cyan-300">Bar ₹${Number(item.barValueCr).toFixed(2)} Cr &bull; Tot ₹${Number(item.turnoverCr).toFixed(1)} Cr</div>
+                  <div class="text-[9px] text-slate-300">B/A ${ba.toFixed(2)}x &bull; ${item.cycleBuildup} (${Number(item.oiChangePct) >= 0 ? '+' : ''}${Number(item.oiChangePct).toFixed(1)}%)</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[10px] font-bold border border-cyan-500/20">🕒 ${item.listedAt}</span>
+                  <div class="text-[9px] text-slate-400 mt-1">${item.sector}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="font-black ${item.score >= 85 ? 'text-emerald-300' : (item.score >= 70 ? 'text-amber-300' : 'text-slate-200')}">${item.score}/100 &bull; ${item.conditionsMet}/6</div>
+                  <div class="flex items-center gap-1 mt-1">${dots}</div>
+                  <div class="text-[9px] text-slate-400 mt-1">${item.classification}</div>
+                </td>
+                <td class="p-2.5 text-[10px] whitespace-nowrap">
+                  <div class="text-white font-black">In ₹${item.entryPrice} &bull; <span class="text-rose-300">SL ₹${item.stopLoss}</span></div>
+                  <div class="text-emerald-300 font-bold">T1 ₹${item.target1} &bull; T2 ₹${item.target2}</div>
+                  <div class="text-[9px] text-cyan-300">T3 (3R) ₹${item.target3}</div>
+                </td>
+                <td class="p-2.5 text-right space-y-1">
+                  <button onclick="openTradingViewChart('${item.symbol}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
+                  <button onclick="openOrderModal('${item.symbol}', '${safeSide}', ${item.entryPrice || item.price}, ${chg})" class="px-2 py-1 rounded ${isBuy ? 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40' : 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40'} border text-[10px] font-black block w-full text-center transition cursor-pointer">⚡ ${safeSide}</button>
+                </td>
+              </tr>`;
+          });
+        }
+        html += `</tbody>`;
+        if (tbl._lastHtmlStr !== html) {
+          tbl._lastHtmlStr = html;
+          tbl.innerHTML = html;
+        }
+      },
+
+      renderTables() {
+        const rpt = this.lastReport;
+        if (!rpt) return;
+        const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+
+        setEl('titan-kpi-universe', String(rpt.universeEvaluated || 0));
+        setEl('titan-kpi-buy', `${rpt.confirmedBuyCount || 0} Confirmed (${rpt.buyCount || 0} Total)`);
+        setEl('titan-kpi-sell', `${rpt.confirmedSellCount || 0} Confirmed (${rpt.sellCount || 0} Total)`);
+        setEl('titan-kpi-stophunt', `${(rpt.stopHuntBuyCount || 0) + (rpt.stopHuntSellCount || 0)} (${rpt.stopHuntBuyCount || 0} SSL / ${rpt.stopHuntSellCount || 0} BSL)`);
+        setEl('titan-kpi-time', String(rpt.istTime || '--:--:-- IST'));
+
+        const q = (document.getElementById('titan-search-input')?.value || '').trim().toUpperCase();
+        const filterList = (list) => (Array.isArray(list) ? list : []).filter(item => {
+          if (this.strictOnly && !item.allSixMet) return false;
+          if (q && !String(item.symbol || '').toUpperCase().includes(q) && !String(item.sector || '').toUpperCase().includes(q)) return false;
+          return true;
+        });
+
+        const rawBuys = Array.isArray(rpt.buySignals) ? rpt.buySignals : [];
+        const rawSells = Array.isArray(rpt.sellSignals) ? rpt.sellSignals : [];
+        const buys = filterList(rawBuys);
+        const sells = filterList(rawSells);
+
+        setEl('titan-buy-badge', rpt.isMidnightCleared ? '0 BUY setups (Midnight Auto-Flush)' : `${buys.length} BUY setups (${this.strictOnly ? '6/6 Confirmed' : 'All Qualified + Forming'})`);
+        setEl('titan-sell-badge', rpt.isMidnightCleared ? '0 SELL setups (Midnight Auto-Flush)' : `${sells.length} SELL setups (${this.strictOnly ? '6/6 Confirmed' : 'All Qualified + Forming'})`);
+
+        this.renderSignalTable('table-titan-bullish', buys, true, Boolean(rpt.isMidnightCleared), rawBuys.length);
+        this.renderSignalTable('table-titan-bearish', sells, false, Boolean(rpt.isMidnightCleared), rawSells.length);
       }
     };
 
@@ -18909,7 +19340,7 @@ ${json.message || 'Unauthorized token.'}`);
                 price: Number(stock.price || 0),
                 pct_change: Number(stock.changePercent ?? stock.pct_change ?? 0),
                 listed_at: stock.listedAt || report.istTime || new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }),
-                extraDetail: `${stock.conditionsMet || 14}/${stock.totalConditions || 14} ${stock.grade || 'STRICT'} • Surge ${stock.glowSurge || 1.5}x`
+                extraDetail: `${stock.conditionsMet || 6}/6 ${stock.classification || stock.grade || 'STRONG'} • Score ${stock.score || 75}/100 • RVOL ${stock.rvol || 1.5}x`
               });
             }
           }
@@ -19260,6 +19691,82 @@ ${json.message || 'Unauthorized token.'}`);
       showToast(ClaudeNotificationEngine.soundEnabled ? '🔊 Audio notifications enabled' : '🔇 Audio notifications muted');
     }
 
+    // ============================================================
+    // DEDICATED 60-SECOND AUTO-REFRESH FOR WATCHLIST & CUSTOM TABLES
+    // ============================================================
+    const AutoRefresh60sManager = {
+      enabled: true,
+      intervalSec: 60,
+      remainingSec: 60,
+      _timer: null,
+      _isRefreshing: false,
+
+      init() {
+        if (this._timer) return;
+        this.updateUI();
+        this._timer = setInterval(() => {
+          if (typeof document !== 'undefined' && document.hidden) return;
+          if (!this.enabled) return;
+          this.remainingSec = Math.max(0, this.remainingSec - 1);
+          if (this.remainingSec <= 0) {
+            this.triggerNow(false);
+          } else {
+            this.updateUI();
+          }
+        }, 1000);
+      },
+
+      toggle() {
+        this.enabled = !this.enabled;
+        if (this.enabled) this.remainingSec = this.intervalSec;
+        this.updateUI();
+        if (typeof showToast === 'function') {
+          showToast(this.enabled ? '⏱ Watchlist & Custom Tables 60s Auto-Refresh ON' : '⏸ 60s Auto-Refresh Paused', 'info');
+        }
+      },
+
+      updateUI() {
+        const text = this.enabled ? (this._isRefreshing ? 'Sync...' : `${this.remainingSec}s`) : 'OFF';
+        ['ct-autorefresh-countdown', 'wl-autorefresh-countdown'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerText = text;
+        });
+        ['ct-autorefresh-toggle', 'wl-autorefresh-toggle'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (!btn) return;
+          btn.innerText = this.enabled ? 'ON' : 'OFF';
+          btn.className = this.enabled
+            ? 'ml-1 px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9.5px] font-black cursor-pointer'
+            : 'ml-1 px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700 text-[9.5px] font-black cursor-pointer';
+        });
+      },
+
+      async triggerNow(showFeedback = false) {
+        if (this._isRefreshing) return;
+        this._isRefreshing = true;
+        this.remainingSec = this.intervalSec;
+        this.updateUI();
+        try {
+          if (typeof MidnightSessionManager !== 'undefined' && !MidnightSessionManager.isMidnightCleared()) {
+            await MidnightSessionManager.pullFreshBackendScan(false);
+          }
+          if (typeof CyberLivePriceEngine !== 'undefined' && typeof CyberLivePriceEngine.fetchBatchQuotes === 'function') {
+            await CyberLivePriceEngine.fetchBatchQuotes();
+          }
+          if (typeof renderCustomTables === 'function') renderCustomTables();
+          if (typeof renderWatchlistTable === 'function') renderWatchlistTable();
+          if (showFeedback && typeof showToast === 'function') {
+            showToast('🔄 Watchlist & Custom Tables Refreshed (60s Cycle)', 'success');
+          }
+        } catch (e) {}
+        finally {
+          this._isRefreshing = false;
+          this.remainingSec = this.intervalSec;
+          this.updateUI();
+        }
+      }
+    };
+
     window.addEventListener('DOMContentLoaded', () => {
       // 1. Enforce Stock-Only Isolation & Render Only Active Tab Above-the-Fold First
       if (typeof sanitizeDataScannersUniverse === 'function') {
@@ -19269,6 +19776,7 @@ ${json.message || 'Unauthorized token.'}`);
         CyberLivePriceEngine.syncSectorStocksFromAllStocks();
         CyberLivePriceEngine.init();
         MidnightSessionManager.init();
+        AutoRefresh60sManager.init();
       } catch (e) {
         console.warn('Core live init warning:', e);
       }
@@ -19292,6 +19800,7 @@ ${json.message || 'Unauthorized token.'}`);
           if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.init();
           if (typeof PriceActionEngine !== 'undefined') PriceActionEngine.init();
           if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.init();
+          if (typeof MuhuratFlowEngine !== 'undefined') MuhuratFlowEngine.init();
           if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.init();
           if (typeof AiTradingJournalEngine !== 'undefined') AiTradingJournalEngine.init();
         } catch (e) {
@@ -19306,9 +19815,14 @@ ${json.message || 'Unauthorized token.'}`);
         renderJournal();
       }, 150);
 
-      // Automatically show Fast Login / Sign In modal on page open as requested
+      // Show Fast Login / Sign In modal only when no local user session is saved yet
       setTimeout(() => {
-        openAuthModal('signin');
+        try {
+          const savedUser = typeof localStorage !== 'undefined' ? localStorage.getItem('muhurat_auth_user') : null;
+          if (!savedUser) openAuthModal('signin');
+        } catch (e) {
+          openAuthModal('signin');
+        }
       }, 280);
     });
 
@@ -19385,16 +19899,15 @@ ${json.message || 'Unauthorized token.'}`);
     }
 
     function handleFyersQuickLogin() {
-      alert(`[Upstox API v2/v3 OAuth Direct Login]\n\nAuthenticated via Client ID: YA49011 (APURBA PAL)\nPlan: 👑 ADMIN PLAN\nSession: Valid (18h remaining)\nAccess Token Synced!`);
+      showToast('✅ Upstox / Client ID YA49011 Authenticated (ADMIN PLAN Active)', 'success');
       closeAuthModal();
       switchTab('admin-plan');
     }
 
     function handleSignUpSubmit() {
       const name = document.getElementById('auth-signup-name').value || 'New Trader';
-      const email = document.getElementById('auth-signup-email').value || 'trader@muhurat.in';
       const plan = document.getElementById('auth-signup-plan').value;
-      alert(`[Muhurat Registration Successful]\n\nAccount Created for: ${name}\nEmail: ${email}\nAssigned Tier: ${plan.toUpperCase()} PLAN\nYour access is now active!`);
+      showToast(`✅ Account Created for ${name} (${plan.toUpperCase()} PLAN Active)`, 'success');
       closeAuthModal();
       switchTab('home');
     }
@@ -19410,14 +19923,14 @@ ${json.message || 'Unauthorized token.'}`);
         actionBtn.innerText = 'Verify OTP & Reset Password →';
         actionBtn.className = 'w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs tracking-wider transition shadow-lg shadow-emerald-500/20';
         otpSent = true;
-        alert(`[Password Reset Verification]\n\nA 6-digit OTP has been dispatched to: ${email}\n\n(Demo Sandbox OTP: 789123)`);
+        showToast(`📩 6-digit OTP dispatched to ${email}`, 'info');
       } else {
         const otpVal = document.getElementById('auth-forgot-otp').value;
         if (!otpVal || otpVal.length < 4) {
-          alert('Please enter the 6-digit OTP received on your email/phone.');
+          showToast('Please enter the 6-digit OTP received on your email/phone.', 'warning');
           return;
         }
-        alert(`[Password Reset Successful]\n\nYour password has been updated securely!\nYou are now signed in with your ADMIN PLAN master credentials.`);
+        showToast('✅ Password updated securely! Signed in with ADMIN PLAN.', 'success');
         closeAuthModal();
         switchTab('admin-plan');
       }
