@@ -27,6 +27,14 @@ import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine'
 import { calculateMarketStatus } from './src/data/marketSchedule';
 import { NIFTY_200_STOCKS } from './src/data/nifty200';
 import { autonomousPriceService, UnifiedMarketQuote } from './server/autonomousPriceService';
+import { requireAuth, AuthRequest } from './src/middleware/auth';
+import {
+  addUserWatchlistItem,
+  getOrCreateUser,
+  getUserScannerAlerts,
+  getUserWatchlist,
+  removeUserWatchlistItem,
+} from './src/db/users';
 
 async function startServer() {
   const app = express();
@@ -1678,6 +1686,70 @@ async function startServer() {
     }
   });
 
+  // Firebase Auth + Cloud SQL Protected User & Watchlist Endpoints
+  app.get('/api/user/me', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      const user = await getOrCreateUser(req.user.uid, req.user.email, req.user.name);
+      res.json({ status: 'ok', user });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to load user profile' });
+    }
+  });
+
+  app.get('/api/user/watchlist', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      await getOrCreateUser(req.user.uid, req.user.email, req.user.name);
+      const items = await getUserWatchlist(req.user.uid);
+      res.json({ status: 'ok', items });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to load watchlist' });
+    }
+  });
+
+  app.post('/api/user/watchlist', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      const symbol = String(req.body?.symbol || '').trim();
+      if (!symbol) return res.status(400).json({ error: 'Symbol is required' });
+      const item = await addUserWatchlistItem(req.user.uid, req.user.email, {
+        symbol,
+        notes: typeof req.body?.notes === 'string' ? req.body.notes : '',
+        targetPrice: Number(req.body?.targetPrice) || 0,
+      });
+      res.status(201).json({ status: 'ok', item });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to add watchlist item' });
+    }
+  });
+
+  app.delete('/api/user/watchlist/:id', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'Invalid watchlist item id' });
+      }
+      const deleted = await removeUserWatchlistItem(req.user.uid, id);
+      if (!deleted) return res.status(404).json({ error: 'Watchlist item not found' });
+      res.json({ status: 'ok', deleted: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to remove watchlist item' });
+    }
+  });
+
+  app.get('/api/user/alerts', requireAuth, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      await getOrCreateUser(req.user.uid, req.user.email, req.user.name);
+      const alerts = await getUserScannerAlerts(req.user.uid);
+      res.json({ status: 'ok', alerts });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to load scanner alerts' });
+    }
+  });
+
   // Catch-all 404 for API endpoints so API calls never receive HTML
   app.all('/api/*', (req, res) => {
     res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
@@ -1765,8 +1837,23 @@ async function startServer() {
             };
           }
         }
-        if (Object.keys(bootstrapIndices).length > 0 && cachedDashHtml.includes('</head>')) {
-          const bootTag = `<script>window.__SERVER_INDICES_BOOTSTRAP__=${JSON.stringify(bootstrapIndices)};</script></head>`;
+        const bootstrapQuotes: Record<string, any> = {};
+        for (const [sym, q] of Object.entries(qCache)) {
+          if (q && q.lp > 0 && q.type !== 'INDEX') {
+            bootstrapQuotes[sym] = {
+              lp: q.lp,
+              ch: q.ch,
+              chp: q.chp,
+              prevClose: q.prevClose,
+              high: q.high,
+              low: q.low,
+              volume: q.volume,
+              atp: q.atp,
+            };
+          }
+        }
+        if ((Object.keys(bootstrapIndices).length > 0 || Object.keys(bootstrapQuotes).length > 0) && cachedDashHtml.includes('</head>')) {
+          const bootTag = `<script>window.__SERVER_INDICES_BOOTSTRAP__=${JSON.stringify(bootstrapIndices)};window.__SERVER_QUOTES_BOOTSTRAP__=${JSON.stringify(bootstrapQuotes)};</script></head>`;
           res.type('text/html').send(cachedDashHtml.replace('</head>', bootTag));
           return;
         }
@@ -1793,6 +1880,9 @@ async function startServer() {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
+
+  // Warm up Autonomous Live Market quotes immediately at boot so index bootstrap has live prices & CHG%
+  autonomousPriceService.fetchAllMarketQuotes(true).catch(() => {});
 
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Nifty 200 Scanner Server with Upstox API & Autonomous Live Engine running on http://localhost:${PORT}`);

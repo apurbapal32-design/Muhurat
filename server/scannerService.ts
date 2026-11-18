@@ -1838,8 +1838,18 @@ export class ScannerService {
 
         // Apply exact live quote data
         scannedStock.price = Number(lp.toFixed(2));
-        scannedStock.change = q ? q.ch : Number((lp - prevClose).toFixed(2));
-        scannedStock.changePercent = q ? q.chp : (prevClose > 0 ? Number((((lp - prevClose) / prevClose) * 100).toFixed(2)) : 0);
+        const rawCh = q && Number.isFinite(Number(q.ch)) ? Number(q.ch) : Number((lp - prevClose).toFixed(2));
+        const trueCh =
+          Math.abs(rawCh) <= 0.0001 && prevClose > 0 && Math.abs(lp - prevClose) > 0.01
+            ? Number((lp - prevClose).toFixed(2))
+            : Number(rawCh.toFixed(2));
+        const rawChp = q && Number.isFinite(Number(q.chp)) ? Number(q.chp) : (prevClose > 0 ? ((lp - prevClose) / prevClose) * 100 : 0);
+        const trueChp =
+          Math.abs(rawChp) <= 0.0001 && prevClose > 0 && Math.abs(trueCh) > 0.01
+            ? Number(((trueCh / prevClose) * 100).toFixed(2))
+            : Number(rawChp.toFixed(2));
+        scannedStock.change = trueCh;
+        scannedStock.changePercent = trueChp;
         scannedStock.sectorChangePercent = realSectorChp;
         if (q?.volume && q.volume > 0) scannedStock.volume = q.volume;
         scannedStock.indicators.price = scannedStock.price;

@@ -829,7 +829,7 @@ export function buildApexAlphaReport(params: {
       watchCount: 0,
       backtestLeaderboard: VERIFIED_18D_BACKTEST_LEADERBOARD,
       backtestCaveat:
-        'Tested on 18 real NSE 5m sessions (218 F&O stocks, 2026-10-22 to 2026-11-17), zero lookahead, SL-first within-bar checks & 0.05% round-trip slippage/STT friction. Historical Yahoo Finance 5m bars omit live Futures OI & Delivery % ticks (neutral fallback used for legacy OI engines).',
+        'Tested on 18 real NSE 5m sessions (218 F&O stocks, 2026-10-22 to 2026-11-17), zero lookahead, SL-first within-bar checks & 0.05% round-trip slippage/STT friction. Historical 5m NSE bars omit live Futures OI & Delivery % ticks (neutral fallback used for legacy OI engines).',
       categories: {
         qualifiedAlpha: [],
         vwapCoilSetups: [],
@@ -994,7 +994,7 @@ export function buildApexAlphaReport(params: {
     maxPerDirection: 10,
     backtestLeaderboard: VERIFIED_18D_BACKTEST_LEADERBOARD,
     backtestCaveat:
-      'Tested on 18 real NSE 5m sessions (218 F&O stocks, 2026-10-22 to 2026-11-17), zero lookahead, SL-first within-bar checks & 0.05% round-trip slippage/STT friction. Historical Yahoo Finance 5m bars omit live Futures OI & Delivery % ticks (neutral fallback used for legacy OI engines).',
+      'Tested on 18 real NSE 5m sessions (218 F&O stocks, 2026-10-22 to 2026-11-17), zero lookahead, SL-first within-bar checks & 0.05% round-trip slippage/STT friction. Historical 5m NSE bars omit live Futures OI & Delivery % ticks (neutral fallback used for legacy OI engines).',
     categories: {
       qualifiedAlpha,
       vwapCoilSetups,

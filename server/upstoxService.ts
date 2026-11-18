@@ -12,6 +12,7 @@ import {
   autonomousPriceService,
   deriveOrderBookDepth,
   getIndexBaselinePrices,
+  IntradayCandleBar,
   UnifiedMarketQuote,
 } from './autonomousPriceService';
 
@@ -112,6 +113,8 @@ class UpstoxService {
   private lastUpstoxQuotesAt = 0;
   private lastUpstoxTokenTag = '';
   private inFlightUpstoxBatch: Promise<Record<string, UnifiedMarketQuote>> | null = null;
+  private lastUpstoxCandlesAt = 0;
+  private inFlightUpstoxCandles: Promise<void> | null = null;
 
   // Broker API v2 Market Info caches & Special Event Market Off Days
   private brokerHolidaysCache: UpstoxBrokerHoliday[] = [];
@@ -610,14 +613,29 @@ class UpstoxService {
                   if (lp <= 0) continue;
 
                   const prevAuto = result[mappedClean] || autoQuotes[mappedClean];
-                  const netCh = typeof item.net_change === 'number' ? Number(item.net_change) : undefined;
+                  const netCh =
+                    typeof item.net_change === 'number' && Number.isFinite(item.net_change)
+                      ? Number(item.net_change)
+                      : undefined;
                   const ohlcClose = Number(item.ohlc?.close || 0);
-                  const prevClose =
-                    netCh !== undefined
-                      ? Number((lp - netCh).toFixed(2))
-                      : prevAuto?.prevClose || (ohlcClose > 0 && ohlcClose !== lp ? ohlcClose : lp);
+                  let prevClose = lp;
+                  if (netCh !== undefined && Math.abs(netCh) > 0.0001) {
+                    prevClose = Number((lp - netCh).toFixed(2));
+                  } else if (ohlcClose > 0 && Math.abs(lp - ohlcClose) > 0.01) {
+                    prevClose = Number(ohlcClose.toFixed(2));
+                  } else if (
+                    (netCh === undefined || (Math.abs(netCh) <= 0.0001 && ohlcClose <= 0)) &&
+                    prevAuto?.prevClose &&
+                    prevAuto.prevClose > 0 &&
+                    Math.abs(lp - prevAuto.prevClose) > 0.01
+                  ) {
+                    prevClose = Number(prevAuto.prevClose.toFixed(2));
+                  }
 
-                  const ch = Number((lp - prevClose).toFixed(2));
+                  const ch =
+                    netCh !== undefined && (Math.abs(netCh) > 0.0001 || Math.abs(prevClose - lp) <= 0.01)
+                      ? Number(netCh.toFixed(2))
+                      : Number((lp - prevClose).toFixed(2));
                   const chp = prevClose > 0 ? Number(((ch / prevClose) * 100).toFixed(2)) : 0;
                   const topBuy = item.depth?.buy?.[0]?.price || prevAuto?.bid || lp;
                   const topSell = item.depth?.sell?.[0]?.price || prevAuto?.ask || lp;
@@ -727,6 +745,11 @@ class UpstoxService {
             intradayBars: autonomousPriceService.getExtendedBars(k) || q.intradayBars,
           };
         });
+
+        const candleTtlMs = isLiveMarket ? 60000 : 10 * 60 * 1000;
+        if (Object.keys(upstoxBatch).length > 0 && Date.now() - this.lastUpstoxCandlesAt > candleTtlMs) {
+          this.triggerUpstox5mCandlesRefresh(resolvedToken);
+        }
       } catch (err: any) {
         console.warn('[UpstoxService] Live quotes warning (using autonomous engine):', err?.message || err);
       }
@@ -805,6 +828,123 @@ class UpstoxService {
   public async fetchIndexQuotes(accessToken?: string): Promise<Record<string, UnifiedMarketQuote>> {
     const syms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'NIFTYNXT50', 'SENSEX', 'NIFTYIT', 'INDIAVIX'];
     return this.fetchUnifiedMarketQuotes(syms, accessToken);
+  }
+
+  private triggerUpstox5mCandlesRefresh(accessToken: string) {
+    if (this.inFlightUpstoxCandles || !accessToken || accessToken.length < 15 || this.isTokenRecentlyRejected(accessToken)) {
+      return;
+    }
+    this.lastUpstoxCandlesAt = Date.now();
+    this.inFlightUpstoxCandles = this.fetchUpstox5mCandlesBatch(accessToken)
+      .catch(() => {})
+      .finally(() => {
+        this.inFlightUpstoxCandles = null;
+      });
+  }
+
+  private parseUpstoxCandleTuple(row: any): IntradayCandleBar | null {
+    if (!Array.isArray(row) || row.length < 5) return null;
+    const ms = Date.parse(String(row[0] || ''));
+    const o = Number(row[1]);
+    const h = Number(row[2]);
+    const l = Number(row[3]);
+    const c = Number(row[4]);
+    const v = Math.max(0, Math.round(Number(row[5]) || 0));
+    if (!Number.isFinite(ms) || !Number.isFinite(c) || c <= 0) return null;
+
+    const istDateObj = new Date(ms + 19800000);
+    const dateIST = `${istDateObj.getUTCFullYear()}-${String(istDateObj.getUTCMonth() + 1).padStart(2, '0')}-${String(
+      istDateObj.getUTCDate()
+    ).padStart(2, '0')}`;
+    const hh = istDateObj.getUTCHours();
+    const mm = istDateObj.getUTCMinutes();
+    const ss = istDateObj.getUTCSeconds();
+    const secIST = hh * 3600 + mm * 60 + ss;
+    if (secIST < 9 * 3600 + 15 * 60 || secIST > 15 * 3600 + 30 * 60) return null;
+
+    return {
+      tsSec: Math.floor(ms / 1000),
+      dateIST,
+      timeIST: `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`,
+      secIST,
+      open: Number((Number.isFinite(o) && o > 0 ? o : c).toFixed(2)),
+      high: Number((Number.isFinite(h) && h > 0 ? h : Math.max(o || c, c)).toFixed(2)),
+      low: Number((Number.isFinite(l) && l > 0 ? l : Math.min(o || c, c)).toFixed(2)),
+      close: Number(c.toFixed(2)),
+      volume: v,
+    };
+  }
+
+  private async fetchUpstox5mCandlesBatch(accessToken: string): Promise<void> {
+    const todayIST = getISTDateParts(new Date()).dateStr;
+    const fromIST = getISTDateParts(new Date(Date.now() - 6 * 86400000)).dateStr;
+    const jobs: Array<{ sym: string; key: string }> = [];
+
+    ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'NIFTYNXT50', 'SENSEX', 'NIFTYIT'].forEach((idx) => {
+      jobs.push({ sym: idx, key: this.getInstrumentKey(idx) });
+    });
+    for (const st of NIFTY_200_STOCKS) {
+      const clean = this.cleanSymbol(st.symbol);
+      const key = this.getInstrumentKey(clean);
+      if (key.includes('|INE')) {
+        jobs.push({ sym: clean, key });
+      }
+    }
+
+    let cursor = 0;
+    const workerCount = 10;
+
+    const runJob = async (job: { sym: string; key: string }) => {
+      try {
+        const headers = { Accept: 'application/json', Authorization: `Bearer ${accessToken}` };
+        const [intraRes, histRes] = await Promise.all([
+          fetch(`https://api.upstox.com/v2/historical-candle/intraday/${encodeURIComponent(job.key)}/5minute`, {
+            headers,
+            signal: AbortSignal.timeout(3500),
+          }),
+          fetch(
+            `https://api.upstox.com/v2/historical-candle/${encodeURIComponent(job.key)}/5minute/${todayIST}/${fromIST}`,
+            { headers, signal: AbortSignal.timeout(3500) }
+          ),
+        ]);
+
+        if (intraRes.status === 401 || histRes.status === 401) {
+          this.invalidateToken(accessToken, 'Upstox historical-candle HTTP 401 Unauthorized');
+          return;
+        }
+
+        const merged = new Map<number, IntradayCandleBar>();
+        for (const r of [histRes, intraRes]) {
+          if (!r.ok) continue;
+          const j = await r.json().catch(() => null);
+          const candles: any[] = Array.isArray(j?.data?.candles) ? j.data.candles : [];
+          for (const tuple of candles) {
+            const bar = this.parseUpstoxCandleTuple(tuple);
+            if (bar) merged.set(bar.tsSec, bar);
+          }
+        }
+
+        const sorted = Array.from(merged.values()).sort((a, b) => a.tsSec - b.tsSec);
+        if (sorted.length === 0) return;
+
+        const todayBars = sorted.filter((b) => b.dateIST === todayIST);
+        const latestDate = sorted[sorted.length - 1].dateIST;
+        const activeBars = todayBars.length >= 2 ? todayBars : sorted.filter((b) => b.dateIST === latestDate);
+        if (activeBars.length > 0) {
+          autonomousPriceService.setSymbolBars(job.sym, activeBars, sorted.slice(-140));
+        }
+      } catch {
+        // Non-fatal per symbol
+      }
+    };
+
+    const workers = Array.from({ length: Math.min(workerCount, jobs.length) }, async () => {
+      while (cursor < jobs.length) {
+        const i = cursor++;
+        if (i < jobs.length) await runJob(jobs[i]);
+      }
+    });
+    await Promise.allSettled(workers);
   }
 
   /**

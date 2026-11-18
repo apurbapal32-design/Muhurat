@@ -108,7 +108,7 @@ class SentinelAgentService {
         await this.providers.forceRefreshQuotes();
         feedStatus = 'HEALED';
         feedDetail = `Low quote coverage detected (${quoteValues.length}); auto-refreshed live upstream feeds`;
-        this.recordRepair('Low live equity quote coverage', 'Triggered forceRefreshQuotes() across Yahoo/TV/Moneycontrol');
+        this.recordRepair('Low live equity quote coverage', 'Triggered forceRefreshQuotes() across Upstox/NSE/Moneycontrol');
         score -= 4;
       }
       newChecks.push({

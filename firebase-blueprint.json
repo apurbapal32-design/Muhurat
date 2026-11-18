@@ -1,0 +1,187 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated trader profile stored under private user document.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified user email address",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Trader display name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp"
+        }
+      },
+      "required": ["uid", "email", "displayName", "createdAt", "updatedAt"]
+    },
+    "WatchlistItem": {
+      "title": "WatchlistItem",
+      "description": "User NSE F&O stock watchlist entry.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "symbol": {
+          "type": "string",
+          "description": "NSE equity symbol",
+          "minLength": 1,
+          "maxLength": 24,
+          "pattern": "^[A-Z0-9_\\-&]+$"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional trade setup note",
+          "minLength": 0,
+          "maxLength": 300
+        },
+        "targetPrice": {
+          "type": "number",
+          "description": "Target alert price in INR"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp"
+        }
+      },
+      "required": ["uid", "symbol", "createdAt", "updatedAt"]
+    },
+    "TradeAlert": {
+      "title": "TradeAlert",
+      "description": "User price or strategy alert configuration.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "symbol": {
+          "type": "string",
+          "description": "NSE symbol",
+          "minLength": 1,
+          "maxLength": 24,
+          "pattern": "^[A-Z0-9_\\-&]+$"
+        },
+        "strategy": {
+          "type": "string",
+          "enum": ["APEX_ALPHA", "INTRADAY_CUM_DELTA", "MUHURAT_FLOW", "MONEY_FLOW", "CUSTOM_PRICE"],
+          "description": "Triggering strategy or price alert type"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "TRIGGERED", "ARCHIVED"],
+          "description": "Alert lifecycle state"
+        },
+        "triggerPrice": {
+          "type": "number",
+          "description": "Trigger price in INR"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": ["uid", "symbol", "strategy", "status", "triggerPrice", "createdAt", "updatedAt"]
+    },
+    "SavedScanConfig": {
+      "title": "SavedScanConfig",
+      "description": "User custom screener filter preset.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Owner Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Preset name",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "minRvol": {
+          "type": "number",
+          "description": "Minimum RVOL threshold"
+        },
+        "minChgPct": {
+          "type": "number",
+          "description": "Minimum absolute % change"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": ["uid", "name", "minRvol", "minChgPct", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile isolated to the authenticated owner."
+    },
+    "/users/{userId}/watchlists/{itemId}": {
+      "schema": { "$ref": "#/entities/WatchlistItem" },
+      "description": "User-owned stock watchlist entries."
+    },
+    "/users/{userId}/alerts/{alertId}": {
+      "schema": { "$ref": "#/entities/TradeAlert" },
+      "description": "User-owned strategy and price alerts."
+    },
+    "/users/{userId}/scanConfigs/{configId}": {
+      "schema": { "$ref": "#/entities/SavedScanConfig" },
+      "description": "User-owned custom scanner presets."
+    }
+  }
+}

@@ -1,7 +1,13 @@
 import { Candle, ScannedStock } from '../src/types';
 import { getISTDateParts } from '../src/data/marketSchedule';
 import { IntradayCandleBar, UnifiedMarketQuote } from './autonomousPriceService';
-import { ClaudeFnoBar, formatClockHHMMSS, parseClockSec } from './claudeFnoEngine';
+import {
+  ClaudeFnoBar,
+  detectHhHlAndTrend,
+  formatClockHHMMSS,
+  parseClockSec,
+  resampleClaudeBars,
+} from './claudeFnoEngine';
 import { computeAtr25, computeRvolFromBars } from './smartMoneyConceptsEngine';
 
 export type IntradayStockSide = 'BUY' | 'SELL';
@@ -18,6 +24,30 @@ export type CycleBuildupLabel =
   | 'Short Covering'
   | 'Long Unwinding';
 
+export interface IntradayCumDeltaCondition {
+  step: number;
+  label: string;
+  passed: boolean;
+  detail: string;
+}
+
+export type CumDeltaInterpretation =
+  | 'Bullish confirmation'
+  | 'Bearish confirmation'
+  | 'Possible bearish divergence'
+  | 'Possible bullish divergence'
+  | 'Buying pressure'
+  | 'Selling pressure';
+
+export type CumDeltaPressureTag =
+  | 'Buyers becoming aggressive'
+  | 'Sellers becoming aggressive'
+  | 'Strong Buying Pressure (+)'
+  | 'Strong Selling Pressure (-)'
+  | 'Buying pressure (+)'
+  | 'Selling pressure (-)'
+  | 'Neutral Flow';
+
 export interface IntradayStockRow {
   id: string;
   symbol: string;
@@ -32,11 +62,12 @@ export interface IntradayStockRow {
     | 'DFC BREAKOUT LIVE'
     | 'PREV CANDLE BO'
     | 'INSIDE DFC WATCH';
+  cumDeltaBadge: '6/6 CUM Δ BUY' | '6/6 CUM Δ SELL' | 'CUM Δ FORMING';
   isDfcQualified: boolean;
   entryStatus: IntradayEntryStatus;
   volatileChop: boolean;
 
-  // PDF Candlestick & Day First Candle (DFC @ 09:15 5m)
+  // Candlestick & Day First Candle (DFC @ 09:15 5m)
   dfcTime: string;
   dfcColor: 'GREEN' | 'RED';
   dfcOpen: number;
@@ -46,14 +77,14 @@ export interface IntradayStockRow {
   dfcRange: number; // DFC HL Difference = Target 1 distance
   dfcRangePct: number;
 
-  // Previous Day & Gap Open Formula (Pages 6-7)
+  // Previous Day & Gap Open Formula
   pdh: number;
   pdl: number;
   prevClose: number;
   gapType: IntradayGapType;
   gapOpenPct: number;
 
-  // Closing Basis Breakout + Next Qualified Candle Rule (Pages 3, 5, 6, 7)
+  // Closing Basis Breakout + Next Qualified Candle Rule
   prevCandleBreakout: 'ABOVE_PREV_HIGH' | 'BELOW_PREV_LOW' | 'NONE';
   closingCandleNo: number | null;
   closingCandleTime: string;
@@ -63,7 +94,7 @@ export interface IntradayStockRow {
   listedAt: string;
   inEntryWindow: boolean;
 
-  // Exact PDF Stop Loss & Targets (Pages 4-5)
+  // Stop Loss & Targets
   price: number;
   changePercent: number;
   entryPrice: number;
@@ -76,6 +107,27 @@ export interface IntradayStockRow {
   rrT1Ratio: string;
   positionSize: number;
   riskAmount: number;
+
+  // Cumulative Delta (Cum Δ) + VWAP + 15m Trend + RVOL 2x Formula
+  vwap: number;
+  vsVwapPct: number;
+  barBuyVolume: number;
+  barSellVolume: number;
+  currentDelta: number; // Current Bar Total Buy Vol - Total Sell Vol
+  prevCumDelta: number;
+  cumDelta: number; // Previous Cum Delta + Current Delta
+  cumDeltaSlope3: number;
+  sessionBuyVolume: number;
+  sessionSellVolume: number;
+  totalBuyQty: number;
+  totalSellQty: number;
+  trend15m: 'BULLISH' | 'BEARISH' | 'NEUTRAL';
+  cumDeltaInterpretation: CumDeltaInterpretation;
+  cumDeltaPressureTag: CumDeltaPressureTag;
+  cumDeltaDivergence: boolean;
+  cumDeltaScore: number; // 0..6
+  allSixCumDeltaMet: boolean;
+  cumDeltaConditions: IntradayCumDeltaCondition[];
 
   // Standard Live Market Flow Telemetry
   sector: string;
@@ -96,7 +148,7 @@ export interface IntradayStockRow {
 export interface IntradayStockReport {
   status: 'ok';
   scannerName: 'Intraday Stock';
-  sourceFormula: 'Secret Formula of Intraday Trading Techniques (DFC 5m Closing Breakout)';
+  sourceFormula: 'Cumulative Delta (Cum Δ) + VWAP + 15m Trend + RVOL ≥ 2x + 5m DFC Formula';
   generatedAt: string;
   istTime: string;
   timeframe: '5m';
@@ -110,6 +162,8 @@ export interface IntradayStockReport {
   universeEvaluated: number;
   totalScanned: number;
   qualifiedDfcCount: number;
+  confirmedCumDeltaBuyCount: number;
+  confirmedCumDeltaSellCount: number;
   buyCount: number;
   sellCount: number;
   gapUpBreakoutCount: number;
@@ -117,8 +171,15 @@ export interface IntradayStockReport {
   indexCount: number;
   totalEligibleUpCount: number;
   totalEligibleDownCount: number;
+  cumDeltaFormulaSummary: {
+    deltaFormula: string;
+    cumDeltaFormula: string;
+    buyRules: string[];
+    sellRules: string[];
+  };
   categories: {
     allSetups: IntradayStockRow[];
+    cumDeltaConfirmed: IntradayStockRow[];
     qualifiedDfc: IntradayStockRow[];
     buySetups: IntradayStockRow[];
     sellSetups: IntradayStockRow[];
@@ -204,6 +265,61 @@ export function classifyGapOpen(dayOpen: number, pdh: number, pdl: number): Intr
   return 'INSIDE_PREV_DAY';
 }
 
+export function computeBarDeltaFromBuySell(bar: {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}): { barBuyVolume: number; barSellVolume: number; delta: number } {
+  const vol = Math.max(0, Math.round(Number(bar.volume) || 0));
+  const range = bar.high - bar.low;
+  const clv =
+    range > 0
+      ? Math.max(-1, Math.min(1, ((bar.close - bar.low) - (bar.high - bar.close)) / range))
+      : bar.close >= bar.open
+        ? 0.5
+        : -0.5;
+  const buyShare = (clv + 1) / 2;
+  const barBuyVolume = Math.round(vol * buyShare);
+  const barSellVolume = Math.max(0, vol - barBuyVolume);
+  const delta = barBuyVolume - barSellVolume;
+  return { barBuyVolume, barSellVolume, delta };
+}
+
+function compute15mTrendDirection(bars5m: ClaudeFnoBar[]): 'BULLISH' | 'BEARISH' | 'NEUTRAL' {
+  const bars15m = resampleClaudeBars(bars5m, 15);
+  if (bars15m.length === 0) return 'NEUTRAL';
+  const last15 = bars15m[bars15m.length - 1];
+  if (bars15m.length === 1) {
+    if (last15.close > last15.open) return 'BULLISH';
+    if (last15.close < last15.open) return 'BEARISH';
+    return 'NEUTRAL';
+  }
+  // 9-bar EMA on 15m closes
+  const k = 2 / (Math.min(9, bars15m.length) + 1);
+  let ema = bars15m[0].close;
+  for (let i = 1; i < bars15m.length; i++) {
+    ema = bars15m[i].close * k + ema * (1 - k);
+  }
+  const hhhl = detectHhHlAndTrend(bars15m);
+  const prev15 = bars15m[bars15m.length - 2];
+
+  if (
+    (last15.close > ema && (last15.close >= prev15.close || last15.close >= last15.open)) ||
+    (hhhl.trend === 'UP' && last15.close >= ema)
+  ) {
+    return 'BULLISH';
+  }
+  if (
+    (last15.close < ema && (last15.close <= prev15.close || last15.close <= last15.open)) ||
+    (hhhl.trend === 'DOWN' && last15.close <= ema)
+  ) {
+    return 'BEARISH';
+  }
+  return 'NEUTRAL';
+}
+
 export function evaluateIntradayStockFormula(params: {
   symbol: string;
   displayName: string;
@@ -220,6 +336,10 @@ export function evaluateIntradayStockFormula(params: {
   tradedValueCr: number;
   capital: number;
   riskPct: number;
+  bidQty?: number;
+  askQty?: number;
+  fallbackRvol?: number;
+  explicitVwap?: number;
   explicitPdh?: number;
   explicitPdl?: number;
   explicitPrevClose?: number;
@@ -261,9 +381,119 @@ export function evaluateIntradayStockFormula(params: {
   const gapType = classifyGapOpen(dfcOpen, pdh, pdl);
   const gapOpenPct = prevClose > 0 ? round2(((dfcOpen - prevClose) / prevClose) * 100) : 0;
 
-  // Previous-candle closing basis breakout check (Page 3 of PDF)
-  const lastBar = session5m[session5m.length - 1];
-  const prevBar = session5m[session5m.length - 2];
+  // Session VWAP + Cumulative Delta (Cum Δ) calculation across today's 5m candles
+  let cumTpv = 0;
+  let cumVol = 0;
+  let runningCumDelta = 0;
+  let sessionBuyVolume = 0;
+  let sessionSellVolume = 0;
+  const cumDeltaSeries: number[] = [];
+  const barStats: Array<{ barBuyVolume: number; barSellVolume: number; delta: number }> = [];
+
+  for (const b of session5m) {
+    const v = Math.max(1, b.volume);
+    const tp = (b.high + b.low + b.close) / 3;
+    cumTpv += tp * v;
+    cumVol += v;
+
+    const st = computeBarDeltaFromBuySell(b);
+    barStats.push(st);
+    sessionBuyVolume += st.barBuyVolume;
+    sessionSellVolume += st.barSellVolume;
+    runningCumDelta += st.delta;
+    cumDeltaSeries.push(runningCumDelta);
+  }
+
+  const lastIdx = session5m.length - 1;
+  const lastBar = session5m[lastIdx];
+  const prevBar = session5m[lastIdx - 1];
+  const sessionVwap = cumVol > 0 ? cumTpv / cumVol : lastBar.close;
+  const vwap = round2(params.explicitVwap && params.explicitVwap > 0 ? params.explicitVwap : sessionVwap);
+  const livePrice = round2(params.price > 0 ? params.price : lastBar.close);
+  const vsVwapPct = vwap > 0 ? round2(((livePrice - vwap) / vwap) * 100) : 0;
+
+  // Forming-bar aware active index for current delta & RVOL
+  const isFormingBar = Boolean(
+    lastIdx >= 2 && prevBar && prevBar.volume > 100 && lastBar.volume < prevBar.volume * 0.45
+  );
+  const activeDeltaIdx = isFormingBar ? lastIdx - 1 : lastIdx;
+  const activeBarStat = barStats[activeDeltaIdx] || barStats[lastIdx];
+  const currentDelta = activeBarStat.delta;
+  const barBuyVolume = activeBarStat.barBuyVolume;
+  const barSellVolume = activeBarStat.barSellVolume;
+  const cumDelta = cumDeltaSeries[activeDeltaIdx];
+  const prevCumDelta = activeDeltaIdx > 0 ? cumDeltaSeries[activeDeltaIdx - 1] : 0;
+  const slopeBaseIdx = Math.max(0, activeDeltaIdx - 3);
+  const cumDeltaSlope3 = cumDelta - (activeDeltaIdx > 0 ? cumDeltaSeries[slopeBaseIdx] : 0);
+
+  // Total Buy vs Total Sell Qty (live L1 depth preferred; fallback to bidAskRatio/session flow)
+  let totalBuyQty = Math.round(Number(params.bidQty) || 0);
+  let totalSellQty = Math.round(Number(params.askQty) || 0);
+  if (totalBuyQty <= 0 || totalSellQty <= 0) {
+    if (params.bidAskRatio > 1.01 || params.bidAskRatio < 0.99) {
+      const baseDepth = Math.max(1000, Math.round((sessionBuyVolume + sessionSellVolume) * 0.05));
+      totalBuyQty = Math.max(100, Math.round(baseDepth * (params.bidAskRatio / (params.bidAskRatio + 1))));
+      totalSellQty = Math.max(100, baseDepth - totalBuyQty);
+    } else {
+      totalBuyQty = sessionBuyVolume;
+      totalSellQty = sessionSellVolume;
+    }
+  }
+
+  // RVOL (5m) with forming bar guard
+  const rawRvol = computeRvolFromBars(params.bars5m, params.fallbackRvol);
+  const completedRvol =
+    isFormingBar && session5m.length >= 4
+      ? computeRvolFromBars(params.bars5m.slice(0, -1), params.fallbackRvol)
+      : rawRvol;
+  const rvol5m = round2(isFormingBar ? Math.max(rawRvol, completedRvol) : rawRvol);
+
+  // 15-minute trend
+  const trend15m = compute15mTrendDirection(params.bars5m);
+
+  // 8-Case Cumulative Delta Interpretation
+  const priceRefIdx = Math.max(0, activeDeltaIdx - 3);
+  const priceDelta3 = session5m[activeDeltaIdx].close - session5m[priceRefIdx].close;
+  const avgBarVol =
+    session5m.reduce((acc, b) => acc + Math.max(0, b.volume), 0) / Math.max(1, session5m.length);
+
+  let cumDeltaInterpretation: CumDeltaInterpretation;
+  if (priceDelta3 > 0 && cumDeltaSlope3 > 0) {
+    cumDeltaInterpretation = 'Bullish confirmation';
+  } else if (priceDelta3 < 0 && cumDeltaSlope3 < 0) {
+    cumDeltaInterpretation = 'Bearish confirmation';
+  } else if (priceDelta3 > 0 && cumDeltaSlope3 < 0) {
+    cumDeltaInterpretation = 'Possible bearish divergence';
+  } else if (priceDelta3 < 0 && cumDeltaSlope3 > 0) {
+    cumDeltaInterpretation = 'Possible bullish divergence';
+  } else if (cumDelta >= 0) {
+    cumDeltaInterpretation = 'Buying pressure';
+  } else {
+    cumDeltaInterpretation = 'Selling pressure';
+  }
+
+  let cumDeltaPressureTag: CumDeltaPressureTag;
+  if (cumDeltaSlope3 > avgBarVol * 1.15 && currentDelta > 0) {
+    cumDeltaPressureTag = 'Buyers becoming aggressive';
+  } else if (cumDeltaSlope3 < -avgBarVol * 1.15 && currentDelta < 0) {
+    cumDeltaPressureTag = 'Sellers becoming aggressive';
+  } else if (cumDelta > avgBarVol * 1.5) {
+    cumDeltaPressureTag = 'Strong Buying Pressure (+)';
+  } else if (cumDelta < -avgBarVol * 1.5) {
+    cumDeltaPressureTag = 'Strong Selling Pressure (-)';
+  } else if (cumDelta > 0) {
+    cumDeltaPressureTag = 'Buying pressure (+)';
+  } else if (cumDelta < 0) {
+    cumDeltaPressureTag = 'Selling pressure (-)';
+  } else {
+    cumDeltaPressureTag = 'Neutral Flow';
+  }
+
+  const cumDeltaDivergence =
+    cumDeltaInterpretation === 'Possible bearish divergence' ||
+    cumDeltaInterpretation === 'Possible bullish divergence';
+
+  // Previous-candle closing basis breakout check
   const prevCandleBreakout: IntradayStockRow['prevCandleBreakout'] =
     lastBar.close > prevBar.high
       ? 'ABOVE_PREV_HIGH'
@@ -283,19 +513,104 @@ export function evaluateIntradayStockFormula(params: {
     }
   }
 
-  // Also capture the most recent active closing breakout if one re-triggered after a chop
   const volatileChop = buyCloseIdx !== -1 && sellCloseIdx !== -1;
+
+  // Evaluate 6-Condition Cum Delta score for BUY and SELL independently first
+  const buildBuyChecks = (): IntradayCumDeltaCondition[] => [
+    {
+      step: 1,
+      label: 'Price above VWAP',
+      passed: livePrice > vwap,
+      detail: `LTP ₹${livePrice} vs VWAP ₹${vwap}`,
+    },
+    {
+      step: 2,
+      label: 'Cum Delta positive & increasing',
+      passed: cumDelta > 0 && cumDelta > prevCumDelta,
+      detail: `Cum Δ ${cumDelta >= 0 ? '+' : ''}${cumDelta.toLocaleString('en-IN')} (Prev ${prevCumDelta >= 0 ? '+' : ''}${prevCumDelta.toLocaleString('en-IN')})`,
+    },
+    {
+      step: 3,
+      label: 'Current Delta positive',
+      passed: currentDelta > 0,
+      detail: `Curr Δ ${currentDelta >= 0 ? '+' : ''}${currentDelta.toLocaleString('en-IN')} (Buy ${barBuyVolume.toLocaleString('en-IN')} - Sell ${barSellVolume.toLocaleString('en-IN')})`,
+    },
+    {
+      step: 4,
+      label: 'Total Buy > Total Sell',
+      passed: totalBuyQty > totalSellQty,
+      detail: `Buy ${totalBuyQty.toLocaleString('en-IN')} vs Sell ${totalSellQty.toLocaleString('en-IN')}`,
+    },
+    {
+      step: 5,
+      label: '15-minute trend bullish',
+      passed: trend15m === 'BULLISH',
+      detail: `15m Trend: ${trend15m}`,
+    },
+    {
+      step: 6,
+      label: 'RVOL ≥ 2.0x',
+      passed: rvol5m >= 2.0,
+      detail: `5m RVOL ${rvol5m.toFixed(2)}x`,
+    },
+  ];
+
+  const buildSellChecks = (): IntradayCumDeltaCondition[] => [
+    {
+      step: 1,
+      label: 'Price below VWAP',
+      passed: livePrice < vwap,
+      detail: `LTP ₹${livePrice} vs VWAP ₹${vwap}`,
+    },
+    {
+      step: 2,
+      label: 'Cum Delta negative & decreasing',
+      passed: cumDelta < 0 && cumDelta < prevCumDelta,
+      detail: `Cum Δ ${cumDelta >= 0 ? '+' : ''}${cumDelta.toLocaleString('en-IN')} (Prev ${prevCumDelta >= 0 ? '+' : ''}${prevCumDelta.toLocaleString('en-IN')})`,
+    },
+    {
+      step: 3,
+      label: 'Current Delta negative',
+      passed: currentDelta < 0,
+      detail: `Curr Δ ${currentDelta >= 0 ? '+' : ''}${currentDelta.toLocaleString('en-IN')} (Buy ${barBuyVolume.toLocaleString('en-IN')} - Sell ${barSellVolume.toLocaleString('en-IN')})`,
+    },
+    {
+      step: 4,
+      label: 'Total Sell > Total Buy',
+      passed: totalSellQty > totalBuyQty,
+      detail: `Sell ${totalSellQty.toLocaleString('en-IN')} vs Buy ${totalBuyQty.toLocaleString('en-IN')}`,
+    },
+    {
+      step: 5,
+      label: '15-minute trend bearish',
+      passed: trend15m === 'BEARISH',
+      detail: `15m Trend: ${trend15m}`,
+    },
+    {
+      step: 6,
+      label: 'RVOL ≥ 2.0x',
+      passed: rvol5m >= 2.0,
+      detail: `5m RVOL ${rvol5m.toFixed(2)}x`,
+    },
+  ];
+
+  const buyChecks = buildBuyChecks();
+  const sellChecks = buildSellChecks();
+  const buyChecksCount = buyChecks.filter((c) => c.passed).length;
+  const sellChecksCount = sellChecks.filter((c) => c.passed).length;
 
   let side: IntradayStockSide;
   let chosenCloseIdx = -1;
   if (buyCloseIdx !== -1 && sellCloseIdx !== -1) {
-    // Pick the direction aligned with current LTP vs DFC midpoint or latest breakout
     if (params.price >= dfcHigh || lastBar.close >= dfcHigh) {
       side = 'BUY';
       chosenCloseIdx = buyCloseIdx;
     } else if (params.price <= dfcLow || lastBar.close <= dfcLow) {
       side = 'SELL';
       chosenCloseIdx = sellCloseIdx;
+    } else if (buyChecksCount !== sellChecksCount) {
+      side = buyChecksCount > sellChecksCount ? 'BUY' : 'SELL';
+      chosenCloseIdx = side === 'BUY' ? buyCloseIdx : sellCloseIdx;
     } else {
       side = buyCloseIdx >= sellCloseIdx ? 'BUY' : 'SELL';
       chosenCloseIdx = side === 'BUY' ? buyCloseIdx : sellCloseIdx;
@@ -306,16 +621,27 @@ export function evaluateIntradayStockFormula(params: {
   } else if (sellCloseIdx !== -1) {
     side = 'SELL';
     chosenCloseIdx = sellCloseIdx;
+  } else if (buyChecksCount !== sellChecksCount) {
+    side = buyChecksCount > sellChecksCount ? 'BUY' : 'SELL';
   } else {
     side =
       prevCandleBreakout === 'ABOVE_PREV_HIGH'
         ? 'BUY'
         : prevCandleBreakout === 'BELOW_PREV_LOW'
           ? 'SELL'
-          : params.price >= (dfcHigh + dfcLow) / 2
+          : livePrice >= vwap
             ? 'BUY'
             : 'SELL';
   }
+
+  const cumDeltaConditions = side === 'BUY' ? buyChecks : sellChecks;
+  const cumDeltaScore = side === 'BUY' ? buyChecksCount : sellChecksCount;
+  const allSixCumDeltaMet = cumDeltaScore === 6;
+  const cumDeltaBadge: IntradayStockRow['cumDeltaBadge'] = allSixCumDeltaMet
+    ? side === 'BUY'
+      ? '6/6 CUM Δ BUY'
+      : '6/6 CUM Δ SELL'
+    : 'CUM Δ FORMING';
 
   let entryStatus: IntradayEntryStatus;
   let isDfcQualified = false;
@@ -335,7 +661,6 @@ export function evaluateIntradayStockFormula(params: {
     closingCandleClose = round2(closeBar.close);
 
     if (chosenCloseIdx + 1 < session5m.length) {
-      // Exact PDF rule: "The next candle to closing candle will be a qualified candle to go for trade."
       const nextCandle = session5m[chosenCloseIdx + 1];
       entryStatus = 'QUALIFIED_NEXT_CANDLE';
       isDfcQualified = true;
@@ -367,7 +692,7 @@ export function evaluateIntradayStockFormula(params: {
 
   const inEntryWindow = triggerSec >= ENTRY_START_SEC && triggerSec <= ENTRY_END_SEC;
 
-  // Exact PDF Stop Loss & Targets:
+  // Stop Loss & Targets:
   // BUY:  SL = DFC Low  | Target 1 = Entry + DFC HL Diff | Target 2 @ 3:25 PM
   // SELL: SL = DFC High | Target 1 = Entry - DFC HL Diff | Target 2 @ 3:25 PM
   const stopLoss = side === 'BUY' ? dfcLow : dfcHigh;
@@ -404,7 +729,6 @@ export function evaluateIntradayStockFormula(params: {
     signalBadge = 'INSIDE DFC WATCH';
   }
 
-  const rvol5m = computeRvolFromBars(params.bars5m);
   const { atr25, atr25Pct } = computeAtr25(params.bars5m, params.price);
 
   return {
@@ -414,6 +738,7 @@ export function evaluateIntradayStockFormula(params: {
     instrumentType: params.instrumentType,
     side,
     signalBadge,
+    cumDeltaBadge,
     isDfcQualified,
     entryStatus,
     volatileChop,
@@ -438,7 +763,7 @@ export function evaluateIntradayStockFormula(params: {
     qualifiedCandleTime,
     listedAt,
     inEntryWindow,
-    price: round2(params.price),
+    price: livePrice,
     changePercent: round2(params.changePercent),
     entryPrice,
     stopLoss,
@@ -450,6 +775,25 @@ export function evaluateIntradayStockFormula(params: {
     rrT1Ratio,
     positionSize,
     riskAmount,
+    vwap,
+    vsVwapPct,
+    barBuyVolume,
+    barSellVolume,
+    currentDelta,
+    prevCumDelta,
+    cumDelta,
+    cumDeltaSlope3,
+    sessionBuyVolume,
+    sessionSellVolume,
+    totalBuyQty,
+    totalSellQty,
+    trend15m,
+    cumDeltaInterpretation,
+    cumDeltaPressureTag,
+    cumDeltaDivergence,
+    cumDeltaScore,
+    allSixCumDeltaMet,
+    cumDeltaConditions,
     sector: params.sector,
     sectorChangePct: params.sectorChangePct,
     rvol5m,
@@ -479,10 +823,31 @@ export function buildIntradayStockReport(params: {
   const capital = Math.max(1000, Number(params.capital) || 100000);
   const riskPct = Math.max(0.1, Math.min(10, Number(params.riskPct) || 1.0));
 
+  const cumDeltaFormulaSummary = {
+    deltaFormula: 'Delta = Total Buy Volume − Total Sell Volume',
+    cumDeltaFormula: 'Cum Delta = Previous Cum Delta + Current Delta',
+    buyRules: [
+      'Price above VWAP',
+      'Cum Delta positive and increasing',
+      'Current Delta positive',
+      'Total Buy greater than Total Sell',
+      '15-minute trend bullish',
+      'RVOL ≥ 2.0x',
+    ],
+    sellRules: [
+      'Price below VWAP',
+      'Cum Delta negative and decreasing',
+      'Current Delta negative',
+      'Total Sell greater than Total Buy',
+      '15-minute trend bearish',
+      'RVOL ≥ 2.0x',
+    ],
+  };
+
   const empty: IntradayStockReport = {
     status: 'ok',
     scannerName: 'Intraday Stock',
-    sourceFormula: 'Secret Formula of Intraday Trading Techniques (DFC 5m Closing Breakout)',
+    sourceFormula: 'Cumulative Delta (Cum Δ) + VWAP + 15m Trend + RVOL ≥ 2x + 5m DFC Formula',
     generatedAt: new Date().toISOString(),
     istTime: `${ist.dateStr} ${ist.timeStr} IST`,
     timeframe: '5m',
@@ -496,6 +861,8 @@ export function buildIntradayStockReport(params: {
     universeEvaluated: 0,
     totalScanned: 0,
     qualifiedDfcCount: 0,
+    confirmedCumDeltaBuyCount: 0,
+    confirmedCumDeltaSellCount: 0,
     buyCount: 0,
     sellCount: 0,
     gapUpBreakoutCount: 0,
@@ -503,8 +870,10 @@ export function buildIntradayStockReport(params: {
     indexCount: 0,
     totalEligibleUpCount: 0,
     totalEligibleDownCount: 0,
+    cumDeltaFormulaSummary,
     categories: {
       allSetups: [],
+      cumDeltaConfirmed: [],
       qualifiedDfc: [],
       buySetups: [],
       sellSetups: [],
@@ -516,7 +885,6 @@ export function buildIntradayStockReport(params: {
 
   if (params.isMidnightCleared) return empty;
 
-  // Pure-equity arithmetic-mean SECTOR %
   const pureEquities = params.stocks.filter(
     (s) => !INDEX_BLACKLIST.has(String(s.symbol || '').toUpperCase())
   );
@@ -565,13 +933,17 @@ export function buildIntradayStockReport(params: {
       tradedValueCr: turnCr,
       capital,
       riskPct,
+      bidQty: Number((eq as any).bidQty) || undefined,
+      askQty: Number((eq as any).askQty) || undefined,
+      fallbackRvol: Number(eq.indicators?.rvol ?? (eq as any).rvol) || undefined,
+      explicitVwap: Number((eq as any).fyersData?.atp || eq.indicators?.vwap) || undefined,
       explicitPdh: Number(eq.indicators?.pdh) || undefined,
       explicitPdl: Number(eq.indicators?.pdl) || undefined,
     });
     if (row) allCollected.push(row);
   }
 
-  // Include Benchmark Indices (PDF explicitly notes "Useful for Nifty & Bank nifty")
+  // Include Benchmark Indices
   for (const idxSym of ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX']) {
     const q = params.indexQuotes[idxSym] || (idxSym === 'NIFTY 50' ? params.indexQuotes['NIFTY'] : undefined);
     if (!q || !q.lp) continue;
@@ -599,6 +971,9 @@ export function buildIntradayStockReport(params: {
       tradedValueCr: Number(q.turnoverCr) || (rawVol * q.lp) / 1e7,
       capital,
       riskPct,
+      bidQty: Number(q.bidQty) || undefined,
+      askQty: Number(q.askQty) || undefined,
+      explicitVwap: Number(q.atp) || undefined,
       explicitPrevClose: Number(q.prevClose) || undefined,
     });
     if (row) allCollected.push(row);
@@ -606,33 +981,49 @@ export function buildIntradayStockReport(params: {
 
   const scoreFormulaQuality = (row: IntradayStockRow): number => {
     let pts = 0;
-    if (row.isDfcQualified) pts += 1000;
-    if (row.entryStatus === 'QUALIFIED_NEXT_CANDLE') pts += 250;
-    if (!row.volatileChop) pts += 350; // PDF rule: Trend over sideways chop
+    // Cumulative Delta 6-Rule Strategy Core Weight
+    if (row.allSixCumDeltaMet) pts += 1200;
+    pts += row.cumDeltaScore * 140;
+    if (
+      (row.side === 'BUY' && row.cumDeltaInterpretation === 'Bullish confirmation') ||
+      (row.side === 'SELL' && row.cumDeltaInterpretation === 'Bearish confirmation')
+    ) {
+      pts += 110;
+    } else if (
+      (row.side === 'BUY' && row.cumDeltaInterpretation === 'Possible bearish divergence') ||
+      (row.side === 'SELL' && row.cumDeltaInterpretation === 'Possible bullish divergence')
+    ) {
+      pts -= 120;
+    }
+    if (
+      (row.side === 'BUY' && row.cumDeltaPressureTag === 'Buyers becoming aggressive') ||
+      (row.side === 'SELL' && row.cumDeltaPressureTag === 'Sellers becoming aggressive')
+    ) {
+      pts += 120;
+    }
+
+    // DFC Breakout, Non-Chop & Execution Alignment
+    if (row.isDfcQualified) pts += 500;
+    if (row.entryStatus === 'QUALIFIED_NEXT_CANDLE') pts += 180;
+    if (!row.volatileChop) pts += 250;
     if (
       (row.side === 'BUY' && row.gapType === 'OUTSIDE_GAP_UP') ||
       (row.side === 'SELL' && row.gapType === 'OUTSIDE_GAP_DOWN')
     ) {
-      pts += 220; // PDF Gap Open formula alignment
+      pts += 140;
     }
-    if (row.inEntryWindow) pts += 120; // 09:20-14:45 IST window
+    if (row.inEntryWindow) pts += 90;
     if (
       (row.side === 'BUY' && row.prevCandleBreakout === 'ABOVE_PREV_HIGH') ||
       (row.side === 'SELL' && row.prevCandleBreakout === 'BELOW_PREV_LOW')
     ) {
-      pts += 110;
+      pts += 80;
     }
     if (
       (row.side === 'BUY' && row.changePercent > 0) ||
       (row.side === 'SELL' && row.changePercent < 0)
     ) {
-      pts += 140; // Directional day % momentum confirms side
-    }
-    if (
-      (row.side === 'BUY' && row.bidAskRatio >= 1.15) ||
-      (row.side === 'SELL' && row.bidAskRatio <= 0.85)
-    ) {
-      pts += 70;
+      pts += 90;
     }
     pts += Math.min(120, (Number(row.rvol5m) || 0) * 18);
     pts += Math.min(120, Math.abs(Number(row.changePercent) || 0) * 18);
@@ -640,7 +1031,6 @@ export function buildIntradayStockReport(params: {
     return round2(pts);
   };
 
-  // Evaluate formula rank score across equities and indices separately
   const equityRows = allCollected.filter((r) => r.instrumentType === 'EQUITY_FNO');
   const indexTargets = allCollected.filter((r) => r.instrumentType === 'INDEX');
   for (const row of allCollected) {
@@ -663,18 +1053,26 @@ export function buildIntradayStockReport(params: {
     return (b.formulaRankScore || 0) - (a.formulaRankScore || 0);
   };
 
-  // Strictly pick Best 10 UP (BUY) stocks and Best 10 DOWN (SELL) stocks by formula quality
   const upCandidates = equityRows.filter((r) => r.side === 'BUY').sort(rankByFormulaDesc);
   const downCandidates = equityRows.filter((r) => r.side === 'SELL').sort(rankByFormulaDesc);
 
   const best10Up = upCandidates.slice(0, 10).map((r, i) => ({ ...r, directionRank: i + 1 }));
   const best10Down = downCandidates.slice(0, 10).map((r, i) => ({ ...r, directionRank: i + 1 }));
 
-  // Re-sort Best 10 UP, Best 10 DOWN, and combined Best 20 Z -> A by listedAt
   best10Up.sort(sortListedZToA);
   best10Down.sort(sortListedZToA);
   const best20Combined = [...best10Up, ...best10Down].sort(sortListedZToA);
   indexTargets.sort(sortListedZToA);
+
+  const cumDeltaConfirmedUp = upCandidates
+    .filter((r) => r.allSixCumDeltaMet)
+    .slice(0, 10)
+    .map((r, i) => ({ ...r, directionRank: i + 1 }));
+  const cumDeltaConfirmedDn = downCandidates
+    .filter((r) => r.allSixCumDeltaMet)
+    .slice(0, 10)
+    .map((r, i) => ({ ...r, directionRank: i + 1 }));
+  const cumDeltaConfirmed = [...cumDeltaConfirmedUp, ...cumDeltaConfirmedDn].sort(sortListedZToA);
 
   const qualifiedDfc = best20Combined.filter((r) => r.isDfcQualified);
   const gapUpBreakouts = upCandidates
@@ -691,7 +1089,7 @@ export function buildIntradayStockReport(params: {
   return {
     status: 'ok',
     scannerName: 'Intraday Stock',
-    sourceFormula: 'Secret Formula of Intraday Trading Techniques (DFC 5m Closing Breakout)',
+    sourceFormula: 'Cumulative Delta (Cum Δ) + VWAP + 15m Trend + RVOL ≥ 2x + 5m DFC Formula',
     generatedAt: new Date().toISOString(),
     istTime: `${ist.dateStr} ${ist.timeStr} IST`,
     timeframe: '5m',
@@ -705,6 +1103,8 @@ export function buildIntradayStockReport(params: {
     universeEvaluated: pureEquities.length + 5,
     totalScanned: allCollected.length,
     qualifiedDfcCount: qualifiedDfc.length,
+    confirmedCumDeltaBuyCount: cumDeltaConfirmedUp.length,
+    confirmedCumDeltaSellCount: cumDeltaConfirmedDn.length,
     buyCount: best10Up.length,
     sellCount: best10Down.length,
     gapUpBreakoutCount: gapUpBreakouts.length,
@@ -712,8 +1112,10 @@ export function buildIntradayStockReport(params: {
     indexCount: indexTargets.length,
     totalEligibleUpCount: upCandidates.length,
     totalEligibleDownCount: downCandidates.length,
+    cumDeltaFormulaSummary,
     categories: {
       allSetups: best20Combined,
+      cumDeltaConfirmed,
       qualifiedDfc,
       buySetups: best10Up,
       sellSetups: best10Down,
@@ -723,3 +1125,4 @@ export function buildIntradayStockReport(params: {
     },
   };
 }
+

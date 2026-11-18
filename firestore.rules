@@ -1,0 +1,221 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reusable Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid.size() >= 1 && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.email is string
+        && data.email.size() >= 3 && data.email.size() <= 254
+        && data.displayName is string
+        && data.displayName.size() >= 1 && data.displayName.size() <= 80
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWatchlistItem(data, userId) {
+      return data.keys().hasAll(['uid', 'symbol', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'symbol', 'notes', 'targetPrice', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid.size() >= 1 && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.symbol is string
+        && data.symbol.size() >= 1 && data.symbol.size() <= 24
+        && data.symbol.matches('^[A-Z0-9_\\-&]+$')
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 300))
+        && (!('targetPrice' in data) || (data.targetPrice is number && data.targetPrice >= 0))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTradeAlert(data, userId) {
+      return data.keys().hasAll(['uid', 'symbol', 'strategy', 'status', 'triggerPrice', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'symbol', 'strategy', 'status', 'triggerPrice', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid.size() >= 1 && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.symbol is string
+        && data.symbol.size() >= 1 && data.symbol.size() <= 24
+        && data.symbol.matches('^[A-Z0-9_\\-&]+$')
+        && data.strategy is string
+        && data.strategy.size() >= 1 && data.strategy.size() <= 32
+        && data.strategy in ['APEX_ALPHA', 'INTRADAY_CUM_DELTA', 'MUHURAT_FLOW', 'MONEY_FLOW', 'CUSTOM_PRICE']
+        && data.status is string
+        && data.status.size() >= 1 && data.status.size() <= 16
+        && data.status in ['ACTIVE', 'TRIGGERED', 'ARCHIVED']
+        && data.triggerPrice is number
+        && data.triggerPrice > 0
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidScanConfig(data, userId) {
+      return data.keys().hasAll(['uid', 'name', 'minRvol', 'minChgPct', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'name', 'minRvol', 'minChgPct', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid.size() >= 1 && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.name is string
+        && data.name.size() >= 1 && data.name.size() <= 60
+        && data.minRvol is number && data.minRvol >= 0
+        && data.minChgPct is number && data.minChgPct >= 0
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      // PII isolated strictly to authenticated owner
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']);
+
+      allow delete: if false;
+
+      match /watchlists/{itemId} {
+        allow get: if isValidId(userId) && isValidId(itemId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.uid == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(itemId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidWatchlistItem(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isValidId(userId)
+          && isValidId(itemId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidWatchlistItem(incoming(), userId)
+          && incoming().uid == existing().uid
+          && incoming().symbol == existing().symbol
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'targetPrice', 'updatedAt'])
+          && exists(/databases/$(database)/documents/users/$(userId));
+
+        allow delete: if isValidId(userId) && isValidId(itemId) && isVerifiedUser() && isOwner(userId);
+      }
+
+      match /alerts/{alertId} {
+        allow get: if isValidId(userId) && isValidId(alertId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.uid == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(alertId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidTradeAlert(incoming(), userId)
+          && incoming().status == 'ACTIVE'
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isValidId(userId)
+          && isValidId(alertId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && existing().status != 'ARCHIVED'
+          && isValidTradeAlert(incoming(), userId)
+          && incoming().uid == existing().uid
+          && incoming().symbol == existing().symbol
+          && incoming().strategy == existing().strategy
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) ||
+            incoming().diff(existing()).affectedKeys().hasOnly(['triggerPrice', 'status', 'updatedAt'])
+          )
+          && exists(/databases/$(database)/documents/users/$(userId));
+
+        allow delete: if isValidId(userId) && isValidId(alertId) && isVerifiedUser() && isOwner(userId);
+      }
+
+      match /scanConfigs/{configId} {
+        allow get: if isValidId(userId) && isValidId(configId) && isOwner(userId);
+        allow list: if isOwner(userId) && resource.data.uid == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(configId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidScanConfig(incoming(), userId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && exists(/databases/$(database)/documents/users/$(userId));
+
+        allow update: if isValidId(userId)
+          && isValidId(configId)
+          && isVerifiedUser()
+          && isOwner(userId)
+          && isValidScanConfig(incoming(), userId)
+          && incoming().uid == existing().uid
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'minRvol', 'minChgPct', 'updatedAt'])
+          && exists(/databases/$(database)/documents/users/$(userId));
+
+        allow delete: if isValidId(userId) && isValidId(configId) && isVerifiedUser() && isOwner(userId);
+      }
+    }
+  }
+}

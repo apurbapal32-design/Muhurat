@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildIntradayStockReport,
   classifyGapOpen,
+  computeBarDeltaFromBuySell,
   evaluateIntradayStockFormula,
 } from './intradayStockEngine';
 import { IntradayCandleBar } from './autonomousPriceService';
@@ -304,4 +305,154 @@ test('buildIntradayStockReport strictly caps equity setups to Best 10 UP + Best 
     );
   }
 });
+
+test('computeBarDeltaFromBuySell calculates Delta = BuyVol - SellVol accurately', () => {
+  const strongGreen = computeBarDeltaFromBuySell({
+    open: 100,
+    high: 110,
+    low: 100,
+    close: 109,
+    volume: 10000,
+  });
+  assert.equal(strongGreen.barBuyVolume + strongGreen.barSellVolume, 10000);
+  assert.equal(strongGreen.delta, strongGreen.barBuyVolume - strongGreen.barSellVolume);
+  assert.ok(strongGreen.delta > 7000);
+
+  const strongRed = computeBarDeltaFromBuySell({
+    open: 110,
+    high: 110,
+    low: 100,
+    close: 101,
+    volume: 10000,
+  });
+  assert.equal(strongRed.barBuyVolume + strongRed.barSellVolume, 10000);
+  assert.equal(strongRed.delta, strongRed.barBuyVolume - strongRed.barSellVolume);
+  assert.ok(strongRed.delta < -7000);
+});
+
+test('Cumulative Delta 6/6 BUY confirmation: Price > VWAP, Cum Delta + & increasing, Curr Delta +, Total Buy > Sell, 15m Bullish, RVOL >= 2x', () => {
+  const bars: IntradayCandleBar[] = [
+    makeBar('09:15:00', 500, 504, 499, 503, 10000, '2026-11-17'),
+    makeBar('09:20:00', 503, 507, 502, 506, 12000, '2026-11-17'),
+    makeBar('09:25:00', 506, 510, 505, 509, 13000, '2026-11-17'),
+    makeBar('09:30:00', 509, 514, 508, 513, 14000, '2026-11-17'),
+    makeBar('09:35:00', 513, 518, 512, 517, 15000, '2026-11-17'),
+    makeBar('09:40:00', 517, 524, 516, 523, 18000, '2026-11-17'),
+    // Strong surge candle with RVOL > 2.5x vs prior average
+    makeBar('09:45:00', 523, 534, 522, 533, 45000, '2026-11-17'),
+  ];
+
+  const row = evaluateIntradayStockFormula({
+    symbol: 'TATASTEEL',
+    displayName: 'Tata Steel',
+    instrumentType: 'EQUITY_FNO',
+    bars5m: bars as any,
+    price: 533,
+    changePercent: 3.1,
+    sector: 'Metals',
+    sectorChangePct: 1.8,
+    bidAskRatio: 1.65,
+    orderBookBias: 'Buyer Dominance',
+    oiChangePct: 11.4,
+    rawVolume: 127000,
+    tradedValueCr: 67.69,
+    capital: 100000,
+    riskPct: 1.0,
+    bidQty: 95000,
+    askQty: 52000,
+  });
+
+  assert.ok(row);
+  assert.equal(row.side, 'BUY');
+  assert.equal(row.allSixCumDeltaMet, true);
+  assert.equal(row.cumDeltaScore, 6);
+  assert.equal(row.cumDeltaBadge, '6/6 CUM Δ BUY');
+  assert.ok(row.price > row.vwap);
+  assert.ok(row.cumDelta > 0 && row.cumDelta > row.prevCumDelta);
+  assert.equal(row.cumDelta, row.prevCumDelta + row.currentDelta);
+  assert.ok(row.currentDelta > 0);
+  assert.ok(row.totalBuyQty > row.totalSellQty);
+  assert.equal(row.trend15m, 'BULLISH');
+  assert.ok(row.rvol5m >= 2.0);
+  assert.equal(row.cumDeltaInterpretation, 'Bullish confirmation');
+});
+
+test('Cumulative Delta 6/6 SELL confirmation: Price < VWAP, Cum Delta - & decreasing, Curr Delta -, Total Sell > Buy, 15m Bearish, RVOL >= 2x', () => {
+  const bars: IntradayCandleBar[] = [
+    makeBar('09:15:00', 800, 801, 795, 796, 10000, '2026-11-17'),
+    makeBar('09:20:00', 796, 797, 791, 792, 11000, '2026-11-17'),
+    makeBar('09:25:00', 792, 793, 787, 788, 12000, '2026-11-17'),
+    makeBar('09:30:00', 788, 789, 783, 784, 13000, '2026-11-17'),
+    makeBar('09:35:00', 784, 785, 779, 780, 14000, '2026-11-17'),
+    makeBar('09:40:00', 780, 781, 773, 774, 16000, '2026-11-17'),
+    // Heavy sell breakdown with RVOL > 2.5x
+    makeBar('09:45:00', 774, 775, 762, 763, 42000, '2026-11-17'),
+  ];
+
+  const row = evaluateIntradayStockFormula({
+    symbol: 'SBIN',
+    displayName: 'State Bank of India',
+    instrumentType: 'EQUITY_FNO',
+    bars5m: bars as any,
+    price: 763,
+    changePercent: -2.9,
+    sector: 'PSU Banks',
+    sectorChangePct: -1.4,
+    bidAskRatio: 0.58,
+    orderBookBias: 'Seller Pressure',
+    oiChangePct: 9.8,
+    rawVolume: 118000,
+    tradedValueCr: 90.0,
+    capital: 100000,
+    riskPct: 1.0,
+    bidQty: 42000,
+    askQty: 88000,
+  });
+
+  assert.ok(row);
+  assert.equal(row.side, 'SELL');
+  assert.equal(row.allSixCumDeltaMet, true);
+  assert.equal(row.cumDeltaScore, 6);
+  assert.equal(row.cumDeltaBadge, '6/6 CUM Δ SELL');
+  assert.ok(row.price < row.vwap);
+  assert.ok(row.cumDelta < 0 && row.cumDelta < row.prevCumDelta);
+  assert.equal(row.cumDelta, row.prevCumDelta + row.currentDelta);
+  assert.ok(row.currentDelta < 0);
+  assert.ok(row.totalSellQty > row.totalBuyQty);
+  assert.equal(row.trend15m, 'BEARISH');
+  assert.ok(row.rvol5m >= 2.0);
+  assert.equal(row.cumDeltaInterpretation, 'Bearish confirmation');
+});
+
+test('Cumulative Delta detects bearish divergence (Price up + Cum Delta down) and prioritizes 6/6 Cum Delta in Best 10 UP', () => {
+  // Price drifts slightly higher while candles close near lows with heavy sell volume -> bearish divergence
+  const divBars: IntradayCandleBar[] = [
+    makeBar('09:15:00', 1000, 1002, 998, 1001, 10000, '2026-11-17'),
+    makeBar('09:20:00', 1001, 1008, 1000, 1001.5, 20000, '2026-11-17'),
+    makeBar('09:25:00', 1001.5, 1009, 1001, 1002, 22000, '2026-11-17'),
+    makeBar('09:30:00', 1002, 1011, 1002, 1002.5, 24000, '2026-11-17'),
+  ];
+  const divRow = evaluateIntradayStockFormula({
+    symbol: 'DIVSTOCK',
+    displayName: 'Div Stock',
+    instrumentType: 'EQUITY_FNO',
+    bars5m: divBars as any,
+    price: 1002.5,
+    changePercent: 0.4,
+    sector: 'IT',
+    sectorChangePct: 0.2,
+    bidAskRatio: 0.9,
+    orderBookBias: 'Balanced',
+    oiChangePct: 1.0,
+    rawVolume: 76000,
+    tradedValueCr: 7.6,
+    capital: 100000,
+    riskPct: 1.0,
+  });
+
+  assert.ok(divRow);
+  assert.equal(divRow.cumDeltaInterpretation, 'Possible bearish divergence');
+  assert.equal(divRow.cumDeltaDivergence, true);
+});
+
 
