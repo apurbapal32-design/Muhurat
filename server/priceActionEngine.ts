@@ -45,6 +45,7 @@ export interface PriceActionConditionResult {
     | 'TF_5M_CANDLE_STRENGTH'
     | 'TF_5M_RVOL_1_5'
     | 'RS_VS_NIFTY'
+    | 'RS_LT_FNO_AND_ALL_INDEX'
     | 'RR_MIN_2';
   label: string;
   passed: boolean;
@@ -90,7 +91,12 @@ export interface PriceActionRow {
   price: number;
   changePercent: number;
   niftyChangePct: number;
-  relativeStrengthDiff: number; // Stock % - Nifty %
+  fnoAvgChangePct: number;
+  allIndexChangePct: number;
+  fnoAndAllIndexPct: number;
+  rsBenchmarkLabel: 'NIFTY' | 'FNO & ALL INDEX';
+  rsBenchmarkPct: number;
+  relativeStrengthDiff: number; // BUY: Stock % - NIFTY %, SELL: Stock % - Composite(FNO & All Index) %
   rsLabel: 'RELATIVE STRENGTH' | 'RELATIVE WEAKNESS' | 'INLINE';
   bidAskRatio: number;
   orderBookBias: string;
@@ -149,6 +155,9 @@ export interface PriceActionReport {
   entryWindowRule: '09:20:00 - 14:45:00 IST';
   vwapFreeRule: true;
   niftyChangePct: number;
+  fnoAvgChangePct: number;
+  allIndexChangePct: number;
+  fnoAndAllIndexPct: number;
   capital: number;
   riskPct: number;
   isMidnightCleared: boolean;
@@ -474,6 +483,8 @@ export function evaluatePriceActionSide(params: {
   price: number;
   changePercent: number;
   niftyChangePct: number;
+  fnoAvgChangePct?: number;
+  allIndexChangePct?: number;
   sector: string;
   sectorChangePct: number;
   bidAskRatio: number;
@@ -526,9 +537,29 @@ export function evaluatePriceActionSide(params: {
   const rvol5m = computeRvolFromBars(params.bars5m);
   const { atr25, atr25Pct } = computeAtr25(params.bars5m, params.price);
 
-  const rsDiff = round2(params.changePercent - params.niftyChangePct);
-  const rsLabel: PriceActionRow['rsLabel'] =
-    rsDiff > 0 ? 'RELATIVE STRENGTH' : rsDiff < 0 ? 'RELATIVE WEAKNESS' : 'INLINE';
+  const fnoAvgChangePct = round2(
+    params.fnoAvgChangePct !== undefined ? params.fnoAvgChangePct : params.niftyChangePct
+  );
+  const allIndexChangePct = round2(
+    params.allIndexChangePct !== undefined ? params.allIndexChangePct : params.niftyChangePct
+  );
+  const fnoAndAllIndexPct = round2((fnoAvgChangePct + allIndexChangePct) / 2);
+  const isBuyTarget = params.side === 'BUY';
+  const rsBenchmarkLabel: PriceActionRow['rsBenchmarkLabel'] = isBuyTarget ? 'NIFTY' : 'FNO & ALL INDEX';
+  const rsBenchmarkPct = isBuyTarget ? round2(params.niftyChangePct) : fnoAndAllIndexPct;
+  const rsDiff = round2(params.changePercent - rsBenchmarkPct);
+  const sellRsWeak = params.changePercent < fnoAvgChangePct && params.changePercent < allIndexChangePct;
+  const rsLabel: PriceActionRow['rsLabel'] = isBuyTarget
+    ? params.changePercent > params.niftyChangePct
+      ? 'RELATIVE STRENGTH'
+      : params.changePercent < params.niftyChangePct
+        ? 'RELATIVE WEAKNESS'
+        : 'INLINE'
+    : sellRsWeak
+      ? 'RELATIVE WEAKNESS'
+      : params.changePercent > fnoAvgChangePct && params.changePercent > allIndexChangePct
+        ? 'RELATIVE STRENGTH'
+        : 'INLINE';
 
   const triggerBar = struct5m.eventSide === params.side ? struct5m.triggerBar : activeCandle5m;
   const triggerSec = triggerBar ? triggerBar.secIST : params.bars5m[params.bars5m.length - 1].secIST;
@@ -561,7 +592,8 @@ export function evaluatePriceActionSide(params: {
   const c5 = struct5m.eventSide === params.side && struct5m.event === 'BOS';
   const c6 = candleStrength.isStrongCandle;
   const c7 = rvol5m >= 1.5;
-  const c8 = isBuy ? params.changePercent > params.niftyChangePct : params.changePercent < params.niftyChangePct;
+  // BUY C8: Stock RS > NIFTY | SELL C8: Stock RS < FNO & All Index (removed < NIFTY)
+  const c8 = isBuy ? params.changePercent > params.niftyChangePct : sellRsWeak;
   const c9 = trade.rrNumeric >= 2.0;
 
   const conditions: PriceActionConditionResult[] = [
@@ -616,10 +648,12 @@ export function evaluatePriceActionSide(params: {
     },
     {
       number: 8,
-      id: 'RS_VS_NIFTY',
-      label: isBuy ? 'Stock RS > NIFTY' : 'Stock RS < NIFTY',
+      id: isBuy ? 'RS_VS_NIFTY' : 'RS_LT_FNO_AND_ALL_INDEX',
+      label: isBuy ? 'Stock RS > NIFTY' : 'Stock RS < FNO & All Index',
       passed: c8,
-      detail: `Stock ${params.changePercent >= 0 ? '+' : ''}${params.changePercent.toFixed(2)}% vs NIFTY ${params.niftyChangePct >= 0 ? '+' : ''}${params.niftyChangePct.toFixed(2)}% (RS ${rsDiff >= 0 ? '+' : ''}${rsDiff}%)`,
+      detail: isBuy
+        ? `Stock ${params.changePercent >= 0 ? '+' : ''}${params.changePercent.toFixed(2)}% vs NIFTY ${params.niftyChangePct >= 0 ? '+' : ''}${params.niftyChangePct.toFixed(2)}% (RS ${rsDiff >= 0 ? '+' : ''}${rsDiff}%)`
+        : `Stock ${params.changePercent >= 0 ? '+' : ''}${params.changePercent.toFixed(2)}% vs FNO ${fnoAvgChangePct >= 0 ? '+' : ''}${fnoAvgChangePct.toFixed(2)}% & All Index ${allIndexChangePct >= 0 ? '+' : ''}${allIndexChangePct.toFixed(2)}% (Diff ${rsDiff >= 0 ? '+' : ''}${rsDiff}%)`,
     },
     {
       number: 9,
@@ -652,8 +686,8 @@ export function evaluatePriceActionSide(params: {
     struct15m.event === 'BOS' || struct5m.event === 'BOS', // 8 BOS
     struct15m.event === 'CHoCH' || struct5m.event === 'CHoCH', // 9 CHoCH
     (isBuy && orbStatus === 'ABOVE_ORH') || (!isBuy && orbStatus === 'BELOW_ORL'), // 10 VWAP-free ORB
-    rsDiff > 0, // 11 Relative Strength
-    rsDiff < 0, // 12 Relative Weakness
+    params.changePercent > params.niftyChangePct, // 11 Relative Strength (> NIFTY)
+    sellRsWeak, // 12 Relative Weakness (< FNO & All Index)
     c1 && c2 && c3 && c5, // 13 MTF Alignment
     c9, // 14 Risk-to-Reward Filter
   ];
@@ -673,6 +707,11 @@ export function evaluatePriceActionSide(params: {
     price: round2(params.price),
     changePercent: round2(params.changePercent),
     niftyChangePct: round2(params.niftyChangePct),
+    fnoAvgChangePct,
+    allIndexChangePct,
+    fnoAndAllIndexPct,
+    rsBenchmarkLabel,
+    rsBenchmarkPct,
     relativeStrengthDiff: rsDiff,
     rsLabel,
     bidAskRatio: round2(params.bidAskRatio),
@@ -732,6 +771,41 @@ export function buildPriceActionReport(params: {
   const niftyQ = params.indexQuotes['NIFTY 50'] || params.indexQuotes['NIFTY'];
   const niftyChangePct = round2(Number(niftyQ?.chp) || 0);
 
+  // Pure-equity F&O universe average % and All Index average %
+  const pureEquities = params.stocks.filter(
+    (s) => !INDEX_BLACKLIST.has(String(s.symbol || '').toUpperCase())
+  );
+  const fnoAvgChangePct =
+    pureEquities.length > 0
+      ? round2(
+          pureEquities.reduce((sum, eq) => sum + (Number(eq.changePercent) || 0), 0) / pureEquities.length
+        )
+      : niftyChangePct;
+
+  const benchmarkIndexValues: number[] = [];
+  const indexGroups: string[][] = [
+    ['NIFTY 50', 'NIFTY', 'NIFTY50'],
+    ['BANKNIFTY', 'NIFTY BANK'],
+    ['FINNIFTY'],
+    ['MIDCPNIFTY'],
+    ['NEXT 50', 'NIFTY NEXT 50', 'NIFTYNXT50'],
+    ['SENSEX'],
+  ];
+  for (const aliases of indexGroups) {
+    for (const key of aliases) {
+      const q = params.indexQuotes[key];
+      if (q && Number.isFinite(Number(q.chp))) {
+        benchmarkIndexValues.push(Number(q.chp));
+        break;
+      }
+    }
+  }
+  const allIndexChangePct =
+    benchmarkIndexValues.length > 0
+      ? round2(benchmarkIndexValues.reduce((s, v) => s + v, 0) / benchmarkIndexValues.length)
+      : niftyChangePct;
+  const fnoAndAllIndexPct = round2((fnoAvgChangePct + allIndexChangePct) / 2);
+
   const emptyReport: PriceActionReport = {
     status: 'ok',
     scannerName: 'Price Action',
@@ -740,6 +814,9 @@ export function buildPriceActionReport(params: {
     entryWindowRule: '09:20:00 - 14:45:00 IST',
     vwapFreeRule: true,
     niftyChangePct,
+    fnoAvgChangePct,
+    allIndexChangePct,
+    fnoAndAllIndexPct,
     capital,
     riskPct,
     isMidnightCleared: Boolean(params.isMidnightCleared),
@@ -767,9 +844,6 @@ export function buildPriceActionReport(params: {
   }
 
   // Uniform pure-equity arithmetic-mean SECTOR %
-  const pureEquities = params.stocks.filter(
-    (s) => !INDEX_BLACKLIST.has(String(s.symbol || '').toUpperCase())
-  );
   const secAgg = new Map<string, { sum: number; count: number }>();
   for (const eq of pureEquities) {
     const sec = eq.sector || 'NSE Equities';
@@ -825,6 +899,8 @@ export function buildPriceActionReport(params: {
       bars30m,
       bars1h,
       niftyChangePct,
+      fnoAvgChangePct,
+      allIndexChangePct,
       capital,
       riskPct,
     };
@@ -915,6 +991,9 @@ export function buildPriceActionReport(params: {
     entryWindowRule: '09:20:00 - 14:45:00 IST',
     vwapFreeRule: true,
     niftyChangePct,
+    fnoAvgChangePct,
+    allIndexChangePct,
+    fnoAndAllIndexPct,
     capital,
     riskPct,
     isMidnightCleared: false,

@@ -17,6 +17,9 @@ import { buildMostActiveFnoReport } from './server/mostActiveFnoEngine';
 import { buildClaudeFnoReport } from './server/claudeFnoEngine';
 import { buildSmartMoneyConceptsReport, SmcTimeframe } from './server/smartMoneyConceptsEngine';
 import { buildPriceActionReport } from './server/priceActionEngine';
+import { buildIntradayStockReport } from './server/intradayStockEngine';
+import { buildApexAlphaReport } from './server/apexAlphaEngine';
+import { aiTradingJournalService } from './server/aiTradingJournalEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
@@ -1408,6 +1411,202 @@ async function startServer() {
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Price Action scan' });
+    }
+  });
+
+  // Intraday Stock (Secret Formula of Intraday Trading Techniques: 5m DFC High/Low Closing Breakout, Next Qualified Candle, Gap Up/Down vs PDH/PDL, SL = DFC Low/High, Target 1 = DFC HL Diff, Target 2 @ 3:25 PM)
+  app.get('/api/intraday-stock/scan', async (req, res) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const accessToken =
+        (req.headers['x-upstox-access-token'] as string) ||
+        scannerService.getEffectiveUpstoxToken();
+
+      const indexSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'INDIAVIX'];
+      const cachedQ = autonomousPriceService.getCachedQuotes();
+      const indexQuotes =
+        cachedQ['NIFTY 50'] && cachedQ['BANKNIFTY']
+          ? cachedQ
+          : await upstoxService.fetchUnifiedMarketQuotes(indexSyms, accessToken).catch(() => cachedQ);
+
+      const capital = Math.max(1000, Number(req.query.capital) || 100000);
+      const riskPct = Math.max(0.1, Math.min(10, Number(req.query.riskPct) || 1.0));
+
+      const report = buildIntradayStockReport({
+        stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        indexQuotes,
+        isMidnightCleared: isCleared,
+        isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
+        dayCategory: sessionState?.brokerSchedule?.dayCategory,
+        capital,
+        riskPct,
+      });
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Intraday Stock scan' });
+    }
+  });
+
+  // Apex Alpha Regime Strategy (Empirically Backtested #1 Strategy: VWAP Compression Coil + PDH/PDL Reclaim + Regime & Trail)
+  app.get('/api/apex-alpha/scan', async (req, res) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const accessToken =
+        (req.headers['x-upstox-access-token'] as string) ||
+        scannerService.getEffectiveUpstoxToken();
+
+      const indexSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'INDIAVIX'];
+      const cachedQ = autonomousPriceService.getCachedQuotes();
+      const indexQuotes =
+        cachedQ['NIFTY 50'] && cachedQ['BANKNIFTY']
+          ? cachedQ
+          : await upstoxService.fetchUnifiedMarketQuotes(indexSyms, accessToken).catch(() => cachedQ);
+
+      const capital = Math.max(1000, Number(req.query.capital) || 100000);
+      const riskPct = Math.max(0.1, Math.min(10, Number(req.query.riskPct) || 1.0));
+
+      const report = buildApexAlphaReport({
+        stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        indexQuotes,
+        isMidnightCleared: isCleared,
+        isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
+        dayCategory: sessionState?.brokerSchedule?.dayCategory,
+        capital,
+        riskPct,
+      });
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Apex Alpha Strategy scan' });
+    }
+  });
+
+  // Autonomous Everyday AI Trading Journal (Max 5 BUY/SELL trades/day + MTM + Trail Lock + 5x Beep Alerts)
+  const runAiJournalSync = async (forceScan: boolean = false, reqAccessToken?: string) => {
+    const stocks = scannerService.getAllStocksDirect();
+    const sessionState = scannerService.getSessionStatus();
+    const isCleared = Boolean(sessionState?.isMidnightCleared);
+    const isMarketOffDay = Boolean(sessionState?.brokerSchedule?.isMarketOffDay);
+
+    if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+      await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+    }
+
+    const accessToken = reqAccessToken || scannerService.getEffectiveUpstoxToken();
+    const indexSyms = ['NIFTY 50', 'BANKNIFTY', 'FINNIFTY', 'MIDCPNIFTY', 'SENSEX', 'INDIAVIX'];
+    const cachedQ = autonomousPriceService.getCachedQuotes();
+    const indexQuotes =
+      cachedQ['NIFTY 50'] && cachedQ['BANKNIFTY']
+        ? cachedQ
+        : await upstoxService.fetchUnifiedMarketQuotes(indexSyms, accessToken).catch(() => cachedQ);
+
+    return aiTradingJournalService.syncWithMarket({
+      stocks,
+      getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+      candlesMap: scannerService.getAllCandlesMap(),
+      indexQuotes,
+      isMidnightCleared: isCleared,
+      isMarketOffDay,
+      forceScan,
+    });
+  };
+
+  setInterval(() => {
+    runAiJournalSync(false).catch(() => {});
+  }, 15000);
+
+  app.get('/api/ai-journal/status', async (req, res) => {
+    try {
+      const accessToken = (req.headers['x-upstox-access-token'] as string) || '';
+      const result = await runAiJournalSync(false, accessToken);
+      res.json({
+        ...result.report,
+        newEvents: result.newEvents,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to load AI Trading Journal status' });
+    }
+  });
+
+  app.post('/api/ai-journal/scan', async (req, res) => {
+    try {
+      const accessToken = (req.headers['x-upstox-access-token'] as string) || '';
+      const result = await runAiJournalSync(true, accessToken);
+      res.json({
+        ...result.report,
+        newEvents: result.newEvents,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to execute AI Trading Journal scan' });
+    }
+  });
+
+  app.post('/api/ai-journal/config', (req, res) => {
+    try {
+      const config = aiTradingJournalService.updateConfig(req.body || {});
+      const sessionState = scannerService.getSessionStatus();
+      const report = aiTradingJournalService.getReport(
+        Boolean(sessionState?.isMidnightCleared),
+        Boolean(sessionState?.brokerSchedule?.isMarketOffDay)
+      );
+      res.json({ status: 'ok', config, report });
+    } catch (error: any) {
+      res.status(400).json({ error: error?.message || 'Failed to update AI Journal config' });
+    }
+  });
+
+  app.post('/api/ai-journal/manual', (req, res) => {
+    try {
+      const out = aiTradingJournalService.addManualTrade(req.body || {});
+      res.json({
+        status: 'ok',
+        trade: out.trade,
+        event: out.event,
+        report: out.report,
+      });
+    } catch (error: any) {
+      res.status(400).json({ error: error?.message || 'Failed to log trade' });
+    }
+  });
+
+  app.post('/api/ai-journal/close', (req, res) => {
+    try {
+      const { tradeId, exitPrice } = req.body || {};
+      const out = aiTradingJournalService.closeTradeManually(String(tradeId || ''), exitPrice);
+      res.json({
+        status: 'ok',
+        trade: out.trade,
+        event: out.event,
+        report: out.report,
+      });
+    } catch (error: any) {
+      res.status(400).json({ error: error?.message || 'Failed to close trade' });
+    }
+  });
+
+  app.delete('/api/ai-journal/trade/:id', (req, res) => {
+    try {
+      const report = aiTradingJournalService.deleteTrade(String(req.params.id || ''));
+      res.json({ status: 'ok', report });
+    } catch (error: any) {
+      res.status(400).json({ error: error?.message || 'Failed to delete trade' });
     }
   });
 

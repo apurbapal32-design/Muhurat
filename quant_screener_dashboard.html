@@ -969,6 +969,20 @@
             </span>
             <span class="text-[10px] text-teal-300 font-mono font-bold">14-MOD &bull; D&amp;S</span>
           </div>
+          <div id="nav-apex-alpha" class="sidebar-link" onclick="switchTab('apex-alpha')" title="Apex Alpha Strategy (Backtested #1): VWAP Compression Coil + PDH/PDL Reclaim + NIFTY/Sector Regime & +0.9R Trail Lock">
+            <span class="flex items-center gap-1.5">
+              <span>🏆 Apex Alpha Strategy</span>
+              <span class="text-[9px] px-1 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-400/35 rounded font-bold">PF 1.87</span>
+            </span>
+            <span class="text-[10px] text-emerald-300 font-mono font-bold">61.2% WIN</span>
+          </div>
+          <div id="nav-intraday-stock" class="sidebar-link border-l-2 border-orange-400 bg-orange-500/10 hover:bg-orange-500/20" onclick="switchTab('intraday-stock')" title="Intraday Stock (Secret Formula): 5m Day First Candle (DFC) High/Low Closing Breakout, Next Qualified Entry Candle, Gap Up/Down vs PDH/PDL, SL = DFC Low/High, Target 1 = DFC HL Diff & Target 2 @ 3:25 PM">
+            <span class="flex items-center gap-1.5">
+              <span>🎯 Intraday Stock</span>
+              <span class="text-[9px] px-1 py-0.2 bg-orange-500/25 text-orange-200 border border-orange-400/40 rounded font-bold">DFC 5m</span>
+            </span>
+            <span class="text-[10px] text-orange-300 font-mono font-bold">HL &bull; 3:25</span>
+          </div>
           <div id="nav-strong" class="sidebar-link" onclick="switchTab('strong')">
             <span>Muhurat Strong</span>
             <span class="text-[10px] text-emerald-400 font-mono font-bold">ORB 15m</span>
@@ -1038,8 +1052,8 @@
             <span class="badge-lock text-cyan-400" id="watchlist-count-badge">218 STOCKS</span>
           </div>
           <div id="nav-journal" class="sidebar-link" onclick="switchTab('journal')">
-            <span>Trading Journal</span>
-            <span class="badge-lock text-emerald-400">facts.py</span>
+            <span>AI Trading Journal</span>
+            <span id="nav-journal-quota-badge" class="badge-lock text-emerald-400 tabular-nums">0/5 AI</span>
           </div>
           <div id="nav-custom-tables" class="sidebar-link" onclick="switchTab('custom-tables')">
             <span>Custom Tables</span>
@@ -2707,33 +2721,177 @@
         </div>
       </section>
 
-      <section id="tab-journal" class="tab-pane hidden space-y-4">
-        <div class="glass-panel p-4 rounded-xl flex items-center justify-between">
-          <div>
-            <h2 class="text-base font-extrabold text-white">Institutional Trading Journal &bull; facts.py</h2>
-            <p class="text-xs text-slate-400 mt-1">Audited performance logs and trade executions.</p>
+      <section id="tab-journal" class="tab-pane hidden space-y-4 font-mono">
+        <!-- Header & Primary Controls -->
+        <div class="glass-panel p-4 rounded-xl border border-[#1d2a42] flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h2 class="text-base md:text-lg font-extrabold text-white tracking-tight whitespace-nowrap">AI Autonomous Trading Journal</h2>
+              <span class="text-[11px] text-emerald-400 font-bold whitespace-nowrap">5 BUY/SELL Trades/Day · 5x Beep &amp; Share Alerts</span>
+            </div>
+            <p id="tj-status-line" class="text-xs text-slate-400 mt-1">Initializing everyday AI trading journal engine across 218 NSE F&amp;O stocks...</p>
+          </div>
+          <div class="flex items-center gap-1.5 flex-wrap xl:flex-nowrap shrink-0">
+            <button id="tj-auto-toggle" type="button" onclick="AiTradingJournalEngine.toggleAutoAi()" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-[11px] font-bold whitespace-nowrap shrink-0 cursor-pointer transition">Auto AI: ON</button>
+            <button id="tj-test-5beep-btn" type="button" onclick="AiTradingJournalEngine.triggerTestFiveBeepAlert()" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 text-[11px] font-bold whitespace-nowrap shrink-0 cursor-pointer transition" title="Play 5x Beep Sound + Fire Shareable BUY/SELL Notification">🔔 Test 5x Beep + Alert</button>
+            <button type="button" onclick="ClaudeNotificationEngine.requestPushPermission()" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 text-cyan-300 text-[11px] font-bold whitespace-nowrap shrink-0 cursor-pointer transition">📲 Enable Push</button>
+            <button id="tj-scan-now-btn" type="button" onclick="AiTradingJournalEngine.scanNow()" class="px-2.5 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-black text-[11px] font-black whitespace-nowrap shrink-0 cursor-pointer transition">⚡ Run AI Scan</button>
+            <button id="tj-manual-toggle-btn" type="button" onclick="AiTradingJournalEngine.toggleManualForm()" class="px-2.5 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-[#253556] text-slate-200 text-[11px] font-bold whitespace-nowrap shrink-0 cursor-pointer transition">+ Log Trade</button>
+            <button type="button" onclick="AiTradingJournalEngine.exportCsv()" class="px-2.5 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] border border-[#253556] text-cyan-300 text-[11px] font-bold whitespace-nowrap shrink-0 cursor-pointer transition">📤 Export CSV</button>
           </div>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs">
-          <div class="glass-card p-3">
-            <div class="text-slate-400 text-[10px]">WIN RATE</div>
-            <div class="text-xl font-bold text-emerald-400 mt-1">68.4%</div>
+
+        <!-- Daily 5-Stock Quota & Risk Config Bar -->
+        <div class="glass-panel p-3.5 rounded-xl border border-[#1c2842] flex flex-col lg:flex-row lg:items-center justify-between gap-3 text-xs">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="text-slate-400 whitespace-nowrap">Daily AI Quota (<span id="tj-date-ist" class="text-white font-bold">--</span>):</span>
+            <div id="tj-quota-slots" class="flex items-center gap-1.5" aria-label="Daily 5 AI trade slots"></div>
+            <span id="tj-quota-text" class="text-cyan-300 font-bold tabular-nums whitespace-nowrap">0 / 5 AI Trades Used</span>
           </div>
-          <div class="glass-card p-3">
+          <div class="flex items-center gap-2.5 flex-wrap lg:flex-nowrap shrink-0">
+            <label class="flex items-center gap-1.5 text-slate-400 whitespace-nowrap">
+              <span>Capital ₹</span>
+              <input id="tj-capital-input" type="number" min="5000" step="10000" value="100000" onchange="AiTradingJournalEngine.saveConfigFromInputs()" class="w-22 px-2 py-1 rounded bg-[#080c16] border border-[#23314f] text-white font-bold tabular-nums focus:outline-none focus:border-cyan-400">
+            </label>
+            <label class="flex items-center gap-1.5 text-slate-400 whitespace-nowrap">
+              <span>Risk %</span>
+              <input id="tj-risk-input" type="number" min="0.25" max="10" step="0.25" value="1.0" onchange="AiTradingJournalEngine.saveConfigFromInputs()" class="w-15 px-2 py-1 rounded bg-[#080c16] border border-[#23314f] text-white font-bold tabular-nums focus:outline-none focus:border-cyan-400">
+            </label>
+            <label class="flex items-center gap-1.5 text-slate-400 whitespace-nowrap">
+              <span>Daily AI Cap</span>
+              <input id="tj-max-daily-input" type="number" min="1" max="10" step="1" value="5" onchange="AiTradingJournalEngine.saveConfigFromInputs()" class="w-13 px-2 py-1 rounded bg-[#080c16] border border-[#23314f] text-emerald-300 font-bold tabular-nums focus:outline-none focus:border-cyan-400">
+            </label>
+          </div>
+        </div>
+
+        <!-- 6 Performance KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
+          <div class="glass-card p-3 border border-[#1d2a42]">
+            <div class="text-slate-400 text-[10px]">TODAY AI SLOTS</div>
+            <div id="tj-kpi-today-quota" class="text-xl font-bold text-cyan-300 mt-1 tabular-nums">0 / 5</div>
+            <div id="tj-kpi-today-sub" class="text-[10px] text-slate-500 mt-0.5 tabular-nums">0 Open · 0 Closed</div>
+          </div>
+          <div class="glass-card p-3 border border-[#1d2a42]">
+            <div class="text-slate-400 text-[10px]">WIN RATE (CLOSED)</div>
+            <div id="tj-kpi-winrate" class="text-xl font-bold text-emerald-400 mt-1 tabular-nums">0.0%</div>
+            <div id="tj-kpi-winrate-sub" class="text-[10px] text-slate-500 mt-0.5 tabular-nums">0W / 0L</div>
+          </div>
+          <div class="glass-card p-3 border border-[#1d2a42]">
             <div class="text-slate-400 text-[10px]">PROFIT FACTOR</div>
-            <div class="text-xl font-bold text-white mt-1">2.41</div>
+            <div id="tj-kpi-pf" class="text-xl font-bold text-white mt-1 tabular-nums">0.00</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Net Expectancy</div>
           </div>
-          <div class="glass-card p-3">
-            <div class="text-slate-400 text-[10px]">NET P&amp;L (FYERS)</div>
-            <div class="text-xl font-bold text-emerald-400 mt-1">+₹42,350.00</div>
+          <div class="glass-card p-3 border border-[#1d2a42]">
+            <div class="text-slate-400 text-[10px]">TOTAL NET P&amp;L</div>
+            <div id="tj-kpi-netpnl" class="text-xl font-bold text-emerald-400 mt-1 tabular-nums">₹0.00</div>
+            <div id="tj-kpi-todaypnl-sub" class="text-[10px] text-slate-500 mt-0.5 tabular-nums">Today: ₹0.00</div>
           </div>
-          <div class="glass-card p-3">
+          <div class="glass-card p-3 border border-[#1d2a42]">
             <div class="text-slate-400 text-[10px]">AVG R-MULTIPLE</div>
-            <div class="text-xl font-bold text-cyan-400 mt-1">1.85R</div>
+            <div id="tj-kpi-avgr" class="text-xl font-bold text-cyan-400 mt-1 tabular-nums">0.00R</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">After 0.05% Cost</div>
+          </div>
+          <div class="glass-card p-3 border border-[#1d2a42]">
+            <div class="text-slate-400 text-[10px]">MAX DRAWDOWN</div>
+            <div id="tj-kpi-maxdd" class="text-xl font-bold text-amber-300 mt-1 tabular-nums">0.00%</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">Peak-to-Trough</div>
           </div>
         </div>
-        <div class="glass-panel rounded-xl overflow-hidden">
-          <div class="overflow-x-auto"><table id="table-journal" class="w-full text-left border-collapse text-xs"></table></div>
+
+        <!-- Collapsible Quick Manual / Paper Trade Logger -->
+        <form id="tj-manual-panel" onsubmit="AiTradingJournalEngine.submitManualTrade(event)" class="hidden glass-panel p-4 rounded-xl border border-cyan-500/35 space-y-3 text-xs">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-extrabold text-white">Log Manual / Paper BUY or SELL Trade (Triggers 5x Beep + Share Notification)</h3>
+            <button type="button" onclick="AiTradingJournalEngine.toggleManualForm(false)" class="text-slate-400 hover:text-white cursor-pointer">Close &times;</button>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+            <label class="space-y-1">
+              <span class="text-[10px] text-slate-400">SYMBOL</span>
+              <input id="tj-man-symbol" required placeholder="e.g. RELIANCE" class="w-full px-2.5 py-1.5 rounded bg-[#080c16] border border-[#23314f] text-white font-bold uppercase focus:outline-none focus:border-cyan-400">
+            </label>
+            <label class="space-y-1">
+              <span class="text-[10px] text-slate-400">SIDE</span>
+              <select id="tj-man-side" class="w-full px-2.5 py-1.5 rounded bg-[#080c16] border border-[#23314f] text-white font-bold focus:outline-none focus:border-cyan-400">
+                <option value="BUY">BUY (Long)</option>
+                <option value="SELL">SELL (Short)</option>
+              </select>
+            </label>
+            <label class="space-y-1">
+              <span class="text-[10px] text-slate-400">ENTRY ₹</span>
+              <input id="tj-man-entry" type="number" step="0.05" required placeholder="1340" class="w-full px-2.5 py-1.5 rounded bg-[#080c16] border border-[#23314f] text-white font-bold tabular-nums focus:outline-none focus:border-cyan-400">
+            </label>
+            <label class="space-y-1">
+              <span class="text-[10px] text-slate-400">STOP LOSS ₹</span>
+              <input id="tj-man-sl" type="number" step="0.05" required placeholder="1325" class="w-full px-2.5 py-1.5 rounded bg-[#080c16] border border-[#23314f] text-white font-bold tabular-nums focus:outline-none focus:border-cyan-400">
+            </label>
+            <label class="space-y-1">
+              <span class="text-[10px] text-slate-400">TARGET ₹</span>
+              <input id="tj-man-target" type="number" step="0.05" required placeholder="1365" class="w-full px-2.5 py-1.5 rounded bg-[#080c16] border border-[#23314f] text-white font-bold tabular-nums focus:outline-none focus:border-cyan-400">
+            </label>
+            <label class="space-y-1">
+              <span class="text-[10px] text-slate-400">QTY (AUTO IF EMPTY)</span>
+              <input id="tj-man-qty" type="number" min="1" step="1" placeholder="Auto" class="w-full px-2.5 py-1.5 rounded bg-[#080c16] border border-[#23314f] text-white font-bold tabular-nums focus:outline-none focus:border-cyan-400">
+            </label>
+            <label class="space-y-1">
+              <span class="text-[10px] text-slate-400">SETUP</span>
+              <input id="tj-man-setup" placeholder="Apex Alpha Coil" class="w-full px-2.5 py-1.5 rounded bg-[#080c16] border border-[#23314f] text-white focus:outline-none focus:border-cyan-400">
+            </label>
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button id="tj-man-submit" type="submit" class="px-4 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs cursor-pointer transition">Log Trade + 5x Beep Alert</button>
+          </div>
+        </form>
+
+        <!-- Today's 5-Slot AI Live Trades & MTM Table -->
+        <div class="glass-panel rounded-xl border border-[#1d2a42] overflow-hidden">
+          <div class="px-4 py-3 bg-[#090d16] border-b border-[#172033] flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+              <h3 class="text-xs md:text-sm font-extrabold text-white">Today's AI Trades &amp; Live MTM Ledger (Max 5 BUY/SELL)</h3>
+            </div>
+            <span id="tj-today-badge" class="text-[11px] text-slate-400 tabular-nums">0 trades today</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table id="table-journal-today" class="w-full text-left border-collapse text-xs tabular-nums"></table>
+          </div>
+        </div>
+
+        <!-- AI Buy/Sell Notifications & 1-Click Share Feed + Daily Rollup -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="glass-panel rounded-xl border border-[#1d2a42] overflow-hidden">
+            <div class="px-4 py-3 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
+              <h3 class="text-xs md:text-sm font-extrabold text-white">AI Trade Notifications &amp; Share Log (5x Beep Dispatched)</h3>
+              <span id="tj-alert-count" class="text-[11px] text-amber-300 font-bold tabular-nums">0 alerts</span>
+            </div>
+            <div id="tj-alert-feed" class="p-3 space-y-2 max-h-80 overflow-y-auto text-xs"></div>
+          </div>
+
+          <div class="glass-panel rounded-xl border border-[#1d2a42] overflow-hidden">
+            <div class="px-4 py-3 bg-[#090d16] border-b border-[#172033] flex items-center justify-between">
+              <h3 class="text-xs md:text-sm font-extrabold text-white">Daily AI Journal Summary (Day-by-Day Track Record)</h3>
+              <span id="tj-days-count" class="text-[11px] text-cyan-300 font-bold tabular-nums">0 days</span>
+            </div>
+            <div class="overflow-x-auto max-h-80">
+              <table id="table-journal-days" class="w-full text-left border-collapse text-xs tabular-nums"></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Complete Multi-Day Trade Archive -->
+        <div class="glass-panel rounded-xl border border-[#1d2a42] overflow-hidden">
+          <div class="px-4 py-3 bg-[#090d16] border-b border-[#172033] flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <h3 class="text-xs md:text-sm font-extrabold text-white">All Audited AI &amp; Manual Trades Archive</h3>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <input id="tj-search-input" type="text" oninput="AiTradingJournalEngine.renderAll()" placeholder="Filter symbol..." class="px-2.5 py-1 rounded bg-[#080c16] border border-[#23314f] text-white text-xs w-36 focus:outline-none focus:border-cyan-400">
+              <button type="button" onclick="AiTradingJournalEngine.setFilter('ALL')" id="tj-filter-ALL" class="px-2.5 py-1 rounded text-[11px] font-bold bg-cyan-500 text-black cursor-pointer whitespace-nowrap">All</button>
+              <button type="button" onclick="AiTradingJournalEngine.setFilter('WIN')" id="tj-filter-WIN" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#121a2d] text-emerald-300 border border-[#23314f] cursor-pointer whitespace-nowrap">Wins</button>
+              <button type="button" onclick="AiTradingJournalEngine.setFilter('LOSS')" id="tj-filter-LOSS" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#121a2d] text-rose-300 border border-[#23314f] cursor-pointer whitespace-nowrap">Losses</button>
+              <button type="button" onclick="AiTradingJournalEngine.setFilter('BUY')" id="tj-filter-BUY" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#121a2d] text-slate-300 border border-[#23314f] cursor-pointer whitespace-nowrap">BUY</button>
+              <button type="button" onclick="AiTradingJournalEngine.setFilter('SELL')" id="tj-filter-SELL" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#121a2d] text-slate-300 border border-[#23314f] cursor-pointer whitespace-nowrap">SELL</button>
+              <button type="button" onclick="AiTradingJournalEngine.setFilter('AI_AUTO')" id="tj-filter-AI_AUTO" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#121a2d] text-amber-300 border border-[#23314f] cursor-pointer whitespace-nowrap">AI Auto</button>
+              <button type="button" onclick="AiTradingJournalEngine.setFilter('MANUAL')" id="tj-filter-MANUAL" class="px-2.5 py-1 rounded text-[11px] font-bold bg-[#121a2d] text-slate-300 border border-[#23314f] cursor-pointer whitespace-nowrap">Manual</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto"><table id="table-journal" class="w-full text-left border-collapse text-xs tabular-nums"></table></div>
         </div>
       </section>
 
@@ -4023,6 +4181,7 @@
           <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-bold whitespace-nowrap transition">⚡ Claude FNO &amp; (Index Options)</button>
           <button onclick="switchTab('smart-money-concepts')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-400/40 font-bold whitespace-nowrap transition">🏛️ Smart Money Concepts</button>
           <button onclick="switchTab('price-action')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-400/40 font-bold whitespace-nowrap transition">📐 Price Action</button>
+          <button onclick="switchTab('intraday-stock')" class="px-2.5 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-400/40 font-bold whitespace-nowrap transition">🎯 Intraday Stock</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
@@ -4183,6 +4342,7 @@
           <button onclick="switchTab('claude-fno')" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-black font-black whitespace-nowrap shadow-md shadow-emerald-500/20">⚡ Claude FNO &amp; (Index Options)</button>
           <button onclick="switchTab('smart-money-concepts')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-400/40 font-bold whitespace-nowrap transition">🏛️ Smart Money Concepts</button>
           <button onclick="switchTab('price-action')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-400/40 font-bold whitespace-nowrap transition">📐 Price Action</button>
+          <button onclick="switchTab('intraday-stock')" class="px-2.5 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-400/40 font-bold whitespace-nowrap transition">🎯 Intraday Stock</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
         </div>
@@ -4330,6 +4490,7 @@
           <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-bold whitespace-nowrap transition">⚡ Claude FNO &amp; (Index Options)</button>
           <button onclick="switchTab('smart-money-concepts')" class="px-3 py-1.5 rounded-lg bg-purple-500 text-black font-black whitespace-nowrap shadow-md shadow-purple-500/20">🏛️ Smart Money Concepts</button>
           <button onclick="switchTab('price-action')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-400/40 font-bold whitespace-nowrap transition">📐 Price Action</button>
+          <button onclick="switchTab('intraday-stock')" class="px-2.5 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-400/40 font-bold whitespace-nowrap transition">🎯 Intraday Stock</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
         </div>
@@ -4548,6 +4709,7 @@
           <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-bold whitespace-nowrap transition">⚡ Claude FNO &amp; (Index Options)</button>
           <button onclick="switchTab('smart-money-concepts')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-400/40 font-bold whitespace-nowrap transition">🏛️ Smart Money Concepts</button>
           <button onclick="switchTab('price-action')" class="px-3 py-1.5 rounded-lg bg-teal-400 text-black font-black whitespace-nowrap shadow-md shadow-teal-400/20">📐 Price Action</button>
+          <button onclick="switchTab('intraday-stock')" class="px-2.5 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-400/40 font-bold whitespace-nowrap transition">🎯 Intraday Stock</button>
           <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
         </div>
@@ -4559,11 +4721,12 @@
               <span class="px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-400/40 text-[10px] font-black">PRICE ACTION + DEMAND &amp; SUPPLY + VOLUME + ORDER FLOW + MARKET STRUCTURE</span>
               <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-400/35 text-[10px] font-black">VWAP-FREE ORB &bull; R:R &ge; 1:2</span>
               <span id="pa-nifty-bench" class="px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-200 border border-cyan-400/30 text-[10px] font-bold">NIFTY 50: --%</span>
+              <span id="pa-fno-all-index-bench" class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-200 border border-rose-400/30 text-[10px] font-bold">FNO &amp; ALL INDEX: --%</span>
               <h2 class="text-base md:text-lg font-black text-white">📐 Price Action &bull; 14 Modules &amp; Exact 9/9 Signal Gate</h2>
               <button onclick="openFormulaModal('price_action')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
             </div>
             <p class="text-xs text-slate-300 font-sans leading-relaxed">
-              Multi-Timeframe Institutional Price Action across <strong>1H, 30M, 15M &amp; 5M</strong> candles: evaluates all <strong>14 Formulas</strong> (Market Structure, S&amp;R, 5M RVOL &ge; 1.5, Candle Strength, Breakout/Breakdown, 15M Demand &amp; Supply, Liquidity Sweep, BOS, CHoCH, <strong>VWAP-Free Opening Range 09:15–09:30</strong>, Relative Strength/Weakness vs NIFTY, MTF Alignment, Target/Stop &ge; 2). Triggers <strong>BUY SIGNAL</strong> or <strong>SELL SIGNAL</strong> strictly when all <strong>9/9 conditions</strong> pass.
+              Multi-Timeframe Institutional Price Action across <strong>1H, 30M, 15M &amp; 5M</strong> candles: evaluates all <strong>14 Formulas</strong> (Market Structure, S&amp;R, 5M RVOL &ge; 1.5, Candle Strength, Breakout/Breakdown, 15M Demand &amp; Supply, Liquidity Sweep, BOS, CHoCH, <strong>VWAP-Free Opening Range 09:15–09:30</strong>, Relative Strength (&gt; NIFTY), Relative Weakness (&lt; FNO &amp; All Index), MTF Alignment, Target/Stop &ge; 2). Triggers <strong>BUY SIGNAL</strong> or <strong>SELL SIGNAL</strong> strictly when all <strong>9/9 conditions</strong> pass.
             </p>
           </div>
           <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-[#162736] w-full">
@@ -4589,7 +4752,7 @@
               <option value="score_desc">Sort: 9/9 Conditions (High&rarr;Low)</option>
               <option value="rvol_desc">Sort: 5M RVOL (High&rarr;Low)</option>
               <option value="turnover_desc">Sort: Turnover ₹ Cr (High&rarr;Low)</option>
-              <option value="rs_desc">Sort: RS vs NIFTY (High&rarr;Low)</option>
+              <option value="rs_desc">Sort: RS Benchmark Diff (High&rarr;Low)</option>
               <option value="rr_desc">Sort: Risk-Reward (High&rarr;Low)</option>
               <option value="bid_ask_desc">Sort: Bid/Ask Ratio (High&rarr;Low)</option>
               <option value="listed_asc">Sort: Listed At (A&rarr;Z)</option>
@@ -4647,7 +4810,7 @@
               <div class="p-2 rounded-lg bg-[#0d1424] border border-[#1a2740]"><div class="text-purple-300 font-black">9. CHoCH</div><div class="text-slate-400 font-sans">Change of Character Reversal</div></div>
               <div class="p-2 rounded-lg bg-[#0d1424] border border-[#1a2740]"><div class="text-purple-300 font-black">10. VWAP-Free ORB</div><div class="text-slate-400 font-sans">09:15–09:30 Opening Momentum</div></div>
               <div class="p-2 rounded-lg bg-[#0d1424] border border-[#1a2740]"><div class="text-sky-300 font-black">11. Relative Strength</div><div class="text-slate-400 font-sans">Stock % &gt; NIFTY 50 %</div></div>
-              <div class="p-2 rounded-lg bg-[#0d1424] border border-[#1a2740]"><div class="text-rose-300 font-black">12. Relative Weakness</div><div class="text-slate-400 font-sans">Stock % &lt; NIFTY 50 %</div></div>
+              <div class="p-2 rounded-lg bg-[#0d1424] border border-[#1a2740]"><div class="text-rose-300 font-black">12. Relative Weakness</div><div class="text-slate-400 font-sans">Stock % &lt; FNO &amp; All Index %</div></div>
               <div class="p-2 rounded-lg bg-[#0d1424] border border-[#1a2740]"><div class="text-amber-200 font-black">13. MTF Confirmation</div><div class="text-slate-400 font-sans">1H + 30M + 15M + 5M Sync</div></div>
               <div class="p-2 rounded-lg bg-[#0d1424] border border-[#1a2740]"><div class="text-emerald-200 font-black">14. Risk-to-Reward Filter</div><div class="text-slate-400 font-sans">Target Dist / Stop Dist &ge; 2.0</div></div>
             </div>
@@ -4676,7 +4839,7 @@
                   <tr><td class="p-1.5 font-black text-white">C5</td><td class="p-1.5">5M = Bullish BOS</td><td class="p-1.5">5M = Bearish BOS</td></tr>
                   <tr><td class="p-1.5 font-black text-white">C6</td><td class="p-1.5">5M = Strong Bullish Candle</td><td class="p-1.5">5M = Strong Bearish Candle</td></tr>
                   <tr><td class="p-1.5 font-black text-white">C7</td><td class="p-1.5">5M RVOL &ge; 1.5</td><td class="p-1.5">5M RVOL &ge; 1.5</td></tr>
-                  <tr><td class="p-1.5 font-black text-white">C8</td><td class="p-1.5">Stock Relative Strength &gt; NIFTY</td><td class="p-1.5">Stock Relative Strength &lt; NIFTY</td></tr>
+                  <tr><td class="p-1.5 font-black text-white">C8</td><td class="p-1.5">Stock Relative Strength &gt; NIFTY</td><td class="p-1.5 font-bold text-rose-300">Stock Relative Strength &lt; FNO &amp; All Index</td></tr>
                   <tr><td class="p-1.5 font-black text-white">C9</td><td class="p-1.5">Target Distance / Stop Distance &ge; 2</td><td class="p-1.5">Target Distance / Stop Distance &ge; 2</td></tr>
                   <tr class="bg-[#0d1924]"><td class="p-1.5 font-black text-amber-300">FINAL</td><td class="p-1.5 font-black text-emerald-300">ALL REQUIRED CONDITIONS TRUE = BUY SIGNAL</td><td class="p-1.5 font-black text-rose-300">ALL REQUIRED CONDITIONS TRUE = SELL SIGNAL</td></tr>
                 </tbody>
@@ -4706,6 +4869,295 @@
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-price-action"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- TAB: INTRADAY STOCK (DFC 5m CLOSING BREAKOUT ENGINE) -->
+      <!-- ==================================================== -->
+      <section id="tab-intraday-stock" class="tab-pane hidden space-y-5 font-mono">
+        <!-- Shared Candidate Engines Horizontal Pill Switcher -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-[#172033] text-xs font-mono">
+          <button onclick="switchTab('claude-10skills')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/25 via-emerald-500/25 to-amber-500/25 text-cyan-200 border border-cyan-400/50 font-bold whitespace-nowrap hover:scale-105 transition">🧠 10-Skill AI &amp; Sentinel</button>
+          <button onclick="switchTab('world-strategy')" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/25 via-emerald-500/25 to-cyan-500/25 text-amber-200 border border-amber-400/40 font-bold whitespace-nowrap hover:scale-105 transition">⚡ World #1 Omni-Quantum</button>
+          <button onclick="switchTab('strong')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Strong (ORB 15m)</button>
+          <button onclick="switchTab('sonic')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Pulse (RVOL &bull; OI)</button>
+          <button onclick="switchTab('titan')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-sky-400 border border-sky-500/20 font-bold whitespace-nowrap transition">Flow (Whales)</button>
+          <button onclick="switchTab('elite')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-rose-400 border border-rose-500/20 font-bold whitespace-nowrap transition">Elite (3m Squeeze)</button>
+          <button onclick="switchTab('elite-pro')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Elite Pro (6m Waves)</button>
+          <button onclick="switchTab('titan-cash')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-blue-400 border border-blue-500/20 font-bold whitespace-nowrap transition">Flow Cash (Delivery)</button>
+          <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-400/40 font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-400/40 font-bold whitespace-nowrap transition">🔥 Most Active FNO &amp; (Index Options)</button>
+          <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-400/40 font-bold whitespace-nowrap transition">⚡ Claude FNO &amp; (Index Options)</button>
+          <button onclick="switchTab('smart-money-concepts')" class="px-2.5 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-400/40 font-bold whitespace-nowrap transition">🏛️ Smart Money Concepts</button>
+          <button onclick="switchTab('price-action')" class="px-2.5 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/25 text-teal-300 border border-teal-400/40 font-bold whitespace-nowrap transition">📐 Price Action</button>
+          <button onclick="switchTab('intraday-stock')" class="px-3 py-1.5 rounded-lg bg-orange-400 text-black font-black whitespace-nowrap shadow-md shadow-orange-400/20">🎯 Intraday Stock</button>
+          <button onclick="switchTab('cloud-ai')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-400 border border-purple-500/20 font-bold whitespace-nowrap transition">Claude AI (Signals)</button>
+          <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
+        </div>
+
+        <!-- Title & Controls Banner -->
+        <div class="card p-4 border-l-4 border-orange-400 bg-gradient-to-r from-[#1c1109] via-[#171628] to-[#0a1220] flex flex-col gap-3">
+          <div class="space-y-1.5 w-full">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-400/40 text-[10px] font-black">BEST 10 UP + BEST 10 DOWN (TOP 20) &bull; DFC 09:15 5-MIN CLOSING BREAKOUT</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-400/35 text-[10px] font-black">T1 = DFC HL DIFF &bull; T2 @ 3:25 PM</span>
+              <h2 class="text-base md:text-lg font-black text-white">🎯 Intraday Stock &bull; Best 10 UP &amp; Best 10 DOWN (DFC 5m Formula)</h2>
+              <button onclick="openFormulaModal('intraday_stock')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
+              <a href="/assets/aistudio/451628927-Secret-Formula-of-Intraday-Trading-Techniques_b1c424b9.pdf" target="_blank" rel="noopener noreferrer" class="px-2 py-0.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-[10.5px] font-bold">📄 Reference Formula PDF</a>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">
+              Evaluates <strong>218 NSE F&amp;O Equities</strong> on live <strong>5-minute candles</strong> and ranks strictly the <strong>Best 10 UP (BUY)</strong> and <strong>Best 10 DOWN (SELL)</strong> stocks (max 20 combined equity setups) by <strong>DFC 5m Formula Quality</strong> (DFC Closing Breakout + Next Qualified Candle + Non-Chop Trend + Out Side Gap Open + Entry Window + 5m RVOL &amp; Flow), sorted <strong>Z &rarr; A by Listed At</strong>. Stop Loss = <strong>DFC Low (BUY) / DFC High (SELL)</strong>, <strong>1st Target = DFC HL Difference</strong>, <strong>2nd Target @ 3:25 PM IST</strong>.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-[#241e2e] w-full">
+            <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#080c16] border border-orange-500/30 text-[11px] text-orange-200 font-bold">
+              <span>Account ₹</span>
+              <input id="is-capital-input" type="number" min="5000" step="10000" value="100000" onchange="IntradayStockEngine.onParamsChange()" class="bg-transparent text-white font-black w-20 focus:outline-none">
+            </label>
+            <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#080c16] border border-amber-500/30 text-[11px] text-amber-200 font-bold">
+              <span>Risk %</span>
+              <input id="is-risk-input" type="number" min="0.25" max="5" step="0.25" value="1.0" onchange="IntradayStockEngine.onParamsChange()" class="bg-transparent text-white font-black w-14 focus:outline-none">
+            </label>
+            <label class="sr-only" for="is-search-input">Filter symbol or sector</label>
+            <input id="is-search-input" oninput="IntradayStockEngine.renderTables()" type="text" placeholder="Search symbol..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-44 focus:outline-none focus:border-orange-400">
+            <label class="sr-only" for="is-dir-filter">Direction Filter</label>
+            <select id="is-dir-filter" onchange="IntradayStockEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-amber-200 text-xs font-bold focus:outline-none">
+              <option value="ALL">Dir: BUY &amp; SELL</option>
+              <option value="BUY">Dir: BUY (Above DFC High)</option>
+              <option value="SELL">Dir: SELL (Below DFC Low)</option>
+            </select>
+            <label class="sr-only" for="is-sort-select">Sort Order</label>
+            <select id="is-sort-select" onchange="IntradayStockEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-cyan-200 text-xs font-bold focus:outline-none">
+              <option value="listed_desc" selected>Sort: Listed At (Z&rarr;A)</option>
+              <option value="rvol_desc">Sort: 5M RVOL (High&rarr;Low)</option>
+              <option value="turnover_desc">Sort: Turnover ₹ Cr (High&rarr;Low)</option>
+              <option value="dfc_range_desc">Sort: DFC HL Diff % (High&rarr;Low)</option>
+              <option value="rr_desc">Sort: T1 Risk-Reward (High&rarr;Low)</option>
+              <option value="bid_ask_desc">Sort: Bid/Ask Ratio (High&rarr;Low)</option>
+              <option value="listed_asc">Sort: Listed At (A&rarr;Z)</option>
+            </select>
+            <button id="is-rulebook-toggle" onclick="IntradayStockEngine.toggleRulebook()" class="px-3 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/35 text-xs font-bold transition cursor-pointer">📖 Hide Formula Rulebook</button>
+            <button onclick="IntradayStockEngine.load(true)" class="px-3 py-1.5 rounded-lg bg-orange-400 hover:bg-orange-300 text-black font-black text-xs transition cursor-pointer">🔄 Scan Now</button>
+          </div>
+        </div>
+
+        <!-- 6 KPI Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs">
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-[#1a253d]">
+            <div class="text-[10px] text-slate-400 uppercase">Universe Evaluated</div>
+            <div id="is-kpi-universe" class="text-base font-black text-white mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-orange-500/35">
+            <div class="text-[10px] text-orange-300 uppercase font-bold">DFC Qualified Entries</div>
+            <div id="is-kpi-qualified" class="text-base font-black text-orange-200 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/30">
+            <div class="text-[10px] text-emerald-400 uppercase font-bold">Best 10 UP (BUY)</div>
+            <div id="is-kpi-buy" class="text-base font-black text-emerald-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-rose-500/30">
+            <div class="text-[10px] text-rose-400 uppercase font-bold">Best 10 DOWN (SELL)</div>
+            <div id="is-kpi-sell" class="text-base font-black text-rose-300 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-cyan-500/30">
+            <div class="text-[10px] text-cyan-300 uppercase font-bold">Top 10 Gap-Up BUY</div>
+            <div id="is-kpi-gapup" class="text-base font-black text-cyan-200 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-amber-500/30">
+            <div class="text-[10px] text-amber-300 uppercase font-bold">Top 10 Gap-Down SELL</div>
+            <div id="is-kpi-gapdown" class="text-base font-black text-amber-200 mt-0.5">--</div>
+          </div>
+        </div>
+
+        <!-- Collapsible Secret Formula Rulebook (BUY vs SELL + Gap Rules + Capital Rules) -->
+        <div id="is-rulebook-panel" class="grid grid-cols-1 xl:grid-cols-12 gap-4 text-[11px]">
+          <!-- BUY vs SELL DFC Closing Breakout Rules -->
+          <div class="xl:col-span-7 p-4 rounded-xl bg-[#0a0f1c] border border-orange-500/30 space-y-2.5">
+            <div class="flex items-center justify-between flex-wrap gap-2 border-b border-[#1c2740] pb-2">
+              <div class="font-black text-xs text-orange-300 uppercase tracking-wider">Day First Candle (DFC 5m) Breakout Formula: BUY vs SELL</div>
+              <span class="text-[9.5px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">5-Min Chart &bull; Closing Basis &bull; Target 2 @ 3:25 PM</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-[10px] border-collapse">
+                <thead>
+                  <tr class="bg-[#0e1526] text-slate-300 border-b border-[#1f2c44] uppercase">
+                    <th class="p-1.5">Rule Step</th>
+                    <th class="p-1.5 text-emerald-300">BUY Trade Technique</th>
+                    <th class="p-1.5 text-rose-300">SELL Trade Technique</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#151f33] text-slate-300">
+                  <tr><td class="p-1.5 font-black text-white">1. Candle Focus</td><td class="p-1.5">Mark 09:15 AM 5m DFC High &amp; DFC Low</td><td class="p-1.5">Mark 09:15 AM 5m DFC High &amp; DFC Low</td></tr>
+                  <tr><td class="p-1.5 font-black text-white">2. Closing Breakout</td><td class="p-1.5">5m Candle (#2/#3/#4/#5+) closes strictly <strong>above DFC High</strong></td><td class="p-1.5">5m Candle (#2/#3/#4/#5+) closes strictly <strong>below DFC Low</strong></td></tr>
+                  <tr><td class="p-1.5 font-black text-white">3. Qualified Entry</td><td class="p-1.5"><strong>Next Candle</strong> after closing candle punches BUY trade</td><td class="p-1.5"><strong>Next Candle</strong> after closing candle punches SELL trade</td></tr>
+                  <tr><td class="p-1.5 font-black text-white">4. Stop Loss (Fixed)</td><td class="p-1.5 text-rose-300 font-bold">DFC Low = Stop Loss</td><td class="p-1.5 text-rose-300 font-bold">DFC High = Stop Loss</td></tr>
+                  <tr><td class="p-1.5 font-black text-white">5. 1st Target</td><td class="p-1.5 text-emerald-300 font-bold">Entry + (DFC High &minus; DFC Low)</td><td class="p-1.5 text-emerald-300 font-bold">Entry &minus; (DFC High &minus; DFC Low)</td></tr>
+                  <tr><td class="p-1.5 font-black text-white">6. 2nd Target</td><td class="p-1.5 text-cyan-300 font-bold">Hold trailing balance until 3:25 PM IST</td><td class="p-1.5 text-cyan-300 font-bold">Hold trailing balance until 3:25 PM IST</td></tr>
+                  <tr><td class="p-1.5 font-black text-white">7. Gap Formula</td><td class="p-1.5">DFC Open &gt; PDH = <strong>Out Side Gap Up</strong> + DFC High Break</td><td class="p-1.5">DFC Open &lt; PDL = <strong>Out Side Gap Down</strong> + DFC Low Break</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Capital Protection & Intraday Discipline Rules -->
+          <div class="xl:col-span-5 p-4 rounded-xl bg-[#0a0f1c] border border-cyan-500/30 space-y-2.5">
+            <div class="flex items-center justify-between flex-wrap gap-2 border-b border-[#1c2740] pb-2">
+              <div class="font-black text-xs text-cyan-300 uppercase tracking-wider">Capital Protection &amp; Execution Rules</div>
+              <span class="text-[9.5px] px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold">NIFTY, BANKNIFTY &amp; F&amp;O</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-sans">
+              <div class="p-2 rounded-lg bg-[#0d1424] border border-emerald-500/20"><div class="font-mono font-black text-emerald-300">Closing-Basis Prev Candle BO</div><div class="text-slate-300 mt-0.5">Close &gt; Prev Candle High = BUY breakout; Close &lt; Prev Candle Low = SELL breakout.</div></div>
+              <div class="p-2 rounded-lg bg-[#0d1424] border border-rose-500/20"><div class="font-mono font-black text-rose-300">Mandatory Stop Loss</div><div class="text-slate-300 mt-0.5">Never trade without Stop Loss (DFC Low / DFC High) to avoid unmanageable MTM loss.</div></div>
+              <div class="p-2 rounded-lg bg-[#0d1424] border border-amber-500/20"><div class="font-mono font-black text-amber-300">Trend Over Chop</div><div class="text-slate-300 mt-0.5">Avoid volatile sideways chop (both DFC High &amp; Low whipsawed) and never overtrade to recover losses.</div></div>
+              <div class="p-2 rounded-lg bg-[#0d1424] border border-cyan-500/20"><div class="font-mono font-black text-cyan-300">Position Risk Sizing</div><div class="text-slate-300 mt-0.5">Qty = (Capital &times; Risk %) &divide; |Entry &minus; SL| so capital stays protected per trade.</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7 Category Filter Tabs -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <button onclick="IntradayStockEngine.setCategory('ALL_SETUPS')" id="is-cat-ALL_SETUPS" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-orange-400 text-black">🎯 Best 20 (10 Up + 10 Down) <span id="is-cnt-ALL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-black/20 text-[10px]">0</span></button>
+          <button onclick="IntradayStockEngine.setCategory('QUALIFIED_DFC')" id="is-cat-QUALIFIED_DFC" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-amber-300 border border-amber-500/30">✅ DFC Breakouts <span id="is-cnt-QUALIFIED_DFC" class="ml-1 px-1.5 py-0.2 rounded bg-amber-500/20 text-[10px]">0</span></button>
+          <button onclick="IntradayStockEngine.setCategory('BUY_SETUPS')" id="is-cat-BUY_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-emerald-300 border border-emerald-500/30">🟢 Best 10 UP (BUY) <span id="is-cnt-BUY_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-emerald-500/20 text-[10px]">0</span></button>
+          <button onclick="IntradayStockEngine.setCategory('SELL_SETUPS')" id="is-cat-SELL_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-rose-300 border border-rose-500/30">🔴 Best 10 DOWN (SELL) <span id="is-cnt-SELL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-rose-500/20 text-[10px]">0</span></button>
+          <button onclick="IntradayStockEngine.setCategory('GAP_UP_BREAKOUTS')" id="is-cat-GAP_UP_BREAKOUTS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-cyan-300 border border-cyan-500/30">🚀 Top 10 Gap-Up BUY <span id="is-cnt-GAP_UP_BREAKOUTS" class="ml-1 px-1.5 py-0.2 rounded bg-cyan-500/20 text-[10px]">0</span></button>
+          <button onclick="IntradayStockEngine.setCategory('GAP_DOWN_BREAKOUTS')" id="is-cat-GAP_DOWN_BREAKOUTS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-purple-300 border border-purple-500/30">📉 Top 10 Gap-Down SELL <span id="is-cnt-GAP_DOWN_BREAKOUTS" class="ml-1 px-1.5 py-0.2 rounded bg-purple-500/20 text-[10px]">0</span></button>
+          <button onclick="IntradayStockEngine.setCategory('INDEX_TARGETS')" id="is-cat-INDEX_TARGETS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-sky-300 border border-sky-500/30">🏛️ NIFTY &amp; BANKNIFTY Indices <span id="is-cnt-INDEX_TARGETS" class="ml-1 px-1.5 py-0.2 rounded bg-sky-500/20 text-[10px]">0</span></button>
+        </div>
+
+        <!-- Primary Intraday Stock Table -->
+        <div class="card overflow-hidden bg-[#0d111a] border border-orange-500/30 rounded-xl shadow-xl">
+          <div class="bg-[#1b120e] px-4 py-3 border-b border-orange-500/25 flex items-center justify-between flex-wrap gap-2">
+            <span id="is-table-title" class="font-bold text-sm text-orange-300 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-orange-400 animate-ping"></span>
+              INTRADAY STOCK &bull; Best 10 UP &amp; Best 10 DOWN (DFC 5m Formula Ranked)
+            </span>
+            <span id="is-count-badge" class="text-xs font-mono text-orange-200 font-bold">Loading live Intraday Stock scan...</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs" id="table-intraday-stock"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================================================== -->
+      <!-- TAB: APEX ALPHA REGIME STRATEGY (#1 BACKTESTED)      -->
+      <!-- ==================================================== -->
+      <section id="tab-apex-alpha" class="tab-pane hidden space-y-5 font-mono">
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar border-b border-[#172033] text-xs font-mono">
+          <button onclick="switchTab('apex-alpha')" class="px-3 py-1.5 rounded-lg bg-emerald-400 text-black font-black whitespace-nowrap">🏆 Apex Alpha Strategy</button>
+          <button onclick="switchTab('intraday-stock')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-orange-300 border border-[#1f2c44] font-bold whitespace-nowrap transition">🎯 Intraday Stock</button>
+          <button onclick="switchTab('claude-fno')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-300 border border-[#1f2c44] font-bold whitespace-nowrap transition">⚡ Claude FNO</button>
+          <button onclick="switchTab('most-active-fno')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-300 border border-[#1f2c44] font-bold whitespace-nowrap transition">🔥 Most Active FNO</button>
+          <button onclick="switchTab('smart-money-concepts')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-purple-300 border border-[#1f2c44] font-bold whitespace-nowrap transition">🏛️ Smart Money Concepts</button>
+          <button onclick="switchTab('price-action')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-teal-300 border border-[#1f2c44] font-bold whitespace-nowrap transition">📐 Price Action</button>
+          <button onclick="switchTab('money-flow')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-cyan-300 border border-[#1f2c44] font-bold whitespace-nowrap transition">🌊 Money Flow</button>
+        </div>
+
+        <div class="card p-4 bg-[#0d1322] border border-emerald-500/30 rounded-xl flex flex-col gap-3">
+          <div class="space-y-1.5 w-full">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-400/35 text-[10px] font-black">18-DAY BACKTEST #1 &bull; 61.2% NET WIN &bull; PF 1.87 &bull; 12.9% MAX DD</span>
+              <h2 class="text-base md:text-lg font-black text-white">🏆 Apex Alpha Strategy &bull; VWAP Compression Coil &amp; PDH/PDL Reclaim</h2>
+              <button onclick="openFormulaModal('apex_alpha')" class="badge-formula cursor-pointer px-2 py-0.5 rounded bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 text-[10.5px] font-bold">⚡ Formula Code</button>
+            </div>
+            <p class="text-xs text-slate-300 font-sans leading-relaxed">
+              Built from empirical walk-forward backtesting across 18 NSE F&amp;O sessions: requires <strong>NIFTY 50 &amp; Sector Breadth Alignment</strong>, <strong>Relative Strength vs NIFTY</strong>, <strong>VWAP + EMA(9/21/50) Structure</strong>, <strong>6-Bar Compression Coil Breakout or PDH/PDL Reclaim</strong>, <strong>SL Risk Corridor (0.30%&ndash;1.80%)</strong>, and an automated <strong>+0.90R Breakeven+0.15R Trail Lock</strong>.
+            </p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-[#1c2842] w-full">
+            <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#080c16] border border-[#23314f] text-[11px] text-emerald-200 font-bold">
+              <span>Account ₹</span>
+              <input id="aa-capital-input" type="number" min="5000" step="10000" value="100000" onchange="ApexAlphaEngine.onParamsChange()" class="bg-transparent text-white font-black w-20 focus:outline-none">
+            </label>
+            <label class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#080c16] border border-[#23314f] text-[11px] text-amber-200 font-bold">
+              <span>Risk %</span>
+              <input id="aa-risk-input" type="number" min="0.25" max="5" step="0.25" value="1.0" onchange="ApexAlphaEngine.onParamsChange()" class="bg-transparent text-white font-black w-14 focus:outline-none">
+            </label>
+            <label class="sr-only" for="aa-search-input">Filter symbol or sector</label>
+            <input id="aa-search-input" oninput="ApexAlphaEngine.renderTables()" type="text" placeholder="Search symbol..." class="px-3 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-white text-xs w-44 focus:outline-none focus:border-emerald-400">
+            <label class="sr-only" for="aa-dir-filter">Direction Filter</label>
+            <select id="aa-dir-filter" onchange="ApexAlphaEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-amber-200 text-xs font-bold focus:outline-none">
+              <option value="ALL">Dir: BUY &amp; SELL</option>
+              <option value="BUY">Dir: BUY Only</option>
+              <option value="SELL">Dir: SELL Only</option>
+            </select>
+            <label class="sr-only" for="aa-sort-select">Sort Order</label>
+            <select id="aa-sort-select" onchange="ApexAlphaEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-cyan-200 text-xs font-bold focus:outline-none">
+              <option value="score_desc" selected>Sort: Checklist Score (8/8 First)</option>
+              <option value="listed_desc">Sort: Listed At (Z&rarr;A)</option>
+              <option value="rvol_desc">Sort: 5M RVOL (High&rarr;Low)</option>
+              <option value="rs_desc">Sort: Rel Strength (High&rarr;Low)</option>
+              <option value="turnover_desc">Sort: Turnover ₹ Cr (High&rarr;Low)</option>
+            </select>
+            <button id="aa-backtest-toggle" onclick="ApexAlphaEngine.toggleLeaderboard()" class="px-3 py-1.5 rounded-lg bg-[#121a2d] hover:bg-[#192642] text-cyan-300 border border-[#23314f] text-xs font-bold transition cursor-pointer">📊 Hide 18d Backtest Proof</button>
+            <button onclick="ApexAlphaEngine.load(true)" class="px-3 py-1.5 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-black font-black text-xs transition cursor-pointer">🔄 Scan Now</button>
+          </div>
+        </div>
+
+        <!-- 6 KPI Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-xs tabular-nums">
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-[#1a253d]">
+            <div class="text-[10px] text-slate-400 uppercase">Universe Scanned</div>
+            <div id="aa-kpi-universe" class="text-base font-black text-white mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/35">
+            <div class="text-[10px] text-emerald-300 uppercase font-bold">8/8 Qualified Alpha</div>
+            <div id="aa-kpi-qualified" class="text-base font-black text-emerald-200 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-cyan-500/30">
+            <div class="text-[10px] text-cyan-300 uppercase font-bold">VWAP Coil / PDH-L</div>
+            <div id="aa-kpi-modes" class="text-base font-black text-cyan-200 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-amber-500/30">
+            <div class="text-[10px] text-amber-300 uppercase font-bold">BUY / SELL (&ge;7/8)</div>
+            <div id="aa-kpi-dirs" class="text-base font-black text-amber-200 mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-[#1a253d]">
+            <div class="text-[10px] text-slate-300 uppercase font-bold">NIFTY 50 Regime</div>
+            <div id="aa-kpi-regime" class="text-base font-black text-white mt-0.5">--</div>
+          </div>
+          <div class="p-3 rounded-xl bg-[#0c1220] border border-emerald-500/30">
+            <div class="text-[10px] text-emerald-300 uppercase font-bold">18d Net PF &bull; Win%</div>
+            <div class="text-base font-black text-emerald-300 mt-0.5">1.87 &bull; 61.2%</div>
+          </div>
+        </div>
+
+        <!-- Collapsible 18-Day Real-Data Walk-Forward Backtest Proof -->
+        <div id="aa-backtest-panel" class="card overflow-hidden bg-[#0a101d] border border-[#1d2b46] rounded-xl">
+          <div class="bg-[#0e1628] px-4 py-2.5 border-b border-[#1c2842] flex items-center justify-between flex-wrap gap-2">
+            <div class="text-xs font-black text-emerald-300">📊 Empirical 18-Session NSE 5m Backtest Leaderboard (2026-10-22 &rarr; 2026-11-17 &bull; Zero Lookahead &bull; SL-First &bull; 0.05% Slippage/STT)</div>
+            <span class="text-[10px] text-slate-400">IS (Days 1-9): 62.9% Win, PF 1.93 | OOS (Days 10-18): 58.9% Win, PF 1.79</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[11px] tabular-nums" id="table-apex-backtest"></table>
+          </div>
+          <div id="aa-backtest-caveat" class="px-4 py-2 bg-[#080d18] border-t border-[#18233a] text-[10px] text-slate-400 font-sans"></div>
+        </div>
+
+        <!-- 6 Category Filter Tabs -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <button onclick="ApexAlphaEngine.setCategory('QUALIFIED_ALPHA')" id="aa-cat-QUALIFIED_ALPHA" class="px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-emerald-400 text-black">🏆 8/8 Qualified Alpha <span id="aa-cnt-QUALIFIED_ALPHA" class="ml-1 px-1.5 py-0.2 rounded bg-black/20 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('VWAP_COIL_SETUPS')" id="aa-cat-VWAP_COIL_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-cyan-300 border border-[#23314f]">🌀 VWAP Coil Breakouts <span id="aa-cnt-VWAP_COIL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('PDH_PDL_RECLAIM')" id="aa-cat-PDH_PDL_RECLAIM" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-amber-300 border border-[#23314f]">🧱 PDH/PDL Reclaims <span id="aa-cnt-PDH_PDL_RECLAIM" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('BUY_SETUPS')" id="aa-cat-BUY_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-emerald-300 border border-[#23314f]">🟢 BUY (&ge;7/8) <span id="aa-cnt-BUY_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('SELL_SETUPS')" id="aa-cat-SELL_SETUPS" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-rose-300 border border-[#23314f]">🔴 SELL (&ge;7/8) <span id="aa-cnt-SELL_SETUPS" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
+          <button onclick="ApexAlphaEngine.setCategory('NEAR_TRIGGER_WATCH')" id="aa-cat-NEAR_TRIGGER_WATCH" class="px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] text-slate-300 border border-[#23314f]">🔭 6-7/8 Coiling Watch <span id="aa-cnt-NEAR_TRIGGER_WATCH" class="ml-1 px-1.5 py-0.2 rounded bg-white/10 text-[10px]">0</span></button>
+        </div>
+
+        <!-- Primary Apex Alpha Setups Table -->
+        <div class="card overflow-hidden bg-[#0d111a] border border-emerald-500/30 rounded-xl">
+          <div class="bg-[#0e1824] px-4 py-3 border-b border-emerald-500/20 flex items-center justify-between flex-wrap gap-2">
+            <span id="aa-table-title" class="font-bold text-sm text-emerald-300 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+              APEX ALPHA STRATEGY &bull; 8/8 Qualified Institutional Setups
+            </span>
+            <span id="aa-count-badge" class="text-xs font-mono text-emerald-200 font-bold">Loading Apex Alpha scan...</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs tabular-nums" id="table-apex-alpha"></table>
           </div>
         </div>
       </section>
@@ -6891,6 +7343,17 @@
             });
           }
         }
+        if (typeof IntradayStockEngine !== 'undefined' && IntradayStockEngine.lastReport?.categories) {
+          const isAll = IntradayStockEngine.lastReport.categories.qualifiedDfc || [];
+          const isHit = isAll.find(x => String(x.symbol || '').toUpperCase() === sym);
+          if (isHit) {
+            recs.push({
+              key: 'intraday_stock',
+              label: `Intraday Stock ${isHit.side === 'BUY' ? '▲' : '▼'} (C${isHit.closingCandleNo || '-'}→C${isHit.qualifiedCandleNo || '-'})`,
+              side: isHit.side === 'SELL' ? 'SELL' : 'BUY'
+            });
+          }
+        }
       } catch (e) {}
       return recs;
     }
@@ -7180,6 +7643,8 @@
           renderNews();
         } else if (tabId === 'watchlist') {
           renderWatchlistTable();
+        } else if (tabId === 'journal') {
+          if (typeof AiTradingJournalEngine !== 'undefined') AiTradingJournalEngine.load(false);
         } else if (tabId === 'cloud-ai') {
           renderCloudAISignals();
         } else if (tabId === 'custom-tables') {
@@ -7198,6 +7663,10 @@
           if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.load(false);
         } else if (tabId === 'price-action') {
           if (typeof PriceActionEngine !== 'undefined') PriceActionEngine.load(false);
+        } else if (tabId === 'apex-alpha') {
+          if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.load(false);
+        } else if (tabId === 'intraday-stock') {
+          if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.load(false);
         } else if (tabId === 'world-strategy') {
           renderWorldStrategyTab();
         } else if (['strong', 'sonic', 'titan', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(tabId)) {
@@ -10464,29 +10933,8 @@
     }
 
 function renderJournal() {
-      const table = document.getElementById('table-journal');
-      if (!table) return;
-      let html = `<thead><tr class="text-[10px] font-bold text-slate-400 border-b border-[#172033] bg-[#090d16]"><th class="p-3">DATE</th><th class="p-3">SYMBOL</th><th class="p-3">SIDE</th><th class="p-3">ENTRY</th><th class="p-3">EXIT</th><th class="p-3">P&L</th><th class="p-3">R-MULTIPLE</th><th class="p-3">SETUP ALGORITHM</th><th class="p-3">CHART</th></tr></thead><tbody>`;
-      DATA.journal_trades.forEach(t => {
-        const isWin = t.status === 'WIN';
-        html += `
-          <tr class="border-b border-[#172033] hover:bg-[#0f1524] transition font-mono">
-            <td class="p-3 text-slate-400">${t.date}</td>
-            <td class="p-3 font-bold text-white cursor-pointer hover:text-cyan-400" onclick="openTradingViewChart('${t.symbol}')">${t.symbol} ↗</td>
-            <td class="p-3 font-bold ${t.side === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}">${t.side}</td>
-            <td class="p-3 text-slate-300">₹${t.entry}</td>
-            <td class="p-3 text-slate-300">₹${t.exit}</td>
-            <td class="p-3 font-bold ${isWin ? 'text-emerald-400' : 'text-rose-400'}">${t.pnl >= 0 ? '+' : ''}₹${t.pnl}</td>
-            <td class="p-3 font-bold ${isWin ? 'text-emerald-400' : 'text-rose-400'}">${t.r_multiple >= 0 ? '+' : ''}${t.r_multiple}R</td>
-            <td class="p-3 text-amber-300">${t.setup}</td>
-            <td class="p-3"><button onclick="openTradingViewChart('${t.symbol}')" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold">TV ↗</button></td>
-          </tr>
-        `;
-      });
-      html += '</tbody>';
-      if (table._lastHtmlStr !== html) {
-        table._lastHtmlStr = html;
-        table.innerHTML = html;
+      if (typeof AiTradingJournalEngine !== 'undefined' && typeof AiTradingJournalEngine.renderAll === 'function') {
+        AiTradingJournalEngine.renderAll();
       }
     }
 
@@ -11106,6 +11554,9 @@ function renderJournal() {
         if (typeof ClaudeFnoEngine !== 'undefined') ClaudeFnoEngine.load(false);
         if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.load(false);
         if (typeof PriceActionEngine !== 'undefined') PriceActionEngine.load(false);
+        if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.load(false);
+        if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.load(false);
+        if (typeof AiTradingJournalEngine !== 'undefined') AiTradingJournalEngine.load(false);
         if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
         if (typeof renderClaudeIndicesOptions === 'function') renderClaudeIndicesOptions();
         this.renderSessionPill();
@@ -11780,6 +12231,10 @@ function renderJournal() {
             if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.load(false);
           } else if (activeTabId === 'price-action') {
             if (typeof PriceActionEngine !== 'undefined') PriceActionEngine.load(false);
+          } else if (activeTabId === 'apex-alpha') {
+            if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.load(false);
+          } else if (activeTabId === 'intraday-stock') {
+            if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.load(false);
           }
         };
 
@@ -12857,11 +13312,11 @@ ${json.message || 'Unauthorized token.'}`);
       'price_action': {
         title: '📐 Price Action • 14 Modules + Exact 9/9 BUY & SELL Engine',
         file: 'server/priceActionEngine.ts',
-        desc: 'Evaluates 14 institutional Price Action modules across 1H, 30M, 15M, and 5M candles strictly VWAP-free. Emits BUY SIGNAL or SELL SIGNAL only when all 9 conditions pass simultaneously.',
-        code: `def evaluate_price_action(stock, bars_1h, bars_30m, bars_15m, bars_5m, nifty_pct):
+        desc: 'Evaluates 14 institutional Price Action modules across 1H, 30M, 15M, and 5M candles strictly VWAP-free. Condition 8 checks Stock RS > NIFTY for BUY and Stock RS < FNO & All Index for SELL.',
+        code: `def evaluate_price_action(stock, bars_1h, bars_30m, bars_15m, bars_5m, nifty_pct, fno_avg_pct, all_index_pct):
     # 14 Modules: Structure, S&R, Volume/RVOL, Candle Strength, Breakout,
     # Demand/Supply, Liquidity Sweep, BOS, CHoCH, VWAP-Free ORB (09:15-09:30),
-    # Relative Strength vs NIFTY, Relative Weakness, MTF Alignment, R:R >= 2.0
+    # RS > NIFTY (BUY), RS < FNO & All Index (SELL), MTF Alignment, R:R >= 2.0
     buy_ok = all([
         trend(bars_1h) == "HH+HL",
         trend(bars_30m) == "HH+HL",
@@ -12881,10 +13336,38 @@ ${json.message || 'Unauthorized token.'}`);
         structure(bars_5m) == "BEARISH_BOS",
         strong_bearish_candle(bars_5m[-1]),
         rvol_5m(bars_5m) >= 1.5,
-        stock.pct_change < nifty_pct,
+        stock.pct_change < fno_avg_pct and stock.pct_change < all_index_pct,
         (entry - target) / (stop_loss - entry) >= 2.0,
     ])
     return "BUY SIGNAL" if buy_ok else ("SELL SIGNAL" if sell_ok else "FORMING")`
+      },
+      'intraday_stock': {
+        title: '🎯 Intraday Stock • Best 10 UP & Best 10 DOWN (5-Min DFC Formula)',
+        file: 'server/intradayStockEngine.ts',
+        desc: 'Marks the 09:15 AM 5-minute Day First Candle (DFC High & Low), classifies Out Side Gap Up (Open > PDH) and Gap Down (Open < PDL), triggers BUY/SELL on closing-basis breakout beyond DFC with Next Candle as Qualified Entry, SL = DFC Low/High, T1 = DFC HL Diff, T2 @ 3:25 PM IST, and ranks strictly the Best 10 UP + Best 10 DOWN stocks by DFC formula quality.',
+        code: `def intraday_dfc_formula(bars_5m, pdh, pdl):
+    dfc = bars_5m[0]  # 09:15 AM 5m Day First Candle
+    dfc_hl_diff = dfc.high - dfc.low
+    gap = "OUTSIDE_GAP_UP" if dfc.open > pdh else ("OUTSIDE_GAP_DOWN" if dfc.open < pdl else "INSIDE")
+    # Select Best 10 UP + Best 10 DOWN ranked by DFC Qualification, Non-Chop, Gap Alignment, Window, RVOL & Flow
+    for i in range(1, len(bars_5m)):
+        if bars_5m[i].close > dfc.high:      # Closing basis breakout BUY
+            entry = bars_5m[i+1].open if i+1 < len(bars_5m) else bars_5m[i].close
+            return {"side": "BUY", "entry": entry, "sl": dfc.low, "t1": entry + dfc_hl_diff, "t2": "3:25 PM", "gap": gap}
+        if bars_5m[i].close < dfc.low:       # Closing basis breakdown SELL
+            entry = bars_5m[i+1].open if i+1 < len(bars_5m) else bars_5m[i].close
+            return {"side": "SELL", "entry": entry, "sl": dfc.high, "t1": entry - dfc_hl_diff, "t2": "3:25 PM", "gap": gap}`
+      },
+      apex_alpha: {
+        title: "Apex Alpha Strategy &bull; VWAP Coil + PDH/PDL Reclaim (PF 1.87, 61.2% Net Win)",
+        file: "server/apexAlphaEngine.ts",
+        desc: "Empirically walk-forward validated across 18 real NSE sessions (09:35-14:15 IST, 0.05% friction included): combines NIFTY 50 & Sector Regime Alignment, Relative Strength vs NIFTY, VWAP + EMA(9/21/50), 6-Bar VWAP Compression Coil Breakout or PDH/PDL Reclaim, RVOL & Spike Volume, RSI Anti-Chase Band, and +0.90R Trail Lock to Entry+0.15R.",
+        code: `def evaluate_apex_alpha(bars_5m, nifty_regime, sector_pct):
+    # Setup A: 6-bar VWAP Coil (0.25% <= range <= 2.5*ATR14) + >=1.45x spike + body >= 50%
+    # Setup B: PDH/PDL Reclaim (close breaks PDH/PDL with body >= 45%, RVOL >= 1.25x)
+    # Regime: BUY needs NIFTY >= EMA9 & Sector > +0.10%; SELL needs NIFTY < EMA9 & < Open
+    # Risk Corridor: 0.30% <= SL_Risk <= 1.80%; Target = 1.6R (Coil) / 1.5R (Reclaim)
+    # Trail Lock: Move SL to Entry + 0.15R when MFE hits +0.90R`
       }
     };
 
@@ -16407,6 +16890,9 @@ ${json.message || 'Unauthorized token.'}`);
             scannerName: 'Price Action',
             isMidnightCleared: true,
             niftyChangePct: 0,
+            fnoAvgChangePct: 0,
+            allIndexChangePct: 0,
+            fnoAndAllIndexPct: 0,
             universeEvaluated: 0,
             totalScanned: 0,
             qualifiedCount: 0,
@@ -16443,6 +16929,9 @@ ${json.message || 'Unauthorized token.'}`);
             scannerName: 'Price Action',
             isMidnightCleared: false,
             niftyChangePct: 0,
+            fnoAvgChangePct: 0,
+            allIndexChangePct: 0,
+            fnoAndAllIndexPct: 0,
             universeEvaluated: 0,
             totalScanned: 0,
             qualifiedCount: 0,
@@ -16478,7 +16967,10 @@ ${json.message || 'Unauthorized token.'}`);
         const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
 
         const niftyPct = Number(rpt.niftyChangePct || 0);
+        const fnoAvg = Number(rpt.fnoAvgChangePct ?? niftyPct);
+        const allIdxAvg = Number(rpt.allIndexChangePct ?? niftyPct);
         setEl('pa-nifty-bench', `NIFTY 50: ${niftyPct >= 0 ? '+' : ''}${niftyPct.toFixed(2)}%`);
+        setEl('pa-fno-all-index-bench', `FNO: ${fnoAvg >= 0 ? '+' : ''}${fnoAvg.toFixed(2)}% • All Index: ${allIdxAvg >= 0 ? '+' : ''}${allIdxAvg.toFixed(2)}%`);
         setEl('pa-kpi-universe', String(rpt.universeEvaluated || 0));
         setEl('pa-kpi-qualified', `${rpt.qualifiedCount || 0} (9/9)`);
         setEl('pa-kpi-buy', `${rpt.buySignalCount || 0} BUY`);
@@ -16535,7 +17027,7 @@ ${json.message || 'Unauthorized token.'}`);
           score_desc: '9/9 Score ↓',
           rvol_desc: '5M RVOL ↓',
           turnover_desc: 'Turnover ↓',
-          rs_desc: 'RS vs NIFTY ↓',
+          rs_desc: 'RS Benchmark ↓',
           rr_desc: 'R:R ↓',
           bid_ask_desc: 'Bid/Ask ↓'
         };
@@ -16553,7 +17045,7 @@ ${json.message || 'Unauthorized token.'}`);
               <th class="p-2.5">MTF STRUCTURE (1H/30M/15M/5M)</th>
               <th class="p-2.5">CANDLE STRENGTH &amp; VWAP-FREE ORB</th>
               <th class="p-2.5">15M D&amp;S ZONE &amp; SWEEP</th>
-              <th class="p-2.5">RS vs NIFTY &amp; KEY S/R</th>
+              <th class="p-2.5">RS (NIFTY / FNO &amp; ALL IDX) &amp; KEY S/R</th>
               <th class="p-2.5">9/9 CONDITIONS &amp; R:R (&ge;1:2)</th>
               <th class="p-2.5 text-right">Actions</th>
             </tr>
@@ -16633,6 +17125,7 @@ ${json.message || 'Unauthorized token.'}`);
                 </td>
                 <td class="p-2.5 text-[10px] space-y-0.5">
                   <div class="font-black ${rsDiff >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${item.rsLabel} (${rsDiff >= 0 ? '+' : ''}${rsDiff.toFixed(2)}%)</div>
+                  <div class="text-[9px] text-cyan-300 font-bold">${isBuy ? `vs NIFTY (${Number(item.niftyChangePct || 0) >= 0 ? '+' : ''}${Number(item.niftyChangePct || 0).toFixed(2)}%)` : `vs FNO (${Number(item.fnoAvgChangePct || 0) >= 0 ? '+' : ''}${Number(item.fnoAvgChangePct || 0).toFixed(2)}%) &bull; All Idx (${Number(item.allIndexChangePct || 0) >= 0 ? '+' : ''}${Number(item.allIndexChangePct || 0).toFixed(2)}%)`}</div>
                   <div class="text-[9px] text-slate-300">Supp: ₹${item.nearestSupport} &bull; Res: ₹${item.nearestResistance}</div>
                   <div class="text-[9px] text-slate-400">PDH ₹${item.pdh} / PDL ₹${item.pdl}</div>
                 </td>
@@ -16658,9 +17151,1203 @@ ${json.message || 'Unauthorized token.'}`);
     };
 
     // ============================================================
+    // INTRADAY STOCK ENGINE (5-MIN DFC CLOSING BREAKOUT FORMULA)
+    // ============================================================
+    const IntradayStockEngine = {
+      activeCategory: 'ALL_SETUPS',
+      capital: 100000,
+      riskPct: 1.0,
+      lastReport: null,
+      _timer: null,
+      _rulebookVisible: true,
+      CATEGORY_META: {
+        ALL_SETUPS: { key: 'allSetups', label: 'Best 20 Formula Setups (Best 10 UP + Best 10 DOWN)' },
+        QUALIFIED_DFC: { key: 'qualifiedDfc', label: 'DFC Closing Breakouts (Inside Best 10 UP + Best 10 DOWN)' },
+        BUY_SETUPS: { key: 'buySetups', label: 'Best 10 UP Stocks (5m Close > DFC High • SL = DFC Low)' },
+        SELL_SETUPS: { key: 'sellSetups', label: 'Best 10 DOWN Stocks (5m Close < DFC Low • SL = DFC High)' },
+        GAP_UP_BREAKOUTS: { key: 'gapUpBreakouts', label: 'Top 10 Out Side Gap Up (Open > PDH) + DFC High Break BUY' },
+        GAP_DOWN_BREAKOUTS: { key: 'gapDownBreakouts', label: 'Top 10 Out Side Gap Down (Open < PDL) + DFC Low Break SELL' },
+        INDEX_TARGETS: { key: 'indexTargets', label: 'NIFTY, BANKNIFTY, FINNIFTY, MIDCPNIFTY & SENSEX' }
+      },
+
+      init() {
+        try {
+          if (typeof localStorage !== 'undefined') {
+            const c = Number(localStorage.getItem('is_capital'));
+            const r = Number(localStorage.getItem('is_risk_pct'));
+            if (Number.isFinite(c) && c >= 5000) this.capital = c;
+            if (Number.isFinite(r) && r >= 0.25 && r <= 10) this.riskPct = r;
+          }
+        } catch (e) {}
+        const capEl = document.getElementById('is-capital-input');
+        const riskEl = document.getElementById('is-risk-input');
+        if (capEl) capEl.value = String(this.capital);
+        if (riskEl) riskEl.value = String(this.riskPct);
+        this.load(false);
+        if (!this._timer) {
+          let tick = 0;
+          this._timer = setInterval(() => {
+            tick += 1;
+            const pane = document.getElementById('tab-intraday-stock');
+            if (pane && !pane.classList.contains('hidden')) {
+              this.load(false);
+            } else if (tick % 12 === 0) {
+              this.load(false);
+            }
+          }, 5000);
+        }
+      },
+
+      toggleRulebook() {
+        this._rulebookVisible = !this._rulebookVisible;
+        const panel = document.getElementById('is-rulebook-panel');
+        const btn = document.getElementById('is-rulebook-toggle');
+        if (panel) panel.classList.toggle('hidden', !this._rulebookVisible);
+        if (btn) btn.innerText = this._rulebookVisible ? '📖 Hide Formula Rulebook' : '📖 Show Formula Rulebook';
+      },
+
+      onParamsChange() {
+        const capEl = document.getElementById('is-capital-input');
+        const riskEl = document.getElementById('is-risk-input');
+        this.capital = Math.max(5000, Number(capEl?.value) || 100000);
+        this.riskPct = Math.max(0.25, Math.min(10, Number(riskEl?.value) || 1.0));
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('is_capital', String(this.capital));
+            localStorage.setItem('is_risk_pct', String(this.riskPct));
+          }
+        } catch (e) {}
+        this.load(false);
+      },
+
+      setCategory(cat) {
+        if (!this.CATEGORY_META[cat]) return;
+        this.activeCategory = cat;
+        Object.keys(this.CATEGORY_META).forEach(k => {
+          const btn = document.getElementById('is-cat-' + k);
+          if (!btn) return;
+          const cntEl = document.getElementById('is-cnt-' + k);
+          const cntTxt = cntEl ? cntEl.innerText : '0';
+          if (k === cat) {
+            btn.className = 'px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-orange-400 text-black';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-black/25 text-black text-[10px] font-black';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] hover:bg-[#192642] text-slate-300 border border-[#23314f]';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-white/10 text-orange-300 text-[10px]';
+          }
+          if (cntEl) cntEl.innerText = cntTxt;
+        });
+        this.renderTables();
+      },
+
+      async load(showFeedback = false) {
+        if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+          this.lastReport = {
+            status: 'ok',
+            scannerName: 'Intraday Stock',
+            isMidnightCleared: true,
+            universeEvaluated: 0,
+            totalScanned: 0,
+            qualifiedDfcCount: 0,
+            buyCount: 0,
+            sellCount: 0,
+            gapUpBreakoutCount: 0,
+            gapDownBreakoutCount: 0,
+            indexCount: 0,
+            totalEligibleUpCount: 0,
+            totalEligibleDownCount: 0,
+            categories: {
+              allSetups: [],
+              qualifiedDfc: [],
+              buySetups: [],
+              sellSetups: [],
+              gapUpBreakouts: [],
+              gapDownBreakouts: [],
+              indexTargets: []
+            }
+          };
+          this.renderTables();
+          return;
+        }
+
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        let report = null;
+        try {
+          const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
+          const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
+          const url = `${base}/api/intraday-stock/scan?capital=${encodeURIComponent(this.capital)}&riskPct=${encodeURIComponent(this.riskPct)}`;
+          const res = await fetch(url, { headers });
+          if (res.ok) report = await res.json();
+        } catch (e) {}
+
+        if (!report || !report.categories) {
+          report = {
+            status: 'standby',
+            scannerName: 'Intraday Stock',
+            isMidnightCleared: false,
+            universeEvaluated: 0,
+            totalScanned: 0,
+            qualifiedDfcCount: 0,
+            buyCount: 0,
+            sellCount: 0,
+            gapUpBreakoutCount: 0,
+            gapDownBreakoutCount: 0,
+            indexCount: 0,
+            totalEligibleUpCount: 0,
+            totalEligibleDownCount: 0,
+            categories: {
+              allSetups: [],
+              qualifiedDfc: [],
+              buySetups: [],
+              sellSetups: [],
+              gapUpBreakouts: [],
+              gapDownBreakouts: [],
+              indexTargets: []
+            }
+          };
+        }
+        this.lastReport = report;
+        const pane = document.getElementById('tab-intraday-stock');
+        if ((pane && !pane.classList.contains('hidden')) || !this._renderedOnce) {
+          this._renderedOnce = true;
+          this.renderTables();
+        }
+        if (showFeedback && typeof showToast === 'function') {
+          showToast(`🎯 Intraday Stock: Best ${report.buyCount || 0} UP + ${report.sellCount || 0} DOWN (from ${report.totalScanned || 0} scanned)`, 'success');
+        }
+      },
+
+      renderTables() {
+        const rpt = this.lastReport;
+        if (!rpt) return;
+        const cats = rpt.categories || {};
+        const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+
+        const eligUp = Number(rpt.totalEligibleUpCount || rpt.buyCount || 0);
+        const eligDn = Number(rpt.totalEligibleDownCount || rpt.sellCount || 0);
+        setEl('is-kpi-universe', String(rpt.universeEvaluated || 0));
+        setEl('is-kpi-qualified', `${rpt.qualifiedDfcCount || 0} / ${(rpt.buyCount || 0) + (rpt.sellCount || 0)}`);
+        setEl('is-kpi-buy', `${rpt.buyCount || 0} UP (of ${eligUp})`);
+        setEl('is-kpi-sell', `${rpt.sellCount || 0} DN (of ${eligDn})`);
+        setEl('is-kpi-gapup', `${rpt.gapUpBreakoutCount || 0} Gap-Up`);
+        setEl('is-kpi-gapdown', `${rpt.gapDownBreakoutCount || 0} Gap-Down`);
+
+        Object.keys(this.CATEGORY_META).forEach(k => {
+          const m = this.CATEGORY_META[k];
+          const arr = Array.isArray(cats[m.key]) ? cats[m.key] : [];
+          setEl('is-cnt-' + k, String(arr.length));
+        });
+
+        const tableEl = document.getElementById('table-intraday-stock');
+        if (!tableEl) return;
+
+        const meta = this.CATEGORY_META[this.activeCategory] || this.CATEGORY_META.ALL_SETUPS;
+        const titleEl = document.getElementById('is-table-title');
+        if (titleEl) {
+          titleEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-orange-400 animate-ping"></span> ${meta.label}`;
+        }
+
+        if (rpt.isMidnightCleared) {
+          setEl('is-count-badge', '0 setups (Midnight Auto-Flush • Waiting 09:20 AM IST)');
+          tableEl.innerHTML = `<tbody><tr><td colspan="12" class="p-8 text-center text-amber-300 font-mono text-xs">🕛 Midnight Auto-Flush Active &mdash; Intraday Stock DFC scan resumes automatically at 09:20 AM IST.</td></tr></tbody>`;
+          return;
+        }
+
+        const q = (document.getElementById('is-search-input')?.value || '').trim().toUpperCase();
+        const dir = document.getElementById('is-dir-filter')?.value || 'ALL';
+        const sortBy = document.getElementById('is-sort-select')?.value || 'listed_desc';
+
+        let rows = (Array.isArray(cats[meta.key]) ? cats[meta.key] : []).filter(r => {
+          if (dir !== 'ALL' && r.side !== dir) return false;
+          if (q && !r.symbol.toUpperCase().includes(q) && !(r.sector || '').toUpperCase().includes(q)) return false;
+          return true;
+        });
+
+        rows = [...rows].sort((a, b) => {
+          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || (Number(b.isDfcQualified) - Number(a.isDfcQualified));
+          if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt));
+          if (sortBy === 'rvol_desc') return (Number(b.rvol5m) || 0) - (Number(a.rvol5m) || 0);
+          if (sortBy === 'turnover_desc') return (Number(b.tradedValueCr) || 0) - (Number(a.tradedValueCr) || 0);
+          if (sortBy === 'dfc_range_desc') return (Number(b.dfcRangePct) || 0) - (Number(a.dfcRangePct) || 0);
+          if (sortBy === 'rr_desc') return (Number(b.rrT1) || 0) - (Number(a.rrT1) || 0);
+          if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
+          return String(b.listedAt).localeCompare(String(a.listedAt));
+        });
+
+        const sortLabels = {
+          listed_desc: 'Listed At Z→A',
+          listed_asc: 'Listed At A→Z',
+          rvol_desc: '5M RVOL ↓',
+          turnover_desc: 'Turnover ↓',
+          dfc_range_desc: 'DFC HL Diff % ↓',
+          rr_desc: 'T1 R:R ↓',
+          bid_ask_desc: 'Bid/Ask ↓'
+        };
+        setEl('is-count-badge', `${rows.length} Setups • Risk ${this.riskPct}% (₹${Math.round(this.capital * this.riskPct / 100).toLocaleString('en-IN')}) • Sorted ${sortLabels[sortBy] || 'Listed At Z→A'}`);
+
+        let html = `
+          <thead class="bg-[#0a0e18] text-slate-400 text-[10px] uppercase border-b border-[#1c2233]">
+            <tr>
+              <th class="p-2.5"># / Symbol &amp; Signal</th>
+              <th class="p-2.5">SECTOR %</th>
+              <th class="p-2.5">5M RVOL &amp; TURNOVER</th>
+              <th class="p-2.5">BID/ASK RATIO</th>
+              <th class="p-2.5">CYCLE (BUILDUP)</th>
+              <th class="p-2.5">LISTED AT (Z&rarr;A)</th>
+              <th class="p-2.5">DFC (09:15 5M) &amp; HL DIFF</th>
+              <th class="p-2.5">GAP OPEN vs PDH/PDL</th>
+              <th class="p-2.5">CLOSING &amp; QUALIFIED CANDLE</th>
+              <th class="p-2.5">SL (DFC) &amp; TARGET 1 / 3:25 PM</th>
+              <th class="p-2.5">R:R &amp; QTY SIZE</th>
+              <th class="p-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#141c2c]">`;
+
+        if (rows.length === 0) {
+          html += `<tr><td colspan="12" class="p-8 text-center text-slate-400 text-xs">No Intraday Stock DFC 5-Min setups matching active filters. Real intraday candles are required (zero fake rows).</td></tr>`;
+        } else {
+          rows.forEach((item, idx) => {
+            const isBuy = item.side === 'BUY';
+            const chg = Number(item.changePercent || 0);
+            const secPct = Number(item.sectorChangePct || 0);
+            const rvol5m = Number(item.rvol5m || 0);
+            const rvolCls = rvol5m >= 2.0 ? 'bg-amber-500/20 text-amber-300 border-amber-400/40' : (rvol5m >= 1.5 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/40' : 'bg-slate-800 text-slate-300 border-slate-700');
+            const ba = Number(item.bidAskRatio || 1.0);
+            const baBadge = ba >= 1.25 ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' : (ba <= 0.80 ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' : 'bg-slate-800 text-slate-300 border-slate-700');
+            const turnCr = Number(item.tradedValueCr || 0);
+            const rawVol = Number(item.rawVolume || 0);
+            const volStr = rawVol >= 1e7 ? (rawVol / 1e7).toFixed(2) + 'Cr' : rawVol >= 1e5 ? (rawVol / 1e5).toFixed(1) + 'L' : rawVol.toLocaleString('en-IN');
+            const normCycle = typeof normalizeCycleBuildup === 'function' ? normalizeCycleBuildup(item.cycleBuildup, chg, item.oiChangePct, ba) : (item.cycleBuildup || 'Long Buildup');
+            const cyclePill = typeof renderCycleBuildupPill === 'function' ? renderCycleBuildupPill(normCycle) : `<span class="text-[9.5px] font-bold">${normCycle}</span>`;
+
+            const badgeCls = item.isDfcQualified
+              ? (isBuy ? 'bg-emerald-500 text-black font-black' : 'bg-rose-500 text-white font-black')
+              : 'bg-slate-700 text-slate-200 font-bold';
+            const gapCls = item.gapType === 'OUTSIDE_GAP_UP'
+              ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+              : item.gapType === 'OUTSIDE_GAP_DOWN'
+                ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                : 'bg-slate-800 text-slate-300 border-slate-700';
+
+            const rankChip = item.directionRank
+              ? `<span class="px-1.5 py-0.2 rounded text-[8.5px] font-black border ${isBuy ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35' : 'bg-rose-500/15 text-rose-300 border-rose-500/35'}" title="Formula Score: ${Number(item.formulaRankScore || 0).toFixed(0)}">#${item.directionRank} ${isBuy ? 'UP' : 'DN'}</span>`
+              : '';
+
+            html += `
+              <tr class="hover:bg-[#12182b] transition">
+                <td class="p-2.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-slate-500 text-[10px]">#${idx + 1}</span>
+                    ${rankChip}
+                    <span class="font-black text-white">${item.symbol}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[8.5px] ${badgeCls}">${item.signalBadge}</span>
+                    ${item.volatileChop ? '<span class="px-1 py-0.2 rounded text-[8px] bg-amber-500/20 text-amber-300 border border-amber-400/40 font-bold" title="Both DFC High and DFC Low closed beyond — watch chop">CHOP</span>' : ''}
+                  </div>
+                  <div class="text-[10px] font-bold mt-1 ${chg >= 0 ? 'text-emerald-300' : 'text-rose-300'}">LTP ₹${Number(item.price).toLocaleString('en-IN')} (${chg >= 0 ? '+' : ''}${chg}%)</div>
+                  <div class="text-[9px] text-slate-400">ATR-25: ${Number(item.atr25Pct || 0).toFixed(2)}% &bull; ${item.instrumentType === 'INDEX' ? 'Index Spot' : 'F&O Equity'}${item.formulaRankScore ? ` &bull; Score ${Math.round(Number(item.formulaRankScore))}` : ''}</div>
+                </td>
+                <td class="p-2.5">
+                  <div class="text-slate-200 font-bold text-[10.5px]">${item.sector}</div>
+                  <div class="text-[10.5px] font-black ${secPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${secPct >= 0 ? '+' : ''}${secPct.toFixed(2)}%</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded border text-[10.5px] font-black ${rvolCls}">${rvol5m.toFixed(2)}x</span>
+                  <div class="text-[9.5px] text-cyan-300 font-bold mt-1">₹${turnCr.toLocaleString('en-IN', { maximumFractionDigits: 2 })} Cr</div>
+                  <div class="text-[9px] text-slate-400">Vol: ${volStr}</div>
+                </td>
+                <td class="p-2.5">
+                  <span class="px-2 py-0.5 rounded border text-[10.5px] font-black ${baBadge}">${ba.toFixed(2)}x</span>
+                  <div class="text-[9px] text-slate-400 mt-0.5 truncate max-w-[110px]">${item.orderBookBias || ''}</div>
+                </td>
+                <td class="p-2.5">${cyclePill}<div class="text-[9px] mt-1 ${Number(item.oiChangePct) >= 0 ? 'text-emerald-300' : 'text-rose-300'}">OI ${Number(item.oiChangePct) >= 0 ? '+' : ''}${item.oiChangePct}%</div></td>
+                <td class="p-2.5">
+                  <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[10.5px] font-bold border border-cyan-500/20 whitespace-nowrap">🕒 ${item.listedAt || '--'}</span>
+                  <div class="text-[9px] mt-1 ${item.inEntryWindow ? 'text-emerald-400' : 'text-slate-400'}">${item.inEntryWindow ? '✔ 09:20–14:45' : 'Outside Window'}</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  <div class="font-bold ${item.dfcColor === 'GREEN' ? 'text-emerald-300' : 'text-rose-300'}">${item.dfcColor} DFC @ ${item.dfcTime}</div>
+                  <div class="text-slate-200">H ₹${item.dfcHigh} &bull; L ₹${item.dfcLow}</div>
+                  <div class="text-orange-300 font-bold">HL Diff: ₹${item.dfcRange} (${item.dfcRangePct}%)</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  <span class="px-1.5 py-0.2 rounded border text-[9px] font-black ${gapCls}">${item.gapType.replace(/_/g, ' ')}</span>
+                  <div class="text-slate-300 mt-0.5">Open: ₹${item.dfcOpen} (${item.gapOpenPct >= 0 ? '+' : ''}${item.gapOpenPct}%)</div>
+                  <div class="text-[9px] text-slate-400">PDH ₹${item.pdh} / PDL ₹${item.pdl}</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  ${item.closingCandleNo ? `<div class="text-cyan-300 font-black">Close C#${item.closingCandleNo} @ ${item.closingCandleTime} (₹${item.closingCandleClose})</div><div class="text-emerald-300 font-bold">Qualified C#${item.qualifiedCandleNo} @ ${item.qualifiedCandleTime}</div>` : `<div class="text-slate-400">Inside DFC Range</div>`}
+                  <div class="text-[9px] text-slate-400">Prev Bar BO: ${item.prevCandleBreakout.replace(/_/g, ' ')}</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5">
+                  <div class="text-white font-black">Entry: ₹${item.entryPrice} &bull; <span class="text-rose-300">SL: ₹${item.stopLoss}</span></div>
+                  <div class="text-emerald-300 font-bold">T1 (DFC HL): ₹${item.target1}</div>
+                  <div class="text-cyan-300 font-bold">T2 (@ 3:25 PM): ₹${item.target2}</div>
+                </td>
+                <td class="p-2.5 text-[10px] space-y-0.5 whitespace-nowrap">
+                  <div class="text-amber-300 font-black">T1 R:R ${item.rrT1Ratio}</div>
+                  <div class="text-cyan-300 font-bold">Qty: ${Number(item.positionSize || 0).toLocaleString('en-IN')} sh</div>
+                  <div class="text-[9px] text-slate-400">Risk/Sh: ₹${item.riskPerUnit}</div>
+                </td>
+                <td class="p-2.5 text-right space-y-1">
+                  <button onclick="openTradingViewChart('${item.symbol}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
+                  <button onclick="openOrderModal('${item.symbol}', '${item.side}', ${item.entryPrice || item.price}, ${chg})" class="px-2 py-1 rounded ${isBuy ? 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40' : 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40'} border text-[10px] font-black block w-full text-center transition cursor-pointer">⚡ ${item.side} (${item.positionSize || 0})</button>
+                </td>
+              </tr>`;
+          });
+        }
+        html += `</tbody>`;
+        if (tableEl._lastHtmlStr !== html) {
+          tableEl._lastHtmlStr = html;
+          tableEl.innerHTML = html;
+        }
+      }
+    };
+
+    // ============================================================
+    // APEX ALPHA STRATEGY ENGINE (VWAP COIL + PDH/PDL + REGIME)
+    // ============================================================
+    const ApexAlphaEngine = {
+      activeCategory: 'QUALIFIED_ALPHA',
+      capital: 100000,
+      riskPct: 1.0,
+      lastReport: null,
+      _timer: null,
+      _leaderboardVisible: true,
+      CATEGORY_META: {
+        QUALIFIED_ALPHA: { key: 'qualifiedAlpha', label: '8/8 Qualified Institutional Alpha Setups (PF 1.87 Backtested)' },
+        VWAP_COIL_SETUPS: { key: 'vwapCoilSetups', label: 'VWAP Compression Coil Breakouts (1:1.6 RR + 0.9R Trail)' },
+        PDH_PDL_RECLAIM: { key: 'pdhPdlReclaim', label: 'PDH / PDL Structural Reclaim Setups (1:1.5 RR + 0.9R Trail)' },
+        BUY_SETUPS: { key: 'buySetups', label: 'BUY Candidates (>= 7/8 Conditions Met)' },
+        SELL_SETUPS: { key: 'sellSetups', label: 'SELL Candidates (>= 7/8 Conditions Met)' },
+        NEAR_TRIGGER_WATCH: { key: 'nearTriggerWatch', label: 'Forming Watchlist (6-7/8 Pre-Breakout Coils)' }
+      },
+
+      init() {
+        try {
+          if (typeof localStorage !== 'undefined') {
+            const c = Number(localStorage.getItem('aa_capital'));
+            const r = Number(localStorage.getItem('aa_risk_pct'));
+            if (Number.isFinite(c) && c >= 5000) this.capital = c;
+            if (Number.isFinite(r) && r >= 0.25 && r <= 10) this.riskPct = r;
+          }
+        } catch (e) {}
+        const capEl = document.getElementById('aa-capital-input');
+        const riskEl = document.getElementById('aa-risk-input');
+        if (capEl) capEl.value = String(this.capital);
+        if (riskEl) riskEl.value = String(this.riskPct);
+        this.load(false);
+        if (!this._timer) {
+          let tick = 0;
+          this._timer = setInterval(() => {
+            tick += 1;
+            const pane = document.getElementById('tab-apex-alpha');
+            if (pane && !pane.classList.contains('hidden')) {
+              this.load(false);
+            } else if (tick % 12 === 0) {
+              this.load(false);
+            }
+          }, 5000);
+        }
+      },
+
+      toggleLeaderboard() {
+        this._leaderboardVisible = !this._leaderboardVisible;
+        const panel = document.getElementById('aa-backtest-panel');
+        const btn = document.getElementById('aa-backtest-toggle');
+        if (panel) panel.classList.toggle('hidden', !this._leaderboardVisible);
+        if (btn) btn.innerText = this._leaderboardVisible ? '📊 Hide 18d Backtest Proof' : '📊 Show 18d Backtest Proof';
+      },
+
+      onParamsChange() {
+        const capEl = document.getElementById('aa-capital-input');
+        const riskEl = document.getElementById('aa-risk-input');
+        this.capital = Math.max(5000, Number(capEl?.value) || 100000);
+        this.riskPct = Math.max(0.25, Math.min(10, Number(riskEl?.value) || 1.0));
+        try {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('aa_capital', String(this.capital));
+            localStorage.setItem('aa_risk_pct', String(this.riskPct));
+          }
+        } catch (e) {}
+        this.load(false);
+      },
+
+      setCategory(cat) {
+        if (!this.CATEGORY_META[cat]) return;
+        this.activeCategory = cat;
+        Object.keys(this.CATEGORY_META).forEach(k => {
+          const btn = document.getElementById('aa-cat-' + k);
+          if (!btn) return;
+          const cntEl = document.getElementById('aa-cnt-' + k);
+          const cntTxt = cntEl ? cntEl.innerText : '0';
+          if (k === cat) {
+            btn.className = 'px-3 py-1.5 rounded-lg font-black whitespace-nowrap cursor-pointer transition bg-emerald-400 text-black';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-black/25 text-black text-[10px] font-black';
+          } else {
+            btn.className = 'px-3 py-1.5 rounded-lg font-bold whitespace-nowrap cursor-pointer transition bg-[#121a2d] hover:bg-[#192642] text-slate-300 border border-[#23314f]';
+            if (cntEl) cntEl.className = 'ml-1 px-1.5 py-0.2 rounded bg-white/10 text-emerald-300 text-[10px]';
+          }
+          if (cntEl) cntEl.innerText = cntTxt;
+        });
+        this.renderTables();
+      },
+
+      async load(showFeedback = false) {
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        let report = null;
+        try {
+          const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
+          const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
+          const url = `${base}/api/apex-alpha/scan?capital=${encodeURIComponent(this.capital)}&riskPct=${encodeURIComponent(this.riskPct)}`;
+          const res = await fetch(url, { headers });
+          if (res.ok) report = await res.json();
+        } catch (e) {}
+
+        if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+          report = {
+            ...(report || {}),
+            status: 'ok',
+            scannerName: 'Apex Alpha Regime Strategy',
+            isMidnightCleared: true,
+            universeEvaluated: 0,
+            qualifiedCount: 0,
+            coilCount: 0,
+            reclaimCount: 0,
+            buyCount: 0,
+            sellCount: 0,
+            watchCount: 0,
+            niftyChangePct: report?.niftyChangePct || 0,
+            niftyRegime: report?.niftyRegime || 'NEUTRAL',
+            backtestLeaderboard: report?.backtestLeaderboard || this.lastReport?.backtestLeaderboard || [],
+            backtestCaveat: report?.backtestCaveat || this.lastReport?.backtestCaveat || '',
+            categories: { qualifiedAlpha: [], vwapCoilSetups: [], pdhPdlReclaim: [], buySetups: [], sellSetups: [], nearTriggerWatch: [] }
+          };
+        }
+
+        if (report && report.categories) {
+          this.lastReport = report;
+          const pane = document.getElementById('tab-apex-alpha');
+          if ((pane && !pane.classList.contains('hidden')) || !this._renderedOnce) {
+            this._renderedOnce = true;
+            this.renderTables();
+          }
+          if (showFeedback && typeof showToast === 'function') {
+            showToast(`🏆 Apex Alpha: ${report.qualifiedCount || 0} qualified 8/8 (${report.watchCount || 0} forming)`, 'success');
+          }
+        }
+      },
+
+      renderBacktestLeaderboard(rpt) {
+        const tbl = document.getElementById('table-apex-backtest');
+        const cav = document.getElementById('aa-backtest-caveat');
+        if (cav && rpt.backtestCaveat) cav.innerText = rpt.backtestCaveat;
+        if (!tbl || !Array.isArray(rpt.backtestLeaderboard)) return;
+
+        let html = `
+          <thead class="bg-[#080d18] text-slate-400 text-[10px] uppercase border-b border-[#1c2842]">
+            <tr>
+              <th class="p-2">Scanner / Strategy</th>
+              <th class="p-2 text-right">Trades</th>
+              <th class="p-2 text-right">Win %</th>
+              <th class="p-2 text-right">Target vs SL %</th>
+              <th class="p-2 text-right">Avg R (Gross)</th>
+              <th class="p-2 text-right">Avg R (0.05% Cost)</th>
+              <th class="p-2 text-right">Profit Factor</th>
+              <th class="p-2 text-right">Net Ret (1% Risk)</th>
+              <th class="p-2 text-right">Max DD %</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#141e33]">`;
+
+        rpt.backtestLeaderboard.forEach((b) => {
+          const isWin = Boolean(b.isWinner);
+          const rowCls = isWin ? 'bg-emerald-500/10 font-bold text-white' : 'text-slate-300';
+          const retCls = b.netRetAfterCostPct >= 0 ? 'text-emerald-300' : 'text-rose-300';
+          html += `
+            <tr class="${rowCls} hover:bg-[#121a2d] transition">
+              <td class="p-2">${isWin ? '🏆 ' : ''}${b.scanner}</td>
+              <td class="p-2 text-right">${b.trades}</td>
+              <td class="p-2 text-right font-bold ${b.winRatePct >= 55 ? 'text-emerald-300' : 'text-slate-200'}">${b.winRatePct.toFixed(1)}%</td>
+              <td class="p-2 text-right">${b.t1VsSlPct.toFixed(1)}%</td>
+              <td class="p-2 text-right">${b.avgRealizedR >= 0 ? '+' : ''}${b.avgRealizedR.toFixed(3)}R</td>
+              <td class="p-2 text-right ${b.avgNetR05bps >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${b.avgNetR05bps >= 0 ? '+' : ''}${b.avgNetR05bps.toFixed(3)}R</td>
+              <td class="p-2 text-right font-bold ${b.profitFactor >= 1.5 ? 'text-emerald-300' : (b.profitFactor >= 1.2 ? 'text-amber-300' : 'text-slate-300')}">${b.profitFactor.toFixed(2)}</td>
+              <td class="p-2 text-right font-bold ${retCls}">${b.netRetAfterCostPct >= 0 ? '+' : ''}${b.netRetAfterCostPct.toFixed(2)}%</td>
+              <td class="p-2 text-right text-amber-200">${b.maxDdPct.toFixed(2)}%</td>
+            </tr>`;
+        });
+        html += `</tbody>`;
+        if (tbl._lastHtmlStr !== html) {
+          tbl._lastHtmlStr = html;
+          tbl.innerHTML = html;
+        }
+      },
+
+      renderTables() {
+        const rpt = this.lastReport;
+        if (!rpt) return;
+        this.renderBacktestLeaderboard(rpt);
+        const cats = rpt.categories || {};
+        const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+
+        setEl('aa-kpi-universe', String(rpt.universeEvaluated || 0));
+        setEl('aa-kpi-qualified', `${rpt.qualifiedCount || 0} Setups`);
+        setEl('aa-kpi-modes', `${rpt.coilCount || 0} Coil / ${rpt.reclaimCount || 0} Reclaim`);
+        setEl('aa-kpi-dirs', `${rpt.buyCount || 0} BUY / ${rpt.sellCount || 0} SELL`);
+        const regPct = Number(rpt.niftyChangePct || 0);
+        setEl('aa-kpi-regime', `${rpt.niftyRegime || 'NEUTRAL'} (${regPct >= 0 ? '+' : ''}${regPct.toFixed(2)}%)`);
+
+        Object.keys(this.CATEGORY_META).forEach(k => {
+          const m = this.CATEGORY_META[k];
+          const arr = Array.isArray(cats[m.key]) ? cats[m.key] : [];
+          setEl('aa-cnt-' + k, String(arr.length));
+        });
+
+        const tableEl = document.getElementById('table-apex-alpha');
+        if (!tableEl) return;
+
+        const meta = this.CATEGORY_META[this.activeCategory] || this.CATEGORY_META.QUALIFIED_ALPHA;
+        const titleEl = document.getElementById('aa-table-title');
+        if (titleEl) {
+          titleEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> ${meta.label}`;
+        }
+
+        if (rpt.isMidnightCleared) {
+          setEl('aa-count-badge', '0 setups (Midnight Auto-Flush • Waiting 09:35 AM IST)');
+          tableEl.innerHTML = `<tbody><tr><td colspan="10" class="p-8 text-center text-amber-300 font-mono text-xs">🕛 Midnight Auto-Flush Active &mdash; Apex Alpha Regime scan resumes at 09:35 AM IST.</td></tr></tbody>`;
+          return;
+        }
+
+        const q = (document.getElementById('aa-search-input')?.value || '').trim().toUpperCase();
+        const dir = document.getElementById('aa-dir-filter')?.value || 'ALL';
+        const sortBy = document.getElementById('aa-sort-select')?.value || 'score_desc';
+
+        let rows = (Array.isArray(cats[meta.key]) ? cats[meta.key] : []).filter(r => {
+          if (dir !== 'ALL' && r.side !== dir) return false;
+          if (q && !r.symbol.toUpperCase().includes(q) && !(r.sector || '').toUpperCase().includes(q)) return false;
+          return true;
+        });
+
+        rows = [...rows].sort((a, b) => {
+          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt));
+          if (sortBy === 'rvol_desc') return (Number(b.rvol5m) || 0) - (Number(a.rvol5m) || 0);
+          if (sortBy === 'rs_desc') return Math.abs(Number(b.rsVsNifty) || 0) - Math.abs(Number(a.rsVsNifty) || 0);
+          if (sortBy === 'turnover_desc') return (Number(b.tradedValueCr) || 0) - (Number(a.tradedValueCr) || 0);
+          return (Number(b.score) || 0) - (Number(a.score) || 0) || String(b.listedAt).localeCompare(String(a.listedAt));
+        });
+
+        setEl('aa-count-badge', `${rows.length} Setups • Risk ${this.riskPct}% (₹${Math.round(this.capital * this.riskPct / 100).toLocaleString('en-IN')})`);
+
+        let html = `
+          <thead class="bg-[#0a0e18] text-slate-400 text-[10px] uppercase border-b border-[#1c2233]">
+            <tr>
+              <th class="p-2.5"># / Symbol &amp; Setup</th>
+              <th class="p-2.5">SECTOR % &amp; RS vs NIFTY</th>
+              <th class="p-2.5">5M RVOL &amp; SPIKE</th>
+              <th class="p-2.5">BID/ASK &amp; CYCLE</th>
+              <th class="p-2.5">LISTED AT</th>
+              <th class="p-2.5">VWAP / EMA(9/21/50) / RSI</th>
+              <th class="p-2.5">COIL / PDH-PDL STRUCTURE</th>
+              <th class="p-2.5">ENTRY / SL / TARGET / TRAIL</th>
+              <th class="p-2.5">8-PT SCORE &amp; QTY</th>
+              <th class="p-2.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#141c2c]">`;
+
+        if (rows.length === 0) {
+          html += `<tr><td colspan="10" class="p-8 text-center text-slate-400 text-xs">No Apex Alpha setups currently active in this bucket. Check &ldquo;6-7/8 Coiling Watch&rdquo; for pre-breakout setups.</td></tr>`;
+        } else {
+          rows.forEach((item, idx) => {
+            const isBuy = item.side === 'BUY';
+            const chg = Number(item.changePercent || 0);
+            const secPct = Number(item.sectorChangePct || 0);
+            const rs = Number(item.rsVsNifty || 0);
+            const ba = Number(item.bidAskRatio || 1.0);
+            const badgeCls = item.isQualified
+              ? (isBuy ? 'bg-emerald-500 text-black font-black' : 'bg-rose-500 text-white font-black')
+              : 'bg-slate-700 text-slate-200 font-bold';
+            const failedTips = Array.isArray(item.conditions)
+              ? item.conditions.filter(c => !c.passed).map(c => c.label).join(', ')
+              : '';
+
+            html += `
+              <tr class="hover:bg-[#12182b] transition">
+                <td class="p-2.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-slate-500 text-[10px]">#${idx + 1}</span>
+                    <span class="font-black text-white">${item.symbol}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[8.5px] ${badgeCls}">${item.signalBadge}</span>
+                  </div>
+                  <div class="text-[10px] font-bold mt-1 ${chg >= 0 ? 'text-emerald-300' : 'text-rose-300'}">LTP ₹${Number(item.price).toLocaleString('en-IN')} (${chg >= 0 ? '+' : ''}${chg}%)</div>
+                  <div class="text-[9px] text-slate-400">${item.setupLabel}</div>
+                </td>
+                <td class="p-2.5">
+                  <div class="text-slate-200 font-bold text-[10.5px]">${item.sector}</div>
+                  <div class="text-[10px] font-bold ${secPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">Sec ${secPct >= 0 ? '+' : ''}${secPct.toFixed(2)}%</div>
+                  <div class="text-[9.5px] font-bold ${rs >= 0 ? 'text-cyan-300' : 'text-amber-300'}">RS ${rs >= 0 ? '+' : ''}${rs.toFixed(2)}%</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <div class="text-amber-300 font-black">RVOL ${Number(item.rvol5m).toFixed(2)}x</div>
+                  <div class="text-[9.5px] text-cyan-300">Spike ${Number(item.barVolRatio).toFixed(2)}x</div>
+                  <div class="text-[9px] text-slate-400">₹${Number(item.tradedValueCr).toLocaleString('en-IN', { maximumFractionDigits: 1 })} Cr</div>
+                </td>
+                <td class="p-2.5">
+                  <div class="font-bold ${ba >= 1.2 ? 'text-emerald-300' : (ba <= 0.85 ? 'text-rose-300' : 'text-slate-200')}">${ba.toFixed(2)}x B/A</div>
+                  <div class="text-[9px] text-slate-400">${item.cycleBuildup}</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[10px] font-bold border border-cyan-500/20">🕒 ${item.listedAt}</span>
+                  <div class="text-[9px] mt-1 ${item.inEntryWindow ? 'text-emerald-400' : 'text-slate-400'}">${item.inEntryWindow ? '✔ 09:35-14:15' : 'Outside Window'}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-slate-200 font-bold">VWAP ₹${item.vwap} &bull; RSI ${item.rsi14}</div>
+                  <div class="text-[9px] text-slate-400">E9 ${item.ema9} / E21 ${item.ema21} / E50 ${item.ema50}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-cyan-300 font-bold">Coil ₹${item.coilLow}&ndash;₹${item.coilHigh} (${item.coilRangePct}%)</div>
+                  <div class="text-[9px] text-slate-400">PDH ₹${item.pdh} &bull; PDL ₹${item.pdl}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-white font-black">In ₹${item.entryPrice} &bull; <span class="text-rose-300">SL ₹${item.stopLoss} (${item.stopRiskPct}%)</span></div>
+                  <div class="text-emerald-300 font-bold">Tgt (${item.rrRatio}): ₹${item.targetPrice}</div>
+                  <div class="text-[9px] text-cyan-300">Trail Lock @ ₹${item.trailTriggerPrice} &rarr; SL ₹${item.trailLockPrice}</div>
+                </td>
+                <td class="p-2.5 text-[10px]" title="${failedTips ? 'Pending: ' + failedTips : 'All 8 conditions satisfied'}">
+                  <div class="font-black ${item.score === 8 ? 'text-emerald-300' : 'text-amber-300'}">${item.score} / 8 Rules</div>
+                  <div class="text-cyan-300 font-bold">Qty: ${Number(item.positionSize || 0).toLocaleString('en-IN')}</div>
+                  <div class="text-[9px] text-slate-400">ATR25 ${item.atr25Pct}%</div>
+                </td>
+                <td class="p-2.5 text-right space-y-1">
+                  <button onclick="openTradingViewChart('${item.symbol}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
+                  <button onclick="openOrderModal('${item.symbol}', '${item.side}', ${item.entryPrice || item.price}, ${chg})" class="px-2 py-1 rounded ${isBuy ? 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40' : 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40'} border text-[10px] font-black block w-full text-center transition cursor-pointer">⚡ ${item.side} (${item.positionSize || 0})</button>
+                </td>
+              </tr>`;
+          });
+        }
+        html += `</tbody>`;
+        if (tableEl._lastHtmlStr !== html) {
+          tableEl._lastHtmlStr = html;
+          tableEl.innerHTML = html;
+        }
+      }
+    };
+
+    // ============================================================
     // REAL-TIME NOTIFICATION ENGINE (WEB & IN-APP APP PUSH)
     // Alerts on: Stock Listed At On-Time & Stock News (Positive/Negative)
     // ============================================================
+    // ============================================================
+    // AI AUTONOMOUS TRADING JOURNAL ENGINE (5 BUY/SELL TRADES/DAY + 5x BEEP)
+    // ============================================================
+    const AiTradingJournalEngine = {
+      lastReport: null,
+      activeFilter: 'ALL',
+      _timer: null,
+      _manualOpen: false,
+
+      init() {
+        this.load(false);
+        if (!this._timer) {
+          this._timer = setInterval(() => {
+            this.load(false);
+          }, 8000);
+        }
+      },
+
+      async load(showFeedback = false) {
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        try {
+          const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
+          const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
+          const res = await fetch(`${base}/api/ai-journal/status`, { headers });
+          if (!res.ok) return;
+          const data = await res.json();
+          this.handleServerPayload(data, showFeedback);
+        } catch (e) {}
+      },
+
+      async scanNow() {
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        try {
+          const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
+          const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
+          const res = await fetch(`${base}/api/ai-journal/scan`, { method: 'POST', headers });
+          if (!res.ok) return;
+          const data = await res.json();
+          this.handleServerPayload(data, true);
+        } catch (e) {
+          if (typeof showToast === 'function') showToast('Unable to reach AI Journal backend.', 'error');
+        }
+      },
+
+      handleServerPayload(data, showFeedback = false) {
+        if (!data || !data.summary) return;
+        this.lastReport = data;
+        this.syncConfigInputs(data.config);
+        this.renderAll();
+        if (Array.isArray(data.newEvents) && data.newEvents.length > 0 && typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.notifyAiJournalEvents) {
+          ClaudeNotificationEngine.notifyAiJournalEvents(data.newEvents);
+        }
+        if (showFeedback && typeof showToast === 'function') {
+          showToast(data.lastScanMessage || `AI Journal synced (${data.summary.todayAiCount}/${data.config.dailyMaxTrades} today)`, 'success');
+        }
+      },
+
+      syncConfigInputs(cfg) {
+        if (!cfg) return;
+        const cap = document.getElementById('tj-capital-input');
+        const risk = document.getElementById('tj-risk-input');
+        const maxD = document.getElementById('tj-max-daily-input');
+        const autoBtn = document.getElementById('tj-auto-toggle');
+        if (cap && document.activeElement !== cap) cap.value = String(cfg.capital || 100000);
+        if (risk && document.activeElement !== risk) risk.value = String(cfg.riskPct || 1.0);
+        if (maxD && document.activeElement !== maxD) maxD.value = String(cfg.dailyMaxTrades || 5);
+        if (autoBtn) {
+          autoBtn.innerText = cfg.autoAiEnabled ? 'Auto AI: ON' : 'Auto AI: OFF';
+          autoBtn.className = cfg.autoAiEnabled
+            ? 'px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition'
+            : 'px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-xs font-bold whitespace-nowrap shrink-0 cursor-pointer transition';
+        }
+      },
+
+      async toggleAutoAi() {
+        const cur = this.lastReport?.config?.autoAiEnabled ?? true;
+        await this.postConfig({ autoAiEnabled: !cur });
+      },
+
+      async saveConfigFromInputs() {
+        const capital = Number(document.getElementById('tj-capital-input')?.value) || 100000;
+        const riskPct = Number(document.getElementById('tj-risk-input')?.value) || 1.0;
+        const dailyMaxTrades = Number(document.getElementById('tj-max-daily-input')?.value) || 5;
+        await this.postConfig({ capital, riskPct, dailyMaxTrades });
+      },
+
+      async postConfig(patch) {
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        try {
+          const res = await fetch(`${base}/api/ai-journal/config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patch)
+          });
+          if (!res.ok) return;
+          const json = await res.json();
+          if (json.report) {
+            this.lastReport = json.report;
+            this.syncConfigInputs(json.config);
+            this.renderAll();
+            if (typeof showToast === 'function') showToast('AI Trading Journal settings saved.', 'success');
+          }
+        } catch (e) {}
+      },
+
+      toggleManualForm(forceState) {
+        this._manualOpen = forceState !== undefined ? Boolean(forceState) : !this._manualOpen;
+        const panel = document.getElementById('tj-manual-panel');
+        if (panel) panel.classList.toggle('hidden', !this._manualOpen);
+      },
+
+      async submitManualTrade(e) {
+        if (e) e.preventDefault();
+        const symbol = (document.getElementById('tj-man-symbol')?.value || '').trim().toUpperCase();
+        const side = document.getElementById('tj-man-side')?.value || 'BUY';
+        const entryPrice = Number(document.getElementById('tj-man-entry')?.value);
+        const stopLoss = Number(document.getElementById('tj-man-sl')?.value);
+        const targetPrice = Number(document.getElementById('tj-man-target')?.value);
+        const qtyRaw = document.getElementById('tj-man-qty')?.value;
+        const qty = qtyRaw ? Number(qtyRaw) : undefined;
+        const setup = (document.getElementById('tj-man-setup')?.value || 'Manual Setup').trim();
+
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        try {
+          const res = await fetch(`${base}/api/ai-journal/manual`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ symbol, side, entryPrice, stopLoss, targetPrice, qty, setup })
+          });
+          const json = await res.json();
+          if (!res.ok) {
+            if (typeof showToast === 'function') showToast(json.error || 'Invalid trade fields', 'error');
+            return;
+          }
+          if (json.report) this.lastReport = json.report;
+          this.renderAll();
+          if (json.event && typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.notifyAiJournalEvents) {
+            ClaudeNotificationEngine.notifyAiJournalEvents([json.event]);
+          }
+          document.getElementById('tj-manual-panel')?.reset?.();
+          this.toggleManualForm(false);
+        } catch (err) {
+          if (typeof showToast === 'function') showToast('Failed to log trade.', 'error');
+        }
+      },
+
+      async closeTrade(tradeId) {
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        try {
+          const res = await fetch(`${base}/api/ai-journal/close`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tradeId })
+          });
+          const json = await res.json();
+          if (!res.ok) {
+            if (typeof showToast === 'function') showToast(json.error || 'Failed to close trade', 'error');
+            return;
+          }
+          if (json.report) this.lastReport = json.report;
+          this.renderAll();
+          if (json.event && typeof ClaudeNotificationEngine !== 'undefined' && ClaudeNotificationEngine.notifyAiJournalEvents) {
+            ClaudeNotificationEngine.notifyAiJournalEvents([json.event]);
+          }
+        } catch (e) {}
+      },
+
+      async shareAlertText(encodedText) {
+        const text = decodeURIComponent(encodedText || '');
+        if (!text) return;
+        if (typeof navigator !== 'undefined' && navigator.share) {
+          try {
+            await navigator.share({ title: 'AI Trading Journal Alert', text });
+            if (typeof showToast === 'function') showToast('Trade notification shared!', 'success');
+            return;
+          } catch (e) {}
+        }
+        if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+          try {
+            await navigator.clipboard.writeText(text);
+            if (typeof showToast === 'function') showToast('Trade alert copied to clipboard — ready to paste & share!', 'success');
+            return;
+          } catch (e) {}
+        }
+        if (typeof showToast === 'function') showToast('Alert ready: ' + text.split('\n')[0], 'info');
+      },
+
+      shareTradeById(tradeId) {
+        const all = [...(this.lastReport?.todayTrades || []), ...(this.lastReport?.historyTrades || [])];
+        const t = all.find(x => x.id === tradeId);
+        if (!t) return;
+        const dir = t.side === 'BUY' ? '🟢 BUY' : '🔴 SELL';
+        const statusLine = (t.status === 'OPEN' || t.status === 'TRAIL_LOCKED')
+          ? `Live LTP: ₹${t.currentPrice} | Open MTM: ${t.pnl >= 0 ? '+' : ''}₹${t.pnl} (${t.rMultiple >= 0 ? '+' : ''}${t.rMultiple}R)`
+          : `Closed (${t.exitReason || t.status}) @ ₹${t.exitPrice || t.currentPrice} | Net P&L: ${t.pnl >= 0 ? '+' : ''}₹${t.pnl} (${t.rMultiple >= 0 ? '+' : ''}${t.rMultiple}R)`;
+        const msg = [
+          `🤖 AI TRADING JOURNAL (${t.daySlot ? `Slot ${t.daySlot}/${this.lastReport?.config?.dailyMaxTrades || 5}` : 'Manual'})`,
+          `${dir} ${t.symbol} @ ₹${t.entryPrice} | Qty: ${t.qty}`,
+          `SL: ₹${t.stopLoss} | Target: ₹${t.targetPrice} (1:${t.rrMultiple})`,
+          statusLine,
+          `Strategy: ${t.strategy} | ${t.dateIST} ${t.entryTimeIST} IST`
+        ].join('\n');
+        this.shareAlertText(encodeURIComponent(msg));
+      },
+
+      triggerTestFiveBeepAlert() {
+        if (typeof ClaudeNotificationEngine !== 'undefined' && typeof ClaudeNotificationEngine.triggerTestFiveBeepJournalAlert === 'function') {
+          ClaudeNotificationEngine.triggerTestFiveBeepJournalAlert();
+        }
+      },
+
+      setFilter(f) {
+        this.activeFilter = f;
+        ['ALL', 'WIN', 'LOSS', 'BUY', 'SELL', 'AI_AUTO', 'MANUAL'].forEach(k => {
+          const btn = document.getElementById('tj-filter-' + k);
+          if (!btn) return;
+          btn.className = k === f
+            ? 'px-2.5 py-1 rounded text-[11px] font-bold bg-cyan-500 text-black cursor-pointer whitespace-nowrap'
+            : 'px-2.5 py-1 rounded text-[11px] font-bold bg-[#121a2d] text-slate-300 border border-[#23314f] cursor-pointer whitespace-nowrap';
+        });
+        this.renderArchiveTable();
+      },
+
+      exportCsv() {
+        const all = [...(this.lastReport?.todayTrades || []), ...(this.lastReport?.historyTrades || [])];
+        if (all.length === 0) {
+          if (typeof showToast === 'function') showToast('No journal trades to export yet.', 'info');
+          return;
+        }
+        const headers = ['DateIST', 'Slot', 'Source', 'Symbol', 'Side', 'Strategy', 'EntryTime', 'Entry', 'SL', 'Target', 'Qty', 'ExitTime', 'Exit', 'NetPnL', 'RMultiple', 'Status', 'ExitReason'];
+        const rows = all.map(t => [
+          t.dateIST, t.daySlot, t.source, t.symbol, t.side, `"${String(t.strategy || '').replace(/"/g, '""')}"`,
+          t.entryTimeIST, t.entryPrice, t.stopLoss, t.targetPrice, t.qty, t.exitTimeIST || '', t.exitPrice || t.currentPrice,
+          t.pnl, t.rMultiple, t.status, t.exitReason || ''
+        ].join(','));
+        const csv = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ai-trading-journal-${this.lastReport?.dateIST || 'history'}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      },
+
+      renderAll() {
+        const rpt = this.lastReport;
+        if (!rpt || !rpt.summary) return;
+        const s = rpt.summary;
+        const cfg = rpt.config || { dailyMaxTrades: 5 };
+        const maxD = Number(cfg.dailyMaxTrades || 5);
+        const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+
+        setEl('nav-journal-quota-badge', `${s.todayAiCount}/${maxD} AI`);
+        setEl('tj-date-ist', `${rpt.dateIST} · ${rpt.istTime}`);
+        setEl('tj-status-line', rpt.lastScanMessage || 'AI Journal synced.');
+        setEl('tj-quota-text', `${s.todayAiCount} / ${maxD} AI Trades Used Today (${s.todayAiRemaining} left)`);
+
+        const slotsEl = document.getElementById('tj-quota-slots');
+        if (slotsEl) {
+          let slotsHtml = '';
+          const todayAi = (rpt.todayTrades || []).filter(t => t.source === 'AI_AUTO').sort((a, b) => a.daySlot - b.daySlot);
+          for (let i = 1; i <= maxD; i++) {
+            const tr = todayAi[i - 1];
+            if (tr) {
+              const cls = tr.side === 'BUY' ? 'bg-emerald-500/25 border-emerald-400 text-emerald-300' : 'bg-rose-500/25 border-rose-400 text-rose-300';
+              slotsHtml += `<span class="px-2 py-0.5 rounded border text-[10px] font-bold ${cls}" title="${tr.symbol} ${tr.side} @ ₹${tr.entryPrice}">#${i} ${tr.symbol}</span>`;
+            } else {
+              slotsHtml += `<span class="px-2 py-0.5 rounded border border-[#23314f] bg-[#080c16] text-slate-500 text-[10px]">#${i} Ready</span>`;
+            }
+          }
+          slotsEl.innerHTML = slotsHtml;
+        }
+
+        const todayOpen = (rpt.todayTrades || []).filter(t => t.status === 'OPEN' || t.status === 'TRAIL_LOCKED').length;
+        const todayClosed = (rpt.todayTrades || []).length - todayOpen;
+        setEl('tj-kpi-today-quota', `${s.todayAiCount} / ${maxD}`);
+        setEl('tj-kpi-today-sub', `${todayOpen} Open · ${todayClosed} Closed`);
+        setEl('tj-kpi-winrate', `${Number(s.winRatePct || 0).toFixed(1)}%`);
+        setEl('tj-kpi-winrate-sub', `${s.wins}W / ${s.losses}L (${s.closedTrades} Closed)`);
+        setEl('tj-kpi-pf', Number(s.profitFactor || 0).toFixed(2));
+
+        const netEl = document.getElementById('tj-kpi-netpnl');
+        const totNet = Number(s.totalRealizedPnl || 0) + Number(s.todayOpenMtm || 0);
+        if (netEl) {
+          netEl.innerText = `${totNet >= 0 ? '+' : ''}₹${totNet.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          netEl.className = `text-xl font-bold mt-1 tabular-nums ${totNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+        setEl('tj-kpi-todaypnl-sub', `Today: ${s.todayTotalPnl >= 0 ? '+' : ''}₹${Number(s.todayTotalPnl || 0).toFixed(2)}`);
+
+        const rEl = document.getElementById('tj-kpi-avgr');
+        if (rEl) {
+          rEl.innerText = `${s.avgRMultiple >= 0 ? '+' : ''}${Number(s.avgRMultiple || 0).toFixed(2)}R`;
+          rEl.className = `text-xl font-bold mt-1 tabular-nums ${s.avgRMultiple >= 0 ? 'text-cyan-400' : 'text-rose-400'}`;
+        }
+        setEl('tj-kpi-maxdd', `${Number(s.maxDrawdownPct || 0).toFixed(2)}%`);
+
+        this.renderTodayTable();
+        this.renderAlertsFeed();
+        this.renderDailySummariesTable();
+        this.renderArchiveTable();
+      },
+
+      renderTodayTable() {
+        const tbl = document.getElementById('table-journal-today');
+        const badge = document.getElementById('tj-today-badge');
+        if (!tbl) return;
+        const rows = this.lastReport?.todayTrades || [];
+        if (badge) badge.innerText = `${rows.length} trade(s) today`;
+
+        if (rows.length === 0) {
+          const clearedMsg = this.lastReport?.isMidnightCleared
+            ? `Midnight Auto-Flush Active — Today's 5 BUY/SELL AI slots are armed and will auto-pick live setups once market scan starts at 09:25 IST (or log a paper trade anytime).`
+            : `0 / ${this.lastReport?.config?.dailyMaxTrades || 5} AI trades triggered so far today — scanning 218 NSE F&O stocks for 8/8 Apex Alpha & institutional BUY/SELL setups.`;
+          tbl.innerHTML = `<tbody><tr><td colspan="12" class="p-8 text-center text-slate-400 text-xs">${clearedMsg}</td></tr></tbody>`;
+          return;
+        }
+
+        let html = `
+          <thead>
+            <tr class="text-[10px] font-bold text-slate-400 border-b border-[#172033] bg-[#090d16] uppercase">
+              <th class="p-2.5">Slot</th>
+              <th class="p-2.5">Time IST</th>
+              <th class="p-2.5">Symbol</th>
+              <th class="p-2.5">Side</th>
+              <th class="p-2.5">Strategy &amp; AI Thesis</th>
+              <th class="p-2.5 text-right">Entry ₹</th>
+              <th class="p-2.5 text-right">LTP / Exit ₹</th>
+              <th class="p-2.5 text-right">SL / Trail ₹</th>
+              <th class="p-2.5 text-right">Target ₹</th>
+              <th class="p-2.5 text-right">Qty</th>
+              <th class="p-2.5 text-right">P&amp;L / R</th>
+              <th class="p-2.5">Status &amp; Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#172033]">`;
+
+        rows.forEach(t => {
+          const isOpen = t.status === 'OPEN' || t.status === 'TRAIL_LOCKED';
+          const pnlCls = t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+          const sideCls = t.side === 'BUY' ? 'text-emerald-300' : 'text-rose-300';
+          const statusCls = t.status === 'WIN'
+            ? 'text-emerald-400'
+            : t.status === 'LOSS'
+              ? 'text-rose-400'
+              : t.status === 'TRAIL_LOCKED'
+                ? 'text-amber-300'
+                : 'text-cyan-300';
+          html += `
+            <tr class="hover:bg-[#0f1524] transition">
+              <td class="p-2.5 font-bold text-slate-300">${t.daySlot > 0 ? `#${t.daySlot}` : 'MAN'}</td>
+              <td class="p-2.5 text-slate-400">${t.entryTimeIST}</td>
+              <td class="p-2.5 font-bold text-white cursor-pointer hover:text-cyan-400" onclick="openTradingViewChart('${t.symbol}')">${t.symbol} ↗</td>
+              <td class="p-2.5 font-extrabold ${sideCls}">${t.side}</td>
+              <td class="p-2.5 max-w-xs">
+                <div class="font-bold text-amber-300">${t.strategy} · ${t.convictionLabel}</div>
+                <div class="text-[10px] text-slate-400 truncate" title="${String(t.thesis || '').replace(/"/g, '&quot;')}">${t.thesis}</div>
+              </td>
+              <td class="p-2.5 text-right text-slate-200">₹${t.entryPrice}</td>
+              <td class="p-2.5 text-right font-bold text-white">₹${isOpen ? t.currentPrice : (t.exitPrice || t.currentPrice)}</td>
+              <td class="p-2.5 text-right ${t.trailLocked ? 'text-amber-300 font-bold' : 'text-rose-300'}">₹${t.stopLoss}${t.trailLocked ? ' (LOCKED)' : ''}</td>
+              <td class="p-2.5 text-right text-emerald-300">₹${t.targetPrice}</td>
+              <td class="p-2.5 text-right text-slate-300">${t.qty}</td>
+              <td class="p-2.5 text-right font-bold ${pnlCls}">
+                <div>${t.pnl >= 0 ? '+' : ''}₹${Number(t.pnl || 0).toFixed(2)}</div>
+                <div class="text-[10px]">${t.rMultiple >= 0 ? '+' : ''}${Number(t.rMultiple || 0).toFixed(2)}R</div>
+              </td>
+              <td class="p-2.5">
+                <div class="font-bold ${statusCls} mb-1">${t.status}${t.exitReason ? ` · ${t.exitReason}` : ''}</div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <button type="button" onclick="AiTradingJournalEngine.shareTradeById('${t.id}')" class="px-2 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[10px] font-bold cursor-pointer">📤 Share</button>
+                  ${isOpen ? `<button type="button" onclick="AiTradingJournalEngine.closeTrade('${t.id}')" class="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold cursor-pointer">Close</button>` : ''}
+                </div>
+              </td>
+            </tr>`;
+        });
+        html += `</tbody>`;
+        tbl.innerHTML = html;
+      },
+
+      renderAlertsFeed() {
+        const box = document.getElementById('tj-alert-feed');
+        const cnt = document.getElementById('tj-alert-count');
+        if (!box) return;
+        const events = this.lastReport?.recentAlerts || [];
+        if (cnt) cnt.innerText = `${events.length} alert(s)`;
+        if (events.length === 0) {
+          box.innerHTML = `<div class="p-6 text-center text-slate-500 text-xs">Every AI BUY/SELL entry, trail lock, and target/SL exit dispatches a 5x Beep + Notification here with 1-click Share.</div>`;
+          return;
+        }
+        box.innerHTML = events.map(ev => {
+          const isBuy = ev.side === 'BUY';
+          const enc = encodeURIComponent(ev.shareText || '');
+          return `
+            <div class="p-3 rounded-lg bg-[#080d18] border border-[#1d2a42] space-y-1.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="font-extrabold ${isBuy ? 'text-emerald-400' : 'text-rose-400'}">${ev.eventType} · ${ev.side} ${ev.symbol}</span>
+                <span class="text-[10px] text-slate-400">${ev.dateIST} ${ev.timeIST} IST · 🔊 5x Beep</span>
+              </div>
+              <div class="text-[11px] text-slate-300 whitespace-pre-line">${ev.shareText}</div>
+              <div class="flex items-center justify-end gap-2 pt-1">
+                <button type="button" onclick="AiTradingJournalEngine.shareAlertText('${enc}')" class="px-2.5 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-[10px] font-bold cursor-pointer">📤 Share / Copy Alert</button>
+                <button type="button" onclick="openTradingViewChart('${ev.symbol}')" class="px-2 py-0.5 rounded bg-[#141d2e] text-slate-300 text-[10px] font-bold cursor-pointer">TV ↗</button>
+              </div>
+            </div>`;
+        }).join('');
+      },
+
+      renderDailySummariesTable() {
+        const tbl = document.getElementById('table-journal-days');
+        const cnt = document.getElementById('tj-days-count');
+        if (!tbl) return;
+        const days = this.lastReport?.dailySummaries || [];
+        if (cnt) cnt.innerText = `${days.length} day(s)`;
+        if (days.length === 0) {
+          tbl.innerHTML = `<tbody><tr><td colspan="6" class="p-6 text-center text-slate-500 text-xs">Daily win/loss &amp; P&amp;L history builds here automatically as each day runs.</td></tr></tbody>`;
+          return;
+        }
+        let html = `
+          <thead>
+            <tr class="text-[10px] font-bold text-slate-400 border-b border-[#172033] bg-[#090d16] uppercase">
+              <th class="p-2.5">Date IST</th>
+              <th class="p-2.5 text-right">Trades (AI/Man)</th>
+              <th class="p-2.5 text-right">W / L</th>
+              <th class="p-2.5 text-right">Win %</th>
+              <th class="p-2.5 text-right">Avg R</th>
+              <th class="p-2.5 text-right">Net P&amp;L</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#172033]">`;
+        days.forEach(d => {
+          const pnlCls = d.netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+          html += `
+            <tr class="hover:bg-[#0f1524]">
+              <td class="p-2.5 font-bold text-white">${d.dateIST}</td>
+              <td class="p-2.5 text-right text-slate-300">${d.totalTrades} (${d.aiTrades}A/${d.manualTrades}M)</td>
+              <td class="p-2.5 text-right text-slate-300">${d.wins}W / ${d.losses}L</td>
+              <td class="p-2.5 text-right font-bold text-cyan-300">${d.winRatePct.toFixed(1)}%</td>
+              <td class="p-2.5 text-right ${d.avgR >= 0 ? 'text-emerald-300' : 'text-rose-300'}">${d.avgR >= 0 ? '+' : ''}${d.avgR.toFixed(2)}R</td>
+              <td class="p-2.5 text-right font-bold ${pnlCls}">${d.netPnl >= 0 ? '+' : ''}₹${d.netPnl.toFixed(2)}</td>
+            </tr>`;
+        });
+        html += `</tbody>`;
+        tbl.innerHTML = html;
+      },
+
+      renderArchiveTable() {
+        const table = document.getElementById('table-journal');
+        if (!table) return;
+        const all = [...(this.lastReport?.todayTrades || []), ...(this.lastReport?.historyTrades || [])];
+        const q = (document.getElementById('tj-search-input')?.value || '').trim().toUpperCase();
+        const filtered = all.filter(t => {
+          if (q && !String(t.symbol || '').toUpperCase().includes(q)) return false;
+          if (this.activeFilter === 'WIN') return t.status === 'WIN';
+          if (this.activeFilter === 'LOSS') return t.status === 'LOSS';
+          if (this.activeFilter === 'BUY') return t.side === 'BUY';
+          if (this.activeFilter === 'SELL') return t.side === 'SELL';
+          if (this.activeFilter === 'AI_AUTO') return t.source === 'AI_AUTO';
+          if (this.activeFilter === 'MANUAL') return t.source === 'MANUAL';
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          table.innerHTML = `<tbody><tr><td colspan="10" class="p-8 text-center text-slate-500 text-xs">No matching journal trades recorded yet.</td></tr></tbody>`;
+          return;
+        }
+
+        let html = `
+          <thead>
+            <tr class="text-[10px] font-bold text-slate-400 border-b border-[#172033] bg-[#090d16] uppercase">
+              <th class="p-3">DATE &amp; TIME</th>
+              <th class="p-3">SOURCE</th>
+              <th class="p-3">SYMBOL</th>
+              <th class="p-3">SIDE</th>
+              <th class="p-3 text-right">ENTRY ₹</th>
+              <th class="p-3 text-right">EXIT / LTP ₹</th>
+              <th class="p-3 text-right">P&amp;L</th>
+              <th class="p-3 text-right">R-MULTIPLE</th>
+              <th class="p-3">SETUP</th>
+              <th class="p-3">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#172033]">`;
+        filtered.forEach(t => {
+          const isOpen = t.status === 'OPEN' || t.status === 'TRAIL_LOCKED';
+          const pnlCls = t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+          html += `
+            <tr class="hover:bg-[#0f1524] transition">
+              <td class="p-3 text-slate-400">${t.dateIST} ${t.entryTimeIST}</td>
+              <td class="p-3 text-[11px] font-bold ${t.source === 'AI_AUTO' ? 'text-amber-300' : 'text-cyan-300'}">${t.source === 'AI_AUTO' ? `AI #${t.daySlot}` : 'MANUAL'}</td>
+              <td class="p-3 font-bold text-white cursor-pointer hover:text-cyan-400" onclick="openTradingViewChart('${t.symbol}')">${t.symbol} ↗</td>
+              <td class="p-3 font-bold ${t.side === 'BUY' ? 'text-emerald-400' : 'text-rose-400'}">${t.side}</td>
+              <td class="p-3 text-right text-slate-300">₹${t.entryPrice}</td>
+              <td class="p-3 text-right text-slate-300">₹${isOpen ? t.currentPrice : (t.exitPrice || t.currentPrice)}</td>
+              <td class="p-3 text-right font-bold ${pnlCls}">${t.pnl >= 0 ? '+' : ''}₹${Number(t.pnl || 0).toFixed(2)}</td>
+              <td class="p-3 text-right font-bold ${pnlCls}">${t.rMultiple >= 0 ? '+' : ''}${Number(t.rMultiple || 0).toFixed(2)}R</td>
+              <td class="p-3 text-amber-300">${t.strategy} (${t.status})</td>
+              <td class="p-3 flex items-center gap-1.5">
+                <button type="button" onclick="AiTradingJournalEngine.shareTradeById('${t.id}')" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold cursor-pointer">Share</button>
+                <button type="button" onclick="openTradingViewChart('${t.symbol}')" class="px-2 py-0.5 rounded bg-[#141d2e] text-slate-300 text-[10px] font-bold cursor-pointer">TV ↗</button>
+              </td>
+            </tr>`;
+        });
+        html += '</tbody>';
+        table.innerHTML = html;
+      }
+    };
+
     const ClaudeNotificationEngine = {
       soundEnabled: true,
       pushEnabled: false,
@@ -16861,7 +18548,7 @@ ${json.message || 'Unauthorized token.'}`);
 
       setFilter(filter) {
         this.currentFilter = filter;
-        const filterIds = ['ALL', 'Moneycontrol', 'ETMarkets', 'ZeeBusiness', 'StockEdge', 'Trendlyne', 'POSITIVE', 'NEGATIVE', 'STOCK_LISTED'];
+        const filterIds = ['ALL', 'AI_JOURNAL', 'Moneycontrol', 'ETMarkets', 'ZeeBusiness', 'StockEdge', 'Trendlyne', 'POSITIVE', 'NEGATIVE', 'STOCK_LISTED'];
         filterIds.forEach(id => {
           const btn = document.getElementById('notif-filter-' + id);
           if (btn) {
@@ -16919,6 +18606,145 @@ ${json.message || 'Unauthorized token.'}`);
           }
         } catch (e) {
           console.warn('Audio chime error:', e);
+        }
+      },
+
+      playFiveBeep(direction = 'BUY', forcePlay = false) {
+        if (!forcePlay && !this.soundEnabled) return;
+        const isBear = String(direction || '').toUpperCase().includes('SELL') || String(direction || '').toUpperCase().includes('DOWN');
+        if (this.hasAndroidBridge() && typeof window.MuhuratAndroidBridge.playFiveBeep === 'function') {
+          try {
+            window.MuhuratAndroidBridge.playFiveBeep(isBear ? 'SELL' : 'BUY');
+            return;
+          } catch (e) {}
+        }
+        try {
+          const ctx = this.getAudioContext();
+          if (!ctx) return;
+          const base = ctx.currentTime + 0.02;
+          const freqs = isBear
+            ? [987.77, 880.0, 784.0, 659.25, 523.25]
+            : [784.0, 880.0, 987.77, 1174.66, 1318.51];
+          const oscType = isBear ? 'triangle' : 'sine';
+          for (let i = 0; i < 5; i++) {
+            const startAt = base + i * 0.21;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = oscType;
+            osc.frequency.setValueAtTime(freqs[i], startAt);
+            gain.gain.setValueAtTime(0.001, startAt);
+            gain.gain.exponentialRampToValueAtTime(0.24, startAt + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.001, startAt + 0.145);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startAt);
+            osc.stop(startAt + 0.155);
+          }
+        } catch (e) {
+          console.warn('5x beep audio error:', e);
+        }
+      },
+
+      notifyAiJournalEvents(events) {
+        if (!Array.isArray(events) || events.length === 0) return;
+        let seenMap = {};
+        try {
+          seenMap = JSON.parse(localStorage.getItem('muhurat_ai_journal_seen_events_v1') || '{}') || {};
+        } catch (e) { seenMap = {}; }
+
+        const unseen = events.filter(ev => ev && ev.eventId && !seenMap[ev.eventId]);
+        if (unseen.length === 0) return;
+
+        unseen.forEach(ev => { seenMap[ev.eventId] = Date.now(); });
+        try {
+          const keys = Object.keys(seenMap);
+          if (keys.length > 200) {
+            keys.sort((a, b) => seenMap[a] - seenMap[b]).slice(0, keys.length - 150).forEach(k => delete seenMap[k]);
+          }
+          localStorage.setItem('muhurat_ai_journal_seen_events_v1', JSON.stringify(seenMap));
+        } catch (e) {}
+
+        // Trigger unmistakable 5 Beep Sound once per fresh AI trade batch
+        this.playFiveBeep(unseen[0].side);
+
+        unseen.forEach(ev => {
+          const isBuy = ev.side === 'BUY';
+          const emoji = ev.eventType === 'AI_EXIT' ? '🏁' : ev.eventType === 'AI_TRAIL_LOCK' ? '🔒' : (isBuy ? '🟢' : '🔴');
+          const title = `${emoji} AI JOURNAL ${ev.side} • ${ev.symbol} (${ev.eventType})`;
+          const body = ev.shareText || `${ev.symbol} ${ev.side} @ ₹${ev.price}`;
+          this.sendSystemPush(title, body, `ai-journal-${ev.eventId}`);
+          if (typeof showToast === 'function') {
+            showToast(`${emoji} AI ${ev.side}: ${ev.symbol} @ ₹${ev.price} (🔊 5x Beep + Notification)`, isBuy ? 'success' : 'error');
+          }
+          this.addHistory({
+            type: 'ai_journal',
+            isUpside: isBuy,
+            isPositive: isBuy,
+            source: 'AI JOURNAL',
+            sourceTab: 'AI TRADING JOURNAL',
+            symbol: ev.symbol,
+            side: ev.side,
+            time: ev.timeIST || 'Live IST',
+            title,
+            message: body,
+            price: ev.price,
+            shareText: body,
+            beepCount: 5
+          });
+        });
+      },
+
+      triggerTestFiveBeepJournalAlert() {
+        const ist = typeof getISTDatePartsNow === 'function' ? getISTDatePartsNow() : { dateStr: '2026-11-18', hours: 10, minutes: 15, seconds: 0 };
+        const timeStr = `${String(ist.hours || 0).padStart(2, '0')}:${String(ist.minutes || 0).padStart(2, '0')}:${String(ist.seconds || 0).padStart(2, '0')}`;
+        const sample = {
+          eventId: `test-5beep-${Date.now()}`,
+          eventType: 'AI_ENTRY',
+          dateIST: ist.dateStr,
+          timeIST: timeStr,
+          symbol: 'RELIANCE',
+          side: 'BUY',
+          strategy: 'Apex Alpha Coil (PF 1.87)',
+          price: 1340,
+          entryPrice: 1340,
+          stopLoss: 1326.5,
+          targetPrice: 1361.6,
+          qty: 74,
+          rrMultiple: 1.6,
+          daySlot: 1,
+          dailyMaxTrades: 5,
+          beepCount: 5,
+          shareText: `🤖 AI TRADING JOURNAL TEST ALERT (1/5)\n🟢 BUY RELIANCE @ ₹1340 | Qty: 74\nSL: ₹1326.5 | Target: ₹1361.6 (R:R 1:1.6)\nStrategy: Apex Alpha Coil (PF 1.87) | ${ist.dateStr} ${timeStr} IST`
+        };
+        const fire = () => {
+          this.playFiveBeep('BUY', true);
+          this.sendSystemPush('🤖 AI JOURNAL BUY • RELIANCE', sample.shareText, `test-${sample.eventId}`);
+          if (typeof showToast === 'function') {
+            showToast('🔊 5x Beep + AI BUY Notification Alert Dispatched (RELIANCE)!', 'success');
+          }
+          this.addHistory({
+            type: 'ai_journal',
+            isUpside: true,
+            isPositive: true,
+            source: 'AI JOURNAL',
+            sourceTab: 'AI TRADING JOURNAL',
+            symbol: sample.symbol,
+            side: 'BUY',
+            time: timeStr,
+            title: '🟢 AI JOURNAL BUY • RELIANCE (5x Beep Test)',
+            message: sample.shareText,
+            price: sample.price,
+            shareText: sample.shareText,
+            beepCount: 5
+          });
+        };
+        if (!this.hasAndroidBridge() && 'Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission().then(perm => {
+            this.pushEnabled = (perm === 'granted');
+            fire();
+          });
+        } else {
+          fire();
         }
       },
 
@@ -17273,6 +19099,7 @@ ${json.message || 'Unauthorized token.'}`);
 
         const filtered = this.history.filter(item => {
           if (this.currentFilter === 'ALL') return true;
+          if (this.currentFilter === 'AI_JOURNAL') return item.type === 'ai_journal';
           if (this.currentFilter === 'POSITIVE') return item.isPositive === true;
           if (this.currentFilter === 'NEGATIVE') return item.isPositive === false;
           if (this.currentFilter === 'STOCK_LISTED') return item.type === 'stock_listed';
@@ -17281,13 +19108,37 @@ ${json.message || 'Unauthorized token.'}`);
         });
 
         if (filtered.length === 0) {
-          container.innerHTML = '<div class="text-center py-8 px-4 text-slate-400 text-xs font-mono leading-relaxed">⚡ Live Notification Monitor Active<br><span class="text-[10.5px] text-slate-500">Only newly listed live-time candidates on Top Momentum &amp; Money Flow appear here with a 3x Beep.<br>All notifications auto-clear after market close for a fresh start next trading day.</span></div>';
+          container.innerHTML = '<div class="text-center py-8 px-4 text-slate-400 text-xs font-mono leading-relaxed">⚡ Live Notification Monitor Active<br><span class="text-[10.5px] text-slate-500">AI Trading Journal BUY/SELL trades trigger a 5x Beep + Share Alert; Top Momentum &amp; Money Flow alerts trigger 3x Beep.</span></div>';
           return;
         }
 
         let html = '';
         filtered.forEach((n) => {
-          if (n.type === 'stock_listed') {
+          if (n.type === 'ai_journal') {
+            const isBuy = n.side === 'BUY' || n.isUpside;
+            const border = isBuy ? 'border-emerald-500/50 bg-[#08151d]' : 'border-rose-500/50 bg-[#170914]';
+            const encShare = encodeURIComponent(n.shareText || n.message || '');
+            html += `
+              <div class="p-3 rounded-xl border ${border} space-y-2 shadow-md">
+                <div class="flex items-center justify-between text-xs font-mono gap-1 flex-wrap">
+                  <div class="flex items-center gap-1.5">
+                    <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 font-black text-[9px]">AI JOURNAL · 5x BEEP</span>
+                    <span class="font-bold px-2 py-0.5 rounded ${isBuy ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'}">${n.side || (isBuy ? 'BUY' : 'SELL')}</span>
+                  </div>
+                  <span class="text-cyan-300 font-bold">🕒 ${n.time} IST</span>
+                </div>
+                <div class="text-sm font-extrabold text-white flex items-center justify-between">
+                  <span class="cursor-pointer hover:text-cyan-400" onclick="openTradingViewChart('${n.symbol}')">${n.symbol} ↗</span>
+                  <span class="text-amber-300 font-mono">₹${n.price}</span>
+                </div>
+                <div class="text-[11px] text-slate-200 whitespace-pre-line leading-snug">${n.message}</div>
+                <div class="flex items-center justify-between pt-2 border-t border-[#1a2538] text-[10px] font-mono">
+                  <button type="button" onclick="AiTradingJournalEngine.shareAlertText('${encShare}')" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold hover:bg-cyan-500/30 cursor-pointer">📤 Share Alert</button>
+                  <button type="button" onclick="switchTab('journal')" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold hover:bg-emerald-500/30 cursor-pointer">Open Journal &rarr;</button>
+                </div>
+              </div>
+            `;
+          } else if (n.type === 'stock_listed') {
             const border = n.isUpside ? 'border-emerald-500/40 bg-[#0a141d]' : 'border-rose-500/40 bg-[#160b13]';
             const badgeColor = n.isUpside ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400';
             const tabPill = n.sourceTab ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30 font-black text-[9px]">${n.sourceTab}</span>` : '';
@@ -17440,6 +19291,9 @@ ${json.message || 'Unauthorized token.'}`);
           if (typeof ClaudeFnoEngine !== 'undefined') ClaudeFnoEngine.init();
           if (typeof SmartMoneyConceptsEngine !== 'undefined') SmartMoneyConceptsEngine.init();
           if (typeof PriceActionEngine !== 'undefined') PriceActionEngine.init();
+          if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.init();
+          if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.init();
+          if (typeof AiTradingJournalEngine !== 'undefined') AiTradingJournalEngine.init();
         } catch (e) {
           console.warn('Deferred engine init warning:', e);
         }
@@ -19538,8 +21392,8 @@ generateOptionChain(symbol, spotPrice, strategy, isBull) {
         <span id="audio-label">Sound: ON</span>
       </button>
 
-      <!-- Test 3x Beep Alert -->
-      <button onclick="ClaudeNotificationEngine.triggerTestTripleBeepNotification('MONEY FLOW')" class="px-2 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold cursor-pointer" title="Test Web & Mobile Notification + 3x Beep">🔔 3x Beep</button>
+      <!-- Test 5x Beep AI Alert -->
+      <button onclick="ClaudeNotificationEngine.triggerTestFiveBeepJournalAlert()" class="px-2 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold cursor-pointer" title="Test AI Journal Notification + 5x Beep Sound">🔔 5x Beep</button>
 
       <!-- Clear Button -->
       <button onclick="ClaudeNotificationEngine.clearAllNotifications(false);" class="text-slate-400 hover:text-rose-400 text-[10.5px] font-mono cursor-pointer">
@@ -19550,6 +21404,7 @@ generateOptionChain(symbol, spotPrice, strategy, isBull) {
     <!-- Source Filter Ribbon in Drawer -->
     <div class="px-3 py-2 bg-[#090e1a] border-b border-[#1a253a] flex items-center gap-1.5 overflow-x-auto text-[10px] font-mono no-scrollbar shrink-0">
       <button onclick="ClaudeNotificationEngine.setFilter('ALL')" id="notif-filter-ALL" class="px-2 py-0.5 rounded font-bold bg-cyan-500 text-black whitespace-nowrap cursor-pointer">ALL</button>
+      <button onclick="ClaudeNotificationEngine.setFilter('AI_JOURNAL')" id="notif-filter-AI_JOURNAL" class="px-2 py-0.5 rounded font-bold bg-[#141d2e] text-emerald-300 hover:bg-[#1a263d] whitespace-nowrap cursor-pointer">🤖 AI Journal</button>
       <button onclick="ClaudeNotificationEngine.setFilter('Moneycontrol')" id="notif-filter-Moneycontrol" class="px-2 py-0.5 rounded font-bold bg-[#141d2e] text-[#00e5a3] hover:bg-[#1a263d] whitespace-nowrap cursor-pointer">Moneycontrol</button>
       <button onclick="ClaudeNotificationEngine.setFilter('ET Markets')" id="notif-filter-ETMarkets" class="px-2 py-0.5 rounded font-bold bg-[#141d2e] text-[#ff4b4b] hover:bg-[#1a263d] whitespace-nowrap cursor-pointer">ET Markets</button>
       <button onclick="ClaudeNotificationEngine.setFilter('Zee Business')" id="notif-filter-ZeeBusiness" class="px-2 py-0.5 rounded font-bold bg-[#141d2e] text-[#ffab00] hover:bg-[#1a263d] whitespace-nowrap cursor-pointer">Zee Business</button>

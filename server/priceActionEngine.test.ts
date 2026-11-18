@@ -191,7 +191,7 @@ test('All 9 BUY conditions trigger BUY SIGNAL when multi-timeframe Price Action 
   assert.equal(row.rsLabel, 'RELATIVE STRENGTH');
 });
 
-test('SELL conditions mirror BUY logic cleanly (Relative Weakness, Bearish Candle, Bearish BOS)', () => {
+test('SELL conditions mirror BUY logic cleanly and Condition 8 enforces Stock RS < FNO & All Index (not < NIFTY)', () => {
   const bullBars = buildBullish9Of9Bars();
   // Invert around 250 so trend, sweeps, and breakouts mirror cleanly downward
   const bearBars: ClaudeFnoBar[] = bullBars.map((b) => ({
@@ -201,7 +201,9 @@ test('SELL conditions mirror BUY logic cleanly (Relative Weakness, Bearish Candl
     low: Number((250 - b.high).toFixed(2)),
     close: Number((250 - b.close).toFixed(2)),
   }));
-  const row = evaluatePriceActionSide({
+
+  // 1) Stock (-2.9%) < FNO (-0.8%) and < All Index (+0.7%) -> Condition 8 PASSES (9/9 SELL SIGNAL)
+  const passRow = evaluatePriceActionSide({
     symbol: 'INDUSINDBK',
     displayName: 'IndusInd Bank',
     category: 'EQUITY_FNO',
@@ -213,6 +215,8 @@ test('SELL conditions mirror BUY logic cleanly (Relative Weakness, Bearish Candl
     price: 124.0,
     changePercent: -2.9,
     niftyChangePct: 0.4,
+    fnoAvgChangePct: -0.8,
+    allIndexChangePct: 0.7,
     sector: 'Banking & Financials',
     sectorChangePct: -1.1,
     bidAskRatio: 0.45,
@@ -224,11 +228,100 @@ test('SELL conditions mirror BUY logic cleanly (Relative Weakness, Bearish Candl
     riskPct: 1,
   });
 
-  assert.equal(row.score, 9);
-  assert.equal(row.isFinalSignal, true);
-  assert.equal(row.signalBadge, 'SELL SIGNAL');
-  assert.equal(row.rsLabel, 'RELATIVE WEAKNESS');
-  assert.equal(row.orbStatus, 'BELOW_ORL');
+  const c8Pass = passRow.conditions.find((c) => c.number === 8);
+  assert.ok(c8Pass);
+  assert.equal(c8Pass.id, 'RS_LT_FNO_AND_ALL_INDEX');
+  assert.equal(c8Pass.label, 'Stock RS < FNO & All Index');
+  assert.equal(c8Pass.passed, true);
+  assert.equal(passRow.score, 9);
+  assert.equal(passRow.isFinalSignal, true);
+  assert.equal(passRow.signalBadge, 'SELL SIGNAL');
+  assert.equal(passRow.rsLabel, 'RELATIVE WEAKNESS');
+  assert.equal(passRow.rsBenchmarkLabel, 'FNO & ALL INDEX');
+  assert.equal(passRow.orbStatus, 'BELOW_ORL');
+
+  // 2) Stock (-0.4%) IS < NIFTY (+0.4%), BUT NOT < FNO (-0.8%) -> Condition 8 FAILS (8/9, NO SELL SIGNAL)
+  const failOldNiftyRuleRow = evaluatePriceActionSide({
+    symbol: 'INDUSINDBK',
+    displayName: 'IndusInd Bank',
+    category: 'EQUITY_FNO',
+    side: 'SELL',
+    bars5m: bearBars,
+    bars15m: resampleClaudeBars(bearBars, 15),
+    bars30m: resampleClaudeBars(bearBars, 30),
+    bars1h: resampleClaudeBars(bearBars, 60),
+    price: 124.0,
+    changePercent: -0.4,
+    niftyChangePct: 0.4,
+    fnoAvgChangePct: -0.8,
+    allIndexChangePct: 0.7,
+    sector: 'Banking & Financials',
+    sectorChangePct: -1.1,
+    bidAskRatio: 0.45,
+    orderBookBias: 'Heavy Seller Supply',
+    oiChangePct: 8.1,
+    rawVolume: 4100000,
+    tradedValueCr: 508.4,
+    capital: 100000,
+    riskPct: 1,
+  });
+
+  const c8Fail = failOldNiftyRuleRow.conditions.find((c) => c.number === 8);
+  assert.ok(c8Fail);
+  assert.equal(c8Fail.id, 'RS_LT_FNO_AND_ALL_INDEX');
+  assert.equal(c8Fail.passed, false);
+  assert.equal(failOldNiftyRuleRow.score, 8);
+  assert.equal(failOldNiftyRuleRow.isFinalSignal, false);
+});
+
+test('buildPriceActionReport computes FNO Avg % and All Index Avg % across F&O stocks and all benchmark indices', () => {
+  const bullBars = buildBullish9Of9Bars();
+  const bearBars: ClaudeFnoBar[] = bullBars.map((b) => ({
+    ...b,
+    open: Number((250 - b.open).toFixed(2)),
+    high: Number((250 - b.low).toFixed(2)),
+    low: Number((250 - b.high).toFixed(2)),
+    close: Number((250 - b.close).toFixed(2)),
+  }));
+  const report = buildPriceActionReport({
+    stocks: [
+      {
+        symbol: 'INDUSINDBK',
+        name: 'IndusInd Bank',
+        sector: 'Banking & Financials',
+        price: 124,
+        changePercent: -3.0,
+        volume: 3000000,
+        bidAskRatio: 0.5,
+      } as any,
+      {
+        symbol: 'RELIANCE',
+        name: 'Reliance Industries',
+        sector: 'Energy & Oil',
+        price: 1320,
+        changePercent: 1.0,
+        volume: 2000000,
+        bidAskRatio: 1.3,
+      } as any,
+    ],
+    getExtendedBarsFn: (sym) => (sym === 'INDUSINDBK' ? bearBars : undefined) as any,
+    candlesMap: new Map(),
+    indexQuotes: {
+      'NIFTY 50': { chp: 0.5 } as any,
+      BANKNIFTY: { chp: 1.5 } as any,
+      FINNIFTY: { chp: 1.0 } as any,
+      SENSEX: { chp: 1.0 } as any,
+    },
+    isMidnightCleared: false,
+  });
+
+  // FNO Avg = (-3.0 + 1.0) / 2 = -1.0; All Index Avg = (0.5 + 1.5 + 1.0 + 1.0) / 4 = 1.0; Composite = 0.0
+  assert.equal(report.fnoAvgChangePct, -1.0);
+  assert.equal(report.allIndexChangePct, 1.0);
+  assert.equal(report.fnoAndAllIndexPct, 0);
+  const indus = report.categories.allSignals.find((r) => r.symbol === 'INDUSINDBK');
+  assert.ok(indus);
+  assert.equal(indus.conditions.find((c) => c.number === 8)?.passed, true);
 });
 
 test('buildPriceActionReport generates zero fake rows when real intraday candles are missing', () => {
