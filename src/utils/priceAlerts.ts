@@ -530,3 +530,294 @@ export function checkOrderQtyAndRvolAlerts(
 
   return newOrderAlerts;
 }
+
+export interface CumulativeDeltaEvaluationState {
+  prevDeltas: Map<string, number>;
+  lastTriggered: Map<string, number>;
+}
+
+const defaultCumulativeDeltaState: CumulativeDeltaEvaluationState = {
+  prevDeltas: new Map<string, number>(),
+  lastTriggered: new Map<string, number>(),
+};
+
+/**
+ * Computes intraday session Cumulative Volume Delta (CVD) from OHLCV bars using Close Location Value (CLV).
+ */
+export function calculateSessionCumulativeDelta(
+  candles: Array<{ open: number; high: number; low: number; close: number; volume: number }>
+): number {
+  if (!Array.isArray(candles) || candles.length === 0) return 0;
+  let cumDelta = 0;
+  for (const bar of candles) {
+    const vol = Math.max(0, Number(bar.volume) || 0);
+    if (vol <= 0) continue;
+    const high = Number(bar.high) || 0;
+    const low = Number(bar.low) || 0;
+    const close = Number(bar.close) || 0;
+    const open = Number(bar.open) || 0;
+    const range = high - low;
+    let clv = 0;
+    if (range > 0.0001) {
+      clv = ((close - low) - (high - close)) / range;
+    } else if (close > open) {
+      clv = 0.5;
+    } else if (close < open) {
+      clv = -0.5;
+    }
+    cumDelta += clv * vol;
+  }
+  const rounded = Math.round(cumDelta);
+  return rounded === 0 ? 0 : rounded;
+}
+
+/**
+ * Resolves a stock's numeric Cumulative Delta, preferring the server-computed session CVD
+ * and falling back deterministically to intraday CLV * volume or order-book imbalance.
+ */
+export function getStockCumulativeDelta(stock: ScannedStock): number {
+  if (typeof stock.cumulativeDelta === 'number' && Number.isFinite(stock.cumulativeDelta)) {
+    return Math.round(stock.cumulativeDelta);
+  }
+  const high = Number(stock.indicators?.high) || 0;
+  const low = Number(stock.indicators?.low) || 0;
+  const close = Number(stock.price) || Number(stock.indicators?.close) || 0;
+  const vol = Math.max(0, Number(stock.volume) || 0);
+  if (high > low && vol > 0) {
+    const clv = ((close - low) - (high - close)) / (high - low);
+    return Math.round(clv * vol * 0.35);
+  }
+  if (typeof stock.bidQty === 'number' && typeof stock.askQty === 'number') {
+    return Math.round(stock.bidQty - stock.askQty);
+  }
+  return 0;
+}
+
+export function formatSignedDelta(value: number): string {
+  const rounded = Math.round(value);
+  const sign = rounded > 0 ? '+' : rounded < 0 ? '-' : '';
+  return `${sign}${Math.abs(rounded).toLocaleString('en-IN')}`;
+}
+
+/**
+ * Detects when any stock's Cumulative Delta crosses the user's configured threshold value.
+ * Supports ABOVE (>= threshold), BELOW (<= threshold), and BOTH (>= +|threshold| or <= -|threshold|).
+ */
+export function checkCumulativeDeltaAlerts(
+  stocks: ScannedStock[],
+  config: AlertConfig,
+  options?: {
+    state?: CumulativeDeltaEvaluationState;
+    now?: number;
+    cooldownMs?: number;
+    notifyBrowser?: boolean;
+  }
+): AlertLogItem[] {
+  if (config.enableCumulativeDeltaAlert === false) return [];
+
+  const rawThreshold = config.cumulativeDeltaThreshold;
+  if (rawThreshold === undefined || rawThreshold === null || !Number.isFinite(Number(rawThreshold))) {
+    return [];
+  }
+
+  const threshold = Number(rawThreshold);
+  const direction = config.cumulativeDeltaDirection ?? 'BOTH';
+  const state = options?.state ?? defaultCumulativeDeltaState;
+  const now = options?.now ?? Date.now();
+  const cooldownMs = options?.cooldownMs ?? 300000; // 5-minute cooldown per symbol & direction
+  const notifyBrowser = options?.notifyBrowser ?? true;
+
+  const triggeredAlerts: AlertLogItem[] = [];
+
+  for (const stock of stocks) {
+    if (!stock?.symbol) continue;
+    const curr = getStockCumulativeDelta(stock);
+    const prev = state.prevDeltas.get(stock.symbol);
+    state.prevDeltas.set(stock.symbol, curr);
+
+    let crossedDirection: 'ABOVE' | 'BELOW' | null = null;
+    let appliedThreshold = threshold;
+
+    if (direction === 'ABOVE') {
+      if (curr >= threshold && (prev === undefined || prev < threshold)) {
+        crossedDirection = 'ABOVE';
+        appliedThreshold = threshold;
+      }
+    } else if (direction === 'BELOW') {
+      if (curr <= threshold && (prev === undefined || prev > threshold)) {
+        crossedDirection = 'BELOW';
+        appliedThreshold = threshold;
+      }
+    } else {
+      const absThreshold = Math.abs(threshold);
+      if (absThreshold === 0) {
+        if (prev !== undefined && prev < 0 && curr >= 0) {
+          crossedDirection = 'ABOVE';
+          appliedThreshold = 0;
+        } else if (prev !== undefined && prev > 0 && curr <= 0) {
+          crossedDirection = 'BELOW';
+          appliedThreshold = 0;
+        }
+      } else if (curr >= absThreshold && (prev === undefined || prev < absThreshold)) {
+        crossedDirection = 'ABOVE';
+        appliedThreshold = absThreshold;
+      } else if (curr <= -absThreshold && (prev === undefined || prev > -absThreshold)) {
+        crossedDirection = 'BELOW';
+        appliedThreshold = -absThreshold;
+      }
+    }
+
+    if (!crossedDirection) continue;
+
+    const cacheKey = `${stock.symbol}_${crossedDirection}_${appliedThreshold}`;
+    const lastTrigger = state.lastTriggered.get(cacheKey);
+    if (lastTrigger !== undefined && now - lastTrigger < cooldownMs) continue;
+
+    state.lastTriggered.set(cacheKey, now);
+
+    const isBullish = crossedDirection === 'ABOVE';
+    const rvol = Number(stock.indicators?.rvol) || 1.0;
+    const vwap = Number(stock.indicators?.vwap) || stock.price;
+    const vwapStatus: 'ABOVE' | 'BELOW' = stock.price >= vwap ? 'ABOVE' : 'BELOW';
+    const sectorStatus: 'POSITIVE' | 'NEGATIVE' = (stock.changePercent || 0) >= 0 ? 'POSITIVE' : 'NEGATIVE';
+    const newsSent: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL' =
+      stock.newsSentiment || (isBullish ? 'POSITIVE' : 'NEGATIVE');
+
+    const sentVia = [
+      'UI Notification',
+      ...(config.soundAlerts ? ['Audio Beep'] : []),
+      ...(config.enableTelegram ? ['Telegram'] : []),
+      ...(config.enableWhatsapp ? ['WhatsApp'] : []),
+      ...(config.enableEmail ? ['Email'] : []),
+    ];
+
+    const arrowLabel = isBullish ? 'crossed above' : 'crossed below';
+    const deltaStr = formatSignedDelta(curr);
+    const thresholdStr = formatSignedDelta(appliedThreshold);
+    const prevStr = prev !== undefined ? ` (from ${formatSignedDelta(prev)})` : '';
+
+    const alertItem: AlertLogItem = {
+      id: `CVD-${stock.symbol}-${crossedDirection}-${now}-${Math.floor(Math.random() * 1000)}`,
+      timestamp: new Date(now).toISOString(),
+      symbol: stock.symbol,
+      signal: isBullish ? 'BUY' : 'SELL',
+      aiScore: stock.aiScore || 85,
+      accuracyScore: stock.aiScore || 85,
+      price: stock.price,
+      entry: stock.risk?.entryPrice || stock.price,
+      stopLoss: stock.risk?.stopLoss || Number((stock.price * (isBullish ? 0.988 : 1.012)).toFixed(2)),
+      target1: stock.risk?.target1 || Number((stock.price * (isBullish ? 1.018 : 0.982)).toFixed(2)),
+      target2: stock.risk?.target2 || Number((stock.price * (isBullish ? 1.032 : 0.968)).toFixed(2)),
+      targetHitStatus: 'ACTIVE',
+      sentVia,
+      status: 'SENT',
+      alertCategory: 'CUMULATIVE_DELTA',
+      rvol,
+      cumulativeDelta: curr,
+      prevCumulativeDelta: prev,
+      cumulativeDeltaThreshold: appliedThreshold,
+      cumulativeDeltaDirection: crossedDirection,
+      reason: `Cum Δ ${deltaStr} ${arrowLabel} ${thresholdStr}${prevStr} | ₹${stock.price.toLocaleString('en-IN')}`,
+      sector: stock.sector,
+      sectorStatus,
+      sectorChangePercent: stock.sectorChangePercent ?? stock.changePercent,
+      oi: stock.oiData ? `${stock.oiData.openInterest.toFixed(2)}L` : '1.25M',
+      oiChangePercent: stock.oiData?.changeInOIPercent || 2.1,
+      volumeX: `${rvol.toFixed(1)}x Vol`,
+      rsi: stock.indicators?.rsi ?? 55,
+      vwap,
+      vwapStatus,
+      newsSentiment: newsSent,
+      newsTitle: stock.newsTitle || `${stock.symbol} Cumulative Delta threshold crossing`,
+      purchaseRationale: `Cumulative Delta Threshold Alert (${stock.symbol}): Session Cum Δ reached ${deltaStr} and ${arrowLabel} configured threshold ${thresholdStr}${prevStr}. Trading ${vwapStatus === 'ABOVE' ? 'Above' : 'Below'} VWAP (₹${vwap}) with ${rvol.toFixed(1)}x RVol.`,
+    };
+
+    triggeredAlerts.push(alertItem);
+
+    if (notifyBrowser && typeof window !== 'undefined') {
+      const emoji = isBullish ? '📈' : '📉';
+      triggerPushNotification(
+        `${emoji} Cumulative Delta Alert: ${stock.symbol}`,
+        `${stock.symbol} Cum Δ ${deltaStr} ${arrowLabel} ${thresholdStr} at ₹${stock.price.toLocaleString('en-IN')}`
+      );
+    }
+  }
+
+  return triggeredAlerts;
+}
+
+/**
+ * Builds an immediate simulated Cumulative Delta crossing AlertLogItem using the user's active threshold config
+ * so traders can test and preview UI notifications directly from AlertsView.
+ */
+export function createCumulativeDeltaTestAlert(
+  stock: ScannedStock | undefined,
+  config: AlertConfig
+): AlertLogItem {
+  const now = Date.now();
+  const rawThreshold = Number(config.cumulativeDeltaThreshold ?? 50000);
+  const directionPref = config.cumulativeDeltaDirection ?? 'BOTH';
+  const crossedDirection: 'ABOVE' | 'BELOW' =
+    directionPref === 'BELOW' || (directionPref === 'BOTH' && rawThreshold < 0)
+      ? 'BELOW'
+      : 'ABOVE';
+
+  const appliedThreshold =
+    directionPref === 'BOTH'
+      ? crossedDirection === 'ABOVE'
+        ? Math.abs(rawThreshold)
+        : -Math.abs(rawThreshold)
+      : rawThreshold;
+
+  const deltaBuffer = Math.max(2500, Math.round(Math.abs(appliedThreshold) * 0.14));
+  const simulatedCurrent =
+    crossedDirection === 'ABOVE' ? appliedThreshold + deltaBuffer : appliedThreshold - deltaBuffer;
+  const simulatedPrev =
+    crossedDirection === 'ABOVE' ? appliedThreshold - deltaBuffer : appliedThreshold + deltaBuffer;
+
+  const symbol = stock?.symbol || 'RELIANCE';
+  const price = stock?.price || 1425.5;
+  const isBullish = crossedDirection === 'ABOVE';
+  const vwap = stock?.indicators?.vwap || price;
+  const rvol = stock?.indicators?.rvol || 1.9;
+  const deltaStr = formatSignedDelta(simulatedCurrent);
+  const thresholdStr = formatSignedDelta(appliedThreshold);
+  const prevStr = formatSignedDelta(simulatedPrev);
+
+  return {
+    id: `CVD-TEST-${symbol}-${now}`,
+    timestamp: new Date(now).toISOString(),
+    symbol,
+    signal: isBullish ? 'BUY' : 'SELL',
+    aiScore: stock?.aiScore || 91,
+    accuracyScore: stock?.aiScore || 91,
+    price,
+    entry: stock?.risk?.entryPrice || price,
+    stopLoss: stock?.risk?.stopLoss || Number((price * (isBullish ? 0.988 : 1.012)).toFixed(2)),
+    target1: stock?.risk?.target1 || Number((price * (isBullish ? 1.018 : 0.982)).toFixed(2)),
+    target2: stock?.risk?.target2 || Number((price * (isBullish ? 1.032 : 0.968)).toFixed(2)),
+    targetHitStatus: 'ACTIVE',
+    sentVia: ['UI Notification', 'Alert History'],
+    status: 'SENT',
+    alertCategory: 'CUMULATIVE_DELTA',
+    rvol,
+    cumulativeDelta: simulatedCurrent,
+    prevCumulativeDelta: simulatedPrev,
+    cumulativeDeltaThreshold: appliedThreshold,
+    cumulativeDeltaDirection: crossedDirection,
+    reason: `Cum Δ ${deltaStr} ${isBullish ? 'crossed above' : 'crossed below'} ${thresholdStr} (from ${prevStr})`,
+    sector: stock?.sector || 'Energy',
+    sectorStatus: (stock?.changePercent ?? 0.8) >= 0 ? 'POSITIVE' : 'NEGATIVE',
+    sectorChangePercent: stock?.sectorChangePercent ?? stock?.changePercent ?? 0.8,
+    oi: stock?.oiData ? `${stock.oiData.openInterest.toFixed(2)}L` : '1.42M',
+    oiChangePercent: stock?.oiData?.changeInOIPercent ?? 3.1,
+    volumeX: `${rvol.toFixed(1)}x Vol`,
+    rsi: stock?.indicators?.rsi ?? 63.4,
+    vwap,
+    vwapStatus: price >= vwap ? 'ABOVE' : 'BELOW',
+    newsSentiment: isBullish ? 'POSITIVE' : 'NEGATIVE',
+    newsTitle: `${symbol} Cumulative Delta threshold test notification`,
+    purchaseRationale: `Cumulative Delta Test Trigger (${symbol}): Session Cum Δ moved from ${prevStr} to ${deltaStr}, crossing ${isBullish ? 'above' : 'below'} your ${thresholdStr} threshold.`,
+  };
+}
+

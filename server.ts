@@ -20,6 +20,7 @@ import { buildPriceActionReport } from './server/priceActionEngine';
 import { buildIntradayStockReport } from './server/intradayStockEngine';
 import { buildApexAlphaReport } from './server/apexAlphaEngine';
 import { buildMuhuratFlowReport } from './server/muhuratFlowEngine';
+import { buildTopMomentumReport } from './server/topMomentumEngine';
 import { aiTradingJournalService } from './server/aiTradingJournalEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
@@ -1496,6 +1497,31 @@ async function startServer() {
       res.status(500).json({ error: error?.message || 'Failed to compute Muhurat Flow scan' });
     }
   });
+
+  // Top Momentum • 5m Order Flow Early Ignition (Sweep -> Break -> Rej 1 -> CΔ Flip -> Zero Late Chase)
+  const handleTopMomentumScan = async (_req: express.Request, res: express.Response) => {
+    try {
+      const stocks = scannerService.getAllStocksDirect();
+      const sessionState = scannerService.getSessionStatus();
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const report = buildTopMomentumReport({
+        stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        isMidnightCleared: isCleared,
+      });
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ error: error?.message || 'Failed to compute Top Momentum Order Flow scan' });
+    }
+  };
+  app.get('/api/top-momentum/scan', handleTopMomentumScan);
+  app.get('/api/top-momentum', handleTopMomentumScan);
 
   // Autonomous Everyday AI Trading Journal (Max 5 BUY/SELL trades/day + MTM + Trail Lock + 5x Beep Alerts)
   const runAiJournalSync = async (forceScan: boolean = false, reqAccessToken?: string) => {

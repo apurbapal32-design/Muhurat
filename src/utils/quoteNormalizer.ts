@@ -261,6 +261,10 @@ export function normalizeScannedStock(raw: Partial<ScannedStock> & Record<string
     bidQty: raw.bidQty !== undefined ? Math.max(0, Math.round(parseFiniteNum(raw.bidQty) ?? 0)) : undefined,
     askQty: raw.askQty !== undefined ? Math.max(0, Math.round(parseFiniteNum(raw.askQty) ?? 0)) : undefined,
     bidAskRatio: raw.bidAskRatio !== undefined ? round2(raw.bidAskRatio, 1) : undefined,
+    cumulativeDelta:
+      raw.cumulativeDelta !== undefined && parseFiniteNum(raw.cumulativeDelta) !== undefined
+        ? Math.round(parseFiniteNum(raw.cumulativeDelta)!)
+        : undefined,
     fixedEntryPrice: raw.fixedEntryPrice !== undefined ? round2(raw.fixedEntryPrice, 0) : undefined,
     fixedStopLoss: raw.fixedStopLoss !== undefined ? round2(raw.fixedStopLoss, 0) : undefined,
     fixedTarget1: raw.fixedTarget1 !== undefined ? round2(raw.fixedTarget1, 0) : undefined,
@@ -298,6 +302,7 @@ export function compactScannedStock(raw: ScannedStock) {
     askQty: s.askQty,
     bidAskRatio: s.bidAskRatio,
     orderBookBias: s.orderBookBias,
+    cumulativeDelta: s.cumulativeDelta,
     listedAt: s.listedAt,
     signalListedAt: s.signalListedAt,
     fixedEntryPrice: s.fixedEntryPrice,

@@ -32,6 +32,7 @@ import {
 import { AlertConfig, AlertLogItem, ScannedStock, NewsItem, TradePosition } from '../types';
 import { getMarketHoursAlertTime } from '../data/marketSchedule';
 import { getInstitutionalEntryAction, getOiDetailedAction } from '../utils/sectorAndOiHelpers';
+import { formatSignedDelta } from '../utils/priceAlerts';
 
 interface AlertsViewProps {
   config: AlertConfig;
@@ -41,6 +42,7 @@ interface AlertsViewProps {
   news?: NewsItem[];
   onUpdateConfig: (newConfig: Partial<AlertConfig>) => void;
   onSendTestAlert: () => void;
+  onTestCumulativeDeltaAlert?: (draftConfig: AlertConfig) => void;
   onCreateTrade?: (data: {
     symbol: string;
     signal: 'BUY' | 'SELL';
@@ -62,6 +64,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
   news,
   onUpdateConfig,
   onSendTestAlert,
+  onTestCumulativeDeltaAlert,
   onCreateTrade,
   onCloseTrade,
   theme = 'dark',
@@ -69,7 +72,9 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
   const [subTab, setSubTab] = useState<'logs' | 'formula' | 'config'>('logs');
   const [formData, setFormData] = useState<AlertConfig>(config);
   const [savedMessage, setSavedMessage] = useState<string>('');
-  const [logCategoryFilter, setLogCategoryFilter] = useState<'ALL' | 'ACCURACY_90' | 'GAP_UP' | 'GAP_DOWN' | 'LARGE_ORDER_QTY' | 'AI_SCORE'>('ALL');
+  const [logCategoryFilter, setLogCategoryFilter] = useState<
+    'ALL' | 'ACCURACY_90' | 'GAP_UP' | 'GAP_DOWN' | 'LARGE_ORDER_QTY' | 'CUMULATIVE_DELTA' | 'AI_SCORE'
+  >('ALL');
   const [only90AccuracyOnly, setOnly90AccuracyOnly] = useState<boolean>(false);
 
   React.useEffect(() => {
@@ -271,6 +276,18 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
                   <span>{(formData.minOrderSizeQty ?? 50000) >= 1000 ? `${Math.round((formData.minOrderSizeQty ?? 50000) / 1000)}k+` : `${formData.minOrderSizeQty ?? 50000}+`} Qty ({logs.filter((l) => l.alertCategory === 'LARGE_ORDER_QTY' || l.orderQty).length})</span>
                 </button>
                 <button
+                  data-testid="filter-cum-delta-logs"
+                  onClick={() => setLogCategoryFilter('CUMULATIVE_DELTA')}
+                  className={`px-2.5 py-1 rounded transition-colors flex items-center gap-1 ${
+                    logCategoryFilter === 'CUMULATIVE_DELTA'
+                      ? 'bg-cyan-600 text-white shadow-md'
+                      : 'opacity-70 hover:opacity-100'
+                  }`}
+                >
+                  <Activity className="w-3 h-3 text-cyan-300" />
+                  <span>Cum Δ ({logs.filter((l) => l.alertCategory === 'CUMULATIVE_DELTA' || l.cumulativeDelta !== undefined).length})</span>
+                </button>
+                <button
                   onClick={() => setLogCategoryFilter('AI_SCORE')}
                   className={`px-2.5 py-1 rounded transition-colors ${
                     logCategoryFilter === 'AI_SCORE'
@@ -321,12 +338,13 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
                   if (logCategoryFilter === 'GAP_UP') return item.gapType === 'STRONG_GAP_UP' || item.gapType === 'GAP_UP' || (item.gapPct && item.gapPct > 0);
                   if (logCategoryFilter === 'GAP_DOWN') return item.gapType === 'STRONG_GAP_DOWN' || item.gapType === 'GAP_DOWN' || (item.gapPct && item.gapPct < 0);
                   if (logCategoryFilter === 'LARGE_ORDER_QTY') return item.alertCategory === 'LARGE_ORDER_QTY' || Boolean(item.orderQty);
+                  if (logCategoryFilter === 'CUMULATIVE_DELTA') return item.alertCategory === 'CUMULATIVE_DELTA' || item.cumulativeDelta !== undefined;
                   if (logCategoryFilter === 'AI_SCORE') return !item.alertCategory || item.alertCategory === 'AI_SCORE';
                   return true;
                 }).length === 0 ? (
                   <tr>
                     <td colSpan={13} className="py-8 text-center opacity-50 font-mono">
-                      No alerts match the selected filter. Live scans check for AI Accuracy &ge; {formData.minScoreToAlert}% and {(formData.minOrderSizeQty ?? 50000).toLocaleString('en-IN')}+ Quantity Purchase/Sale.
+                      No alerts match the selected filter. Live scans monitor AI Accuracy &ge; {formData.minScoreToAlert}%, {(formData.minOrderSizeQty ?? 50000).toLocaleString('en-IN')}+ Qty surges, and Cumulative Delta threshold {formatSignedDelta(formData.cumulativeDeltaThreshold ?? 50000)}.
                     </td>
                   </tr>
                 ) : (
@@ -336,6 +354,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
                       if (logCategoryFilter === 'GAP_UP') return item.gapType === 'STRONG_GAP_UP' || item.gapType === 'GAP_UP' || (item.gapPct && item.gapPct > 0);
                       if (logCategoryFilter === 'GAP_DOWN') return item.gapType === 'STRONG_GAP_DOWN' || item.gapType === 'GAP_DOWN' || (item.gapPct && item.gapPct < 0);
                       if (logCategoryFilter === 'LARGE_ORDER_QTY') return item.alertCategory === 'LARGE_ORDER_QTY' || Boolean(item.orderQty);
+                      if (logCategoryFilter === 'CUMULATIVE_DELTA') return item.alertCategory === 'CUMULATIVE_DELTA' || item.cumulativeDelta !== undefined;
                       if (logCategoryFilter === 'AI_SCORE') return !item.alertCategory || item.alertCategory === 'AI_SCORE';
                       return true;
                     })
@@ -378,11 +397,16 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
                               </div>
                             </td>
                             <td className="py-2.5 px-3 font-bold text-sm">
-                              <div className="flex items-center gap-1.5">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <span>{item.symbol}</span>
                                 {(item.alertCategory === 'LARGE_ORDER_QTY' || item.orderQty) && (
                                   <span className="px-1.5 py-0.5 text-[9px] bg-amber-500/20 text-amber-300 font-bold rounded border border-amber-500/30">
                                     {item.orderQty ? (item.orderQty >= 1000 ? `${Math.round(item.orderQty / 1000)}k+` : `${item.orderQty}+`) : '50k+'} Qty
+                                  </span>
+                                )}
+                                {(item.alertCategory === 'CUMULATIVE_DELTA' || item.cumulativeDelta !== undefined) && (
+                                  <span className="px-1.5 py-0.5 text-[9px] bg-cyan-500/20 text-cyan-300 font-bold rounded border border-cyan-500/30">
+                                    Cum Δ
                                   </span>
                                 )}
                               </div>
@@ -400,7 +424,28 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
                               </span>
                             </td>
                             <td className="py-2.5 px-3">
-                              {item.alertCategory === 'LARGE_ORDER_QTY' || item.dealType ? (
+                              {item.alertCategory === 'CUMULATIVE_DELTA' || item.cumulativeDelta !== undefined ? (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span
+                                    className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                                      item.cumulativeDeltaDirection === 'BELOW'
+                                        ? 'bg-rose-500 text-white'
+                                        : 'bg-cyan-500 text-slate-950'
+                                    }`}
+                                  >
+                                    CUM Δ {item.cumulativeDeltaDirection === 'BELOW' ? '↓ BELOW' : '↑ ABOVE'}
+                                  </span>
+                                  {item.cumulativeDelta !== undefined && (
+                                    <span className="text-[10px] font-bold text-cyan-300">
+                                      ({formatSignedDelta(item.cumulativeDelta)}
+                                      {item.cumulativeDeltaThreshold !== undefined
+                                        ? ` / ${formatSignedDelta(item.cumulativeDeltaThreshold)}`
+                                        : ''}
+                                      )
+                                    </span>
+                                  )}
+                                </div>
+                              ) : item.alertCategory === 'LARGE_ORDER_QTY' || item.dealType ? (
                                 <div className="flex items-center gap-1">
                                   <span
                                     className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
@@ -866,6 +911,23 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
                     <td className="py-3 px-4 opacity-80 text-[11px]">Overnight bearish distribution, institutional short buildup &amp; below VWAP breakdown</td>
                     <td className="py-3 px-4 text-right font-bold text-rose-400">Trigger Gap Down Alert</td>
                   </tr>
+
+                  <tr className={isDark ? 'hover:bg-slate-800/40' : 'hover:bg-slate-50'}>
+                    <td className="py-3 px-4 font-bold opacity-60">15</td>
+                    <td className="py-3 px-4 font-bold text-cyan-300 flex items-center gap-1.5">
+                      <Activity className="w-4 h-4 text-cyan-400" />
+                      <span>Cumulative Delta (CVD)</span>
+                    </td>
+                    <td className="py-3 px-4 font-bold text-cyan-400">
+                      {(formData.cumulativeDeltaDirection ?? 'BOTH') === 'BOTH'
+                        ? `Crosses ±${Math.abs(formData.cumulativeDeltaThreshold ?? 50000).toLocaleString('en-IN')} Net Shares`
+                        : `${(formData.cumulativeDeltaDirection ?? 'BOTH') === 'ABOVE' ? 'Crosses Above' : 'Crosses Below'} ${formatSignedDelta(formData.cumulativeDeltaThreshold ?? 50000)} Net Shares`}
+                    </td>
+                    <td className="py-3 px-4 opacity-80 text-[11px]">
+                      Detects net aggressive buyer vs seller flow imbalance crossing your configured Cumulative Delta threshold
+                    </td>
+                    <td className="py-3 px-4 text-right font-bold text-cyan-400">Trigger UI Notification</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -1120,6 +1182,198 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
                   className="px-2.5 py-1 text-[10px] font-bold uppercase bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30 transition-colors"
                 >
                   🚀 250k Qty + 2.5x RVol (Institutional Block)
+                </button>
+              </div>
+            </div>
+
+            {/* Cumulative Delta (CVD) Threshold Alert Engine Card */}
+            <div
+              data-testid="cum-delta-config-card"
+              className={`p-5 rounded-xl border font-mono transition-colors ${
+                isDark
+                  ? 'bg-slate-950/90 border-cyan-500/30 text-slate-100'
+                  : 'bg-cyan-50/60 border-cyan-200 text-slate-900'
+              }`}
+            >
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 pb-3 mb-4 border-b border-cyan-500/20">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-cyan-500/20 text-cyan-400 rounded-lg border border-cyan-500/30 font-bold">
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-tight flex items-center gap-2 flex-wrap">
+                      <span>Cumulative Delta (CVD) Threshold Alert Engine</span>
+                      <span className="px-2 py-0.5 text-[9px] bg-cyan-500/20 text-cyan-300 rounded border border-cyan-500/40 font-bold">
+                        UI Notification
+                      </span>
+                    </h3>
+                    <p className="text-[11px] opacity-70">
+                      Triggers an instant UI notification and alert log entry whenever intraday Cumulative Delta crosses your target threshold
+                    </p>
+                  </div>
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border bg-cyan-500/10 border-cyan-500/30 text-cyan-300 font-bold text-xs uppercase shrink-0">
+                  <input
+                    data-testid="cum-delta-enable"
+                    type="checkbox"
+                    checked={formData.enableCumulativeDeltaAlert !== false}
+                    onChange={(e) =>
+                      setFormData({ ...formData, enableCumulativeDeltaAlert: e.target.checked })
+                    }
+                    className="w-4 h-4 accent-cyan-500 cursor-pointer"
+                  />
+                  <span>Enable Cum Δ Alerts</span>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                {/* Cumulative Delta Threshold Value */}
+                <div>
+                  <label className="opacity-70 font-bold uppercase block mb-1.5">
+                    Cumulative Delta Threshold:
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      data-testid="cum-delta-threshold"
+                      type="number"
+                      step="5000"
+                      value={formData.cumulativeDeltaThreshold ?? 50000}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          cumulativeDeltaThreshold: Number(e.target.value),
+                        })
+                      }
+                      className={`w-full px-3 py-2 rounded border font-bold text-xs focus:outline-none ${
+                        isDark
+                          ? 'bg-slate-900 border-slate-700 text-cyan-300'
+                          : 'bg-white border-slate-300 text-slate-900'
+                      }`}
+                    />
+                    <span className="font-bold opacity-60 text-[10px] uppercase whitespace-nowrap">
+                      Net Shares
+                    </span>
+                  </div>
+                  <p className="text-[10px] opacity-60 mt-1">
+                    Positive or negative net share flow (e.g. 50000 or -50000)
+                  </p>
+                </div>
+
+                {/* Crossing Direction */}
+                <div>
+                  <label className="opacity-70 font-bold uppercase block mb-1.5">
+                    Crossing Condition:
+                  </label>
+                  <select
+                    data-testid="cum-delta-direction"
+                    value={formData.cumulativeDeltaDirection ?? 'BOTH'}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        cumulativeDeltaDirection: e.target.value as 'ABOVE' | 'BELOW' | 'BOTH',
+                      })
+                    }
+                    className={`w-full px-3 py-2 rounded border font-bold text-xs focus:outline-none ${
+                      isDark
+                        ? 'bg-slate-900 border-slate-700 text-slate-100'
+                        : 'bg-white border-slate-300 text-slate-900'
+                    }`}
+                  >
+                    <option value="BOTH">Crosses ± Threshold (Above +Value or Below -Value)</option>
+                    <option value="ABOVE">Crosses Above Threshold (&ge; Value)</option>
+                    <option value="BELOW">Crosses Below Threshold (&le; Value)</option>
+                  </select>
+                  <p className="text-[10px] opacity-60 mt-1">
+                    Active rule:{' '}
+                    {(formData.cumulativeDeltaDirection ?? 'BOTH') === 'BOTH'
+                      ? `≥ +${Math.abs(formData.cumulativeDeltaThreshold ?? 50000).toLocaleString('en-IN')} or ≤ -${Math.abs(formData.cumulativeDeltaThreshold ?? 50000).toLocaleString('en-IN')}`
+                      : `${(formData.cumulativeDeltaDirection ?? 'BOTH') === 'ABOVE' ? '≥' : '≤'} ${formatSignedDelta(formData.cumulativeDeltaThreshold ?? 50000)}`}
+                  </p>
+                </div>
+
+                {/* Instant UI Notification Test */}
+                <div className="flex flex-col justify-between">
+                  <label className="opacity-70 font-bold uppercase block mb-1.5">
+                    UI Notification Preview:
+                  </label>
+                  <button
+                    data-testid="test-cum-delta-btn"
+                    type="button"
+                    onClick={() => {
+                      onTestCumulativeDeltaAlert?.(formData);
+                      setSavedMessage('Cumulative Delta UI notification triggered!');
+                      setTimeout(() => setSavedMessage(''), 3000);
+                    }}
+                    className="w-full px-3 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-black text-xs uppercase rounded transition-colors flex items-center justify-center gap-1.5 shadow-md"
+                  >
+                    <Activity className="w-3.5 h-3.5" />
+                    <span>Test Cum Δ Notification</span>
+                  </button>
+                  <p className="text-[10px] opacity-60 mt-1">
+                    Fires an immediate UI toast &amp; logs into Alert History
+                  </p>
+                </div>
+              </div>
+
+              {/* Cumulative Delta Quick Presets */}
+              <div className="mt-4 pt-3 border-t border-cyan-500/20 flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase opacity-60 mr-1">CVD Presets:</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      enableCumulativeDeltaAlert: true,
+                      cumulativeDeltaThreshold: 25000,
+                      cumulativeDeltaDirection: 'BOTH',
+                    })
+                  }
+                  className="px-2.5 py-1 text-[10px] font-bold uppercase bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 rounded border border-cyan-500/30 transition-colors"
+                >
+                  ±25k Scalping Flow
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      enableCumulativeDeltaAlert: true,
+                      cumulativeDeltaThreshold: 50000,
+                      cumulativeDeltaDirection: 'BOTH',
+                    })
+                  }
+                  className="px-2.5 py-1 text-[10px] font-bold uppercase bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 rounded border border-indigo-500/30 transition-colors"
+                >
+                  ±50k Institutional CVD
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      enableCumulativeDeltaAlert: true,
+                      cumulativeDeltaThreshold: 100000,
+                      cumulativeDeltaDirection: 'ABOVE',
+                    })
+                  }
+                  className="px-2.5 py-1 text-[10px] font-bold uppercase bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30 transition-colors"
+                >
+                  +100k Bullish Whale Flow
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      enableCumulativeDeltaAlert: true,
+                      cumulativeDeltaThreshold: -50000,
+                      cumulativeDeltaDirection: 'BELOW',
+                    })
+                  }
+                  className="px-2.5 py-1 text-[10px] font-bold uppercase bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 rounded border border-rose-500/30 transition-colors"
+                >
+                  -50k Bearish Distribution
                 </button>
               </div>
             </div>

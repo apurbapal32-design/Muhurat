@@ -5647,29 +5647,58 @@
           <button onclick="switchTab('momentum')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-emerald-400 border border-emerald-500/20 font-bold whitespace-nowrap transition">Top Momentum</button>
           <button onclick="switchTab('liquidity')" class="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1a2233] text-amber-400 border border-amber-500/20 font-bold whitespace-nowrap transition">Market Liquidity</button>
         </div>
-        <div class="card p-4 border-l-4 border-emerald-500 bg-[#121622] flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div>
-            <div class="flex items-center gap-2">
-              <h2 class="text-lg font-bold text-white">Top Momentum &bull; Best Intraday Velocity Movers</h2>
-              <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">UP &bull; DOWN</span>
+        <div class="card p-4 border-l-4 border-emerald-500 bg-[#121622] space-y-3">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 class="text-lg font-bold text-white">Top Momentum &bull; 5m Order Flow Early Ignition</h2>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold text-[10px]">SWEEP &rarr; BREAK &rarr; REJ 1</span>
+                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold text-[10px]">C&Delta; + ZERO-LINE IMPULSE</span>
+                <span class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-400/40 font-bold text-[10px]">ZERO LATE CHASE</span>
+              </div>
+              <p class="text-xs text-slate-300 mt-1 max-w-3xl font-sans">
+                Alerts <span class="text-emerald-300 font-bold">BEFORE</span> the big move — right at the 5m <span class="text-cyan-300 font-bold">Break</span> &amp; <span class="text-amber-300 font-bold">Rej 1</span> VWAP hold when Cumulative Delta (C&Delta;) flips &amp; Zero-Line Momentum crosses 0.00. Automatically blocks late over-extended stocks &amp; Exit bar-&Delta; reversals so alerts never fire after the move is over.
+              </p>
             </div>
-            <p class="text-xs text-slate-300 mt-1 max-w-2xl font-sans">
-              Ranked in real-time by absolute price change velocity, relative volume acceleration, and aggressive buy/sell ratio imbalance across all 218 NSE F&O contracts.
-            </p>
+            <div class="flex flex-col md:items-end gap-1.5 font-mono text-xs text-slate-400">
+              <div class="flex items-center gap-2 flex-wrap">
+                <button id="momentum-btn-mode" onclick="TopMomentumOrderFlowEngine.toggleEarlyOnlyMode()" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-[11px] font-bold transition cursor-pointer" title="Toggle between Fresh Break/Rej 1 Ignitions Only and All Active Early Momentum">Mode: All Active Early</button>
+                <button onclick="TopMomentumOrderFlowEngine.load(true)" class="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 text-[11px] font-bold transition cursor-pointer">🔄 Scan Now</button>
+                <button onclick="openFormulaModal('momentum')" class="px-2.5 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/40 text-purple-300 text-[11px] font-bold transition cursor-pointer">📐 Formula</button>
+                <button onclick="ClaudeNotificationEngine.triggerTestTripleBeepNotification('TOP MOMENTUM')" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 text-[11px] font-bold transition cursor-pointer" title="Test Immediate Notification + 3x Beep Alert for New Early-Ignition Momentum Candidate">🔔 Test 3x Beep</button>
+                <button onclick="ClaudeNotificationEngine.requestPushPermission()" class="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 text-[11px] font-bold transition cursor-pointer" title="Enable Web & Mobile Push Alerts">📲 Enable Push</button>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <input id="momentum-search-input" type="text" oninput="TopMomentumOrderFlowEngine.renderTables()" placeholder="Filter symbol / sector..." class="bg-[#0b0f18] border border-[#22304c] rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-slate-500 focus:outline-none focus:border-emerald-400 w-44" />
+                <span>Universe: <span id="momentum-kpi-universe" class="text-amber-400 font-bold">218 NSE F&amp;O</span> &bull; <span id="momentum-kpi-time" class="text-cyan-400 font-bold">--:--:-- IST</span></span>
+              </div>
+            </div>
           </div>
-          <div class="flex flex-col md:items-end gap-1.5 font-mono text-xs text-slate-400">
-            <div class="flex items-center gap-2 flex-wrap">
-              <button onclick="ClaudeNotificationEngine.triggerTestTripleBeepNotification('TOP MOMENTUM')" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-300 text-[11px] font-bold transition cursor-pointer" title="Test Notification + 3x Beep Alert for New Top Momentum Candidate">🔔 Test 3x Beep</button>
-              <button onclick="ClaudeNotificationEngine.requestPushPermission()" class="px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 text-[11px] font-bold transition cursor-pointer" title="Enable Web & Mobile Push Alerts">📲 Enable Push</button>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-2 border-t border-[#1c263b] text-xs">
+            <div class="bg-[#0b101b] border border-emerald-500/25 rounded-lg p-2.5">
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Early Ignition BUY (Break / Rej 1)</div>
+              <div id="momentum-kpi-buy" class="text-sm font-black text-emerald-400 mt-0.5">0 Ignition (0 Total)</div>
             </div>
-            <div>Update Frequency: <span class="text-cyan-400 font-bold">Tick-by-Tick</span> &bull; Universe: <span class="text-amber-400 font-bold">218 NSE F&amp;O</span></div>
+            <div class="bg-[#0b101b] border border-rose-500/25 rounded-lg p-2.5">
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Early Ignition SELL (Break / Rej 1)</div>
+              <div id="momentum-kpi-sell" class="text-sm font-black text-rose-400 mt-0.5">0 Ignition (0 Total)</div>
+            </div>
+            <div class="bg-[#0b101b] border border-amber-500/25 rounded-lg p-2.5">
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Blocked Late / Exit Zone</div>
+              <div id="momentum-kpi-blocked" class="text-sm font-black text-amber-300 mt-0.5">0 Blocked (No Late Alerts)</div>
+            </div>
+            <div class="bg-[#0b101b] border border-cyan-500/25 rounded-lg p-2.5">
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Alert Trigger Gate</div>
+              <div class="text-xs font-bold text-cyan-300 mt-0.5">🔥 Break / 🎯 Rej 1 (&lt;1.25% VWAP)</div>
+            </div>
           </div>
         </div>
 
         <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl">
-          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between">
-            <span class="font-bold text-sm text-emerald-400">Top Upside Momentum Leaders (Breakout Surge)</span>
-            <span class="text-xs font-mono text-slate-400">Ranked by Velocity</span>
+          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between flex-wrap gap-2">
+            <span class="font-bold text-sm text-emerald-400">🔥 Top Upside Early-Ignition Leaders (Sweep &rarr; Break &rarr; Rej 1 &bull; C&Delta; Surge)</span>
+            <span id="momentum-buy-badge" class="text-xs font-mono text-emerald-300">Scanning 5m Order Flow...</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-momentum-upside"></table>
@@ -5677,13 +5706,21 @@
         </div>
 
         <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl">
-          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between">
-            <span class="font-bold text-sm text-rose-400">Top Downside Momentum Leaders (Aggressive Breakdown)</span>
-            <span class="text-xs font-mono text-slate-400">Ranked by Velocity</span>
+          <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between flex-wrap gap-2">
+            <span class="font-bold text-sm text-rose-400">🔥 Top Downside Early-Ignition Leaders (High Sweep &rarr; Breakdown &rarr; Rej 1 &bull; -C&Delta;)</span>
+            <span id="momentum-sell-badge" class="text-xs font-mono text-rose-300">Scanning 5m Order Flow...</span>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs" id="table-momentum-downside"></table>
           </div>
+        </div>
+
+        <div id="momentum-exhausted-panel" class="card overflow-hidden bg-[#0d111a] border border-amber-500/25 rounded-xl hidden">
+          <div class="bg-[#15131f] px-4 py-2.5 border-b border-amber-500/20 flex items-center justify-between flex-wrap gap-2">
+            <span class="font-bold text-xs text-amber-300">🛑 Anti-Chase Shield &bull; Extended / Exit-Zone Stocks (Alerts Blocked So You Never Chase Late)</span>
+            <span id="momentum-blocked-badge" class="text-[11px] font-mono text-slate-400">0 blocked</span>
+          </div>
+          <div id="momentum-exhausted-list" class="p-3 flex flex-wrap gap-2 text-[11px] font-mono"></div>
         </div>
       </section>
 
@@ -6103,7 +6140,7 @@
               <h2 class="text-lg font-bold text-white">Watchlist &bull; All 218 NSE F&amp;O Stocks &amp; Starred Radar</h2>
               <span id="watchlist-count-badge" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold text-[10px]">ALL 218 STOCKS</span>
             </div>
-            <p class="text-xs text-slate-300 font-sans mt-0.5">Real-time quotes, bid/ask depth ratios, derivative buildup cycles, and 1-click execution across the complete NSE F&amp;O universe.</p>
+            <p class="text-xs text-slate-300 font-sans mt-0.5">Real-time quotes, relative volume (RVOL), bid/ask depth ratios, derivative buildup cycles, and 1-click execution across the complete NSE F&amp;O universe.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
             <!-- 60s Automatic Auto-Refresh Controls -->
@@ -6129,6 +6166,14 @@
             <!-- Sector Dropdown -->
             <select id="watchlist-sector-filter" onchange="renderWatchlistTable()" class="px-3 py-1.5 rounded-lg bg-[#080b12] border border-[#1c2230] text-xs text-white focus:outline-none focus:border-cyan-400">
               <option value="ALL">All 12 Sectors</option>
+            </select>
+            <!-- RVOL Filter Dropdown -->
+            <select id="watchlist-rvol-filter" onchange="renderWatchlistTable()" class="px-3 py-1.5 rounded-lg bg-[#080b12] border border-amber-500/40 text-xs text-amber-200 font-bold focus:outline-none focus:border-amber-400" title="Filter Watchlist by Minimum Relative Volume (RVOL)">
+              <option value="0">All RVOL</option>
+              <option value="1.2">RVOL &ge; 1.2x</option>
+              <option value="1.5">RVOL &ge; 1.5x (High)</option>
+              <option value="2.0">RVOL &ge; 2.0x (Surge 🔥)</option>
+              <option value="3.0">RVOL &ge; 3.0x (Extreme)</option>
             </select>
           </div>
         </div>
@@ -7310,14 +7355,51 @@
         }
       },
       {
-        key: 'best_momentum_upside', label: 'Momentum ▲', side: 'BUY',
-        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && s.signal !== 'SELL' && (Number(s.pct_change) || 0) >= 1.50 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 30 && (Number(s.bid_ask_ratio) || 1) >= 1.15,
-        score: (s) => (Number(s.pct_change) || 0) * 20 + _stockRangePos(s) * 8
+        key: 'best_momentum_upside', label: 'Momentum ▲ (Early)', side: 'BUY',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          const vwapDist = atp > 0 ? ((price - atp) / atp) * 100 : 0;
+          const delta = Number(s.delta) || 0;
+          // Early-Ignition Sweet Spot (+0.25% to +2.35%, tight above VWAP <= 1.65%, positive CΔ, RVOL >= 1.15x) — blocks late +3% chasers
+          return s.side !== 'SHORT' && s.signal !== 'SELL' && pct >= 0.25 && pct <= 2.35 && vwapDist >= -0.08 && vwapDist <= 1.65 && delta > 0 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 20 && (Number(s.bid_ask_ratio) || 1) >= 1.08;
+        },
+        score: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          const vwapDist = atp > 0 ? Math.max(0, ((price - atp) / atp) * 100) : 0;
+          const rvol = Number(s.rvol) || 1;
+          const ba = Number(s.bid_ask_ratio) || 1;
+          // Reward early VWAP proximity + RVOL + B/A + early ignition move (penalize extended chasers > 1.4%)
+          const earlyBonus = pct <= 1.35 ? 28 : Math.max(0, 28 - (pct - 1.35) * 22);
+          const vwapTightness = Math.max(0, 22 - vwapDist * 14);
+          return earlyBonus + vwapTightness + Math.min(25, (rvol - 1) * 18) + Math.min(18, (ba - 1) * 22) + _stockRangePos(s) * 8;
+        }
       },
       {
-        key: 'best_momentum_downside', label: 'Momentum ▼', side: 'SELL',
-        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'LONG' && s.signal !== 'BUY' && (Number(s.pct_change) || 0) <= -1.50 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 30 && (Number(s.bid_ask_ratio) || 1) <= 0.88,
-        score: (s) => -(Number(s.pct_change) || 0) * 20 + (1 - _stockRangePos(s)) * 8
+        key: 'best_momentum_downside', label: 'Momentum ▼ (Early)', side: 'SELL',
+        match: (s) => {
+          const pct = Number(s.pct_change) || 0;
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          const vwapDist = atp > 0 ? ((atp - price) / atp) * 100 : 0;
+          const delta = Number(s.delta) || 0;
+          // Early-Ignition Downside Sweet Spot (-0.25% to -2.35%, tight below VWAP <= 1.65%, negative CΔ, RVOL >= 1.15x)
+          return s.side !== 'LONG' && s.signal !== 'BUY' && pct <= -0.25 && pct >= -2.35 && vwapDist >= -0.08 && vwapDist <= 1.65 && delta < 0 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.turnover_cr) || 0) >= 20 && (Number(s.bid_ask_ratio) || 1) <= 0.92;
+        },
+        score: (s) => {
+          const absPct = Math.abs(Number(s.pct_change) || 0);
+          const price = Number(s.price) || 0;
+          const atp = Number(s.atp) || price;
+          const vwapDist = atp > 0 ? Math.max(0, ((atp - price) / atp) * 100) : 0;
+          const rvol = Number(s.rvol) || 1;
+          const ba = Number(s.bid_ask_ratio) || 1;
+          const earlyBonus = absPct <= 1.35 ? 28 : Math.max(0, 28 - (absPct - 1.35) * 22);
+          const vwapTightness = Math.max(0, 22 - vwapDist * 14);
+          return earlyBonus + vwapTightness + Math.min(25, (rvol - 1) * 18) + Math.min(18, (1 - ba) * 30) + (1 - _stockRangePos(s)) * 8;
+        }
       }
     ];
 
@@ -7334,8 +7416,8 @@
       quant_elite_pro_bearish: 'Elite Pro ▼ (6m Waves)',
       titan_cash_bullish: 'Flow Cash ▲ (Delivery)',
       titan_cash_bearish: 'Flow Cash ▼ (Delivery)',
-      best_momentum_upside: 'Momentum ▲ (Velocity)',
-      best_momentum_downside: 'Momentum ▼ (Velocity)',
+      best_momentum_upside: 'Momentum ▲ (Early Ignition)',
+      best_momentum_downside: 'Momentum ▼ (Early Ignition)',
       liquidity_bull: 'Liquidity ▲ (Deep Flow)',
       liquidity_bear: 'Liquidity ▼ (Deep Flow)'
     };
@@ -7766,7 +7848,10 @@
           renderWorldStrategyTab();
         } else if (tabId === 'titan') {
           if (typeof MuhuratFlowEngine !== 'undefined') MuhuratFlowEngine.load(false);
-        } else if (['strong', 'sonic', 'elite', 'elite-pro', 'titan-cash', 'momentum', 'liquidity'].includes(tabId)) {
+        } else if (tabId === 'momentum') {
+          if (typeof TopMomentumOrderFlowEngine !== 'undefined') TopMomentumOrderFlowEngine.load(false);
+          else renderAllTables();
+        } else if (['strong', 'sonic', 'elite', 'elite-pro', 'titan-cash', 'liquidity'].includes(tabId)) {
           renderAllTables();
         }
       } catch (err) {
@@ -9700,6 +9785,24 @@
         ? `<td class="p-3">${typeof renderScannerRecBadges === 'function' ? renderScannerRecBadges(s) : '--'}</td>`
         : '';
 
+      const rvolVal = Number(s.rvol ?? s.indicators?.rvol ?? 1.0);
+      const safeRvol = Number.isFinite(rvolVal) && rvolVal > 0 ? rvolVal : 1.0;
+      const rvolBadgeCls = safeRvol >= 2.0
+        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-black'
+        : safeRvol >= 1.5
+          ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/35 font-bold'
+          : safeRvol >= 1.15
+            ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25 font-bold'
+            : 'bg-slate-800/80 text-slate-300 border-slate-700 font-semibold';
+      const rvolTagText = safeRvol >= 2.0 ? '🔥 Surge' : safeRvol >= 1.5 ? 'High Vol' : safeRvol >= 1.15 ? 'Above Avg' : 'Normal';
+      const rvolTagColor = safeRvol >= 2.0 ? 'text-amber-300' : safeRvol >= 1.5 ? 'text-cyan-300' : safeRvol >= 1.15 ? 'text-emerald-400' : 'text-slate-400';
+      const watchlistRvolCell = showScannerRec
+        ? `<td class="p-3 whitespace-nowrap">
+            <span class="px-2 py-0.5 rounded border text-[11px] ${rvolBadgeCls}" title="Relative Volume (RVOL) vs 20-bar Average">${safeRvol.toFixed(2)}x</span>
+            <div class="text-[9px] mt-0.5 font-bold ${rvolTagColor}">${rvolTagText}</div>
+          </td>`
+        : '';
+
       return `
         <tr class="border-b border-[#172033] hover:bg-[#0f1524] transition font-mono cursor-pointer" onclick="openTradingViewChart('${s.symbol}')">
           <td class="p-3" onclick="event.stopPropagation()">
@@ -9746,6 +9849,7 @@
             </div>
           </td>
           <td class="p-3 font-bold ${pColor}">${pSign}${s.pct_change}%</td>
+          ${watchlistRvolCell}
           <td class="p-3 min-w-[125px]">
             <div class="flex justify-between items-center text-[10px] font-bold font-mono">
               <span class="text-emerald-400">B: ${s.total_bid_str}</span>
@@ -10323,6 +10427,14 @@
     // WATCHLIST TABLE
     // ============================================================
     let watchlistViewMode = 'all';
+    let watchlistRvolSort = null; // null | 'desc' | 'asc'
+
+    function toggleWatchlistRvolSort() {
+      if (watchlistRvolSort === null) watchlistRvolSort = 'desc';
+      else if (watchlistRvolSort === 'desc') watchlistRvolSort = 'asc';
+      else watchlistRvolSort = null;
+      renderWatchlistTable();
+    }
 
     function setWatchlistViewMode(mode) {
       watchlistViewMode = mode;
@@ -10350,6 +10462,7 @@
 
       const q = (document.getElementById('watchlist-search')?.value || '').trim().toUpperCase();
       const secFilter = document.getElementById('watchlist-sector-filter')?.value || 'ALL';
+      const minRvolFilter = parseFloat(document.getElementById('watchlist-rvol-filter')?.value || '0') || 0;
 
       // Update starred count pill
       const starredPill = document.getElementById('starred-count-pill');
@@ -10361,9 +10474,19 @@
           const matchesQ = !q || s.symbol.includes(q) || (s.name && s.name.toUpperCase().includes(q));
           const matchesSec = secFilter === 'ALL' || s.sector === secFilter;
           const matchesMode = (watchlistViewMode === 'all') || activeWatchlist.includes(s.symbol);
-          return matchesQ && matchesSec && matchesMode;
+          const stockRvol = Number(s.rvol ?? s.indicators?.rvol ?? 1.0) || 0;
+          const matchesRvol = minRvolFilter <= 0 || stockRvol >= minRvolFilter;
+          return matchesQ && matchesSec && matchesMode && matchesRvol;
         })
       );
+
+      if (watchlistRvolSort === 'desc') {
+        filtered = [...filtered].sort((a, b) => (Number(b.rvol ?? b.indicators?.rvol ?? 0) || 0) - (Number(a.rvol ?? a.indicators?.rvol ?? 0) || 0));
+      } else if (watchlistRvolSort === 'asc') {
+        filtered = [...filtered].sort((a, b) => (Number(a.rvol ?? a.indicators?.rvol ?? 0) || 0) - (Number(b.rvol ?? b.indicators?.rvol ?? 0) || 0));
+      }
+
+      const rvolSortIndicator = watchlistRvolSort === 'desc' ? ' ▼' : watchlistRvolSort === 'asc' ? ' ▲' : ' ⇅';
 
       let html = `
         <thead>
@@ -10376,6 +10499,7 @@
             <th class="p-3">ENTRY PRICE &amp; STRATEGY</th>
             <th class="p-3">LIVE PRICE</th>
             <th class="p-3">% CHG</th>
+            <th class="p-3 cursor-pointer hover:text-amber-300 select-none whitespace-nowrap ${watchlistRvolSort ? 'text-amber-300' : ''}" onclick="toggleWatchlistRvolSort()" title="Click to sort Watchlist by Relative Volume (RVOL)">RVOL${rvolSortIndicator}</th>
             <th class="p-3">TOTAL BID / ASK</th>
             <th class="p-3">BID/ASK RATIO</th>
             <th class="p-3">TURNOVER &amp; VOL</th>
@@ -10394,14 +10518,14 @@
       if (filtered.length === 0) {
         html += `
           <tr>
-            <td colspan="18" class="p-8 text-center text-slate-500 font-mono">
+            <td colspan="19" class="p-8 text-center text-slate-500 font-mono">
               <div class="text-sm font-bold text-slate-400 mb-1">No stocks match your active filter.</div>
-              <div class="text-xs">${watchlistViewMode === 'starred' ? 'You have not starred any stocks yet. Click the ⭐ icon on any stock row to add it!' : 'Try clearing your search query or selecting "All 12 Sectors".'}</div>
+              <div class="text-xs">${watchlistViewMode === 'starred' ? 'You have not starred any stocks yet. Click the ⭐ icon on any stock row to add it!' : 'Try clearing your search query, lowering the RVOL filter, or selecting "All 12 Sectors".'}</div>
             </td>
           </tr>
         `;
       } else {
-        const isDefaultAll = !q && secFilter === 'ALL' && watchlistViewMode === 'all';
+        const isDefaultAll = !q && secFilter === 'ALL' && minRvolFilter <= 0 && watchlistViewMode === 'all';
         const limit = (isDefaultAll && !window._watchlistShowAll) ? 50 : filtered.length;
         const visibleRows = filtered.slice(0, limit);
         visibleRows.forEach((s, idx) => {
@@ -10410,7 +10534,7 @@
         if (filtered.length > visibleRows.length) {
           html += `
             <tr>
-              <td colspan="18" class="p-4 text-center bg-[#090d16]">
+              <td colspan="19" class="p-4 text-center bg-[#090d16]">
                 <button onclick="window._watchlistShowAll = true; renderWatchlistTable();" class="px-5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500 text-cyan-300 hover:text-black border border-cyan-500/40 font-mono font-bold text-xs transition cursor-pointer">
                   ⚡ Showing ${visibleRows.length} of ${filtered.length} Stocks (Fast Mode) &bull; Click to Show All ${filtered.length}
                 </button>
@@ -11491,7 +11615,9 @@ function renderJournal() {
           abs_change: Number(absChg.toFixed(2)),
           rvol: Number(rvol.toFixed(2)),
           hyperflow: Number(hyperflow.toFixed(1)),
-          delta: Math.round(vol * (pct / 100) * 0.45),
+          delta: (b.cumulativeDelta !== undefined && Number.isFinite(Number(b.cumulativeDelta)))
+            ? Math.round(Number(b.cumulativeDelta))
+            : Math.round(vol * (pct / 100) * 0.45),
           side: isBull ? 'LONG' : 'SHORT',
           entry: Number(b.fixedEntryPrice || b.risk?.entryPrice || 0),
           stop: Number(b.fixedStopLoss || b.risk?.stopLoss || 0),
@@ -11706,6 +11832,7 @@ function renderJournal() {
         if (typeof PriceActionEngine !== 'undefined') PriceActionEngine.load(false);
         if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.load(false);
         if (typeof MuhuratFlowEngine !== 'undefined') MuhuratFlowEngine.load(false);
+        if (typeof TopMomentumOrderFlowEngine !== 'undefined') TopMomentumOrderFlowEngine.load(false);
         if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.load(false);
         if (typeof AiTradingJournalEngine !== 'undefined') AiTradingJournalEngine.load(false);
         if (typeof renderSectorHeatmap === 'function') renderSectorHeatmap();
@@ -13181,9 +13308,13 @@ function renderJournal() {
       renderVisibleTable('table-titan-cash-bullish', DATA.titan_cash_bullish, true);
       renderVisibleTable('table-titan-cash-bearish', DATA.titan_cash_bearish, false);
 
-      // New Momentum & Liquidity Tables
-      renderVisibleTable('table-momentum-upside', DATA.best_momentum_upside, true);
-      renderVisibleTable('table-momentum-downside', DATA.best_momentum_downside, false);
+      // Top Momentum (5m Order Flow Early Ignition) & Liquidity Tables
+      if (typeof TopMomentumOrderFlowEngine !== 'undefined' && TopMomentumOrderFlowEngine.lastReport && isElementVisiblePane(document.getElementById('table-momentum-upside'))) {
+        TopMomentumOrderFlowEngine.renderTables();
+      } else {
+        renderVisibleTable('table-momentum-upside', DATA.best_momentum_upside, true);
+        renderVisibleTable('table-momentum-downside', DATA.best_momentum_downside, false);
+      }
       // Market Liquidity Dedicated Tab: Strictly Formula-Qualified Up to 15 Upside & Downside by Monetary Turnover (Rs Cr)
       if (isElementVisiblePane(document.getElementById('table-top-traded')) || isElementVisiblePane(document.getElementById('table-top-traded-downside'))) {
         const liqUp = sortByListedAtNewestFirstAtoZ(
@@ -13393,13 +13524,20 @@ function renderJournal() {
     }`
       },
       momentum: {
-        title: "Claude AI Momentum Vector &bull; Upside Surge & Downside Collapse",
-        file: "trader-entry/entry.py & trader-scanner/scan.py",
-        desc: "Calculates instantaneous momentum vector from price velocity, relative volume (RVOL), VWAP displacement, and order book depth imbalance.",
-        code: `def momentum_vector(price_chp, rvol, hyperflow, bid_ask_ratio):
-    upside_score = 50.0 + (price_chp * 5.2) + ((rvol - 1.0) * 14.0) + (hyperflow * 0.28) + ((bid_ask_ratio - 1.0) * 16.0)
-    downside_score = 50.0 + (abs(price_chp) * 5.2) + ((rvol - 1.0) * 14.0) + ((100.0 - hyperflow) * 0.28) + (((1.0 / max(0.1, bid_ask_ratio)) - 1.0) * 16.0)
-    return {"upside_score": round(upside_score, 1), "downside_score": round(downside_score, 1)}`
+        title: "Top Momentum &bull; 5m Order Flow Early Ignition (Sweep &rarr; Break &rarr; Rej 1 &bull; Zero Late Chase)",
+        file: "server/topMomentumEngine.ts (/api/top-momentum/scan)",
+        desc: "Catches institutional momentum RIGHT AT IGNITION (+0.25% to +1.35% early move) — BEFORE the stock becomes extended! Detects opening/range liquidity sweep, first 5m Break above consolidation + VWAP + EMA 9/21, Rej 1 pullback hold, Cumulative Delta (CΔ) flip + aligned Bar Δ, and Zero-Line Momentum & Impulse cross above 0.00. Automatically blocks late alerts once price stretches >= 1.65% from VWAP, >= 1.85% from Break/Rej 1 entry, >= 2.45% day move, or Bar Δ flips against the trend (Exit Zone).",
+        code: `def top_momentum_order_flow_ignition(bars_5m, vwap, ema9, ema21, rvol, bid_ask_ratio):
+    # 1. Sweep + First 5m Break above pre-break consolidation high + VWAP + EMA9
+    break_ok = bar.close > base_high and bar.close >= vwap and bar_delta > 0 and cum_delta > 0
+    # 2. Rej 1: First micro-pullback holding Break level & VWAP with rejection wick
+    rej1_ok = pullback.low >= sweep_low and pullback.close >= max(vwap, break_level * 0.9965)
+    # 3. Sub-pane 2 (Zero-Line Momentum > 0) & Sub-pane 3 (Impulse Thrust) + RVOL >= 1.15x
+    impulse_ok = zero_line_mom > 0.01 and rvol >= 1.15 and bid_ask_ratio >= 1.05
+    # 4. Anti-Chase Exhaustion Blocker (NEVER alert after the move is already over!)
+    exhausted = (move_from_entry_pct >= 1.85) or (vs_vwap_pct >= 1.65) or (day_chg_pct >= 2.45) or (bar_delta < 0)
+    should_alert_now = (not exhausted) and (stage in ("BREAK_IGNITION", "REJ_1_ENTRY")) and impulse_ok
+    return {"stage": "EXHAUSTED_EXIT" if exhausted else stage, "should_alert_now": should_alert_now}`
       },
       liquidity: {
         title: "Market Liquidity &bull; Turnover (₹ Cr) & Order Depth Imbalance",
@@ -18353,6 +18491,332 @@ function renderJournal() {
     };
 
     // ============================================================
+    // TOP MOMENTUM • 5M ORDER FLOW EARLY-IGNITION ENGINE
+    // (Sweep -> Break -> Rej 1 -> CΔ Flip + Zero-Line Mom -> Zero Late Chase)
+    // ============================================================
+    const TopMomentumOrderFlowEngine = {
+      lastReport: null,
+      earlyOnly: false,
+      _timer: null,
+      _renderedOnce: false,
+      _lastError: '',
+
+      init() {
+        this.load(false);
+        if (!this._timer) {
+          let tick = 0;
+          this._timer = setInterval(() => {
+            tick += 1;
+            const pane = document.getElementById('tab-momentum');
+            // Poll every 5s when tab is active, and every 15s in background so EARLY ignition alerts fire immediately!
+            if ((pane && !pane.classList.contains('hidden')) || tick % 3 === 0) {
+              this.load(false);
+            }
+          }, 5000);
+        }
+      },
+
+      toggleEarlyOnlyMode() {
+        this.earlyOnly = !this.earlyOnly;
+        const btn = document.getElementById('momentum-btn-mode');
+        if (btn) {
+          if (this.earlyOnly) {
+            btn.className = 'px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 text-[11px] font-bold transition cursor-pointer';
+            btn.innerText = 'Mode: Break / Rej 1 Only';
+          } else {
+            btn.className = 'px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/50 text-emerald-300 text-[11px] font-bold transition cursor-pointer';
+            btn.innerText = 'Mode: All Active Early';
+          }
+        }
+        this.renderTables();
+      },
+
+      formatCompactDelta(n) {
+        const val = Number(n) || 0;
+        const sign = val >= 0 ? '+' : '-';
+        const abs = Math.abs(val);
+        if (abs >= 1000000) return `${sign}${(abs / 1000000).toFixed(2)}M`;
+        if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1)}K`;
+        return `${sign}${Math.round(abs)}`;
+      },
+
+      mapOrderFlowRowToDataRow(item) {
+        const isBuy = item.direction === 'BUY';
+        return {
+          symbol: item.symbol,
+          name: item.name || item.symbol,
+          fyers: `NSE:${item.symbol}-EQ`,
+          sector: item.sector || 'NSE F&O',
+          sector_pct: Number(item.sectorChangePct || 0),
+          price: Number(item.price || 0),
+          pct_change: Number(item.changePercent || 0),
+          abs_change: Number((Number(item.price || 0) - Number(item.prevClose || item.price || 0)).toFixed(2)),
+          rvol: Number(item.rvol || 1.2),
+          hyperflow: Number(item.score || 70),
+          delta: Number(item.cumulativeDelta || 0),
+          bar_delta: Number(item.barDelta || 0),
+          side: isBuy ? 'LONG' : 'SHORT',
+          signal: isBuy ? 'BUY' : 'SELL',
+          entry: Number(item.entryPrice || item.price || 0),
+          stop: Number(item.stopLoss || 0),
+          target: Number(item.target1 || 0),
+          entry_locked: true,
+          formula_code: item.stage,
+          formula_name: item.stageBadge,
+          trade_status: item.shouldAlertNow ? 'ACTIVE' : 'WATCH',
+          listed_at: item.listedAt || '--',
+          atp: Number(item.vwap || item.price || 0),
+          turnover_cr: Number(item.turnoverCr || 0),
+          volume: Number(item.volume || 0),
+          bid_ask_ratio: Number(item.bidAskRatio || 1.0),
+          order_book_bias: item.orderBookBias || (isBuy ? 'Buyer Dominance' : 'Seller Pressure'),
+          oi_chg_pct: Number(item.oiChangePct || 0),
+          buildup: item.buildup || (isBuy ? 'Long Buildup' : 'Short Buildup'),
+          buildup_type: isBuy ? 'BULLISH' : 'BEARISH',
+          stage: item.stage,
+          stageBadge: item.stageBadge,
+          shouldAlertNow: Boolean(item.shouldAlertNow),
+          isEarlyIgnition: Boolean(item.isEarlyIgnition),
+          isExhausted: Boolean(item.isExhausted),
+          barsSinceIgnition: Number(item.barsSinceIgnition ?? 0),
+          vsVwapPct: Number(item.vsVwapPct || 0),
+          moveFromEntryPct: Number(item.moveFromEntryPct || 0)
+        };
+      },
+
+      async load(showFeedback = false) {
+        const base = (typeof getApiBaseUrl === 'function') ? getApiBaseUrl() : '';
+        let report = null;
+        this._lastError = '';
+        try {
+          const accessToken = (typeof localStorage !== 'undefined' && localStorage.getItem('upstox_access_token')) || '';
+          const headers = accessToken ? { 'x-upstox-access-token': accessToken } : {};
+          const res = await fetch(`${base}/api/top-momentum/scan`, { headers });
+          if (res.ok) report = await res.json();
+          else this._lastError = `HTTP ${res.status} loading Top Momentum scan`;
+        } catch (e) {
+          this._lastError = e?.message || 'Network error fetching Top Momentum scan';
+        }
+
+        if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) {
+          report = {
+            ...(report || {}),
+            status: 'ok',
+            scannerName: 'Top Momentum • Order Flow Early Ignition',
+            isMidnightCleared: true,
+            universeEvaluated: 0,
+            earlyIgnitionBuyCount: 0,
+            earlyIgnitionSellCount: 0,
+            buyCount: 0,
+            sellCount: 0,
+            blockedExhaustedCount: 0,
+            istTime: report?.istTime || '--:--:-- IST',
+            buySignals: [],
+            sellSignals: [],
+            exhaustedSignals: []
+          };
+        }
+
+        if (report && Array.isArray(report.buySignals) && Array.isArray(report.sellSignals)) {
+          this.lastReport = report;
+
+          // Keep DATA.best_momentum_* synced with early-ignition Order Flow rows (used by Home preview & badges)
+          if (typeof DATA !== 'undefined' && DATA) {
+            DATA.best_momentum_upside = report.buySignals.map(r => this.mapOrderFlowRowToDataRow(r));
+            DATA.best_momentum_downside = report.sellSignals.map(r => this.mapOrderFlowRowToDataRow(r));
+            if (typeof renderVisibleTable === 'function') {
+              renderVisibleTable('table-home-momentum-upside', DATA.best_momentum_upside.slice(0, 15), true);
+              renderVisibleTable('table-home-momentum-downside', DATA.best_momentum_downside.slice(0, 15), false);
+            }
+          }
+
+          // Fire IMMEDIATE Early-Ignition Alerts (Break / Rej 1 ONLY — never late exhausted moves!)
+          if (typeof ClaudeNotificationEngine !== 'undefined' && typeof ClaudeNotificationEngine.syncTopMomentumOrderFlow === 'function') {
+            ClaudeNotificationEngine.syncTopMomentumOrderFlow(report);
+          }
+
+          const pane = document.getElementById('tab-momentum');
+          if ((pane && !pane.classList.contains('hidden')) || !this._renderedOnce) {
+            this._renderedOnce = true;
+            this.renderTables();
+          }
+
+          if (showFeedback && typeof showToast === 'function') {
+            showToast(
+              `🔥 Top Momentum Order Flow: ${report.earlyIgnitionBuyCount || 0} BUY / ${report.earlyIgnitionSellCount || 0} SELL Early Ignitions (${report.blockedExhaustedCount || 0} late moves blocked)`,
+              'success'
+            );
+          }
+        } else if (this._lastError) {
+          ['table-momentum-upside', 'table-momentum-downside'].forEach(id => {
+            const tbl = document.getElementById(id);
+            if (tbl) {
+              tbl.innerHTML = `<tbody><tr><td colspan="9" class="p-8 text-center text-rose-300 text-xs">${this._lastError} &bull; <button type="button" onclick="TopMomentumOrderFlowEngine.load(true)" class="px-2.5 py-1 rounded bg-emerald-500 text-black font-black cursor-pointer">🔄 Retry Scan</button></td></tr></tbody>`;
+            }
+          });
+        }
+      },
+
+      renderSignalTable(tableId, items, isBuy, isMidnightCleared, rawTotalCount) {
+        const tbl = document.getElementById(tableId);
+        if (!tbl) return;
+        let html = `
+          <thead class="bg-[#0e1420] text-[10px] text-slate-400 uppercase tracking-wider border-b border-[#1c263b]">
+            <tr>
+              <th class="p-2.5">Stock &amp; Stage</th>
+              <th class="p-2.5">Break / Rej 1 Structure</th>
+              <th class="p-2.5">Order Flow (C&Delta; &bull; Bar &Delta;)</th>
+              <th class="p-2.5">Zero-Line &amp; VWAP</th>
+              <th class="p-2.5">RVOL &bull; Book &bull; OI</th>
+              <th class="p-2.5">Ignition Time</th>
+              <th class="p-2.5">Checklist &bull; Score</th>
+              <th class="p-2.5">Ignition Entry / SL / T1-T2</th>
+              <th class="p-2.5 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#172033]">`;
+
+        if (!items || items.length === 0) {
+          const emptyMsg = isMidnightCleared
+            ? '🌙 Midnight Auto-Flush Active — Waiting for fresh 09:15 AM IST 5m Order Flow candles (Zero stale signals).'
+            : (this.earlyOnly && rawTotalCount > 0)
+            ? `No fresh Break / Rej 1 ${isBuy ? 'BUY' : 'SELL'} ignitions on the latest 2 candles (${rawTotalCount} active early trends running). <button type="button" onclick="TopMomentumOrderFlowEngine.toggleEarlyOnlyMode()" class="ml-2 px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-bold cursor-pointer">Show Active Early (${rawTotalCount})</button>`
+            : `No fresh early-ignition ${isBuy ? 'BUY' : 'SELL'} momentum setups right now. Late extended moves are automatically blocked to protect entry quality.`;
+          html += `<tr><td colspan="9" class="p-8 text-center text-slate-400 font-sans text-xs">${emptyMsg}</td></tr>`;
+        } else {
+          items.forEach(item => {
+            const chg = Number(item.changePercent || 0);
+            const mvEntry = Number(item.moveFromEntryPct || 0);
+            const vsVwap = Number(item.vsVwapPct || 0);
+            const rvol = Number(item.rvol || 1);
+            const ba = Number(item.bidAskRatio || 1);
+            const cvd = Number(item.cumulativeDelta || 0);
+            const barDelta = Number(item.barDelta || 0);
+            const zeroMom = Number(item.zeroLineMomentum || 0);
+            const imp = Number(item.impulseOscillator || 0);
+            const safeSide = isBuy ? 'BUY' : 'SELL';
+
+            const stageCls = item.stage === 'REJ_1_ENTRY'
+              ? 'bg-amber-500/20 text-amber-300 border-amber-400/50'
+              : item.stage === 'BREAK_IGNITION'
+              ? (isBuy ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50' : 'bg-rose-500/20 text-rose-300 border-rose-400/50')
+              : 'bg-cyan-500/15 text-cyan-300 border-cyan-400/40';
+
+            const dots = (item.conditions || []).map(c =>
+              `<span title="${c.step}. ${c.label}: ${c.detail}" class="inline-block w-2.5 h-2.5 rounded-full ${c.passed ? 'bg-emerald-400' : 'bg-rose-500/60'}"></span>`
+            ).join('');
+
+            html += `
+              <tr class="hover:bg-[#131b2b] transition">
+                <td class="p-2.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-black text-white text-xs cursor-pointer hover:text-cyan-300" onclick="openTradingViewChart('${item.symbol}')">${item.symbol}</span>
+                    <span class="px-1.5 py-0.5 rounded text-[9px] font-black border ${stageCls}">${item.stageBadge}</span>
+                    ${item.shouldAlertNow ? '<span class="px-1 py-0.5 rounded text-[8.5px] font-black bg-emerald-500 text-black">🔔 ALERT</span>' : ''}
+                  </div>
+                  <div class="text-[10px] font-bold mt-1 ${chg >= 0 ? 'text-emerald-300' : 'text-rose-300'}">LTP ₹${Number(item.price).toLocaleString('en-IN')} (${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%)</div>
+                  <div class="text-[9px] text-slate-400 mt-0.5">${item.sector} &bull; ${mvEntry >= 0 ? '+' : ''}${mvEntry.toFixed(2)}% vs Entry</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-white font-bold">Break ₹${Number(item.breakLevel).toLocaleString('en-IN')} <span class="text-slate-400">@ ${String(item.breakTimeIST || '--').slice(0, 5)}</span></div>
+                  <div class="${item.rej1Detected ? 'text-amber-300 font-bold' : 'text-slate-400'}">${item.rej1Detected ? `🎯 Rej 1 Confirmed @ ${String(item.rej1TimeIST || '--').slice(0, 5)}` : 'Awaiting Rej 1 Retest'}</div>
+                  <div class="text-[9px] ${item.sweepDetected ? 'text-cyan-300' : 'text-slate-500'}">${item.sweepDetected ? `✔ Sweep Extreme ₹${Number(item.sweepExtreme).toLocaleString('en-IN')}` : `Prev Close ₹${Number(item.prevClose).toLocaleString('en-IN')}`}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="font-black ${cvd >= 0 ? 'text-emerald-300' : 'text-rose-300'}">C&Delta; ${this.formatCompactDelta(cvd)}</div>
+                  <div class="font-bold ${barDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">Bar &Delta; ${this.formatCompactDelta(barDelta)}</div>
+                  <div class="text-[9px] text-slate-400">${item.cvdFlippedAtBreak ? '✔ C&Delta; Flipped on Break' : 'C&Delta; Aligned'}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="font-bold ${zeroMom >= 0 ? 'text-cyan-300' : 'text-rose-300'}">Zero-Line ${zeroMom >= 0 ? '+' : ''}${zeroMom.toFixed(2)} &bull; Imp ${imp >= 0 ? '+' : ''}${imp.toFixed(2)}</div>
+                  <div class="text-slate-200">VWAP ₹${Number(item.vwap).toLocaleString('en-IN')} (<span class="${Math.abs(vsVwap) <= 1.25 ? 'text-emerald-300 font-bold' : 'text-amber-300'}">${vsVwap >= 0 ? '+' : ''}${vsVwap.toFixed(2)}%</span>)</div>
+                  <div class="text-[9px] text-slate-400">EMA9 ₹${Number(item.ema9).toFixed(1)} &bull; EMA21 ₹${Number(item.ema21).toFixed(1)}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="text-amber-300 font-black">RVOL ${rvol.toFixed(2)}x &bull; Bar ${Number(item.barVolRatio || 1).toFixed(2)}x</div>
+                  <div class="text-slate-200">B/A ${ba.toFixed(2)}x &bull; ₹${Number(item.turnoverCr || 0).toFixed(1)} Cr</div>
+                  <div class="text-[9px] text-slate-400">${item.buildup} (${Number(item.oiChangePct || 0) >= 0 ? '+' : ''}${Number(item.oiChangePct || 0).toFixed(1)}%)</div>
+                </td>
+                <td class="p-2.5 whitespace-nowrap">
+                  <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 font-mono text-[10px] font-bold border border-cyan-500/20">🕒 ${item.listedAt}</span>
+                  <div class="text-[9px] text-slate-400 mt-1">${item.barsSinceIgnition === 0 ? 'LIVE BAR' : `${item.barsSinceIgnition} bar(s) ago`}</div>
+                </td>
+                <td class="p-2.5 text-[10px]">
+                  <div class="font-black ${item.score >= 80 ? 'text-emerald-300' : (item.score >= 65 ? 'text-amber-300' : 'text-slate-200')}">${item.score}/100 &bull; ${item.conditionsMet}/6</div>
+                  <div class="flex items-center gap-1 mt-1">${dots}</div>
+                  <div class="text-[9px] text-slate-400 mt-1 max-w-[170px] truncate" title="${item.ignitionNote}">${item.ignitionNote}</div>
+                </td>
+                <td class="p-2.5 text-[10px] whitespace-nowrap">
+                  <div class="text-white font-black">In ₹${item.entryPrice} &bull; <span class="text-rose-300">SL ₹${item.stopLoss}</span></div>
+                  <div class="text-emerald-300 font-bold">T1 ₹${item.target1} &bull; T2 ₹${item.target2}</div>
+                  <div class="text-[9px] text-cyan-300">Risk ₹${item.riskR} &bull; R:R ${item.rrRatio}</div>
+                </td>
+                <td class="p-2.5 text-right space-y-1">
+                  <button onclick="openTradingViewChart('${item.symbol}')" class="px-2 py-1 rounded bg-[#131b2e] hover:bg-[#1d2a47] border border-[#23314f] text-cyan-300 text-[10px] font-bold block w-full text-center cursor-pointer">📈 Chart</button>
+                  <button onclick="openOrderModal('${item.symbol}', '${safeSide}', ${item.entryPrice || item.price}, ${chg})" class="px-2 py-1 rounded ${isBuy ? 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-black border-emerald-500/40' : 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border-rose-500/40'} border text-[10px] font-black block w-full text-center transition cursor-pointer">⚡ ${safeSide}</button>
+                </td>
+              </tr>`;
+          });
+        }
+        html += `</tbody>`;
+        if (tbl._lastHtmlStr !== html) {
+          tbl._lastHtmlStr = html;
+          tbl.innerHTML = html;
+        }
+      },
+
+      renderTables() {
+        const rpt = this.lastReport;
+        if (!rpt) return;
+        const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+
+        setEl('momentum-kpi-universe', `${rpt.universeEvaluated || 0} NSE F&O`);
+        setEl('momentum-kpi-time', String(rpt.istTime || '--:--:-- IST'));
+        setEl('momentum-kpi-buy', `${rpt.earlyIgnitionBuyCount || 0} Ignition (${rpt.buyCount || 0} Active)`);
+        setEl('momentum-kpi-sell', `${rpt.earlyIgnitionSellCount || 0} Ignition (${rpt.sellCount || 0} Active)`);
+        setEl('momentum-kpi-blocked', `${rpt.blockedExhaustedCount || 0} Blocked (No Late Alerts)`);
+
+        const q = (document.getElementById('momentum-search-input')?.value || '').trim().toUpperCase();
+        const filterList = (list) => (Array.isArray(list) ? list : []).filter(item => {
+          if (this.earlyOnly && !item.isEarlyIgnition) return false;
+          if (q && !String(item.symbol || '').toUpperCase().includes(q) && !String(item.sector || '').toUpperCase().includes(q)) return false;
+          return true;
+        });
+
+        const rawBuys = Array.isArray(rpt.buySignals) ? rpt.buySignals : [];
+        const rawSells = Array.isArray(rpt.sellSignals) ? rpt.sellSignals : [];
+        const exhausted = Array.isArray(rpt.exhaustedSignals) ? rpt.exhaustedSignals : [];
+        const buys = filterList(rawBuys);
+        const sells = filterList(rawSells);
+
+        setEl('momentum-buy-badge', rpt.isMidnightCleared ? '0 BUY ignitions (Midnight Auto-Flush)' : `${buys.length} BUY (${rpt.earlyIgnitionBuyCount || 0} Break/Rej 1)`);
+        setEl('momentum-sell-badge', rpt.isMidnightCleared ? '0 SELL ignitions (Midnight Auto-Flush)' : `${sells.length} SELL (${rpt.earlyIgnitionSellCount || 0} Break/Rej 1)`);
+
+        this.renderSignalTable('table-momentum-upside', buys, true, Boolean(rpt.isMidnightCleared), rawBuys.length);
+        this.renderSignalTable('table-momentum-downside', sells, false, Boolean(rpt.isMidnightCleared), rawSells.length);
+
+        const exPanel = document.getElementById('momentum-exhausted-panel');
+        const exList = document.getElementById('momentum-exhausted-list');
+        if (exPanel && exList) {
+          if (exhausted.length > 0 && !rpt.isMidnightCleared) {
+            exPanel.classList.remove('hidden');
+            setEl('momentum-blocked-badge', `${rpt.blockedExhaustedCount || exhausted.length} late/exit stocks blocked from alerting`);
+            exList.innerHTML = exhausted.map(item => `
+              <div class="px-2.5 py-1.5 rounded-lg bg-[#141724] border border-amber-500/25 text-slate-300 flex items-center gap-2" title="${item.exhaustionReason}">
+                <span class="font-bold text-amber-300 cursor-pointer hover:underline" onclick="openTradingViewChart('${item.symbol}')">${item.symbol}</span>
+                <span class="${item.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${item.changePercent >= 0 ? '+' : ''}${Number(item.changePercent).toFixed(2)}%</span>
+                <span class="text-slate-400">Bar &Delta; ${this.formatCompactDelta(item.barDelta)}</span>
+                <span class="text-rose-300 text-[10px]">🛑 ${String(item.exhaustionReason || 'Extended').split('•')[0].trim()}</span>
+              </div>
+            `).join('');
+          } else {
+            exPanel.classList.add('hidden');
+          }
+        }
+      }
+    };
+
+    // ============================================================
     // REAL-TIME NOTIFICATION ENGINE (WEB & IN-APP APP PUSH)
     // Alerts on: Stock Listed At On-Time & Stock News (Positive/Negative)
     // ============================================================
@@ -19333,15 +19797,115 @@ function renderJournal() {
         }
       },
 
+      syncTopMomentumOrderFlow(report) {
+        if (!report || report.isMidnightCleared) return [];
+        const up = Array.isArray(report.buySignals) ? report.buySignals : [];
+        const dn = Array.isArray(report.sellSignals) ? report.sellSignals : [];
+        // ONLY consider non-exhausted stocks flagged as shouldAlertNow (🔥 BREAK IGNITION or 🎯 REJ 1 ENTRY)
+        const alertableUp = up.filter(s => s && !s.isExhausted && s.shouldAlertNow);
+        const alertableDn = dn.filter(s => s && !s.isExhausted && s.shouldAlertNow);
+
+        // Mark already-exhausted stocks as seen so they can never fire a late alert
+        (Array.isArray(report.exhaustedSignals) ? report.exhaustedSignals : []).forEach(ex => {
+          if (ex && ex.symbol) {
+            this.seenMomentumSymbols.add(`UP:${ex.symbol}`);
+            this.seenMomentumSymbols.add(`DOWN:${ex.symbol}`);
+          }
+        });
+
+        const combined = [
+          ...alertableUp.map(s => ({ stock: s, isUpside: true, key: `UP:${s.symbol}:${s.stage}` })),
+          ...alertableDn.map(s => ({ stock: s, isUpside: false, key: `DOWN:${s.symbol}:${s.stage}` }))
+        ];
+
+        // First load baseline: seed older ignitions silently, EXCEPT brand-new LIVE BAR ignitions (barsSinceIgnition === 0)
+        if (!this._orderFlowMomentumBaselineReady) {
+          this._orderFlowMomentumBaselineReady = true;
+          const liveNow = [];
+          const nowMs = Date.now();
+          combined.forEach(({ stock, isUpside, key }) => {
+            this.seenMomentumSymbols.add(key);
+            if (Number(stock.barsSinceIgnition ?? 99) === 0 && stock.isEarlyIgnition) {
+              this.lastAlertedAt.set(`MOMENTUM:${key}`, nowMs);
+              liveNow.push({
+                symbol: stock.symbol,
+                name: stock.name || stock.symbol,
+                isUpside,
+                direction: isUpside ? 'BUY' : 'SELL',
+                price: Number(stock.price || 0),
+                pct_change: Number(stock.changePercent || 0),
+                listed_at: stock.listedAt || new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }),
+                extraDetail: `${stock.stageBadge} • Entry ₹${stock.entryPrice} • SL ₹${stock.stopLoss} • RVol ${stock.rvol}x`
+              });
+            }
+          });
+          if (liveNow.length > 0) {
+            this.notifyNewCandidateBatch(liveNow, 'TOP MOMENTUM');
+          }
+          return liveNow;
+        }
+
+        const nowMs = Date.now();
+        const cooldownMs = 8 * 60 * 1000;
+        const newlyIgnited = [];
+
+        combined.forEach(({ stock, isUpside, key }) => {
+          if (!stock || !stock.symbol) return;
+          if (!this.seenMomentumSymbols.has(key)) {
+            this.seenMomentumSymbols.add(key);
+            // Fire IMMEDIATELY on fresh ignition (never silently drop fresh transitions due to stale listed_at!)
+            const isFreshBar = Number(stock.barsSinceIgnition ?? 0) <= 3;
+            if (!isFreshBar && !this.isWithinLiveAlertWindow(stock.listedAt, 600)) {
+              return;
+            }
+            const prevTs = this.lastAlertedAt.get(`MOMENTUM:${key}`) || 0;
+            if (nowMs - prevTs >= cooldownMs) {
+              this.lastAlertedAt.set(`MOMENTUM:${key}`, nowMs);
+              newlyIgnited.push({
+                symbol: stock.symbol,
+                name: stock.name || stock.symbol,
+                isUpside,
+                direction: isUpside ? 'BUY' : 'SELL',
+                price: Number(stock.price || 0),
+                pct_change: Number(stock.changePercent || 0),
+                listed_at: stock.listedAt || new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }),
+                extraDetail: `${stock.stageBadge} • Entry ₹${stock.entryPrice} • SL ₹${stock.stopLoss} • CΔ ${TopMomentumOrderFlowEngine.formatCompactDelta(stock.cumulativeDelta)} • RVol ${stock.rvol}x`
+              });
+            }
+          }
+        });
+
+        if (newlyIgnited.length > 0) {
+          this.notifyNewCandidateBatch(newlyIgnited, 'TOP MOMENTUM');
+        }
+        return newlyIgnited;
+      },
+
       syncMomentumCandidates(upsideList, downsideList, fromBackendSync = false) {
         if (typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared()) return [];
+        // When the 5m Order Flow Top Momentum engine is active, let syncTopMomentumOrderFlow drive alerts so late movers NEVER fire!
+        if (typeof TopMomentumOrderFlowEngine !== 'undefined' && TopMomentumOrderFlowEngine.lastReport && !TopMomentumOrderFlowEngine.lastReport.isMidnightCleared) {
+          return [];
+        }
         const up = Array.isArray(upsideList) ? upsideList : [];
         const dn = Array.isArray(downsideList) ? downsideList : [];
         if (up.length === 0 && dn.length === 0) return [];
 
+        // Anti-Chase filter: only alert early moves (<= 2.20% day move, tight to VWAP <= 1.50%), NEVER after a +3% move!
+        const isEarlyCandidate = (s, isUpside) => {
+          if (!s || !s.symbol || s.isExhausted) return false;
+          const pct = Number(s.pct_change || 0);
+          const dirPct = isUpside ? pct : -pct;
+          if (dirPct < 0.25 || dirPct > 2.20) return false;
+          const price = Number(s.price || 0);
+          const atp = Number(s.atp || price);
+          const vwapDist = atp > 0 ? (isUpside ? ((price - atp) / atp) * 100 : ((atp - price) / atp) * 100) : 0;
+          return vwapDist >= -0.1 && vwapDist <= 1.50;
+        };
+
         const combined = [
-          ...up.map(s => ({ stock: s, isUpside: true, key: `UP:${s.symbol}` })),
-          ...dn.map(s => ({ stock: s, isUpside: false, key: `DOWN:${s.symbol}` }))
+          ...up.filter(s => isEarlyCandidate(s, true)).map(s => ({ stock: s, isUpside: true, key: `UP:${s.symbol}` })),
+          ...dn.filter(s => isEarlyCandidate(s, false)).map(s => ({ stock: s, isUpside: false, key: `DOWN:${s.symbol}` }))
         ];
 
         // Seed silent baseline on first initialization or first live backend scan sync
@@ -19353,17 +19917,13 @@ function renderJournal() {
         }
 
         const nowMs = Date.now();
-        const cooldownMs = 10 * 60 * 1000;
+        const cooldownMs = 8 * 60 * 1000;
         const newlyListed = [];
 
         combined.forEach(({ stock, isUpside, key }) => {
           if (!stock || !stock.symbol) return;
           if (!this.seenMomentumSymbols.has(key)) {
             this.seenMomentumSymbols.add(key);
-            // Ignore stale morning/old-time stocks (e.g., 09:30 o'clock) when live clock is later (e.g., 14:20)
-            if (!this.isWithinLiveAlertWindow(stock.listed_at, 300)) {
-              return;
-            }
             const prevTs = this.lastAlertedAt.get(`MOMENTUM:${key}`) || 0;
             if (nowMs - prevTs >= cooldownMs) {
               this.lastAlertedAt.set(`MOMENTUM:${key}`, nowMs);
@@ -19374,8 +19934,8 @@ function renderJournal() {
                 direction: isUpside ? 'BUY' : 'SELL',
                 price: Number(stock.price || 0),
                 pct_change: Number(stock.pct_change || 0),
-                listed_at: stock.listed_at || new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }),
-                extraDetail: `RVol ${stock.rvol || 1.2}x • B/A ${stock.bid_ask_ratio || 1.0}x`
+                listed_at: new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false }),
+                extraDetail: `Early Ignition • RVol ${stock.rvol || 1.2}x • B/A ${stock.bid_ask_ratio || 1.0}x`
               });
             }
           }
@@ -19892,6 +20452,7 @@ function renderJournal() {
           if (typeof PriceActionEngine !== 'undefined') PriceActionEngine.init();
           if (typeof ApexAlphaEngine !== 'undefined') ApexAlphaEngine.init();
           if (typeof MuhuratFlowEngine !== 'undefined') MuhuratFlowEngine.init();
+          if (typeof TopMomentumOrderFlowEngine !== 'undefined') TopMomentumOrderFlowEngine.init();
           if (typeof IntradayStockEngine !== 'undefined') IntradayStockEngine.init();
           if (typeof AiTradingJournalEngine !== 'undefined') AiTradingJournalEngine.init();
         } catch (e) {

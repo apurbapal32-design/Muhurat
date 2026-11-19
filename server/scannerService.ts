@@ -32,6 +32,11 @@ import {
   parseFiniteNum,
   round2,
 } from '../src/utils/quoteNormalizer';
+import {
+  calculateSessionCumulativeDelta,
+  checkCumulativeDeltaAlerts,
+  CumulativeDeltaEvaluationState,
+} from '../src/utils/priceAlerts';
 
 const INDEX_SYMBOLS_UNIVERSE = new Set([
   'NIFTY',
@@ -124,12 +129,20 @@ export class ScannerService {
   };
   private ledgerDirty: boolean = false;
 
+  private cumulativeDeltaState: CumulativeDeltaEvaluationState = {
+    prevDeltas: new Map(),
+    lastTriggered: new Map(),
+  };
+
   private alertConfig: AlertConfig = {
     minScoreToAlert: 80,
     enableOrderQtyAlert: true,
     minOrderSizeQty: 50000,
     minRvolForOrderAlert: 1.5,
     orderTypeFilter: 'BOTH',
+    enableCumulativeDeltaAlert: true,
+    cumulativeDeltaThreshold: 50000,
+    cumulativeDeltaDirection: 'BOTH',
     enableTelegram: false,
     telegramBotToken: '',
     telegramChatId: '',
@@ -2058,6 +2071,10 @@ export class ScannerService {
             ? 'Seller Pressure'
             : 'Balanced Order Book';
 
+        const computedCumDelta = calculateSessionCumulativeDelta(evalCandles);
+        scannedStock.cumulativeDelta =
+          computedCumDelta !== 0 ? computedCumDelta : Math.round(effBidQty - effAskQty);
+
         scannedStock.sparkline = candles.slice(-12).map((c) => Number(c.close.toFixed(2)));
         scannedStock.alertCreateTime = nowIso;
 
@@ -2079,6 +2096,9 @@ export class ScannerService {
         }
         if (this.alertConfig.enableOrderQtyAlert !== false) {
           this.processOrderQtyAlert(scannedStock);
+        }
+        if (this.alertConfig.enableCumulativeDeltaAlert !== false) {
+          this.processCumulativeDeltaAlert(scannedStock);
         }
 
         scannedStock.fyersSymbol = upstoxService.getInstrumentKey(scannedStock.symbol);
@@ -2529,6 +2549,20 @@ export class ScannerService {
   }
 
   /**
+   * Processes alerts when a stock's Cumulative Delta crosses the configured threshold
+   */
+  private processCumulativeDeltaAlert(stock: ScannedStock) {
+    const triggered = checkCumulativeDeltaAlerts([stock], this.alertConfig, {
+      state: this.cumulativeDeltaState,
+      notifyBrowser: false,
+    });
+    for (const alertItem of triggered) {
+      this.alertLogs.unshift(alertItem);
+      if (this.alertLogs.length > 50) this.alertLogs.pop();
+    }
+  }
+
+  /**
    * Triggers a live test alert and logs it into alert history
    */
   public triggerTestAlert(): AlertLogItem | null {
@@ -2791,7 +2825,26 @@ export class ScannerService {
   }
 
   public updateAlertConfig(newConfig: Partial<AlertConfig>) {
-    this.alertConfig = { ...this.alertConfig, ...newConfig };
+    const sanitized: Partial<AlertConfig> = { ...newConfig };
+    if (sanitized.cumulativeDeltaThreshold !== undefined) {
+      const parsed = parseFiniteNum(sanitized.cumulativeDeltaThreshold);
+      if (parsed !== undefined) {
+        sanitized.cumulativeDeltaThreshold = Math.round(parsed);
+      } else {
+        delete sanitized.cumulativeDeltaThreshold;
+      }
+    }
+    const thresholdChanged =
+      sanitized.cumulativeDeltaThreshold !== undefined &&
+      sanitized.cumulativeDeltaThreshold !== this.alertConfig.cumulativeDeltaThreshold;
+    const directionChanged =
+      sanitized.cumulativeDeltaDirection !== undefined &&
+      sanitized.cumulativeDeltaDirection !== this.alertConfig.cumulativeDeltaDirection;
+
+    this.alertConfig = { ...this.alertConfig, ...sanitized };
+    if (thresholdChanged || directionChanged) {
+      this.cumulativeDeltaState.lastTriggered.clear();
+    }
     return this.alertConfig;
   }
 

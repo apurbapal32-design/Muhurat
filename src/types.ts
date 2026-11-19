@@ -350,6 +350,7 @@ export interface ScannedStock {
   askQty?: number;
   bidAskRatio?: number;
   orderBookBias?: string;
+  cumulativeDelta?: number;
   newsSentiment?: 'POSITIVE' | 'NEGATIVE' | 'NEUTRAL';
   newsTitle?: string;
   keyTriggers: string[];
@@ -522,6 +523,9 @@ export interface AlertConfig {
   minOrderSizeQty?: number; // e.g. 50000 Quantity
   minRvolForOrderAlert?: number; // e.g. 1.5x RVol
   orderTypeFilter?: 'BOTH' | 'PURCHASE_ONLY' | 'SALE_ONLY';
+  enableCumulativeDeltaAlert?: boolean;
+  cumulativeDeltaThreshold?: number; // Net shares threshold (e.g. 50000 or -50000)
+  cumulativeDeltaDirection?: 'ABOVE' | 'BELOW' | 'BOTH';
   enableTelegram: boolean;
   telegramBotToken: string;
   telegramChatId: string;
@@ -550,10 +554,14 @@ export interface AlertLogItem {
   targetHitPrice?: number;
   sentVia: string[];
   status: 'SENT' | 'FAILED';
-  alertCategory?: 'AI_SCORE' | 'LARGE_ORDER_QTY';
+  alertCategory?: 'AI_SCORE' | 'LARGE_ORDER_QTY' | 'CUMULATIVE_DELTA';
   orderQty?: number;
   rvol?: number;
   dealType?: 'PURCHASE' | 'SALE';
+  cumulativeDelta?: number;
+  prevCumulativeDelta?: number;
+  cumulativeDeltaThreshold?: number;
+  cumulativeDeltaDirection?: 'ABOVE' | 'BELOW';
   reason?: string;
   accuracyScore?: number;
   sector?: string;

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { Activity, ArrowLeft, BellRing, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { AiAnalysisView } from './components/AiAnalysisView';
 import { AlertsView } from './components/AlertsView';
 import { BrokerConfigView } from './components/BrokerConfigView';
@@ -44,7 +44,14 @@ import {
   INITIAL_CORPORATE_ACTIONS,
   INITIAL_NEWS,
 } from './data/initialNewsData';
-import { checkAndTriggerPriceAlerts, checkOrderQtyAndRvolAlerts } from './utils/priceAlerts';
+import {
+  checkAndTriggerPriceAlerts,
+  checkCumulativeDeltaAlerts,
+  checkOrderQtyAndRvolAlerts,
+  createCumulativeDeltaTestAlert,
+  CumulativeDeltaEvaluationState,
+  formatSignedDelta,
+} from './utils/priceAlerts';
 import { safeFetchJson } from './utils/apiClient';
 import { normalizeScanResultsPayload, ScanResultsResponse } from './utils/quoteNormalizer';
 import { isMarketHours, getMarketHoursDiagnostics } from './utils/marketHours';
@@ -121,6 +128,9 @@ export default function App() {
     minOrderSizeQty: 50000,
     minRvolForOrderAlert: 1.5,
     orderTypeFilter: 'BOTH',
+    enableCumulativeDeltaAlert: true,
+    cumulativeDeltaThreshold: 50000,
+    cumulativeDeltaDirection: 'BOTH',
     enableTelegram: false,
     telegramBotToken: '',
     telegramChatId: '',
@@ -132,6 +142,38 @@ export default function App() {
     emailSmtpHost: '',
     soundAlerts: false,
   });
+  const alertsConfigRef = useRef<AlertConfig>(alertsConfig);
+  const cumDeltaStateRef = useRef<CumulativeDeltaEvaluationState>({
+    prevDeltas: new Map(),
+    lastTriggered: new Map(),
+  });
+  const [uiNotifications, setUiNotifications] = useState<Array<{ id: string; alert: AlertLogItem }>>([]);
+
+  useEffect(() => {
+    alertsConfigRef.current = alertsConfig;
+  }, [alertsConfig]);
+
+  const dismissUiNotification = (id: string) => {
+    setUiNotifications((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const pushUiNotifications = (alerts: AlertLogItem[]) => {
+    if (!alerts || alerts.length === 0) return;
+    const entries = alerts.slice(0, 3).map((alert) => ({
+      id: alert.id || `UI-${Date.now()}-${Math.random()}`,
+      alert,
+    }));
+    setUiNotifications((prev) => {
+      const existingIds = new Set(prev.map((p) => p.id));
+      const fresh = entries.filter((e) => !existingIds.has(e.id));
+      return [...fresh, ...prev].slice(0, 4);
+    });
+    entries.forEach((entry) => {
+      setTimeout(() => {
+        setUiNotifications((prev) => prev.filter((item) => item.id !== entry.id));
+      }, 10000);
+    });
+  };
 
   const [alertLogs, setAlertLogs] = useState<AlertLogItem[]>([]);
   const [trades, setTrades] = useState<TradePosition[]>([]);
@@ -176,18 +218,32 @@ export default function App() {
         parse: normalizeScanResultsPayload,
       });
       if (data) {
+        const effectiveConfig: AlertConfig = data.alerts
+          ? { ...alertsConfigRef.current, ...data.alerts }
+          : alertsConfigRef.current;
+
+        if (data.alerts) {
+          alertsConfigRef.current = effectiveConfig;
+          setAlertsConfig(effectiveConfig);
+        }
+
         if (data.stocks) {
           setStocks(data.stocks);
           checkAndTriggerPriceAlerts(data.stocks);
-          const newOrderAlerts = checkOrderQtyAndRvolAlerts(data.stocks, alertsConfig);
-          if (newOrderAlerts.length > 0) {
+          const newOrderAlerts = checkOrderQtyAndRvolAlerts(data.stocks, effectiveConfig);
+          const newCumDeltaAlerts = checkCumulativeDeltaAlerts(data.stocks, effectiveConfig, {
+            state: cumDeltaStateRef.current,
+          });
+          const triggeredAlerts = [...newCumDeltaAlerts, ...newOrderAlerts];
+          if (triggeredAlerts.length > 0) {
             setAlertLogs((prev) => {
-              const map = new Map();
-              [...newOrderAlerts, ...prev].forEach((item) => {
+              const map = new Map<string, AlertLogItem>();
+              [...triggeredAlerts, ...prev].forEach((item) => {
                 if (item && item.id && !map.has(item.id)) map.set(item.id, item);
               });
               return Array.from(map.values()).slice(0, 50);
             });
+            pushUiNotifications(newCumDeltaAlerts.length > 0 ? newCumDeltaAlerts : triggeredAlerts);
             playAlertSound();
           }
         }
@@ -195,7 +251,6 @@ export default function App() {
         if (data.top10Sell) setTopSell(data.top10Sell);
         if (data.overview) setOverview(data.overview);
         if (data.broker) setBroker(data.broker);
-        if (data.alerts) setAlertsConfig(data.alerts);
         if (data.news && Array.isArray(data.news) && data.news.length > 0) setNews(data.news);
         if (data.corporateActions && Array.isArray(data.corporateActions) && data.corporateActions.length > 0)
           setCorporateActions(data.corporateActions);
@@ -310,15 +365,51 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newConfig),
       });
-      if (data?.config) setAlertsConfig(data.config);
+      const updatedConfig = data?.config
+        ? { ...alertsConfigRef.current, ...data.config }
+        : { ...alertsConfigRef.current, ...newConfig };
+      alertsConfigRef.current = updatedConfig;
+      setAlertsConfig(updatedConfig);
+
+      // Re-evaluate Cumulative Delta thresholds cleanly against current stocks after config update
+      cumDeltaStateRef.current.lastTriggered.clear();
+      cumDeltaStateRef.current.prevDeltas.clear();
+      if (stocks.length > 0 && updatedConfig.enableCumulativeDeltaAlert !== false) {
+        const newlyTriggered = checkCumulativeDeltaAlerts(stocks, updatedConfig, {
+          state: cumDeltaStateRef.current,
+        });
+        if (newlyTriggered.length > 0) {
+          setAlertLogs((prev) => {
+            const map = new Map<string, AlertLogItem>();
+            [...newlyTriggered, ...prev].forEach((item) => {
+              if (item && item.id && !map.has(item.id)) map.set(item.id, item);
+            });
+            return Array.from(map.values()).slice(0, 50);
+          });
+          pushUiNotifications(newlyTriggered);
+          playAlertSound();
+        }
+      }
     } catch (e) {
       console.error('Failed to update alert config:', e);
     }
   };
 
+  const handleTestCumulativeDeltaAlert = (draftConfig?: AlertConfig) => {
+    const activeCfg = draftConfig ? { ...alertsConfigRef.current, ...draftConfig } : alertsConfigRef.current;
+    const referenceStock = topBuy[0] || stocks[0];
+    const testAlert = createCumulativeDeltaTestAlert(referenceStock, activeCfg);
+    setAlertLogs((prev) => [testAlert, ...prev.filter((item) => item.id !== testAlert.id)].slice(0, 50));
+    pushUiNotifications([testAlert]);
+    playAlertSound();
+  };
+
   const handleSendTestAlert = async () => {
     try {
-      await safeFetchJson('/api/alerts/test', { method: 'POST' });
+      const res = await safeFetchJson<{ alert?: AlertLogItem }>('/api/alerts/test', { method: 'POST' });
+      if (res?.alert) {
+        pushUiNotifications([res.alert]);
+      }
       playAlertSound();
       fetchScanResults();
     } catch (e) {
@@ -842,6 +933,7 @@ export default function App() {
             news={news}
             onUpdateConfig={handleUpdateAlertConfig}
             onSendTestAlert={handleSendTestAlert}
+            onTestCumulativeDeltaAlert={handleTestCumulativeDeltaAlert}
             onCreateTrade={handleCreateTrade}
             onCloseTrade={handleCloseTrade}
             theme={theme}
@@ -875,6 +967,116 @@ export default function App() {
         onClose={() => setIsUtmModalOpen(false)}
         stocks={stocks}
       />
+
+      {/* Live UI Notification Stack (Cumulative Delta & Threshold Alerts) */}
+      {uiNotifications.length > 0 && (
+        <div
+          data-testid="ui-notification-stack"
+          role="region"
+          aria-label="Live Alert Notifications"
+          className="fixed top-20 right-4 z-50 flex flex-col gap-2.5 w-full max-w-sm pointer-events-none"
+        >
+          {uiNotifications.map(({ id, alert }) => {
+            const isCumDelta = alert.alertCategory === 'CUMULATIVE_DELTA';
+            const isBullish =
+              alert.cumulativeDeltaDirection === 'ABOVE' ||
+              (!alert.cumulativeDeltaDirection && alert.signal === 'BUY');
+            const isLight = theme === 'light';
+
+            return (
+              <div
+                key={id}
+                data-testid="ui-notification-toast"
+                role="status"
+                aria-live="polite"
+                className={`pointer-events-auto rounded-xl border p-3.5 shadow-2xl backdrop-blur-md transition-all font-mono ${
+                  isLight
+                    ? 'bg-white/95 border-cyan-300 text-slate-900'
+                    : isCumDelta
+                    ? 'bg-slate-900/95 border-cyan-500/50 text-slate-100 shadow-cyan-950/50'
+                    : 'bg-slate-900/95 border-indigo-500/40 text-slate-100'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div
+                      className={`p-1.5 rounded-lg shrink-0 ${
+                        isCumDelta
+                          ? isBullish
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                          : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
+                      }`}
+                    >
+                      {isCumDelta ? (
+                        isBullish ? (
+                          <TrendingUp className="w-4 h-4" />
+                        ) : (
+                          <TrendingDown className="w-4 h-4" />
+                        )
+                      ) : (
+                        <BellRing className="w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-xs font-black tracking-tight uppercase">
+                          {alert.symbol}
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.5 text-[9px] font-bold rounded uppercase ${
+                            isCumDelta
+                              ? isBullish
+                                ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                                : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                              : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                          }`}
+                        >
+                          {isCumDelta
+                            ? `Cum Δ ${isBullish ? 'Crossed Above' : 'Crossed Below'}`
+                            : alert.alertCategory || 'Alert'}
+                        </span>
+                      </div>
+                      <p className="text-[11px] opacity-80 mt-0.5 leading-snug">
+                        {isCumDelta && alert.cumulativeDelta !== undefined && alert.cumulativeDeltaThreshold !== undefined
+                          ? `Cum Δ ${formatSignedDelta(alert.cumulativeDelta)} ${
+                              isBullish ? '≥' : '≤'
+                            } ${formatSignedDelta(alert.cumulativeDeltaThreshold)} at ₹${alert.price.toLocaleString('en-IN')}`
+                          : alert.reason || `${alert.signal} signal at ₹${alert.price.toLocaleString('en-IN')}`}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => dismissUiNotification(id)}
+                    aria-label="Dismiss notification"
+                    className="p-1 rounded hover:bg-slate-800/60 opacity-60 hover:opacity-100 transition-opacity shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="mt-2.5 pt-2 border-t border-slate-800/70 flex items-center justify-between text-[10px]">
+                  <span className="flex items-center gap-1 opacity-65">
+                    <Activity className="w-3 h-3 text-cyan-400" />
+                    <span>LTP ₹{alert.price.toLocaleString('en-IN')}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('alerts');
+                      dismissUiNotification(id);
+                    }}
+                    className="font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-wide"
+                  >
+                    View Alerts →
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
