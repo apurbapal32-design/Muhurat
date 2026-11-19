@@ -1689,7 +1689,7 @@
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
           
           <!-- Table 1: High Liquidity Top Traded (Upside) -->
-          <div class="glass-panel p-4 md:p-5 rounded-2xl border border-emerald-500/30 bg-[#0c111d] shadow-2xl flex flex-col justify-between">
+          <div class="glass-panel p-4 md:p-5 rounded-2xl border border-emerald-500/30 bg-[#0c111d] shadow-2xl flex flex-col justify-start">
             <div class="flex items-center justify-between pb-3 border-b border-[#1c273c] mb-3 flex-wrap gap-2">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
@@ -1707,7 +1707,7 @@
           </div>
 
           <!-- Table 2: High Liquidity Top Traded (Downside) -->
-          <div class="glass-panel p-4 md:p-5 rounded-2xl border border-rose-500/30 bg-[#0c111d] shadow-2xl flex flex-col justify-between">
+          <div class="glass-panel p-4 md:p-5 rounded-2xl border border-rose-500/30 bg-[#0c111d] shadow-2xl flex flex-col justify-start">
             <div class="flex items-center justify-between pb-3 border-b border-[#1c273c] mb-3 flex-wrap gap-2">
               <div class="flex items-center gap-2 flex-wrap">
                 <span class="w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping"></span>
@@ -5073,8 +5073,8 @@
             </select>
             <label class="sr-only" for="aa-sort-select">Sort Order</label>
             <select id="aa-sort-select" onchange="ApexAlphaEngine.renderTables()" class="px-2.5 py-1.5 rounded-lg bg-[#080c16] border border-[#1f2c44] text-cyan-200 text-xs font-bold focus:outline-none">
-              <option value="score_desc" selected>Sort: Checklist Score (8/8 First)</option>
-              <option value="listed_desc">Sort: Listed At (Z&rarr;A)</option>
+              <option value="listed_desc" selected>Sort: Listed At (Z&rarr;A Latest)</option>
+              <option value="score_desc">Sort: Checklist Score (8/8 First)</option>
               <option value="rvol_desc">Sort: 5M RVOL (High&rarr;Low)</option>
               <option value="rs_desc">Sort: Rel Strength (High&rarr;Low)</option>
               <option value="turnover_desc">Sort: Turnover ₹ Cr (High&rarr;Low)</option>
@@ -7180,15 +7180,34 @@
       return `<span class="px-2 py-0.5 rounded text-[10px] font-bold pill-long-unwinding whitespace-nowrap">🟠 Long Unwind</span>`;
     }
 
+    function extractListedAtSeconds(row) {
+      if (!row || typeof row !== 'object') return 0;
+      const raw = row.listed_at || row.listedAt || row.entryTime || row.breakTimeIST || row.signalTimeIST || row.triggerTime || row.timeIST || '';
+      if (!raw || raw === '--' || raw === '--:--:--') return 0;
+      if (typeof timeStringToSec === 'function') {
+        const parsed = timeStringToSec(String(raw));
+        if (parsed > 0) return parsed;
+      }
+      const m = String(raw).match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (!m) return 0;
+      return (parseInt(m[1], 10) || 0) * 3600 + (parseInt(m[2], 10) || 0) * 60 + (parseInt(m[3] || '0', 10) || 0);
+    }
+
+    function compareListedAtDescZtoA(a, b) {
+      const secA = extractListedAtSeconds(a);
+      const secB = extractListedAtSeconds(b);
+      if (secB !== secA) return secB - secA; // Z->A Time: Latest/Newest LISTED AT first, earliest last
+      const symA = String(a?.symbol || a?.underlying || '').toUpperCase();
+      const symB = String(b?.symbol || b?.underlying || '').toUpperCase();
+      return symB.localeCompare(symA); // Tie-breaker: Symbol Z -> A
+    }
+
+    function sortByListedAtZtoA(arr) {
+      return [...(arr || [])].sort(compareListedAtDescZtoA);
+    }
+
     function sortByListedAtNewestFirstAtoZ(arr) {
-      return [...(arr || [])].sort((a, b) => {
-        const rawA = a.listed_at || a.listedAt || '';
-        const rawB = b.listed_at || b.listedAt || '';
-        const secA = (rawA && rawA !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawA) : 0;
-        const secB = (rawB && rawB !== '--' && typeof timeStringToSec === 'function') ? timeStringToSec(rawB) : 0;
-        if (secB !== secA) return secB - secA; // Z->A Model: Latest/2nd eligible FIRST -> Earliest/1st eligible LAST
-        return String(b.symbol || '').localeCompare(String(a.symbol || ''));
-      });
+      return sortByListedAtZtoA(arr);
     }
 
     function normLogRvol(s) {
@@ -7213,6 +7232,149 @@
       return Math.max(0, Math.min(1, ((Number(s.price) || lo) - lo) / span));
     };
 
+    const UNIVERSAL_STRONG_RVOL_MIN = 2.00;
+    const UNIVERSAL_STRONG_XTIME_VOL_MIN = 2.00;
+    const UNIVERSAL_STRONG_ADX_MIN = 25.0;
+
+    function passesUniversalStrongFilter(s) {
+      if (!s) return false;
+      const rvol = Number(s.rvol) || 0;
+      const xTimeVol = Number(s.x_time_vol ?? s.xTimeVolume ?? 0) || 0;
+      const adx = Number(s.adx) || 0;
+      return rvol >= UNIVERSAL_STRONG_RVOL_MIN && xTimeVol >= UNIVERSAL_STRONG_XTIME_VOL_MIN && adx >= UNIVERSAL_STRONG_ADX_MIN;
+    }
+
+    // Sticky Session Lock:
+    // 1. Strictly admits ONLY stocks matching each scanner's existing formula + Strong RVOL >= 2.00 + Strong X-Time Vol >= 2.00X + ADX >= 25+.
+    // 2. Once listed in a scanner today, live quote/scanner refreshes update its live price/CHG%/metrics WITHOUT kicking it out
+    //    unless hard Stop Loss is breached, side sharply reverses opposite, or 12:00 AM IST midnight flush resets the session.
+    window.ScannerStickySessionLock = {
+      sessionDate: '',
+      buckets: {},
+      clearAll() {
+        this.buckets = {};
+      },
+      _ensureSession() {
+        const isCleared = typeof MidnightSessionManager !== 'undefined' && MidnightSessionManager.isMidnightCleared && MidnightSessionManager.isMidnightCleared();
+        const today = (typeof getISTDatePartsNow === 'function') ? getISTDatePartsNow().dateStr : new Date().toISOString().slice(0, 10);
+        if (isCleared) {
+          this.buckets = {};
+          this.sessionDate = today;
+          return false;
+        }
+        if (this.sessionDate && this.sessionDate !== today) {
+          this.buckets = {};
+        }
+        this.sessionDate = today;
+        return true;
+      },
+      _isInvalidated(entry, liveRow) {
+        if (!liveRow) return false;
+        const lp = Number(liveRow.price) || 0;
+        const chg = Number(liveRow.pct_change) || 0;
+        if (lp <= 0) return false;
+        if (entry.side === 'BUY') {
+          if (entry.stop > 0 && lp <= entry.stop) return true;
+          if (entry.entry > 0 && chg <= -0.50 && lp < entry.entry * 0.992) return true;
+        } else {
+          if (entry.stop > 0 && lp >= entry.stop) return true;
+          if (entry.entry > 0 && chg >= 0.50 && lp > entry.entry * 1.008) return true;
+        }
+        return false;
+      },
+      stabilize(scannerKey, side, freshQualifiedRows, allPoolMap, maxRows = 15) {
+        if (!this._ensureSession()) return [];
+        if (!this.buckets[scannerKey]) this.buckets[scannerKey] = new Map();
+        const bucket = this.buckets[scannerKey];
+        const freshList = Array.isArray(freshQualifiedRows) ? freshQualifiedRows : [];
+        const seen = new Set();
+        const merged = [];
+
+        // Admit brand-new strictly eligible rows & update already-locked rows
+        for (const row of freshList) {
+          const sym = String(row?.symbol || '').toUpperCase().trim();
+          if (!sym || seen.has(sym)) continue;
+          const existing = bucket.get(sym);
+          if (existing) {
+            existing.peakRvol = Math.max(existing.peakRvol, Number(row.rvol) || 0);
+            existing.peakXTime = Math.max(existing.peakXTime, Number(row.x_time_vol) || 0);
+            existing.peakAdx = Math.max(existing.peakAdx, Number(row.adx) || 0);
+            const updated = {
+              ...row,
+              listed_at: existing.listed_at || row.listed_at,
+              entry: existing.entry || row.entry,
+              stop: existing.stop || row.stop,
+              target: existing.target || row.target,
+              rvol: Math.max(Number(row.rvol) || 0, existing.peakRvol),
+              x_time_vol: Math.max(Number(row.x_time_vol) || 0, existing.peakXTime),
+              adx: Math.max(Number(row.adx) || 0, existing.peakAdx)
+            };
+            existing.row = updated;
+            if (!this._isInvalidated(existing, updated)) {
+              merged.push(updated);
+              seen.add(sym);
+            } else {
+              bucket.delete(sym);
+            }
+          } else if (passesUniversalStrongFilter(row)) {
+            const inferredSide =
+              side === 'SELL'
+                ? 'SELL'
+                : side === 'BUY'
+                  ? 'BUY'
+                  : (String(row.side || row.signal || '').toUpperCase().includes('SHORT') ||
+                     String(row.side || row.signal || '').toUpperCase().includes('SELL') ||
+                     (Number(row.pct_change) || 0) < 0)
+                    ? 'SELL'
+                    : 'BUY';
+            const lockedEntry = {
+              symbol: sym,
+              side: inferredSide,
+              listed_at: row.listed_at || '--',
+              entry: Number(row.entry) || Number(row.price) || 0,
+              stop: Number(row.stop) || 0,
+              target: Number(row.target) || 0,
+              peakRvol: Number(row.rvol) || 0,
+              peakXTime: Number(row.x_time_vol) || 0,
+              peakAdx: Number(row.adx) || 0,
+              row: { ...row }
+            };
+            bucket.set(sym, lockedEntry);
+            merged.push(lockedEntry.row);
+            seen.add(sym);
+          }
+        }
+
+        // Retain previously listed stocks that flickered on refresh (updating live price/metrics)
+        for (const [sym, entry] of Array.from(bucket.entries())) {
+          if (seen.has(sym)) continue;
+          const liveRow = allPoolMap ? allPoolMap.get(sym) : null;
+          if (this._isInvalidated(entry, liveRow)) {
+            bucket.delete(sym);
+            continue;
+          }
+          const updated = liveRow
+            ? {
+                ...entry.row,
+                ...liveRow,
+                listed_at: entry.listed_at || liveRow.listed_at,
+                entry: entry.entry || liveRow.entry,
+                stop: entry.stop || liveRow.stop,
+                target: entry.target || liveRow.target,
+                rvol: Math.max(Number(liveRow.rvol) || 0, entry.peakRvol),
+                x_time_vol: Math.max(Number(liveRow.x_time_vol) || 0, entry.peakXTime),
+                adx: Math.max(Number(liveRow.adx) || 0, entry.peakAdx)
+              }
+            : entry.row;
+          entry.row = updated;
+          merged.push(updated);
+          seen.add(sym);
+        }
+
+        return sortByListedAtNewestFirstAtoZ(merged).slice(0, maxRows);
+      }
+    };
+
     function hasActiveFormulaSignal(s) {
       if (!s || !isPureEquityStock(s)) return false;
       const fCode = String(s.formula_code || s.formulaCode || '').toUpperCase();
@@ -7226,108 +7388,100 @@
       return true;
     }
 
-    // Unified System Formula Definitions (0..15 eligible stocks per scanner — never pads or admits NONE/NO_SIGNAL stocks)
+    // Unified System Formula Definitions (0..15 strictly eligible stocks per scanner — existing formula + Strong RVOL >= 2.00 + Strong X-Time Vol >= 2.00X + ADX >= 25+)
     const SCANNER_FORMULA_DEFS = [
       {
         key: 'strong_bullish', label: 'Strong Bull', side: 'BUY',
         match: (s) => {
-          if (!hasActiveFormulaSignal(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
+          if (!hasActiveFormulaSignal(s) || !passesUniversalStrongFilter(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
           const pct = Number(s.pct_change) || 0;
-          const rvol = Number(s.rvol) || 1;
           const price = Number(s.price) || 0;
           const atp = Number(s.atp) || price;
-          const adx = Number(s.adx) || 25;
-          return pct >= 1.25 && rvol >= 1.15 && price >= atp * 0.999 && _stockRangePos(s) >= 0.55 && adx >= 22;
+          return pct >= 1.25 && price >= atp * 0.999 && _stockRangePos(s) >= 0.55;
         },
-        score: (s) => (s.formula_code === 'STRONG_ORB' ? 120 : 0) + (Number(s.adx) || 25) * 1.4 + Math.abs(Number(s.pct_change) || 0) * 10 + _stockRangePos(s) * 30
+        score: (s) => (s.formula_code === 'STRONG_ORB' ? 120 : 0) + (Number(s.adx) || 0) * 1.4 + Math.abs(Number(s.pct_change) || 0) * 10 + _stockRangePos(s) * 30
       },
       {
         key: 'strong_bearish', label: 'Strong Bear', side: 'SELL',
         match: (s) => {
-          if (!hasActiveFormulaSignal(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
+          if (!hasActiveFormulaSignal(s) || !passesUniversalStrongFilter(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
           const pct = Number(s.pct_change) || 0;
-          const rvol = Number(s.rvol) || 1;
           const price = Number(s.price) || 0;
           const atp = Number(s.atp) || price;
-          const adx = Number(s.adx) || 25;
-          return pct <= -1.25 && rvol >= 1.15 && price <= atp * 1.001 && _stockRangePos(s) <= 0.45 && adx >= 22;
+          return pct <= -1.25 && price <= atp * 1.001 && _stockRangePos(s) <= 0.45;
         },
-        score: (s) => (s.formula_code === 'STRONG_ORB' ? 120 : 0) + (Number(s.adx) || 25) * 1.4 + Math.abs(Number(s.pct_change) || 0) * 10 + (1 - _stockRangePos(s)) * 30
+        score: (s) => (s.formula_code === 'STRONG_ORB' ? 120 : 0) + (Number(s.adx) || 0) * 1.4 + Math.abs(Number(s.pct_change) || 0) * 10 + (1 - _stockRangePos(s)) * 30
       },
       {
         key: 'sonic_bullish', label: 'Pulse Bull', side: 'BUY',
         match: (s) => {
-          if (!hasActiveFormulaSignal(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
+          if (!hasActiveFormulaSignal(s) || !passesUniversalStrongFilter(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
           const pct = Number(s.pct_change) || 0;
-          const rvol = Number(s.rvol) || 1;
           const oi = Number(s.oi_chg_pct) || 0;
           const price = Number(s.price) || 0;
           const atp = Number(s.atp) || price;
-          return pct >= 0.80 && rvol >= 1.15 && (oi >= 2.0 || s.buildup === 'Long Buildup' || s.buildup === 'Short Covering') && price >= atp * 0.998;
+          return pct >= 0.80 && (oi >= 2.0 || s.buildup === 'Long Buildup' || s.buildup === 'Short Covering') && price >= atp * 0.998;
         },
-        score: (s) => (s.formula_code === 'SONIC_RVOL' ? 120 : 0) + (Number(s.rvol) || 1) * 1.4 + Math.abs(Number(s.oi_chg_pct) || 0) * 3.8 + 25
+        score: (s) => (s.formula_code === 'SONIC_RVOL' ? 120 : 0) + (Number(s.rvol) || 0) * 1.4 + Math.abs(Number(s.oi_chg_pct) || 0) * 3.8 + 25
       },
       {
         key: 'sonic_bearish', label: 'Pulse Bear', side: 'SELL',
         match: (s) => {
-          if (!hasActiveFormulaSignal(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
+          if (!hasActiveFormulaSignal(s) || !passesUniversalStrongFilter(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
           const pct = Number(s.pct_change) || 0;
-          const rvol = Number(s.rvol) || 1;
           const oi = Number(s.oi_chg_pct) || 0;
           const price = Number(s.price) || 0;
           const atp = Number(s.atp) || price;
-          return pct <= -0.80 && rvol >= 1.15 && (Math.abs(oi) >= 2.0 || s.buildup === 'Short Buildup' || s.buildup === 'Long Unwinding') && price <= atp * 1.002;
+          return pct <= -0.80 && (Math.abs(oi) >= 2.0 || s.buildup === 'Short Buildup' || s.buildup === 'Long Unwinding') && price <= atp * 1.002;
         },
-        score: (s) => (s.formula_code === 'SONIC_RVOL' ? 120 : 0) + (Number(s.rvol) || 1) * 1.4 + Math.abs(Number(s.oi_chg_pct) || 0) * 3.8 + 25
+        score: (s) => (s.formula_code === 'SONIC_RVOL' ? 120 : 0) + (Number(s.rvol) || 0) * 1.4 + Math.abs(Number(s.oi_chg_pct) || 0) * 3.8 + 25
       },
       {
         key: 'titan_bullish', label: 'Flow Bull', side: 'BUY',
-        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && s.signal !== 'SELL' && (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) >= 1.45 && (Number(s.delta) || 0) > 20000,
+        match: (s) => hasActiveFormulaSignal(s) && passesUniversalStrongFilter(s) && s.side !== 'SHORT' && s.signal !== 'SELL' && (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) >= 1.45 && (Number(s.delta) || 0) > 20000,
         score: (s) => (s.formula_code === 'TITAN_WHALE' ? 140 : 0) + (Number(s.bid_ask_ratio) || 1) * 35 + Math.min(40, Math.sqrt(Math.max(0, Number(s.turnover_cr) || 0)) * 2.2) + Math.min(30, Math.abs(Number(s.delta) || 0) / 50000)
       },
       {
         key: 'titan_bearish', label: 'Flow Bear', side: 'SELL',
-        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'LONG' && s.signal !== 'BUY' && (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) <= 0.72 && (Number(s.delta) || 0) < -20000,
+        match: (s) => hasActiveFormulaSignal(s) && passesUniversalStrongFilter(s) && s.side !== 'LONG' && s.signal !== 'BUY' && (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.bid_ask_ratio) || 1) <= 0.72 && (Number(s.delta) || 0) < -20000,
         score: (s) => (s.formula_code === 'TITAN_WHALE' ? 140 : 0) + (1 / Math.max(0.15, Number(s.bid_ask_ratio) || 1)) * 35 + Math.min(40, Math.sqrt(Math.max(0, Number(s.turnover_cr) || 0)) * 2.2) + Math.min(30, Math.abs(Number(s.delta) || 0) / 50000)
       },
       {
         key: 'quant_elite_bullish', label: 'Elite Bull', side: 'BUY',
         match: (s) => {
-          if (!hasActiveFormulaSignal(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
+          if (!hasActiveFormulaSignal(s) || !passesUniversalStrongFilter(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
           const pct = Number(s.pct_change) || 0;
           const rsi = Number(s.rsi) || 55;
           const ai = Number(s.aiScore || s.hyperflow || 62);
-          const adx = Number(s.adx) || 25;
-          return pct >= 0.50 && pct <= 4.5 && rsi >= 52 && rsi <= 76 && (Boolean(s.squeeze_on) || adx >= 23) && ai >= 62;
+          return pct >= 0.50 && pct <= 4.5 && rsi >= 52 && rsi <= 76 && ai >= 62;
         },
-        score: (s) => (s.squeeze_on ? 60 : 0) + (Number(s.adx) || 25) * 2.6 + (Math.abs(Number(s.pct_change) || 0) <= 4.2 ? 45 : 0) + 32 + (Number(s.aiScore || s.hyperflow) || 60) * 0.5
+        score: (s) => (s.squeeze_on ? 60 : 0) + (Number(s.adx) || 0) * 2.6 + (Math.abs(Number(s.pct_change) || 0) <= 4.2 ? 45 : 0) + 32 + (Number(s.aiScore || s.hyperflow) || 60) * 0.5
       },
       {
         key: 'quant_elite_bearish', label: 'Elite Bear', side: 'SELL',
         match: (s) => {
-          if (!hasActiveFormulaSignal(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
+          if (!hasActiveFormulaSignal(s) || !passesUniversalStrongFilter(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
           const pct = Number(s.pct_change) || 0;
           const rsi = Number(s.rsi) || 45;
           const ai = Number(s.aiScore || s.hyperflow || 60);
-          const adx = Number(s.adx) || 25;
-          return pct <= -0.50 && pct >= -4.5 && rsi >= 24 && rsi <= 48 && (Boolean(s.squeeze_on) || adx >= 23) && ai >= 60;
+          return pct <= -0.50 && pct >= -4.5 && rsi >= 24 && rsi <= 48 && ai >= 60;
         },
-        score: (s) => (s.squeeze_on ? 60 : 0) + (Number(s.adx) || 25) * 2.6 + (Math.abs(Number(s.pct_change) || 0) <= 4.2 ? 45 : 0) + 32 + (Number(s.aiScore || s.hyperflow) || 60) * 0.5
+        score: (s) => (s.squeeze_on ? 60 : 0) + (Number(s.adx) || 0) * 2.6 + (Math.abs(Number(s.pct_change) || 0) <= 4.2 ? 45 : 0) + 32 + (Number(s.aiScore || s.hyperflow) || 60) * 0.5
       },
       {
         key: 'quant_elite_pro_bullish', label: 'Elite Pro ▲', side: 'BUY',
-        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && s.signal !== 'SELL' && (Number(s.pct_change) || 0) >= 0.55 && (Number(s.pcr) || 1) >= 1.22 && ((Number(s.bid_ask_ratio) || 1) >= 1.25 || s.buildup === 'Short Covering'),
+        match: (s) => hasActiveFormulaSignal(s) && passesUniversalStrongFilter(s) && s.side !== 'SHORT' && s.signal !== 'SELL' && (Number(s.pct_change) || 0) >= 0.55 && (Number(s.pcr) || 1) >= 1.22 && ((Number(s.bid_ask_ratio) || 1) >= 1.25 || s.buildup === 'Short Covering'),
         score: (s) => ((Number(s.pcr) || 1) >= 1.2 ? 55 : 0) + (Number(s.pcr) || 1) * 45 + (s.buildup === 'Short Covering' ? 40 : 0) + (Number(s.aiScore || s.hyperflow) || 60) * 0.55
       },
       {
         key: 'quant_elite_pro_bearish', label: 'Elite Pro ▼', side: 'SELL',
-        match: (s) => hasActiveFormulaSignal(s) && s.side !== 'LONG' && s.signal !== 'BUY' && (Number(s.pct_change) || 0) <= -0.55 && (Number(s.pcr) || 1) <= 0.85 && ((Number(s.bid_ask_ratio) || 1) <= 0.82 || s.buildup === 'Short Buildup'),
+        match: (s) => hasActiveFormulaSignal(s) && passesUniversalStrongFilter(s) && s.side !== 'LONG' && s.signal !== 'BUY' && (Number(s.pct_change) || 0) <= -0.55 && (Number(s.pcr) || 1) <= 0.85 && ((Number(s.bid_ask_ratio) || 1) <= 0.82 || s.buildup === 'Short Buildup'),
         score: (s) => ((Number(s.pcr) || 1) <= 0.85 ? 55 : 0) + Math.max(0, 2.2 - (Number(s.pcr) || 1)) * 45 + (s.buildup === 'Short Buildup' ? 40 : 0) + (Number(s.aiScore || s.hyperflow) || 60) * 0.55
       },
       {
         key: 'titan_cash_bullish', label: 'Flow Cash ▲', side: 'BUY',
         match: (s) => {
-          if (!hasActiveFormulaSignal(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
+          if (!hasActiveFormulaSignal(s) || !passesUniversalStrongFilter(s) || s.side === 'SHORT' || s.signal === 'SELL') return false;
           const pct = Number(s.pct_change) || 0;
           const turn = Number(s.turnover_cr) || 0;
           const price = Number(s.price) || 0;
@@ -7343,7 +7497,7 @@
       {
         key: 'titan_cash_bearish', label: 'Flow Cash ▼', side: 'SELL',
         match: (s) => {
-          if (!hasActiveFormulaSignal(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
+          if (!hasActiveFormulaSignal(s) || !passesUniversalStrongFilter(s) || s.side === 'LONG' || s.signal === 'BUY') return false;
           const pct = Number(s.pct_change) || 0;
           const turn = Number(s.turnover_cr) || 0;
           const price = Number(s.price) || 0;
@@ -7359,16 +7513,14 @@
       {
         key: 'best_momentum_upside', label: 'Momentum ▲ (RVOL2+ ADX25+)', side: 'BUY',
         match: (s) => {
+          if (!passesUniversalStrongFilter(s)) return false;
           const pct = Number(s.pct_change) || 0;
           const price = Number(s.price) || 0;
           const atp = Number(s.atp) || price;
           const vwapDist = atp > 0 ? ((price - atp) / atp) * 100 : 0;
           const delta = Number(s.delta) || 0;
-          const rvol = Number(s.rvol) || 0;
-          const xTimeVol = Number(s.x_time_vol ?? s.rvol) || 0;
-          const adx = Number(s.adx) || 0;
           // Strict Top Momentum Formula: Strong RVOL >= 2.00, Strong X-Time Vol >= 2.00X, ADX >= 25+, Early Ignition (+0.25%..+2.35%, VWAP <= 1.65%)
-          return s.side !== 'SHORT' && s.signal !== 'SELL' && pct >= 0.25 && pct <= 2.35 && vwapDist >= -0.08 && vwapDist <= 1.65 && delta > 0 && rvol >= 2.00 && xTimeVol >= 2.00 && adx >= 25 && (Number(s.turnover_cr) || 0) >= 20 && (Number(s.bid_ask_ratio) || 1) >= 1.08;
+          return s.side !== 'SHORT' && s.signal !== 'SELL' && pct >= 0.25 && pct <= 2.35 && vwapDist >= -0.08 && vwapDist <= 1.65 && delta > 0 && (Number(s.turnover_cr) || 0) >= 20 && (Number(s.bid_ask_ratio) || 1) >= 1.08;
         },
         score: (s) => {
           const pct = Number(s.pct_change) || 0;
@@ -7377,7 +7529,7 @@
           const vwapDist = atp > 0 ? Math.max(0, ((price - atp) / atp) * 100) : 0;
           const rvol = Number(s.rvol) || 1;
           const xTimeVol = Number(s.x_time_vol ?? s.rvol) || 1;
-          const adx = Number(s.adx) || 25;
+          const adx = Number(s.adx) || 0;
           const ba = Number(s.bid_ask_ratio) || 1;
           const earlyBonus = pct <= 1.35 ? 26 : Math.max(0, 26 - (pct - 1.35) * 20);
           const vwapTightness = Math.max(0, 20 - vwapDist * 13);
@@ -7387,16 +7539,14 @@
       {
         key: 'best_momentum_downside', label: 'Momentum ▼ (RVOL2+ ADX25+)', side: 'SELL',
         match: (s) => {
+          if (!passesUniversalStrongFilter(s)) return false;
           const pct = Number(s.pct_change) || 0;
           const price = Number(s.price) || 0;
           const atp = Number(s.atp) || price;
           const vwapDist = atp > 0 ? ((atp - price) / atp) * 100 : 0;
           const delta = Number(s.delta) || 0;
-          const rvol = Number(s.rvol) || 0;
-          const xTimeVol = Number(s.x_time_vol ?? s.rvol) || 0;
-          const adx = Number(s.adx) || 0;
           // Strict Top Momentum Formula: Strong RVOL >= 2.00, Strong X-Time Vol >= 2.00X, ADX >= 25+, Early Ignition (-0.25%..-2.35%, VWAP <= 1.65%)
-          return s.side !== 'LONG' && s.signal !== 'BUY' && pct <= -0.25 && pct >= -2.35 && vwapDist >= -0.08 && vwapDist <= 1.65 && delta < 0 && rvol >= 2.00 && xTimeVol >= 2.00 && adx >= 25 && (Number(s.turnover_cr) || 0) >= 20 && (Number(s.bid_ask_ratio) || 1) <= 0.92;
+          return s.side !== 'LONG' && s.signal !== 'BUY' && pct <= -0.25 && pct >= -2.35 && vwapDist >= -0.08 && vwapDist <= 1.65 && delta < 0 && (Number(s.turnover_cr) || 0) >= 20 && (Number(s.bid_ask_ratio) || 1) <= 0.92;
         },
         score: (s) => {
           const absPct = Math.abs(Number(s.pct_change) || 0);
@@ -7405,7 +7555,7 @@
           const vwapDist = atp > 0 ? Math.max(0, ((atp - price) / atp) * 100) : 0;
           const rvol = Number(s.rvol) || 1;
           const xTimeVol = Number(s.x_time_vol ?? s.rvol) || 1;
-          const adx = Number(s.adx) || 25;
+          const adx = Number(s.adx) || 0;
           const ba = Number(s.bid_ask_ratio) || 1;
           const earlyBonus = absPct <= 1.35 ? 26 : Math.max(0, 26 - (absPct - 1.35) * 20);
           const vwapTightness = Math.max(0, 20 - vwapDist * 13);
@@ -7450,17 +7600,18 @@
             }
           } catch (e) {}
         });
-        // Also check High Liquidity Claude AI Formula
-        const pct = Number(stock.pct_change) || 0;
-        const turn = Number(stock.turnover_cr) || 0;
-        const rvol = Number(stock.rvol) || 1;
-        const ba = Number(stock.bid_ask_ratio) || 1;
-        const price = Number(stock.price) || 0;
-        const atp = Number(stock.atp) || price;
-        if (stock.side !== 'SHORT' && pct >= 0.55 && turn >= 100 && rvol >= 1.15 && price >= atp * 0.998 && ba >= 1.15) {
-          recs.push({ key: 'liquidity_bull', label: SCANNER_FULL_NAMES.liquidity_bull, side: 'BUY' });
-        } else if (stock.side !== 'LONG' && pct <= -0.55 && turn >= 100 && rvol >= 1.15 && price <= atp * 1.002 && ba <= 0.88) {
-          recs.push({ key: 'liquidity_bear', label: SCANNER_FULL_NAMES.liquidity_bear, side: 'SELL' });
+        // Also check High Liquidity Claude AI Formula (with universal Strong RVOL >= 2.00, X-Time Vol >= 2.00X, ADX >= 25+)
+        if (passesUniversalStrongFilter(stock)) {
+          const pct = Number(stock.pct_change) || 0;
+          const turn = Number(stock.turnover_cr) || 0;
+          const ba = Number(stock.bid_ask_ratio) || 1;
+          const price = Number(stock.price) || 0;
+          const atp = Number(stock.atp) || price;
+          if (stock.side !== 'SHORT' && pct >= 0.55 && turn >= 100 && price >= atp * 0.998 && ba >= 1.15) {
+            recs.push({ key: 'liquidity_bull', label: SCANNER_FULL_NAMES.liquidity_bull, side: 'BUY' });
+          } else if (stock.side !== 'LONG' && pct <= -0.55 && turn >= 100 && price <= atp * 1.002 && ba <= 0.88) {
+            recs.push({ key: 'liquidity_bear', label: SCANNER_FULL_NAMES.liquidity_bear, side: 'SELL' });
+          }
         }
       }
       // Include strictly confirmed live engine matches from Money Flow, Apex Alpha, Most Active F&O, Claude F&O, SMC, Price Action, Intraday Stock
@@ -7562,34 +7713,42 @@
     }
 
     function buildDistinctFormulaScanners(equityPool) {
+      const allMap = new Map((equityPool || []).map(s => [String(s?.symbol || '').toUpperCase(), s]));
       const pool = (equityPool || []).filter(hasActiveFormulaSignal);
 
-      // Strict Formula Picker: ONLY shows stocks that genuinely qualify (0..15 stocks — never forces or pads)
-      const pickEligibleUpTo15 = (arr, filterFn, scoreFn) =>
-        sortByListedAtNewestFirstAtoZ(
-          arr.filter(filterFn).sort((a, b) => scoreFn(b) - scoreFn(a)).slice(0, 15)
-        );
+      // Strict Formula Picker + Sticky Session Lock:
+      // ONLY admits stocks that genuinely qualify (existing formula + Strong RVOL >= 2.00 + X-Time Vol >= 2.00X + ADX >= 25+),
+      // and NEVER kicks out an already-listed stock during subsequent scanner refreshes.
+      const pickAndStabilizeUpTo15 = (scannerKey, side, arr, filterFn, scoreFn) => {
+        const freshQualified = arr
+          .filter(s => passesUniversalStrongFilter(s) && filterFn(s))
+          .sort((a, b) => scoreFn(b) - scoreFn(a))
+          .slice(0, 15);
+        return window.ScannerStickySessionLock.stabilize(scannerKey, side, freshQualified, allMap, 15);
+      };
 
       const out = {};
       SCANNER_FORMULA_DEFS.forEach(def => {
-        out[def.key] = pickEligibleUpTo15(pool, def.match, def.score);
+        out[def.key] = pickAndStabilizeUpTo15(def.key, def.side, pool, def.match, def.score);
       });
 
       const momUpDef = SCANNER_FORMULA_DEFS.find(d => d.key === 'best_momentum_upside');
       const momDnDef = SCANNER_FORMULA_DEFS.find(d => d.key === 'best_momentum_downside');
       const pulseUpDef = SCANNER_FORMULA_DEFS.find(d => d.key === 'sonic_bullish');
 
-      out.top_gainer = pickEligibleUpTo15(pool, momUpDef.match, momUpDef.score);
-      out.top_loser = pickEligibleUpTo15(pool, momDnDef.match, momDnDef.score);
-      out.market_pulse = pickEligibleUpTo15(pool, pulseUpDef.match, pulseUpDef.score);
-      out.top_traded_value = pickEligibleUpTo15(
+      out.top_gainer = pickAndStabilizeUpTo15('top_gainer', 'BUY', pool, momUpDef.match, momUpDef.score);
+      out.top_loser = pickAndStabilizeUpTo15('top_loser', 'SELL', pool, momDnDef.match, momDnDef.score);
+      out.market_pulse = pickAndStabilizeUpTo15('market_pulse', 'BUY', pool, pulseUpDef.match, pulseUpDef.score);
+      out.top_traded_value = pickAndStabilizeUpTo15(
+        'top_traded_value',
+        'BOTH',
         pool,
-        (s) => (Number(s.turnover_cr) || 0) >= 180 && Math.abs(Number(s.pct_change) || 0) >= 0.60 && (Number(s.rvol) || 1) >= 1.15,
+        (s) => (Number(s.turnover_cr) || 0) >= 180 && Math.abs(Number(s.pct_change) || 0) >= 0.60,
         (s) => (Number(s.turnover_cr) || 0) * 1.0 + Math.abs(Number(s.pct_change) || 0) * 12
       );
       out.most_active_volume = sortByListedAtNewestFirstAtoZ([
-        ...pickEligibleUpTo15(pool, (s) => s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 120 && (Number(s.rvol) || 1) >= 1.15, (s) => Number(s.volume) || 0),
-        ...pickEligibleUpTo15(pool, (s) => s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 120 && (Number(s.rvol) || 1) >= 1.15, (s) => Number(s.volume) || 0)
+        ...pickAndStabilizeUpTo15('most_active_volume_buy', 'BUY', pool, (s) => s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.65 && (Number(s.turnover_cr) || 0) >= 120, (s) => Number(s.volume) || 0),
+        ...pickAndStabilizeUpTo15('most_active_volume_sell', 'SELL', pool, (s) => s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.65 && (Number(s.turnover_cr) || 0) >= 120, (s) => Number(s.volume) || 0)
       ]);
       return out;
     }
@@ -7605,13 +7764,19 @@
       }
       const pool = Array.isArray(DATA.all_stocks) ? DATA.all_stocks : [];
       if (pool.length > 0) {
+        const prevMomUp = (typeof TopMomentumOrderFlowEngine !== 'undefined' && TopMomentumOrderFlowEngine.lastReport) ? DATA.best_momentum_upside : null;
+        const prevMomDn = (typeof TopMomentumOrderFlowEngine !== 'undefined' && TopMomentumOrderFlowEngine.lastReport) ? DATA.best_momentum_downside : null;
         const distinct = buildDistinctFormulaScanners(pool);
         Object.assign(DATA, distinct);
+        // Never overwrite authoritative Top Momentum backend engine rows on 3.5s quote refresh!
+        if (Array.isArray(prevMomUp)) DATA.best_momentum_upside = prevMomUp;
+        if (Array.isArray(prevMomDn)) DATA.best_momentum_downside = prevMomDn;
       }
       if (Array.isArray(DATA.cloud_ai_signals)) {
-        const cleanSig = DATA.cloud_ai_signals.filter(s => isPureEquityStock(s) && Math.abs(Number(s.pct_change) || 0) >= 0.75);
-        const sigBuy = cleanSig.filter(s => String(s.side || '').includes('BUY') && (Number(s.bid_ask_ratio) || 1) >= 1.15).slice(0, 15);
-        const sigSell = cleanSig.filter(s => String(s.side || '').includes('SELL') && (Number(s.bid_ask_ratio) || 1) <= 0.90).slice(0, 15);
+        const allMap = new Map(pool.map(s => [String(s?.symbol || '').toUpperCase(), s]));
+        const cleanSig = DATA.cloud_ai_signals.filter(s => isPureEquityStock(s) && passesUniversalStrongFilter(allMap.get(String(s.symbol || '').toUpperCase()) || s) && Math.abs(Number(s.pct_change) || 0) >= 0.75);
+        const sigBuy = window.ScannerStickySessionLock.stabilize('cloud_ai_signals_buy', 'BUY', cleanSig.filter(s => String(s.side || '').includes('BUY') && (Number(s.bid_ask_ratio) || 1) >= 1.15).slice(0, 15), allMap, 15);
+        const sigSell = window.ScannerStickySessionLock.stabilize('cloud_ai_signals_sell', 'SELL', cleanSig.filter(s => String(s.side || '').includes('SELL') && (Number(s.bid_ask_ratio) || 1) <= 0.90).slice(0, 15), allMap, 15);
         DATA.cloud_ai_signals = sortByListedAtNewestFirstAtoZ([...sigBuy, ...sigSell]);
       }
       window._scannersDirty = false;
@@ -11582,6 +11747,9 @@ function renderJournal() {
         DATA.cloud_ai_signals = [];
         window.TOP_10_UPSIDE = [];
         window.TOP_10_DOWNSIDE = [];
+        if (window.ScannerStickySessionLock && typeof window.ScannerStickySessionLock.clearAll === 'function') {
+          window.ScannerStickySessionLock.clearAll();
+        }
       },
 
       formatCrVolStr(val, isCr = false) {
@@ -11625,12 +11793,13 @@ function renderJournal() {
           pct_change: Number(pct.toFixed(2)),
           abs_change: Number(absChg.toFixed(2)),
           rvol: Number(rvol.toFixed(2)),
-          x_time_vol: Number((b.indicators?.rvol ?? baseStock?.x_time_vol ?? rvol).toFixed(2)),
+          x_time_vol: Number((b.indicators?.xTimeVolume ?? baseStock?.x_time_vol ?? 0).toFixed(2)),
           adx: Number((b.indicators?.adx ?? baseStock?.adx ?? 0).toFixed(1)),
           hyperflow: Number(hyperflow.toFixed(1)),
           delta: (b.cumulativeDelta !== undefined && Number.isFinite(Number(b.cumulativeDelta)))
             ? Math.round(Number(b.cumulativeDelta))
             : Math.round(vol * (pct / 100) * 0.45),
+          cumulative_delta_real: Boolean(b.cumulativeDelta !== undefined && Number.isFinite(Number(b.cumulativeDelta))),
           side: isBull ? 'LONG' : 'SHORT',
           entry: Number(b.fixedEntryPrice || b.risk?.entryPrice || 0),
           stop: Number(b.fixedStopLoss || b.risk?.stopLoss || 0),
@@ -11670,7 +11839,6 @@ function renderJournal() {
           ivp: Number(b.greeks?.ivPercentile || baseStock?.ivp || 54),
           aiScore: Number(b.aiScore || Math.round(hyperflow)),
           rsi,
-          adx: Number(b.indicators?.adx || baseStock?.adx || 25),
           squeeze_on: Boolean(b.indicators?.squeezeOn || false)
         };
       },
@@ -11688,18 +11856,28 @@ function renderJournal() {
           CyberLivePriceEngine.syncSectorStocksFromAllStocks(sectorAvgOverrideMap);
         }
 
-        // Assign distinct, strictly eligible (0..15) per scanner (ordered Newest Listed At first, A-Z tie-break)
+        // Preserve authoritative Top Momentum backend rows when already loaded
+        const prevMomUp = (typeof TopMomentumOrderFlowEngine !== 'undefined' && TopMomentumOrderFlowEngine.lastReport) ? DATA.best_momentum_upside : null;
+        const prevMomDn = (typeof TopMomentumOrderFlowEngine !== 'undefined' && TopMomentumOrderFlowEngine.lastReport) ? DATA.best_momentum_downside : null;
+
+        // Assign distinct, strictly eligible (0..15) per scanner with Sticky Session Lock
         const distinct = buildDistinctFormulaScanners(equityPool);
         Object.assign(DATA, distinct);
+        if (Array.isArray(prevMomUp)) DATA.best_momentum_upside = prevMomUp;
+        if (Array.isArray(prevMomDn)) DATA.best_momentum_downside = prevMomDn;
 
-        const bullTop = equityPool
-          .filter(s => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) >= (Number(s.atp) || Number(s.price) || 0) * 0.998)
+        const allMap = new Map(equityPool.map(s => [String(s?.symbol || '').toUpperCase(), s]));
+        const bullTopFresh = equityPool
+          .filter(s => hasActiveFormulaSignal(s) && passesUniversalStrongFilter(s) && s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.45 && (Number(s.price) || 0) >= (Number(s.atp) || Number(s.price) || 0) * 0.998)
           .sort((a, b) => scoreEquityFormulaMove(b, true) - scoreEquityFormulaMove(a, true))
           .slice(0, 15);
-        const bearTop = equityPool
-          .filter(s => hasActiveFormulaSignal(s) && s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.45 && (Number(s.rvol) || 1) >= 1.15 && (Number(s.price) || 0) <= (Number(s.atp) || Number(s.price) || 0) * 1.002)
+        const bearTopFresh = equityPool
+          .filter(s => hasActiveFormulaSignal(s) && passesUniversalStrongFilter(s) && s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.45 && (Number(s.price) || 0) <= (Number(s.atp) || Number(s.price) || 0) * 1.002)
           .sort((a, b) => scoreEquityFormulaMove(b, false) - scoreEquityFormulaMove(a, false))
           .slice(0, 15);
+
+        const bullTop = window.ScannerStickySessionLock.stabilize('cloud_ai_bull', 'BUY', bullTopFresh, allMap, 15);
+        const bearTop = window.ScannerStickySessionLock.stabilize('cloud_ai_bear', 'SELL', bearTopFresh, allMap, 15);
 
         const topSignals = sortByListedAtNewestFirstAtoZ([...bullTop, ...bearTop]);
         DATA.cloud_ai_signals = topSignals.map(s => {
@@ -11712,6 +11890,9 @@ function renderJournal() {
             listed_at: s.listed_at,
             price: s.price,
             pct_change: s.pct_change,
+            rvol: s.rvol,
+            x_time_vol: s.x_time_vol,
+            adx: s.adx,
             confidence_pct: Math.min(98, Math.max(84, Math.round(s.aiScore || 91))),
             entry: s.entry,
             stop: s.stop,
@@ -11722,7 +11903,7 @@ function renderJournal() {
             total_ask_str: s.total_ask_str,
             turnover_str: s.turnover_str,
             volume_str: s.volume_str,
-            ai_thesis: `${isLong ? 'Bullish institutional accumulation' : 'Bearish supply liquidation'} detected on fresh scan (${s.pct_change >= 0 ? '+' : ''}${s.pct_change}% | ${s.rvol}x RVol | ${s.buildup}).`
+            ai_thesis: `${isLong ? 'Bullish institutional accumulation' : 'Bearish supply liquidation'} detected on fresh scan (${s.pct_change >= 0 ? '+' : ''}${s.pct_change}% | ${s.rvol}x RVol | ${s.x_time_vol}X Vol | ADX ${s.adx} | ${s.buildup}).`
           };
         });
       },
@@ -12324,7 +12505,9 @@ function renderJournal() {
               ? 'Seller Pressure'
               : 'Balanced Order Book';
           }
-          s.delta = Math.round((s.volume || 200000) * ((s.pct_change || 0) / 100) * 0.4);
+          if (!s.cumulative_delta_real) {
+            s.delta = Math.round((s.volume || 200000) * ((s.pct_change || 0) / 100) * 0.4);
+          }
           if (typeof normalizeCycleBuildup === 'function') {
             s.buildup = normalizeCycleBuildup(s.buildup, s.pct_change, s.oi_chg_pct, s.bid_ask_ratio);
             s.buildup_type = (s.buildup === 'Long Buildup' || s.buildup === 'Short Covering') ? 'BULLISH' : 'BEARISH';
@@ -13263,13 +13446,14 @@ function renderJournal() {
         isElementVisiblePane(document.getElementById('table-home-top-traded')) ||
         isElementVisiblePane(document.getElementById('table-home-top-traded-downside'));
 
+      const allStocksMap = new Map(allStocks.map(s => [String(s?.symbol || '').toUpperCase(), s]));
       if (needTopTradedHome || !window.TOP_10_UPSIDE) {
-        // Rank Upside Candidates by Claude AI Trade Skill Formula (strict formula-qualified only, never NONE/NO_SIGNAL)
+        // Rank Upside Candidates by Claude AI Trade Skill Formula + Universal Strong Gate (RVOL >= 2.00, X-Time >= 2.00X, ADX >= 25+) + Sticky Lock
         let upsideTraded = allStocks.filter(s =>
           hasActiveFormulaSignal(s) &&
+          passesUniversalStrongFilter(s) &&
           s.side !== 'SHORT' &&
           (Number(s.pct_change) || 0) >= 0.45 &&
-          (Number(s.rvol) || 1) >= 1.15 &&
           (Number(s.turnover_cr) || 0) >= 50 &&
           (Number(s.bid_ask_ratio) || 1) >= 1.05
         );
@@ -13278,12 +13462,12 @@ function renderJournal() {
         });
         upsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-        // Rank Downside Candidates by Claude AI Trade Skill Formula (strict formula-qualified only, never NONE/NO_SIGNAL)
+        // Rank Downside Candidates by Claude AI Trade Skill Formula + Universal Strong Gate + Sticky Lock
         let downsideTraded = allStocks.filter(s =>
           hasActiveFormulaSignal(s) &&
+          passesUniversalStrongFilter(s) &&
           s.side !== 'LONG' &&
           (Number(s.pct_change) || 0) <= -0.45 &&
-          (Number(s.rvol) || 1) >= 1.15 &&
           (Number(s.turnover_cr) || 0) >= 50 &&
           (Number(s.bid_ask_ratio) || 1) <= 0.95
         );
@@ -13292,11 +13476,8 @@ function renderJournal() {
         });
         downsideTraded.sort((a, b) => (b.claude_ai_score || 0) - (a.claude_ai_score || 0));
 
-        const topUp = upsideTraded.slice(0, 15);
-        const topDn = downsideTraded.slice(0, 15);
-
-        window.TOP_10_UPSIDE = sortByListedAtNewestFirstAtoZ(topUp);
-        window.TOP_10_DOWNSIDE = sortByListedAtNewestFirstAtoZ(topDn);
+        window.TOP_10_UPSIDE = window.ScannerStickySessionLock.stabilize('home_top_traded_up', 'BUY', upsideTraded.slice(0, 15), allStocksMap, 15);
+        window.TOP_10_DOWNSIDE = window.ScannerStickySessionLock.stabilize('home_top_traded_dn', 'SELL', downsideTraded.slice(0, 15), allStocksMap, 15);
 
         renderVisibleTable('table-home-top-traded', window.TOP_10_UPSIDE, true, activeAiStrategyFilter !== 'ALL');
         renderVisibleTable('table-home-top-traded-downside', window.TOP_10_DOWNSIDE, false, activeAiStrategyFilter !== 'ALL');
@@ -13328,20 +13509,18 @@ function renderJournal() {
         renderVisibleTable('table-momentum-upside', DATA.best_momentum_upside, true);
         renderVisibleTable('table-momentum-downside', DATA.best_momentum_downside, false);
       }
-      // Market Liquidity Dedicated Tab: Strictly Formula-Qualified Up to 15 Upside & Downside by Monetary Turnover (Rs Cr)
+      // Market Liquidity Dedicated Tab: Strictly Formula-Qualified + Universal Strong Gate + Sticky Lock
       if (isElementVisiblePane(document.getElementById('table-top-traded')) || isElementVisiblePane(document.getElementById('table-top-traded-downside'))) {
-        const liqUp = sortByListedAtNewestFirstAtoZ(
-          [...allStocks]
-            .filter(s => hasActiveFormulaSignal(s) && s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.45 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.rvol) || 1) >= 1.1)
-            .sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0))
-            .slice(0, 15)
-        );
-        const liqDn = sortByListedAtNewestFirstAtoZ(
-          [...allStocks]
-            .filter(s => hasActiveFormulaSignal(s) && s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.45 && (Number(s.turnover_cr) || 0) >= 80 && (Number(s.rvol) || 1) >= 1.1)
-            .sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0))
-            .slice(0, 15)
-        );
+        const liqUpFresh = [...allStocks]
+          .filter(s => hasActiveFormulaSignal(s) && passesUniversalStrongFilter(s) && s.side !== 'SHORT' && (Number(s.pct_change) || 0) >= 0.45 && (Number(s.turnover_cr) || 0) >= 80)
+          .sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0))
+          .slice(0, 15);
+        const liqDnFresh = [...allStocks]
+          .filter(s => hasActiveFormulaSignal(s) && passesUniversalStrongFilter(s) && s.side !== 'LONG' && (Number(s.pct_change) || 0) <= -0.45 && (Number(s.turnover_cr) || 0) >= 80)
+          .sort((a, b) => (b.turnover_cr || 0) - (a.turnover_cr || 0))
+          .slice(0, 15);
+        const liqUp = window.ScannerStickySessionLock.stabilize('liquidity_tab_up', 'BUY', liqUpFresh, allStocksMap, 15);
+        const liqDn = window.ScannerStickySessionLock.stabilize('liquidity_tab_dn', 'SELL', liqDnFresh, allStocksMap, 15);
         renderVisibleTable('table-top-traded', liqUp, true);
         renderVisibleTable('table-top-traded-downside', liqDn, false);
       }
@@ -15658,13 +15837,13 @@ function renderJournal() {
           let arr = Array.isArray(list) ? list : [];
           if (this.strictOnly) arr = arr.filter(x => x.allSixMet || x.conditionsMet === 6);
           if (q) arr = arr.filter(x => x.symbol.includes(q) || (x.sector && x.sector.toUpperCase().includes(q)));
-          return arr;
+          return sortByListedAtZtoA(arr);
         };
 
         const renderTableBody = (tableEl, rows, isBuy, badgeElId) => {
           const filtered = filterList(rows);
           const bEl = document.getElementById(badgeElId);
-          if (bEl) bEl.innerText = `${filtered.length} ${isBuy ? 'BUY' : 'SELL'} Setups • Ranked by 100-Pt Score (${this.strictOnly ? '6/6 Confirmed Only' : '>=60 Watchlist/Good/Strong'})`;
+          if (bEl) bEl.innerText = `${filtered.length} ${isBuy ? 'BUY' : 'SELL'} Setups • Sorted Listed At Z→A (${this.strictOnly ? '6/6 Confirmed Only' : '>=60 Watchlist/Good/Strong'})`;
 
           let html = `
             <thead>
@@ -16099,8 +16278,8 @@ function renderJournal() {
           if (dirFilter === 'BUY') rows = rows.filter(r => r.bias === 'BULLISH');
           if (dirFilter === 'SELL') rows = rows.filter(r => r.bias === 'BEARISH');
           rows = [...rows].sort((a, b) => {
-            if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || String(b.symbol).localeCompare(String(a.symbol));
-            if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt)) || String(a.symbol).localeCompare(String(b.symbol));
+            if (sortBy === 'listed_desc') return compareListedAtDescZtoA(a, b);
+            if (sortBy === 'listed_asc') return -compareListedAtDescZtoA(a, b);
             if (sortBy === 'mtf_desc') return (b.mtfAlignmentCount || 0) - (a.mtfAlignmentCount || 0) || b.formulaScore - a.formulaScore;
             if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
             if (sortBy === 'volume_desc') return b.totalVolume - a.totalVolume;
@@ -16193,15 +16372,15 @@ function renderJournal() {
         });
 
         rows = [...rows].sort((a, b) => {
-          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || String(b.symbol).localeCompare(String(a.symbol));
-          if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt)) || String(a.symbol).localeCompare(String(b.symbol));
+          if (sortBy === 'listed_desc') return compareListedAtDescZtoA(a, b);
+          if (sortBy === 'listed_asc') return -compareListedAtDescZtoA(a, b);
           if (sortBy === 'mtf_desc') return (b.mtfAlignmentCount || 0) - (a.mtfAlignmentCount || 0) || b.score - a.score;
           if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
           if (sortBy === 'volume_desc') return b.rawVolume - a.rawVolume;
           if (sortBy === 'value_desc') return b.tradedValueCr - a.tradedValueCr;
           if (sortBy === 'oi_chg_desc') return Math.abs(b.oiChangePct) - Math.abs(a.oiChangePct);
           if (sortBy === 'rr_desc') return b.rrNumeric - a.rrNumeric;
-          return b.score - a.score;
+          return compareListedAtDescZtoA(a, b);
         });
 
         setEl('maf-count-badge', `${rows.length} Candidates [${tfMeta.label}] (${this.strictMode ? 'Strict Formula 0-15' : 'All Ranked Top 15'}) • Listed At Z→A`);
@@ -16573,14 +16752,14 @@ function renderJournal() {
           if (sortBy === 'overlap_listed_desc') {
             const ovDiff = (b.inBothTopVolAndVal ? 1 : 0) - (a.inBothTopVolAndVal ? 1 : 0);
             if (ovDiff !== 0) return ovDiff;
-            return String(b.listedAt).localeCompare(String(a.listedAt)) || b.score - a.score;
+            return compareListedAtDescZtoA(a, b);
           }
-          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || String(b.symbol).localeCompare(String(a.symbol));
-          if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt)) || String(a.symbol).localeCompare(String(b.symbol));
+          if (sortBy === 'listed_desc') return compareListedAtDescZtoA(a, b);
+          if (sortBy === 'listed_asc') return -compareListedAtDescZtoA(a, b);
           if (sortBy === 'score_desc') return (b.score - a.score) || ((b.inBothTopVolAndVal ? 1 : 0) - (a.inBothTopVolAndVal ? 1 : 0));
           if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
           if (sortBy === 'value_desc') return (b.tradedValueCr || 0) - (a.tradedValueCr || 0);
-          return String(b.listedAt).localeCompare(String(a.listedAt));
+          return compareListedAtDescZtoA(a, b);
         });
 
         setEl('cfno-count-badge', `${rows.length} Candidates • Risk 1% (₹${riskBudget.toLocaleString('en-IN')}) • Sorted ${sortBy === 'listed_asc' ? 'A→Z' : 'Z→A'}`);
@@ -16995,8 +17174,8 @@ function renderJournal() {
         });
 
         rows = [...rows].sort((a, b) => {
-          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || (b.checklistScore - a.checklistScore);
-          if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt)) || (b.checklistScore - a.checklistScore);
+          if (sortBy === 'listed_desc') return compareListedAtDescZtoA(a, b);
+          if (sortBy === 'listed_asc') return -compareListedAtDescZtoA(a, b);
           if (sortBy === 'score_desc') return (b.checklistScore - a.checklistScore) || ((b.tradeMath?.rrNumeric || 0) - (a.tradeMath?.rrNumeric || 0));
           if (sortBy === 'rr_desc') return ((b.tradeMath?.rrNumeric || 0) - (a.tradeMath?.rrNumeric || 0));
           if (sortBy === 'rvol_desc') return (Number(b.rvol) || 0) - (Number(a.rvol) || 0);
@@ -17004,7 +17183,7 @@ function renderJournal() {
           if (sortBy === 'atr25_desc') return (Number(b.atr25Pct) || 0) - (Number(a.atr25Pct) || 0);
           if (sortBy === 'rsi_desc') return (Number(b.rsi) || 0) - (Number(a.rsi) || 0);
           if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
-          return String(b.listedAt).localeCompare(String(a.listedAt));
+          return compareListedAtDescZtoA(a, b);
         });
 
         setEl('smc-count-badge', `${rows.length} Setups • Risk ${this.riskPct}% (₹${Math.round(this.capital * this.riskPct / 100).toLocaleString('en-IN')}) • Sorted ${sortBy === 'listed_asc' ? 'A→Z' : 'Z→A'}`);
@@ -17371,15 +17550,15 @@ function renderJournal() {
         });
 
         rows = [...rows].sort((a, b) => {
-          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || (b.score - a.score);
-          if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt)) || (b.score - a.score);
+          if (sortBy === 'listed_desc') return compareListedAtDescZtoA(a, b);
+          if (sortBy === 'listed_asc') return -compareListedAtDescZtoA(a, b);
           if (sortBy === 'score_desc') return (b.score - a.score) || ((b.rrNumeric || 0) - (a.rrNumeric || 0));
           if (sortBy === 'rvol_desc') return (Number(b.rvol5m) || 0) - (Number(a.rvol5m) || 0);
           if (sortBy === 'turnover_desc') return (Number(b.tradedValueCr) || 0) - (Number(a.tradedValueCr) || 0);
           if (sortBy === 'rs_desc') return Math.abs(Number(b.relativeStrengthDiff) || 0) - Math.abs(Number(a.relativeStrengthDiff) || 0);
           if (sortBy === 'rr_desc') return (Number(b.rrNumeric) || 0) - (Number(a.rrNumeric) || 0);
           if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
-          return String(b.listedAt).localeCompare(String(a.listedAt));
+          return compareListedAtDescZtoA(a, b);
         });
 
         const sortLabels = {
@@ -17743,15 +17922,15 @@ function renderJournal() {
         });
 
         rows = [...rows].sort((a, b) => {
-          if (sortBy === 'cum_delta_desc') return (Number(b.cumDeltaScore) || 0) - (Number(a.cumDeltaScore) || 0) || (Number(b.rvol5m) || 0) - (Number(a.rvol5m) || 0) || String(b.listedAt).localeCompare(String(a.listedAt));
-          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt)) || (Number(b.cumDeltaScore) || 0) - (Number(a.cumDeltaScore) || 0);
-          if (sortBy === 'listed_asc') return String(a.listedAt).localeCompare(String(b.listedAt));
+          if (sortBy === 'cum_delta_desc') return (Number(b.cumDeltaScore) || 0) - (Number(a.cumDeltaScore) || 0) || (Number(b.rvol5m) || 0) - (Number(a.rvol5m) || 0) || compareListedAtDescZtoA(a, b);
+          if (sortBy === 'listed_desc') return compareListedAtDescZtoA(a, b);
+          if (sortBy === 'listed_asc') return -compareListedAtDescZtoA(a, b);
           if (sortBy === 'rvol_desc') return (Number(b.rvol5m) || 0) - (Number(a.rvol5m) || 0);
           if (sortBy === 'turnover_desc') return (Number(b.tradedValueCr) || 0) - (Number(a.tradedValueCr) || 0);
           if (sortBy === 'dfc_range_desc') return (Number(b.dfcRangePct) || 0) - (Number(a.dfcRangePct) || 0);
           if (sortBy === 'rr_desc') return (Number(b.rrT1) || 0) - (Number(a.rrT1) || 0);
           if (sortBy === 'bid_ask_desc') return (Number(b.bidAskRatio) || 1) - (Number(a.bidAskRatio) || 1);
-          return String(b.listedAt).localeCompare(String(a.listedAt));
+          return compareListedAtDescZtoA(a, b);
         });
 
         const sortLabels = {
@@ -18134,7 +18313,7 @@ function renderJournal() {
 
         const q = (document.getElementById('aa-search-input')?.value || '').trim().toUpperCase();
         const dir = document.getElementById('aa-dir-filter')?.value || 'ALL';
-        const sortBy = document.getElementById('aa-sort-select')?.value || 'score_desc';
+        const sortBy = document.getElementById('aa-sort-select')?.value || 'listed_desc';
 
         let rows = (Array.isArray(cats[meta.key]) ? cats[meta.key] : []).filter(r => {
           if (dir !== 'ALL' && r.side !== dir) return false;
@@ -18143,11 +18322,12 @@ function renderJournal() {
         });
 
         const sortRows = (list) => [...list].sort((a, b) => {
-          if (sortBy === 'listed_desc') return String(b.listedAt).localeCompare(String(a.listedAt));
+          if (sortBy === 'listed_desc') return compareListedAtDescZtoA(a, b);
           if (sortBy === 'rvol_desc') return (Number(b.rvol5m) || 0) - (Number(a.rvol5m) || 0);
           if (sortBy === 'rs_desc') return Math.abs(Number(b.rsVsNifty) || 0) - Math.abs(Number(a.rsVsNifty) || 0);
           if (sortBy === 'turnover_desc') return (Number(b.tradedValueCr) || 0) - (Number(a.tradedValueCr) || 0);
-          return (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.formulaRankScore) || 0) - (Number(a.formulaRankScore) || 0) || String(b.listedAt).localeCompare(String(a.listedAt));
+          if (sortBy === 'score_desc') return (Number(b.score) || 0) - (Number(a.score) || 0) || (Number(b.formulaRankScore) || 0) - (Number(a.formulaRankScore) || 0) || compareListedAtDescZtoA(a, b);
+          return compareListedAtDescZtoA(a, b);
         });
 
         // Strictly cap displayed rows to Best 10 UP & Best 10 DOWN when viewing unfiltered buckets
@@ -18484,11 +18664,11 @@ function renderJournal() {
         setEl('titan-kpi-time', String(rpt.istTime || '--:--:-- IST'));
 
         const q = (document.getElementById('titan-search-input')?.value || '').trim().toUpperCase();
-        const filterList = (list) => (Array.isArray(list) ? list : []).filter(item => {
+        const filterList = (list) => sortByListedAtZtoA((Array.isArray(list) ? list : []).filter(item => {
           if (this.strictOnly && !item.allSixMet) return false;
           if (q && !String(item.symbol || '').toUpperCase().includes(q) && !String(item.sector || '').toUpperCase().includes(q)) return false;
           return true;
-        });
+        }));
 
         const rawBuys = Array.isArray(rpt.buySignals) ? rpt.buySignals : [];
         const rawSells = Array.isArray(rpt.sellSignals) ? rpt.sellSignals : [];
@@ -18799,11 +18979,11 @@ function renderJournal() {
         setEl('momentum-kpi-blocked', `${rpt.blockedExhaustedCount || 0} Blocked (No Late Alerts)`);
 
         const q = (document.getElementById('momentum-search-input')?.value || '').trim().toUpperCase();
-        const filterList = (list) => (Array.isArray(list) ? list : []).filter(item => {
+        const filterList = (list) => sortByListedAtZtoA((Array.isArray(list) ? list : []).filter(item => {
           if (this.earlyOnly && !item.isEarlyIgnition) return false;
           if (q && !String(item.symbol || '').toUpperCase().includes(q) && !String(item.sector || '').toUpperCase().includes(q)) return false;
           return true;
-        });
+        }));
 
         const rawBuys = Array.isArray(rpt.buySignals) ? rpt.buySignals : [];
         const rawSells = Array.isArray(rpt.sellSignals) ? rpt.sellSignals : [];

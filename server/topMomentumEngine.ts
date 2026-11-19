@@ -449,11 +449,22 @@ export function evaluateTopMomentumOrderFlow(params: {
 
   const latestIdx = sessionBars.length - 1;
   const latestBar = sessionBars[latestIdx];
+  // If latest bar is a zero-range closing print or 1-tick forming bar (H === L), use the last active
+  // price-discovery candle for intrabar delta & impulse so neither BUY nor SELL is falsely distorted.
+  let activeDeltaIdx = latestIdx;
+  if (latestBar.high <= latestBar.low && latestIdx > 0) {
+    for (let k = latestIdx - 1; k >= Math.max(0, latestIdx - 6); k--) {
+      if (sessionBars[k].high > sessionBars[k].low) {
+        activeDeltaIdx = k;
+        break;
+      }
+    }
+  }
   const latestVwap =
     params.explicitVwap && params.explicitVwap > 0 ? params.explicitVwap : vwapSession[latestIdx];
   const latestEma9 = ema9Session[latestIdx];
   const latestEma21 = ema21Session[latestIdx];
-  const latestBarDelta = barDeltas[latestIdx];
+  const latestBarDelta = barDeltas[activeDeltaIdx];
   const latestCvd = cumDeltas[latestIdx];
   const prevCvd3 = cumDeltas[Math.max(0, latestIdx - 3)];
   const cvdSlope3 = latestCvd - prevCvd3;
@@ -468,13 +479,24 @@ export function evaluateTopMomentumOrderFlow(params: {
   );
 
   // Sub-pane 3: Impulse / Delta Imbalance Oscillator (spikes on ignition, fades/inverts on exhaustion)
-  const barVolRatio = avgBarVol > 0 ? latestBar.volume / avgBarVol : 1;
-  const barClv = barMetrics[latestIdx].clv;
+  const activeDeltaBar = sessionBars[activeDeltaIdx];
+  const barVolRatio = avgBarVol > 0 ? activeDeltaBar.volume / avgBarVol : 1;
+  const barClv = barMetrics[activeDeltaIdx].clv;
   const impulseOscillator = round2(
     Math.max(-1.0, Math.min(1.0, barClv * Math.min(1.8, Math.sqrt(Math.max(0.25, barVolRatio))) * 0.65))
   );
 
-  const rvolCalc = computeRvolFromBars(bars5m, 20);
+  const rvolCalcRaw = computeRvolFromBars(bars5m, 20);
+  const prevBar5m = bars5m.length >= 2 ? bars5m[bars5m.length - 2] : undefined;
+  const prev2Bar5m = bars5m.length >= 3 ? bars5m[bars5m.length - 3] : undefined;
+  const recentVolPeak = Math.max(
+    latestBar.volume,
+    prevBar5m ? prevBar5m.volume : 0,
+    prev2Bar5m ? prev2Bar5m.volume * 0.88 : 0
+  );
+  const flickerResistantRvol =
+    avgBarVol > 0 ? Math.min(25, recentVolPeak / avgBarVol) : rvolCalcRaw;
+  const rvolCalc = Math.max(rvolCalcRaw || 0, flickerResistantRvol || 0);
   const rvol = round2(
     params.explicitRvol !== undefined && Number.isFinite(params.explicitRvol) && params.explicitRvol > 0
       ? Math.max(params.explicitRvol, rvolCalc || 0)
@@ -532,6 +554,11 @@ export function evaluateTopMomentumOrderFlow(params: {
           ? Math.min(baseLow, ...earlierToday.map((x) => x.low))
           : baseLow;
 
+      const earlierTodayHigh =
+        earlierToday.length > 0 ? Math.max(...earlierToday.map((x) => x.high)) : baseHigh;
+      const earlierTodayLow =
+        earlierToday.length > 0 ? Math.min(...earlierToday.map((x) => x.low)) : baseLow;
+
       // Track opening / pre-break liquidity sweep
       if (isBuy) {
         if (b.low < Math.min(prevClose, baseLow) * 1.0005 || mI.lowerWickPct >= 32) {
@@ -544,7 +571,8 @@ export function evaluateTopMomentumOrderFlow(params: {
         }
         const breaksRange =
           b.close > localHigh * 0.9995 ||
-          (i <= 2 && b.low < prevClose && b.close > prevClose * 1.0018 && b.close > b.open);
+          (i <= 2 && b.low < prevClose && b.close > prevClose * 1.0018 && b.close > b.open) ||
+          (i >= 1 && b.close > earlierTodayHigh * 0.9998 && b.close > vwapI * 1.001 && b.close > prevClose * 1.0025);
         const strongBar = b.close > b.open && b.close >= vwapI * 0.999 && b.close >= ema9I * 0.9985;
         const deltaAligned = deltaI > 0 && cvdI > 0 && mI.clv >= 0.15;
         const volActive = avgBarVol <= 0 || b.volume >= avgBarVol * 0.75;
@@ -571,7 +599,8 @@ export function evaluateTopMomentumOrderFlow(params: {
         }
         const breaksRange =
           b.close < localLow * 1.0005 ||
-          (i <= 2 && b.high > prevClose && b.close < prevClose * 0.9982 && b.close < b.open);
+          (i <= 2 && b.high > prevClose && b.close < prevClose * 0.9982 && b.close < b.open) ||
+          (i >= 1 && b.close < earlierTodayLow * 1.0002 && b.close < vwapI * 0.999 && b.close < prevClose * 0.9975);
         const strongBar = b.close < b.open && b.close <= vwapI * 1.001 && b.close <= ema9I * 1.0015;
         const deltaAligned = deltaI < 0 && cvdI < 0 && mI.clv <= -0.15;
         const volActive = avgBarVol <= 0 || b.volume >= avgBarVol * 0.75;
@@ -690,7 +719,9 @@ export function evaluateTopMomentumOrderFlow(params: {
     // Sub-pane checks on current bar
     const vwapAligned = isBuy ? price >= latestVwap * 0.999 : price <= latestVwap * 1.001;
     const emaAligned = isBuy ? latestEma9 >= latestEma21 * 0.9985 : latestEma9 <= latestEma21 * 1.0015;
-    const cvdAligned = isBuy ? latestCvd > 0 && cvdSlope3 >= 0 : latestCvd < 0 && cvdSlope3 <= 0;
+    const cvdAligned = isBuy
+      ? latestCvd > 0 && (cvdSlope3 >= 0 || latestCvd >= avgBarVol * 0.5)
+      : latestCvd < 0 && (cvdSlope3 <= 0 || latestCvd <= -avgBarVol * 0.5);
     const barDeltaAligned = isBuy ? latestBarDelta > 0 : latestBarDelta < 0;
     const zeroLineAligned = isBuy ? zeroLineMomentum > 0.01 : zeroLineMomentum < -0.01;
     const orderBookAligned = isBuy ? bidAskRatio >= 1.05 : bidAskRatio <= 0.95;

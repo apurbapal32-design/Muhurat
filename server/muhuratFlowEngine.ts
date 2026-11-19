@@ -209,10 +209,10 @@ export function computeBarClvAndDelta(bar: {
 }): { clv: number; delta: number; lowerWickPct: number; upperWickPct: number; bodyPct: number } {
   const range = bar.high - bar.low;
   if (range <= 0) {
-    const sign = bar.close >= bar.open ? 0.25 : -0.25;
+    const sign = bar.close > bar.open ? 0.25 : bar.close < bar.open ? -0.25 : 0;
     return {
       clv: sign,
-      delta: bar.volume * sign,
+      delta: Math.round(bar.volume * sign),
       lowerWickPct: 0,
       upperWickPct: 0,
       bodyPct: 0,

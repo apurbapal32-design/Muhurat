@@ -934,7 +934,7 @@ export function buildApexAlphaReport(params: {
   const sortListedZToA = (a: ApexAlphaRow, b: ApexAlphaRow): number => {
     const tDiff = parseClockSec(b.listedAt) - parseClockSec(a.listedAt);
     if (tDiff !== 0) return tDiff;
-    return (b.formulaRankScore || 0) - (a.formulaRankScore || 0);
+    return String(b.symbol).localeCompare(String(a.symbol));
   };
 
   const pickBest10UpDown = (rows: ApexAlphaRow[]) => {
@@ -958,7 +958,16 @@ export function buildApexAlphaReport(params: {
   const reclaimPick = pickBest10UpDown(
     evaluated.filter((r) => r.isQualified && (r.setupType === 'PDH_RECLAIM' || r.setupType === 'PDL_BREAKDOWN'))
   );
-  const dirEligiblePick = pickBest10UpDown(evaluated.filter((r) => r.score >= 7));
+  const dirEligiblePick = pickBest10UpDown(
+    evaluated.filter(
+      (r) =>
+        r.score >= 7 ||
+        (r.score >= 6 &&
+          r.setupType !== 'WATCH_COIL' &&
+          ((r.side === 'SELL' && r.changePercent <= -0.5 && r.rsVsNifty <= -1.0) ||
+            (r.side === 'BUY' && r.changePercent >= 0.5 && r.rsVsNifty >= 1.0)))
+    )
+  );
   const watchPick = pickBest10UpDown(evaluated.filter((r) => !r.isQualified && r.score >= 6));
 
   const qualifiedAlpha = qualPick.combined;

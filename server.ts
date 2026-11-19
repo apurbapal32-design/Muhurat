@@ -21,6 +21,17 @@ import { buildIntradayStockReport } from './server/intradayStockEngine';
 import { buildApexAlphaReport } from './server/apexAlphaEngine';
 import { buildMuhuratFlowReport } from './server/muhuratFlowEngine';
 import { buildTopMomentumReport } from './server/topMomentumEngine';
+import {
+  applyUniversalGateToApexAlphaReport,
+  applyUniversalGateToClaudeFnoReport,
+  applyUniversalGateToIntradayStockReport,
+  applyUniversalGateToMoneyFlowReport,
+  applyUniversalGateToMostActiveFnoReport,
+  applyUniversalGateToMuhuratFlowReport,
+  applyUniversalGateToPriceActionReport,
+  applyUniversalGateToSmcReport,
+  applyUniversalGateToTopMomentumReport,
+} from './server/scannerUniversalGate';
 import { aiTradingJournalService } from './server/aiTradingJournalEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
@@ -1154,10 +1165,12 @@ async function startServer() {
       const cachedQ = autonomousPriceService.getCachedQuotes();
       const niftyQ = cachedQ['NIFTY 50'] || cachedQ['NIFTY'];
       const niftyBars = autonomousPriceService.getExtendedBars('NIFTY 50');
-      const report = buildSmartMoneyFlowReport(
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildSmartMoneyFlowReport(
         stocks,
-        (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        scannerService.getAllCandlesMap(),
+        getBarsFn,
+        candlesMap,
         Boolean(sessionState?.isMidnightCleared),
         {
           price: niftyQ?.lp,
@@ -1166,6 +1179,7 @@ async function startServer() {
           bars: niftyBars,
         }
       );
+      const report = applyUniversalGateToMoneyFlowReport(rawReport, stocks, getBarsFn, candlesMap);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Money Flow Surge scan' });
@@ -1215,10 +1229,12 @@ async function startServer() {
 
       const timeframe = typeof req.query.timeframe === 'string' ? req.query.timeframe : '5m';
 
-      const report = buildMostActiveFnoReport({
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildMostActiveFnoReport({
         stocks,
-        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        candlesMap: scannerService.getAllCandlesMap(),
+        getExtendedBarsFn: getBarsFn,
+        candlesMap,
         indexQuotes,
         optionChainsByIndex: cachedMostActiveOc,
         indiaVix: scannerService.getIndiaVixPrice(),
@@ -1227,6 +1243,7 @@ async function startServer() {
         dayCategory: sessionState?.brokerSchedule?.dayCategory,
         timeframe,
       });
+      const report = applyUniversalGateToMostActiveFnoReport(rawReport, stocks, getBarsFn, candlesMap, timeframe);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Most Active FNO & (Index Options) scan' });
@@ -1282,10 +1299,12 @@ async function startServer() {
       const capital = Math.max(1000, Number(req.query.capital) || 100000);
       const dailyLossPct = Number(req.query.dailyLossPct) || 0;
 
-      const report = buildClaudeFnoReport({
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildClaudeFnoReport({
         stocks,
-        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        candlesMap: scannerService.getAllCandlesMap(),
+        getExtendedBarsFn: getBarsFn,
+        candlesMap,
         indexQuotes,
         optionChainsByIndex: cachedClaudeOc,
         newsItems: scannerService.getNewsFeedDirect(),
@@ -1296,6 +1315,7 @@ async function startServer() {
         capital,
         dailyLossPct,
       });
+      const report = applyUniversalGateToClaudeFnoReport(rawReport, stocks, getBarsFn, candlesMap);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Claude FNO & (Index Options) scan' });
@@ -1331,10 +1351,12 @@ async function startServer() {
       const capital = Math.max(1000, Number(req.query.capital) || 100000);
       const riskPct = Math.max(0.1, Math.min(10, Number(req.query.riskPct) || 1.0));
 
-      const report = buildSmartMoneyConceptsReport({
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildSmartMoneyConceptsReport({
         stocks,
-        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        candlesMap: scannerService.getAllCandlesMap(),
+        getExtendedBarsFn: getBarsFn,
+        candlesMap,
         indexQuotes,
         isMidnightCleared: isCleared,
         isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
@@ -1343,6 +1365,7 @@ async function startServer() {
         capital,
         riskPct,
       });
+      const report = applyUniversalGateToSmcReport(rawReport, stocks, getBarsFn, candlesMap, timeframe);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Smart Money Concepts scan' });
@@ -1374,10 +1397,12 @@ async function startServer() {
       const capital = Math.max(1000, Number(req.query.capital) || 100000);
       const riskPct = Math.max(0.1, Math.min(10, Number(req.query.riskPct) || 1.0));
 
-      const report = buildPriceActionReport({
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildPriceActionReport({
         stocks,
-        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        candlesMap: scannerService.getAllCandlesMap(),
+        getExtendedBarsFn: getBarsFn,
+        candlesMap,
         indexQuotes,
         isMidnightCleared: isCleared,
         isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
@@ -1385,6 +1410,7 @@ async function startServer() {
         capital,
         riskPct,
       });
+      const report = applyUniversalGateToPriceActionReport(rawReport, stocks, getBarsFn, candlesMap);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Price Action scan' });
@@ -1416,10 +1442,12 @@ async function startServer() {
       const capital = Math.max(1000, Number(req.query.capital) || 100000);
       const riskPct = Math.max(0.1, Math.min(10, Number(req.query.riskPct) || 1.0));
 
-      const report = buildIntradayStockReport({
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildIntradayStockReport({
         stocks,
-        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        candlesMap: scannerService.getAllCandlesMap(),
+        getExtendedBarsFn: getBarsFn,
+        candlesMap,
         indexQuotes,
         isMidnightCleared: isCleared,
         isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
@@ -1427,6 +1455,7 @@ async function startServer() {
         capital,
         riskPct,
       });
+      const report = applyUniversalGateToIntradayStockReport(rawReport, stocks, getBarsFn, candlesMap);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Intraday Stock scan' });
@@ -1458,10 +1487,12 @@ async function startServer() {
       const capital = Math.max(1000, Number(req.query.capital) || 100000);
       const riskPct = Math.max(0.1, Math.min(10, Number(req.query.riskPct) || 1.0));
 
-      const report = buildApexAlphaReport({
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildApexAlphaReport({
         stocks,
-        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        candlesMap: scannerService.getAllCandlesMap(),
+        getExtendedBarsFn: getBarsFn,
+        candlesMap,
         indexQuotes,
         isMidnightCleared: isCleared,
         isMarketOffDay: Boolean(sessionState?.brokerSchedule?.isMarketOffDay),
@@ -1469,6 +1500,7 @@ async function startServer() {
         capital,
         riskPct,
       });
+      const report = applyUniversalGateToApexAlphaReport(rawReport, stocks, getBarsFn, candlesMap);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Apex Alpha Strategy scan' });
@@ -1486,12 +1518,15 @@ async function startServer() {
         await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
       }
 
-      const report = buildMuhuratFlowReport({
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildMuhuratFlowReport({
         stocks,
-        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        candlesMap: scannerService.getAllCandlesMap(),
+        getExtendedBarsFn: getBarsFn,
+        candlesMap,
         isMidnightCleared: isCleared,
       });
+      const report = applyUniversalGateToMuhuratFlowReport(rawReport, stocks, getBarsFn, candlesMap);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Muhurat Flow scan' });
@@ -1509,12 +1544,15 @@ async function startServer() {
         await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
       }
 
-      const report = buildTopMomentumReport({
+      const candlesMap = scannerService.getAllCandlesMap();
+      const getBarsFn = (sym: string) => autonomousPriceService.getExtendedBars(sym);
+      const rawReport = buildTopMomentumReport({
         stocks,
-        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
-        candlesMap: scannerService.getAllCandlesMap(),
+        getExtendedBarsFn: getBarsFn,
+        candlesMap,
         isMidnightCleared: isCleared,
       });
+      const report = applyUniversalGateToTopMomentumReport(rawReport, stocks, getBarsFn, candlesMap);
       res.json(report);
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to compute Top Momentum Order Flow scan' });

@@ -277,9 +277,11 @@ export function computeBarDeltaFromBuySell(bar: {
   const clv =
     range > 0
       ? Math.max(-1, Math.min(1, ((bar.close - bar.low) - (bar.high - bar.close)) / range))
-      : bar.close >= bar.open
+      : bar.close > bar.open
         ? 0.5
-        : -0.5;
+        : bar.close < bar.open
+          ? -0.5
+          : 0;
   const buyShare = (clv + 1) / 2;
   const barBuyVolume = Math.round(vol * buyShare);
   const barSellVolume = Math.max(0, vol - barBuyVolume);

@@ -37,6 +37,13 @@ import {
   checkCumulativeDeltaAlerts,
   CumulativeDeltaEvaluationState,
 } from '../src/utils/priceAlerts';
+import {
+  computeUniversalStrongMetrics,
+  stickyScannerRegistry,
+  UNIVERSAL_STRONG_ADX_MIN,
+  UNIVERSAL_STRONG_RVOL_MIN,
+  UNIVERSAL_STRONG_XTIME_VOL_MIN,
+} from './scannerUniversalGate';
 
 const INDEX_SYMBOLS_UNIVERSE = new Set([
   'NIFTY',
@@ -2075,6 +2082,22 @@ export class ScannerService {
         scannedStock.cumulativeDelta =
           computedCumDelta !== 0 ? computedCumDelta : Math.round(effBidQty - effAskQty);
 
+        // Compute real Wilder ADX(14), Strong RVOL, and flicker-resistant X-Time Volume from real 5m bars
+        const extBars5m = autonomousPriceService.getExtendedBars(stockInfo.symbol);
+        const strongMetrics = computeUniversalStrongMetrics(
+          extBars5m && extBars5m.length >= 4 ? extBars5m : evalCandles,
+          scannedStock.indicators.rvol,
+          scannedStock.indicators.adx,
+          scannedStock.indicators.xTimeVolume
+        );
+        scannedStock.indicators.rvol = strongMetrics.rvol;
+        scannedStock.indicators.xTimeVolume = strongMetrics.xTimeVolume;
+        scannedStock.indicators.adx = strongMetrics.adx;
+        if (strongMetrics.plusDI > 0 || strongMetrics.minusDI > 0) {
+          scannedStock.indicators.plusDi = strongMetrics.plusDI;
+          scannedStock.indicators.minusDi = strongMetrics.minusDI;
+        }
+
         scannedStock.sparkline = candles.slice(-12).map((c) => Number(c.close.toFixed(2)));
         scannedStock.alertCreateTime = nowIso;
 
@@ -2723,29 +2746,123 @@ export class ScannerService {
       isPureStock(s) &&
       s.signal === 'BUY' &&
       s.changePercent >= 0.45 &&
-      (s.indicators.rvol || 1) >= 1.15 &&
+      (s.indicators.rvol || 0) >= UNIVERSAL_STRONG_RVOL_MIN &&
+      (s.indicators.xTimeVolume || 0) >= UNIVERSAL_STRONG_XTIME_VOL_MIN &&
+      (s.indicators.adx || 0) >= UNIVERSAL_STRONG_ADX_MIN &&
       s.price >= (s.indicators.vwap || s.price) * 0.998 &&
-      s.aiScore >= 70;
+      s.aiScore >= 65;
 
     const isEligibleSellFormula = (s: ScannedStock) =>
       isPureStock(s) &&
       s.signal === 'SELL' &&
       s.changePercent <= -0.45 &&
-      (s.indicators.rvol || 1) >= 1.15 &&
+      (s.indicators.rvol || 0) >= UNIVERSAL_STRONG_RVOL_MIN &&
+      (s.indicators.xTimeVolume || 0) >= UNIVERSAL_STRONG_XTIME_VOL_MIN &&
+      (s.indicators.adx || 0) >= UNIVERSAL_STRONG_ADX_MIN &&
       s.price <= (s.indicators.vwap || s.price) * 1.002 &&
-      s.aiScore >= 70;
+      s.aiScore >= 65;
 
-    const buyStocks = this.stockScanResults
+    const buyCandidates = this.stockScanResults
       .filter(isEligibleBuyFormula)
       .sort((a, b) => scoreFormulaBuy(b) - scoreFormulaBuy(a));
-    const sellStocks = this.stockScanResults
+    const sellCandidates = this.stockScanResults
       .filter(isEligibleSellFormula)
       .sort((a, b) => scoreFormulaSell(b) - scoreFormulaSell(a));
 
     const cleared = this.sessionState.isMidnightCleared;
+    const liveMap = new Map<string, ScannedStock>(
+      this.stockScanResults.map((s) => [s.symbol.toUpperCase(), s])
+    );
+    const getBarsFn = (sym: string) =>
+      autonomousPriceService.getExtendedBars(sym) || this.stockCandles[sym];
+
+    const stabilizedBuy = stickyScannerRegistry.filterAndStabilizeRows<ScannedStock>({
+      scannerKey: 'core-scanner:BUY',
+      rows: buyCandidates,
+      liveStockMap: liveMap,
+      getBarsFn,
+      isMidnightCleared: cleared,
+      maxRows: 15,
+      getSymbol: (s) => s.symbol,
+      getSide: () => 'BUY',
+      getEntryPrice: (s) => s.fixedEntryPrice || s.risk?.entryPrice || s.price,
+      getStopLoss: (s) => s.fixedStopLoss || s.risk?.stopLoss || 0,
+      getRvol: (s) => s.indicators?.rvol,
+      getAdx: (s) => s.indicators?.adx,
+      getXTimeVol: (s) => s.indicators?.xTimeVolume,
+      enrichRow: (s, m) => ({
+        ...s,
+        indicators: {
+          ...s.indicators,
+          rvol: Math.max(s.indicators.rvol || 0, m.rvol),
+          xTimeVolume: Math.max(s.indicators.xTimeVolume || 0, m.xTimeVolume),
+          adx: Math.max(s.indicators.adx || 0, m.adx),
+        },
+      }),
+      updateLiveRow: (locked, live, fresh, m) => {
+        const src = fresh || live || locked;
+        return {
+          ...src,
+          listedAt: locked.listedAt || src.listedAt,
+          entryTime: locked.entryTime || src.entryTime,
+          fixedEntryPrice: locked.fixedEntryPrice || src.fixedEntryPrice,
+          fixedStopLoss: locked.fixedStopLoss || src.fixedStopLoss,
+          fixedTarget1: locked.fixedTarget1 || src.fixedTarget1,
+          indicators: {
+            ...src.indicators,
+            rvol: Math.max(src.indicators?.rvol || 0, m.rvol),
+            xTimeVolume: Math.max(src.indicators?.xTimeVolume || 0, m.xTimeVolume),
+            adx: Math.max(src.indicators?.adx || 0, m.adx),
+          },
+        };
+      },
+    });
+
+    const stabilizedSell = stickyScannerRegistry.filterAndStabilizeRows<ScannedStock>({
+      scannerKey: 'core-scanner:SELL',
+      rows: sellCandidates,
+      liveStockMap: liveMap,
+      getBarsFn,
+      isMidnightCleared: cleared,
+      maxRows: 15,
+      getSymbol: (s) => s.symbol,
+      getSide: () => 'SELL',
+      getEntryPrice: (s) => s.fixedEntryPrice || s.risk?.entryPrice || s.price,
+      getStopLoss: (s) => s.fixedStopLoss || s.risk?.stopLoss || 0,
+      getRvol: (s) => s.indicators?.rvol,
+      getAdx: (s) => s.indicators?.adx,
+      getXTimeVol: (s) => s.indicators?.xTimeVolume,
+      enrichRow: (s, m) => ({
+        ...s,
+        indicators: {
+          ...s.indicators,
+          rvol: Math.max(s.indicators.rvol || 0, m.rvol),
+          xTimeVolume: Math.max(s.indicators.xTimeVolume || 0, m.xTimeVolume),
+          adx: Math.max(s.indicators.adx || 0, m.adx),
+        },
+      }),
+      updateLiveRow: (locked, live, fresh, m) => {
+        const src = fresh || live || locked;
+        return {
+          ...src,
+          listedAt: locked.listedAt || src.listedAt,
+          entryTime: locked.entryTime || src.entryTime,
+          fixedEntryPrice: locked.fixedEntryPrice || src.fixedEntryPrice,
+          fixedStopLoss: locked.fixedStopLoss || src.fixedStopLoss,
+          fixedTarget1: locked.fixedTarget1 || src.fixedTarget1,
+          indicators: {
+            ...src.indicators,
+            rvol: Math.max(src.indicators?.rvol || 0, m.rvol),
+            xTimeVolume: Math.max(src.indicators?.xTimeVolume || 0, m.xTimeVolume),
+            adx: Math.max(src.indicators?.adx || 0, m.adx),
+          },
+        };
+      },
+    });
+
     const normalizedStocks = cleared ? [] : this.stockScanResults.map((s) => normalizeScannedStock(s));
-    const normalizedTopBuy = cleared ? [] : sortNewestFirstZtoA(buyStocks.slice(0, 15)).map((s) => normalizeScannedStock(s));
-    const normalizedTopSell = cleared ? [] : sortNewestFirstZtoA(sellStocks.slice(0, 15)).map((s) => normalizeScannedStock(s));
+    const normalizedTopBuy = cleared ? [] : sortNewestFirstZtoA(stabilizedBuy).map((s) => normalizeScannedStock(s));
+    const normalizedTopSell = cleared ? [] : sortNewestFirstZtoA(stabilizedSell).map((s) => normalizeScannedStock(s));
     return {
       stocks: normalizedStocks,
       top10Buy: normalizedTopBuy,

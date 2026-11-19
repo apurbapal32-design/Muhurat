@@ -151,36 +151,86 @@ export function calculateATR(candles: Candle[], period: number = 14): number {
 }
 
 /**
- * Calculates ADX (14) along with +DI and -DI
+ * Calculates Wilder's ADX (14) along with +DI and -DI.
+ * Never returns a fake constant (like 26) when bars are short — adapts lookback cleanly to real candles.
  */
 export function calculateADX(candles: Candle[], period: number = 14): { adx: number; plusDI: number; minusDI: number } {
-  if (candles.length <= period * 2) return { adx: 26, plusDI: 28, minusDI: 18 };
+  if (!candles || candles.length < 4) return { adx: 0, plusDI: 0, minusDI: 0 };
 
-  let plusDM = 0;
-  let minusDM = 0;
-  let tr = 0;
+  const trArr: number[] = [];
+  const plusDmArr: number[] = [];
+  const minusDmArr: number[] = [];
 
-  for (let i = Math.max(1, candles.length - period); i < candles.length; i++) {
+  for (let i = 1; i < candles.length; i++) {
     const upMove = candles[i].high - candles[i - 1].high;
     const downMove = candles[i - 1].low - candles[i].low;
-
-    if (upMove > downMove && upMove > 0) plusDM += upMove;
-    if (downMove > upMove && downMove > 0) minusDM += downMove;
-
-    tr += Math.max(
-      candles[i].high - candles[i].low,
-      Math.abs(candles[i].high - candles[i - 1].close),
-      Math.abs(candles[i].low - candles[i - 1].close)
+    plusDmArr.push(upMove > downMove && upMove > 0 ? upMove : 0);
+    minusDmArr.push(downMove > upMove && downMove > 0 ? downMove : 0);
+    trArr.push(
+      Math.max(
+        candles[i].high - candles[i].low,
+        Math.abs(candles[i].high - candles[i - 1].close),
+        Math.abs(candles[i].low - candles[i - 1].close)
+      )
     );
   }
 
-  if (tr === 0) return { adx: 20, plusDI: 20, minusDI: 20 };
+  const effPeriod = Math.min(period, Math.max(3, Math.floor(trArr.length / 2)));
+  if (trArr.length < effPeriod) {
+    const sumTr = trArr.reduce((a, b) => a + b, 0);
+    if (sumTr <= 0) return { adx: 0, plusDI: 0, minusDI: 0 };
+    const pDI = (plusDmArr.reduce((a, b) => a + b, 0) / sumTr) * 100;
+    const mDI = (minusDmArr.reduce((a, b) => a + b, 0) / sumTr) * 100;
+    const dx = pDI + mDI > 0 ? (Math.abs(pDI - mDI) / (pDI + mDI)) * 100 : 0;
+    return { adx: Number(dx.toFixed(2)), plusDI: Number(pDI.toFixed(2)), minusDI: Number(mDI.toFixed(2)) };
+  }
 
-  const plusDI = Number(((plusDM / tr) * 100).toFixed(2));
-  const minusDI = Number(((minusDM / tr) * 100).toFixed(2));
-  const dx = (Math.abs(plusDI - minusDI) / (plusDI + minusDI || 1)) * 100;
+  let smTR = 0;
+  let smPlusDM = 0;
+  let smMinusDM = 0;
+  for (let i = 0; i < effPeriod; i++) {
+    smTR += trArr[i];
+    smPlusDM += plusDmArr[i];
+    smMinusDM += minusDmArr[i];
+  }
 
-  return { adx: Number(dx.toFixed(2)), plusDI, minusDI };
+  const dxValues: number[] = [];
+  let lastPlusDI = 0;
+  let lastMinusDI = 0;
+
+  const pushDx = () => {
+    if (smTR <= 0) {
+      dxValues.push(0);
+      return;
+    }
+    lastPlusDI = (smPlusDM / smTR) * 100;
+    lastMinusDI = (smMinusDM / smTR) * 100;
+    const denom = lastPlusDI + lastMinusDI;
+    dxValues.push(denom > 0 ? (Math.abs(lastPlusDI - lastMinusDI) / denom) * 100 : 0);
+  };
+
+  pushDx();
+  for (let i = effPeriod; i < trArr.length; i++) {
+    smTR = smTR - smTR / effPeriod + trArr[i];
+    smPlusDM = smPlusDM - smPlusDM / effPeriod + plusDmArr[i];
+    smMinusDM = smMinusDM - smMinusDM / effPeriod + minusDmArr[i];
+    pushDx();
+  }
+
+  if (dxValues.length === 0) return { adx: 0, plusDI: 0, minusDI: 0 };
+  let adxVal =
+    dxValues.length >= effPeriod
+      ? dxValues.slice(0, effPeriod).reduce((a, b) => a + b, 0) / effPeriod
+      : dxValues.reduce((a, b) => a + b, 0) / dxValues.length;
+  for (let i = effPeriod; i < dxValues.length; i++) {
+    adxVal = (adxVal * (effPeriod - 1) + dxValues[i]) / effPeriod;
+  }
+
+  return {
+    adx: Number(adxVal.toFixed(2)),
+    plusDI: Number(lastPlusDI.toFixed(2)),
+    minusDI: Number(lastMinusDI.toFixed(2)),
+  };
 }
 
 /**
@@ -278,15 +328,27 @@ export function evaluateStockScanner(
       ? prev20Volumes.reduce((a, b) => a + b, 0) / prev20Volumes.length
       : volumes.reduce((a, b) => a + b, 0) / (volumes.length || 1);
 
-  // During the opening seconds/minutes of a new 5m bar, currentCandle.volume is partial;
-  // blend with previous completed bar's activity so genuine movers are not throttled to ~0.05x RVOL.
-  const effectiveCurrentVolume =
-    candles.length >= 2 && prevCandle.volume > 100 && currentCandle.volume < prevCandle.volume * 0.45
-      ? Math.max(currentCandle.volume, Math.round(prevCandle.volume * 0.85))
-      : currentCandle.volume;
+  // During the opening seconds/minutes of a new 5m bar or a quiet closing bar, currentCandle.volume can dip;
+  // evaluate recent 3-bar peak (weighted 1.0 latest, 1.0 prev, 0.85 third-last) so genuine high-volume movers
+  // never falsely collapse to ~0.07x RVOL while quiet stocks remain strictly below threshold.
+  const prev2Candle = candles[candles.length - 3];
+  const recentCandidateVol = Math.max(
+    currentCandle.volume,
+    candles.length >= 2 && prevCandle.volume > 100 && currentCandle.volume < prevCandle.volume * 0.55
+      ? prevCandle.volume
+      : 0,
+    prev2Candle && prev2Candle.volume > 100 && currentCandle.volume < prev2Candle.volume * 0.45
+      ? Math.round(prev2Candle.volume * 0.85)
+      : 0
+  );
+  const effectiveCurrentVolume = recentCandidateVol;
 
   const volRatio = Number((effectiveCurrentVolume / (avgVolume20 || 1)).toFixed(2));
   const rvol = volRatio;
+  // Flicker-resistant X-Time Volume: peak volume across last 3 bars vs prior 20-bar baseline
+  const recent3Vols = candles.slice(-Math.min(3, candles.length)).map((c) => Math.max(0, c.volume));
+  const peakRecent3Vol = recent3Vols.length > 0 ? Math.max(...recent3Vols) : effectiveCurrentVolume;
+  const xTimeVolume = Number(Math.min(25, peakRecent3Vol / (avgVolume20 || 1)).toFixed(2));
   const volumeBreakout = effectiveCurrentVolume > 1.5 * avgVolume20;
 
   // CPR & Pivots
@@ -446,11 +508,19 @@ export function evaluateStockScanner(
   if (effMarketPct >= 0.20) {
     marketState = 'BULLISH';
     buyMarketScore = 5;
-    sellMarketScore = 0;
+    // Counter-trend relative weakness: genuine heavy selloff against a green NIFTY earns partial regime credit
+    sellMarketScore =
+      changePercent <= -0.55 && price <= vwap * 1.001 && (rvol >= 1.5 || xTimeVolume >= 2.0)
+        ? 3.5
+        : 0;
   } else if (effMarketPct <= -0.20) {
     marketState = 'BEARISH';
     sellMarketScore = 5;
-    buyMarketScore = 0;
+    // Counter-trend relative strength: genuine strong rally against a red NIFTY earns partial regime credit
+    buyMarketScore =
+      changePercent >= 0.55 && price >= vwap * 0.999 && (rvol >= 1.5 || xTimeVolume >= 2.0)
+        ? 3.5
+        : 0;
   }
 
   let sectorState: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
@@ -459,11 +529,17 @@ export function evaluateStockScanner(
   if (effSectorPct >= 0.15) {
     sectorState = 'BULLISH';
     buySectorScore = 5;
-    sellSectorScore = 0;
+    sellSectorScore =
+      changePercent <= -0.60 && price <= vwap * 1.001 && (rvol >= 1.5 || xTimeVolume >= 2.0)
+        ? 3.5
+        : 0;
   } else if (effSectorPct <= -0.15) {
     sectorState = 'BEARISH';
     sellSectorScore = 5;
-    buySectorScore = 0;
+    buySectorScore =
+      changePercent >= 0.60 && price >= vwap * 0.999 && (rvol >= 1.5 || xTimeVolume >= 2.0)
+        ? 3.5
+        : 0;
   }
 
   // --------------------------------------------------------------------------
@@ -614,31 +690,32 @@ export function evaluateStockScanner(
   // Low liquidity / choppy market false signal suppression
   const hasAdequateLiquidity = rvol >= 0.7;
 
+  // Symmetric trend & counter-trend validation:
+  // Allows genuine stock-specific breakouts (UP on bearish market days) and breakdowns (DOWN on bullish market days)
+  // whenever price is cleanly on the right side of VWAP with real volume & directional momentum.
+  const strongVolActive = rvol >= 1.15 || xTimeVolume >= 1.8;
+
   const isBuyValid =
     hasAdequateLiquidity &&
     price >= vwap * 0.998 &&
-    ema13 >= ema21 &&
-    foxTrend !== -1 &&
+    (ema13 >= ema21 || (changePercent >= 0.75 && price > vwap && strongVolActive)) &&
+    (foxTrend !== -1 || (changePercent >= 0.85 && price > vwap && strongVolActive)) &&
     (marketState !== 'BEARISH' ||
-      (changePercent >= 1.0 &&
-        price > vwap &&
-        ema13 > ema21 &&
-        foxTrend === 1 &&
-        rvol >= 1.15 &&
-        (sectorState !== 'BEARISH' || changePercent >= 2.0)));
+      (changePercent >= 0.45 &&
+        price >= vwap * 0.999 &&
+        strongVolActive &&
+        (ema13 >= ema21 || foxTrend === 1 || changePercent >= 0.75)));
 
   const isSellValid =
     hasAdequateLiquidity &&
     price <= vwap * 1.002 &&
-    ema13 <= ema21 &&
-    foxTrend !== 1 &&
+    (ema13 <= ema21 || (changePercent <= -0.75 && price < vwap && strongVolActive)) &&
+    (foxTrend !== 1 || (changePercent <= -0.85 && price < vwap && strongVolActive)) &&
     (marketState !== 'BULLISH' ||
-      (changePercent <= -1.0 &&
-        price < vwap &&
-        ema13 < ema21 &&
-        foxTrend === -1 &&
-        rvol >= 1.15 &&
-        (sectorState !== 'BULLISH' || changePercent <= -2.0)));
+      (changePercent <= -0.45 &&
+        price <= vwap * 1.001 &&
+        strongVolActive &&
+        (ema13 <= ema21 || foxTrend === -1 || changePercent <= -0.75)));
 
   if (passHardBuy || (buyFinalScore > sellFinalScore && buyFinalScore >= 85 && isBuyValid)) {
     signal = 'BUY';
@@ -658,18 +735,26 @@ export function evaluateStockScanner(
     if (foxTrend === -1) triggers.push('Fox-Trend ATR Bearish Band Active');
     if (oiState !== 'NEUTRAL') triggers.push(`Futures OI: ${oiState.replace('_', ' ')}`);
     if (rvol >= 1.5) triggers.push(`High RVOL Sale (${rvol.toFixed(2)}x)`);
-  } else if (buyFinalScore > sellFinalScore && buyFinalScore >= 75 && isBuyValid) {
+  } else if (buyFinalScore > sellFinalScore && buyFinalScore >= 65 && isBuyValid) {
     signal = 'BUY';
     totalScore = buyFinalScore;
-    triggers.push('🟢 WATCH BUY (Score 75-84) - Awaiting Full Filter Confirmation');
+    triggers.push(
+      buyFinalScore >= 75
+        ? '🟢 WATCH BUY (Score 75-84) - Awaiting Full Filter Confirmation'
+        : '🟢 COUNTER-TREND / MOMENTUM BUY (Score 65-74) - VWAP + Volume Confirmed'
+    );
     if (price > vwap) triggers.push('Price Above VWAP');
-    if (rvol >= 1.0) triggers.push(`Moderate RVOL (${rvol.toFixed(2)}x)`);
-  } else if (sellFinalScore > buyFinalScore && sellFinalScore >= 75 && isSellValid) {
+    if (rvol >= 1.0) triggers.push(`Active RVOL (${rvol.toFixed(2)}x)`);
+  } else if (sellFinalScore > buyFinalScore && sellFinalScore >= 65 && isSellValid) {
     signal = 'SELL';
     totalScore = sellFinalScore;
-    triggers.push('🔴 WATCH SELL (Score 75-84) - Awaiting Full Filter Confirmation');
+    triggers.push(
+      sellFinalScore >= 75
+        ? '🔴 WATCH SELL (Score 75-84) - Awaiting Full Filter Confirmation'
+        : '🔴 COUNTER-TREND / MOMENTUM SELL (Score 65-74) - VWAP + Volume Confirmed'
+    );
     if (price < vwap) triggers.push('Price Below VWAP');
-    if (rvol >= 1.0) triggers.push(`Moderate RVOL (${rvol.toFixed(2)}x)`);
+    if (rvol >= 1.0) triggers.push(`Active RVOL (${rvol.toFixed(2)}x)`);
   } else {
     signal = 'NEUTRAL';
     totalScore = Math.max(buyFinalScore, sellFinalScore, 50);
@@ -741,6 +826,7 @@ export function evaluateStockScanner(
     bbMiddle,
     bbLower,
     rvol,
+    xTimeVolume,
     volumeBreakout,
     pdh: prevDayHigh,
     pdl: prevDayLow,

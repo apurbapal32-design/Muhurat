@@ -120,6 +120,7 @@ export interface TechnicalIndicators {
   bbMiddle: number;
   bbLower: number;
   rvol: number;
+  xTimeVolume?: number;
   volumeBreakout: boolean;
   pdh: number; // Previous Day High
   pdl: number; // Previous Day Low
