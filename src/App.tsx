@@ -46,6 +46,7 @@ import {
 } from './data/initialNewsData';
 import { checkAndTriggerPriceAlerts, checkOrderQtyAndRvolAlerts } from './utils/priceAlerts';
 import { safeFetchJson } from './utils/apiClient';
+import { normalizeScanResultsPayload, ScanResultsResponse } from './utils/quoteNormalizer';
 import { isMarketHours, getMarketHoursDiagnostics } from './utils/marketHours';
 import {
   AlertConfig,
@@ -171,7 +172,9 @@ export default function App() {
 
   const fetchScanResults = async () => {
     try {
-      const data = await safeFetchJson<any>('/api/scan/results');
+      const data = await safeFetchJson<ScanResultsResponse>('/api/scan/results', {
+        parse: normalizeScanResultsPayload,
+      });
       if (data) {
         if (data.stocks) {
           setStocks(data.stocks);

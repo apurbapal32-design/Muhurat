@@ -35,6 +35,12 @@ import {
   getUserWatchlist,
   removeUserWatchlistItem,
 } from './src/db/users';
+import {
+  compactScannedStock,
+  normalizeMarketOverview,
+  normalizeScannedStock,
+  round2,
+} from './src/utils/quoteNormalizer';
 
 async function startServer() {
   const app = express();
@@ -670,72 +676,32 @@ async function startServer() {
   // Get live scanner results & market stats
   app.get('/api/scan/results', (req, res) => {
     try {
+      res.setHeader('Cache-Control', 'no-store');
       const data = scannerService.getScanResults();
+      const sectorAvgMap: Record<string, number> = {};
+      for (const [sec, val] of Object.entries(data.sectorAvgMap || {})) {
+        sectorAvgMap[sec] = round2(val, 0);
+      }
+      const overview = normalizeMarketOverview(data.overview);
+
       if (req.query.compact === '1') {
-        const shrinkStock = (s: any) => ({
-          symbol: s.symbol,
-          name: s.name,
-          fyersSymbol: s.fyersSymbol,
-          sector: s.sector,
-          sectorChangePercent: s.sectorChangePercent,
-          price: s.price,
-          change: s.change,
-          changePercent: s.changePercent,
-          volume: s.volume,
-          turnover: s.turnover,
-          signal: s.signal,
-          aiScore: s.aiScore,
-          bidQty: s.bidQty,
-          askQty: s.askQty,
-          bidAskRatio: s.bidAskRatio,
-          orderBookBias: s.orderBookBias,
-          listedAt: s.listedAt,
-          signalListedAt: s.signalListedAt,
-          fixedEntryPrice: s.fixedEntryPrice,
-          fixedStopLoss: s.fixedStopLoss,
-          fixedTarget1: s.fixedTarget1,
-          formulaCode: s.formulaCode,
-          formulaName: s.formulaName,
-          tradeStatus: s.tradeStatus,
-          entryTime: s.entryTime,
-          strikeStep: s.strikeStep,
-          risk: s.risk
-            ? { entryPrice: s.risk.entryPrice, stopLoss: s.risk.stopLoss, target1: s.risk.target1 }
-            : undefined,
-          indicators: s.indicators
-            ? {
-                price: s.indicators.price,
-                vwap: s.indicators.vwap,
-                rsi: s.indicators.rsi,
-                adx: s.indicators.adx,
-                rvol: s.indicators.rvol,
-                high: s.indicators.high,
-                low: s.indicators.low,
-                open: s.indicators.open,
-                close: s.indicators.close,
-                squeezeOn: s.indicators.squeezeOn,
-              }
-            : undefined,
-          oiData: s.oiData
-            ? {
-                buildup: s.oiData.buildup,
-                openInterest: s.oiData.openInterest,
-                changeInOIPercent: s.oiData.changeInOIPercent,
-                pcr: s.oiData.pcr,
-              }
-            : undefined,
-          greeks: s.greeks ? { iv: s.greeks.iv, ivPercentile: s.greeks.ivPercentile } : undefined,
-        });
         return res.json({
-          stocks: (data.stocks || []).map(shrinkStock),
-          top10Buy: (data.top10Buy || []).map(shrinkStock),
-          top10Sell: (data.top10Sell || []).map(shrinkStock),
-          sectorAvgMap: data.sectorAvgMap || {},
-          overview: data.overview,
+          stocks: (data.stocks || []).map(compactScannedStock),
+          top10Buy: (data.top10Buy || []).map(compactScannedStock),
+          top10Sell: (data.top10Sell || []).map(compactScannedStock),
+          sectorAvgMap,
+          overview,
           sessionState: data.sessionState,
         });
       }
-      res.json(data);
+      res.json({
+        ...data,
+        stocks: (data.stocks || []).map(normalizeScannedStock),
+        top10Buy: (data.top10Buy || []).map(normalizeScannedStock),
+        top10Sell: (data.top10Sell || []).map(normalizeScannedStock),
+        sectorAvgMap,
+        overview,
+      });
     } catch (error: any) {
       console.error('Error in /api/scan/results:', error);
       res.status(500).json({ error: error.message || 'Failed to fetch scan results' });
@@ -780,7 +746,8 @@ async function startServer() {
   // Trigger fresh scan cycle (unlocks midnight flush if overridden or discovers fresh today candidates)
   app.post('/api/scan/trigger', async (req, res) => {
     try {
-      const updatedStocks = await scannerService.triggerManualScanOverride();
+      res.setHeader('Cache-Control', 'no-store');
+      const updatedStocks = (await scannerService.triggerManualScanOverride()).map(normalizeScannedStock);
       res.json({
         status: 'success',
         scannedCount: updatedStocks.length,

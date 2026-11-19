@@ -13,6 +13,7 @@ import {
   Candle,
   CorporateAction,
   EquityCurvePoint,
+  FyersQuote,
   MarketOverview,
   NewsItem,
   ScannedStock,
@@ -25,6 +26,12 @@ import { BrokerMarketScheduleStatus, upstoxService } from './upstoxService';
 import { autonomousPriceService, deriveOrderBookDepth, IntradayCandleBar, UnifiedMarketQuote } from './autonomousPriceService';
 import { marketWebSocketServer } from './marketWebSocketServer';
 import { sentinelAgentService } from './sentinelAgentService';
+import {
+  normalizeMarketOverview,
+  normalizeScannedStock,
+  parseFiniteNum,
+  round2,
+} from '../src/utils/quoteNormalizer';
 
 const INDEX_SYMBOLS_UNIVERSE = new Set([
   'NIFTY',
@@ -1270,17 +1277,31 @@ export class ScannerService {
       quoteKey: string
     ) => {
       const q: UnifiedMarketQuote | undefined = quotes[quoteKey];
-      if (!q || !q.lp) return;
+      const lp = round2(q?.lp, 0);
+      if (lp <= 0) return;
+      const prevClose = round2(q?.prevClose, lp);
+      const rawCh = parseFiniteNum(q?.ch);
+      const ch =
+        rawCh !== undefined && (Math.abs(rawCh) > 0.0001 || Math.abs(lp - prevClose) <= 0.01)
+          ? round2(rawCh)
+          : round2(lp - prevClose);
+      const rawChp = parseFiniteNum(q?.chp);
+      const chp =
+        rawChp !== undefined && (Math.abs(rawChp) > 0.0001 || Math.abs(ch) <= 0.01)
+          ? round2(rawChp)
+          : prevClose > 0
+          ? round2((ch / prevClose) * 100)
+          : 0;
       const prevEntry = (this.marketOverview as any)[overviewKey] || {};
       (this.marketOverview as any)[overviewKey] = {
         ...prevEntry,
-        price: q.lp,
-        change: q.ch,
-        changePercent: q.chp,
-        open: q.open,
-        high: q.high,
-        low: q.low,
-        prevClose: q.prevClose,
+        price: lp,
+        change: ch,
+        changePercent: chp,
+        open: round2(q?.open, lp),
+        high: round2(q?.high, lp),
+        low: round2(q?.low, lp),
+        prevClose,
       };
     };
 
@@ -1292,15 +1313,19 @@ export class ScannerService {
     applyIdx('niftyIT', 'NIFTYIT');
 
     const vix = quotes['INDIAVIX'];
-    if (vix && vix.lp) {
+    const vixLp = round2(vix?.lp, 0);
+    if (vix && vixLp > 0) {
       let regime: 'LOW_VOLATILITY' | 'MODERATE' | 'HIGH_FEAR' | 'EXTREME_PANIC' = 'LOW_VOLATILITY';
-      if (vix.lp > 22) regime = 'EXTREME_PANIC';
-      else if (vix.lp > 17) regime = 'HIGH_FEAR';
-      else if (vix.lp > 14) regime = 'MODERATE';
+      if (vixLp > 22) regime = 'EXTREME_PANIC';
+      else if (vixLp > 17) regime = 'HIGH_FEAR';
+      else if (vixLp > 14) regime = 'MODERATE';
+      const vixPrev = round2(vix.prevClose, vixLp);
+      const vixCh = round2(vix.ch, round2(vixLp - vixPrev));
+      const vixChp = round2(vix.chp, vixPrev > 0 ? round2((vixCh / vixPrev) * 100) : 0);
       this.marketOverview.indiaVix = {
-        price: vix.lp,
-        change: vix.ch,
-        changePercent: vix.chp,
+        price: vixLp,
+        change: vixCh,
+        changePercent: vixChp,
         regime,
       };
     }
@@ -1400,32 +1425,56 @@ export class ScannerService {
       return;
     }
 
-    // Apply latest cached real quotes from Upstox / Autonomous batch feed onto scanned stocks
-    const cachedQuotes = autonomousPriceService.getCachedQuotes();
+    // Apply latest cached real quotes (Upstox live cache takes priority over autonomous fallback)
+    const cachedQuotes: Record<string, UnifiedMarketQuote> = {
+      ...autonomousPriceService.getCachedQuotes(),
+      ...upstoxService.getCachedUpstoxQuotes(),
+    };
     for (const stock of this.stockScanResults) {
-      const q = cachedQuotes[stock.symbol];
-      if (q && q.lp > 0) {
-        stock.price = q.lp;
-        stock.change = q.ch;
-        stock.changePercent = q.chp;
-        stock.volume = q.volume || stock.volume;
-        stock.indicators.price = q.lp;
-        stock.indicators.close = q.lp;
+      const cleanSym = upstoxService.cleanSymbol(stock.symbol);
+      const q = cachedQuotes[cleanSym] || cachedQuotes[stock.symbol];
+      const qLp = round2(q?.lp, 0);
+      if (q && qLp > 0) {
+        const qPrev = round2(q.prevClose, qLp);
+        const rawCh = parseFiniteNum(q.ch);
+        const qCh =
+          rawCh !== undefined && (Math.abs(rawCh) > 0.0001 || Math.abs(qLp - qPrev) <= 0.01)
+            ? round2(rawCh)
+            : round2(qLp - qPrev);
+        const rawChp = parseFiniteNum(q.chp);
+        const qChp =
+          rawChp !== undefined && (Math.abs(rawChp) > 0.0001 || Math.abs(qCh) <= 0.01)
+            ? round2(rawChp)
+            : qPrev > 0
+            ? round2((qCh / qPrev) * 100)
+            : 0;
+
+        stock.price = qLp;
+        stock.change = qCh;
+        stock.changePercent = qChp;
+        stock.volume = Math.max(0, Math.round(parseFiniteNum(q.volume) ?? stock.volume));
+        stock.indicators.price = qLp;
+        stock.indicators.close = qLp;
+        if (q.open > 0) stock.indicators.open = round2(q.open, qLp);
+        if (q.high > 0) stock.indicators.high = round2(Math.max(q.high, qLp), qLp);
+        if (q.low > 0) stock.indicators.low = round2(Math.min(q.low, qLp), qLp);
+        stock.fyersData = this.buildFyersQuoteFromUnified(stock.symbol, q, qLp, qCh, qChp, qPrev);
+
         const tickDepth =
           q.bidQty > 0 && q.askQty > 0
             ? {
                 bidQty: q.bidQty,
                 askQty: q.askQty,
-                bidAskRatio: Number((q.bidQty / q.askQty).toFixed(2)),
+                bidAskRatio: round2(q.bidQty / q.askQty, 1),
               }
             : deriveOrderBookDepth({
                 volume: stock.volume,
-                lp: q.lp,
-                open: q.open || stock.indicators.open || q.lp,
-                high: q.high || stock.indicators.high || q.lp,
-                low: q.low || stock.indicators.low || q.lp,
-                chp: q.chp,
-                atp: q.atp || stock.indicators.vwap || q.lp,
+                lp: qLp,
+                open: q.open || stock.indicators.open || qLp,
+                high: q.high || stock.indicators.high || qLp,
+                low: q.low || stock.indicators.low || qLp,
+                chp: qChp,
+                atp: q.atp || stock.indicators.vwap || qLp,
                 intradayBars: q.intradayBars,
               });
         stock.bidQty = tickDepth.bidQty;
@@ -1447,12 +1496,44 @@ export class ScannerService {
 
     const liveSectorMap = this.computeSectorAvgMap();
     for (const stock of this.stockScanResults) {
-      stock.sectorChangePercent = liveSectorMap[stock.sector] ?? Number((Number(stock.changePercent) || 0).toFixed(2));
+      stock.sectorChangePercent = liveSectorMap[stock.sector] ?? round2(stock.changePercent, 0);
     }
 
     this.evaluateTargetHitsAndTrades(this.stockScanResults);
     this.lastScanTimestamp = new Date().toISOString();
     this.marketOverview.lastScanTime = this.lastScanTimestamp;
+  }
+
+  private buildFyersQuoteFromUnified(
+    symbol: string,
+    q: UnifiedMarketQuote | undefined,
+    lp: number,
+    ch: number,
+    chp: number,
+    prevClose: number
+  ): FyersQuote {
+    const safePrev = prevClose > 0 ? round2(prevClose) : round2(lp - ch);
+    return {
+      symbol,
+      fyersSymbol: q?.instrumentKey || upstoxService.getInstrumentKey(symbol),
+      description: q?.description || `${symbol} (NSE)`,
+      exchange: q?.exchange || 'NSE',
+      type: q?.type || 'EQUITY',
+      lp: round2(lp),
+      open: round2(q?.open, lp),
+      high: round2(Math.max(parseFiniteNum(q?.high) ?? lp, lp), lp),
+      low: round2(Math.min(parseFiniteNum(q?.low) ?? lp, lp), lp),
+      prevClose: safePrev,
+      ch: round2(ch),
+      chp: round2(chp),
+      volume: Math.max(0, Math.round(parseFiniteNum(q?.volume) ?? 0)),
+      atp: round2(q?.atp, lp),
+      ltt: q?.ltt || 'EOD Settlement',
+      fyersStatus: q?.isMarketOpen ? 'LIVE_V3_FEED' : 'CLOSED_SETTLEMENT',
+      isMarketOpen: Boolean(q?.isMarketOpen),
+      marketSession: q?.marketSession,
+      lastRefreshed: q?.lastRefreshed || new Date().toISOString(),
+    };
   }
 
   /**
@@ -1748,13 +1829,17 @@ export class ScannerService {
         const q = allQuotes[cleanSym] || allQuotes[stockInfo.symbol];
         if (q?.source === 'UPSTOX_API_V2') usedUpstox = true;
 
-        const lp = q?.lp && q.lp > 0 ? q.lp : stockInfo.basePrice;
-        const prevClose = q?.prevClose && q.prevClose > 0 ? q.prevClose : lp;
-        const dayHigh = q?.high && q.high > 0 ? Math.max(q.high, lp) : Math.max(lp, prevClose);
-        const dayLow = q?.low && q.low > 0 ? Math.min(q.low, lp) : Math.min(lp, prevClose);
+        const rawLp = parseFiniteNum(q?.lp);
+        const lp = rawLp && rawLp > 0 ? round2(rawLp) : round2(stockInfo.basePrice);
+        const rawPrevClose = parseFiniteNum(q?.prevClose);
+        const prevClose = rawPrevClose && rawPrevClose > 0 ? round2(rawPrevClose) : lp;
+        const rawHigh = parseFiniteNum(q?.high);
+        const dayHigh = rawHigh && rawHigh > 0 ? round2(Math.max(rawHigh, lp)) : round2(Math.max(lp, prevClose));
+        const rawLow = parseFiniteNum(q?.low);
+        const dayLow = rawLow && rawLow > 0 ? round2(Math.min(rawLow, lp)) : round2(Math.min(lp, prevClose));
         const realSectorChp =
           precomputedSectorAvgMap[stockInfo.sector] ??
-          Number((q?.chp ?? (prevClose > 0 ? ((lp - prevClose) / prevClose) * 100 : 0)).toFixed(2));
+          round2(q?.chp ?? (prevClose > 0 ? ((lp - prevClose) / prevClose) * 100 : 0));
 
         const stockMeta: StockMetaCache = {
           prevClose,
@@ -1836,27 +1921,42 @@ export class ScannerService {
           niftyLiveChp
         );
 
-        // Apply exact live quote data
-        scannedStock.price = Number(lp.toFixed(2));
-        const rawCh = q && Number.isFinite(Number(q.ch)) ? Number(q.ch) : Number((lp - prevClose).toFixed(2));
+        // Apply exact live Upstox/Autonomous quote data rounded to 2 decimal places
+        scannedStock.price = round2(lp);
+        const rawCh = parseFiniteNum(q?.ch);
         const trueCh =
-          Math.abs(rawCh) <= 0.0001 && prevClose > 0 && Math.abs(lp - prevClose) > 0.01
-            ? Number((lp - prevClose).toFixed(2))
-            : Number(rawCh.toFixed(2));
-        const rawChp = q && Number.isFinite(Number(q.chp)) ? Number(q.chp) : (prevClose > 0 ? ((lp - prevClose) / prevClose) * 100 : 0);
+          rawCh === undefined ||
+          (Math.abs(rawCh) <= 0.0001 && prevClose > 0 && Math.abs(lp - prevClose) > 0.01)
+            ? round2(lp - prevClose)
+            : round2(rawCh);
+        const rawChp = parseFiniteNum(q?.chp);
         const trueChp =
-          Math.abs(rawChp) <= 0.0001 && prevClose > 0 && Math.abs(trueCh) > 0.01
-            ? Number(((trueCh / prevClose) * 100).toFixed(2))
-            : Number(rawChp.toFixed(2));
+          rawChp === undefined ||
+          (Math.abs(rawChp) <= 0.0001 && prevClose > 0 && Math.abs(trueCh) > 0.01)
+            ? prevClose > 0
+              ? round2((trueCh / prevClose) * 100)
+              : 0
+            : round2(rawChp);
         scannedStock.change = trueCh;
         scannedStock.changePercent = trueChp;
-        scannedStock.sectorChangePercent = realSectorChp;
-        if (q?.volume && q.volume > 0) scannedStock.volume = q.volume;
+        scannedStock.sectorChangePercent = round2(realSectorChp);
+        if (q?.volume && q.volume > 0) scannedStock.volume = Math.round(q.volume);
         scannedStock.indicators.price = scannedStock.price;
         scannedStock.indicators.close = scannedStock.price;
-        if (q?.rsi) scannedStock.indicators.rsi = q.rsi;
-        if (q?.ema20) scannedStock.indicators.ema21 = q.ema20;
-        if (q?.sma50) scannedStock.indicators.ema50 = q.sma50;
+        if (q?.open && q.open > 0) scannedStock.indicators.open = round2(q.open, scannedStock.price);
+        scannedStock.indicators.high = dayHigh;
+        scannedStock.indicators.low = dayLow;
+        if (q?.rsi) scannedStock.indicators.rsi = round2(q.rsi, scannedStock.indicators.rsi);
+        if (q?.ema20) scannedStock.indicators.ema21 = round2(q.ema20, scannedStock.indicators.ema21);
+        if (q?.sma50) scannedStock.indicators.ema50 = round2(q.sma50, scannedStock.indicators.ema50);
+        scannedStock.fyersData = this.buildFyersQuoteFromUnified(
+          scannedStock.symbol,
+          q,
+          scannedStock.price,
+          trueCh,
+          trueChp,
+          prevClose
+        );
 
         if (!hasRealBars && statusForScan.session !== 'PRE_OPEN') {
           scannedStock.signal = 'NEUTRAL';
@@ -2609,12 +2709,15 @@ export class ScannerService {
       .sort((a, b) => scoreFormulaSell(b) - scoreFormulaSell(a));
 
     const cleared = this.sessionState.isMidnightCleared;
+    const normalizedStocks = cleared ? [] : this.stockScanResults.map((s) => normalizeScannedStock(s));
+    const normalizedTopBuy = cleared ? [] : sortNewestFirstZtoA(buyStocks.slice(0, 15)).map((s) => normalizeScannedStock(s));
+    const normalizedTopSell = cleared ? [] : sortNewestFirstZtoA(sellStocks.slice(0, 15)).map((s) => normalizeScannedStock(s));
     return {
-      stocks: cleared ? [] : this.stockScanResults,
-      top10Buy: cleared ? [] : sortNewestFirstZtoA(buyStocks.slice(0, 15)),
-      top10Sell: cleared ? [] : sortNewestFirstZtoA(sellStocks.slice(0, 15)),
+      stocks: normalizedStocks,
+      top10Buy: normalizedTopBuy,
+      top10Sell: normalizedTopSell,
       sectorAvgMap: cleared ? {} : sectorAvgMap,
-      overview: this.marketOverview,
+      overview: normalizeMarketOverview(this.marketOverview),
       broker: this.brokerConfig,
       alerts: this.alertConfig,
       news: this.newsFeed,
@@ -2662,9 +2765,26 @@ export class ScannerService {
       this.stockMetaCache.set(stockInfo.symbol, meta);
       const scanned = this.stockScanResults.find((s) => s.symbol === stockInfo.symbol);
       if (scanned) {
-        scanned.price = meta.price;
-        scanned.change = Number((meta.price - meta.prevClose).toFixed(2));
-        scanned.changePercent = Number((((meta.price - meta.prevClose) / meta.prevClose) * 100).toFixed(2));
+        const cleanPrice = round2(meta.price, scanned.price);
+        const cleanPrev = meta.prevClose > 0 ? round2(meta.prevClose, cleanPrice) : cleanPrice;
+        const cleanCh = round2(cleanPrice - cleanPrev);
+        const cleanChp = cleanPrev > 0 ? round2((cleanCh / cleanPrev) * 100) : 0;
+        scanned.price = cleanPrice;
+        scanned.change = cleanCh;
+        scanned.changePercent = cleanChp;
+        scanned.indicators.price = cleanPrice;
+        scanned.indicators.close = cleanPrice;
+        if (scanned.fyersData) {
+          scanned.fyersData = {
+            ...scanned.fyersData,
+            lp: cleanPrice,
+            prevClose: cleanPrev,
+            ch: cleanCh,
+            chp: cleanChp,
+            high: round2(Math.max(meta.dayHigh, cleanPrice), cleanPrice),
+            low: round2(Math.min(meta.dayLow, cleanPrice), cleanPrice),
+          };
+        }
       }
     }
     return this.getStockCandles(stockInfo.symbol);

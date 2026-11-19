@@ -15,6 +15,11 @@ import {
   IntradayCandleBar,
   UnifiedMarketQuote,
 } from './autonomousPriceService';
+import {
+  deriveUpstoxPriceChange,
+  parseFiniteNum,
+  round2,
+} from '../src/utils/quoteNormalizer';
 
 export interface UpstoxProfile {
   user_id?: string;
@@ -212,6 +217,13 @@ class UpstoxService {
     this.lastUpstoxTokenTag = '';
     this.inFlightUpstoxBatch = null;
     this.tokenVerificationCache.clear();
+  }
+
+  public getCachedUpstoxQuotes(): Record<string, UnifiedMarketQuote> {
+    if (Date.now() - this.lastUpstoxQuotesAt > 60000) {
+      return {};
+    }
+    return { ...this.lastUpstoxQuotes };
   }
 
   private loadCachedMapFromDisk() {
@@ -602,53 +614,36 @@ class UpstoxService {
                   continue;
                 }
                 for (const [respKey, item] of Object.entries<any>(r.value.data)) {
-                  if (!item || typeof item.last_price !== 'number') continue;
+                  if (!item) continue;
                   const instToken: string = item.instrument_token || respKey.replace(':', '|');
                   const mappedClean =
                     keyToClean.get(instToken) ||
                     this.reverseKeyMap.get(instToken) ||
                     (item.symbol ? this.cleanSymbol(item.symbol) : this.cleanSymbol(respKey.split(':')[1] || respKey));
 
-                  const lp = Number(item.last_price);
-                  if (lp <= 0) continue;
-
                   const prevAuto = result[mappedClean] || autoQuotes[mappedClean];
-                  const netCh =
-                    typeof item.net_change === 'number' && Number.isFinite(item.net_change)
-                      ? Number(item.net_change)
-                      : undefined;
-                  const ohlcClose = Number(item.ohlc?.close || 0);
-                  let prevClose = lp;
-                  if (netCh !== undefined && Math.abs(netCh) > 0.0001) {
-                    prevClose = Number((lp - netCh).toFixed(2));
-                  } else if (ohlcClose > 0 && Math.abs(lp - ohlcClose) > 0.01) {
-                    prevClose = Number(ohlcClose.toFixed(2));
-                  } else if (
-                    (netCh === undefined || (Math.abs(netCh) <= 0.0001 && ohlcClose <= 0)) &&
-                    prevAuto?.prevClose &&
-                    prevAuto.prevClose > 0 &&
-                    Math.abs(lp - prevAuto.prevClose) > 0.01
-                  ) {
-                    prevClose = Number(prevAuto.prevClose.toFixed(2));
-                  }
+                  const derived = deriveUpstoxPriceChange({
+                    lastPrice: item.last_price,
+                    netChange: item.net_change,
+                    ohlcClose: item.ohlc?.close,
+                    percentChange: item.percentage_change ?? item.chp,
+                    fallbackPrevClose: prevAuto?.prevClose,
+                  });
+                  if (!derived) continue;
 
-                  const ch =
-                    netCh !== undefined && (Math.abs(netCh) > 0.0001 || Math.abs(prevClose - lp) <= 0.01)
-                      ? Number(netCh.toFixed(2))
-                      : Number((lp - prevClose).toFixed(2));
-                  const chp = prevClose > 0 ? Number(((ch / prevClose) * 100).toFixed(2)) : 0;
-                  const topBuy = item.depth?.buy?.[0]?.price || prevAuto?.bid || lp;
-                  const topSell = item.depth?.sell?.[0]?.price || prevAuto?.ask || lp;
-                  const volume = Number(item.volume || prevAuto?.volume || 0);
-                  const atp = Number(item.average_price || prevAuto?.atp || lp);
+                  const { lp, prevClose, ch, chp } = derived;
+                  const topBuy = parseFiniteNum(item.depth?.buy?.[0]?.price) ?? prevAuto?.bid ?? lp;
+                  const topSell = parseFiniteNum(item.depth?.sell?.[0]?.price) ?? prevAuto?.ask ?? lp;
+                  const volume = Math.max(0, Math.round(parseFiniteNum(item.volume) ?? prevAuto?.volume ?? 0));
+                  const atp = round2(item.average_price, round2(prevAuto?.atp, lp));
                   const isIdx = instToken.includes('_INDEX|');
                   const exch: 'NSE' | 'BSE' = instToken.startsWith('BSE') ? 'BSE' : 'NSE';
 
-                  const openPx = Number((item.ohlc?.open || prevAuto?.open || lp).toFixed(2));
-                  const highPx = Number((item.ohlc?.high || prevAuto?.high || lp).toFixed(2));
-                  const lowPx = Number((item.ohlc?.low || prevAuto?.low || lp).toFixed(2));
-                  let bidQty = Number(item.total_buy_quantity || prevAuto?.bidQty || 0);
-                  let askQty = Number(item.total_sell_quantity || prevAuto?.askQty || 0);
+                  const openPx = round2(item.ohlc?.open, round2(prevAuto?.open, lp));
+                  const highPx = round2(item.ohlc?.high, round2(prevAuto?.high, lp));
+                  const lowPx = round2(item.ohlc?.low, round2(prevAuto?.low, lp));
+                  let bidQty = parseFiniteNum(item.total_buy_quantity) ?? prevAuto?.bidQty ?? 0;
+                  let askQty = parseFiniteNum(item.total_sell_quantity) ?? prevAuto?.askQty ?? 0;
                   if (bidQty <= 0 || askQty <= 0) {
                     const depthFb = deriveOrderBookDepth({
                       volume: volume || 350000,
@@ -666,7 +661,7 @@ class UpstoxService {
 
                   const bidQtySafe = Math.max(1, Math.round(bidQty));
                   const askQtySafe = Math.max(1, Math.round(askQty));
-                  const computedBidAskRatio = Number((bidQtySafe / askQtySafe).toFixed(2));
+                  const computedBidAskRatio = round2(bidQtySafe / askQtySafe, 1);
                   const computedOrderBookBias =
                     computedBidAskRatio >= 1.25
                       ? 'BUY_PRESSURE'
@@ -680,23 +675,23 @@ class UpstoxService {
                     description: prevAuto?.description || `${mappedClean} (${exch})`,
                     exchange: exch,
                     type: isIdx ? 'INDEX' : 'EQUITY',
-                    lp: Number(lp.toFixed(2)),
+                    lp,
                     open: openPx,
                     high: highPx,
                     low: lowPx,
-                    prevClose: Number(prevClose.toFixed(2)),
+                    prevClose,
                     ch,
                     chp,
                     volume,
-                    turnoverCr: Number(((volume * (atp || lp)) / 10000000).toFixed(2)),
-                    atp: Number(atp.toFixed(2)),
-                    bid: Number(topBuy),
-                    ask: Number(topSell),
+                    turnoverCr: round2((volume * (atp || lp)) / 10000000, 0),
+                    atp,
+                    bid: round2(topBuy, lp),
+                    ask: round2(topSell, lp),
                     bidQty: bidQtySafe,
                     askQty: askQtySafe,
                     bidAskRatio: computedBidAskRatio,
                     orderBookBias: computedOrderBookBias,
-                    oi: Number(item.oi || 0),
+                    oi: Math.max(0, Math.round(parseFiniteNum(item.oi) ?? 0)),
                     ltt: item.last_trade_time
                       ? new Date(Number(item.last_trade_time)).toLocaleTimeString('en-IN', {
                           timeZone: 'Asia/Kolkata',
