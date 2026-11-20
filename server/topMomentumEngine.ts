@@ -4,10 +4,11 @@ import { IntradayCandleBar } from './autonomousPriceService';
 import { ClaudeFnoBar, formatClockHHMMSS, parseClockSec } from './claudeFnoEngine';
 import { computeRvolFromBars } from './smartMoneyConceptsEngine';
 import { computeBarClvAndDelta } from './muhuratFlowEngine';
+import { LOCKED_SYSTEM_RULES } from './systemFiveRules';
 
-export const TOP_MOMENTUM_STRONG_RVOL_MIN = 2.0;
-export const TOP_MOMENTUM_STRONG_XTIME_VOL_MIN = 2.0;
-export const TOP_MOMENTUM_STRONG_ADX_MIN = 25.0;
+export const TOP_MOMENTUM_STRONG_RVOL_MIN = LOCKED_SYSTEM_RULES.MIN_RVOL_STRICT; // > 2.00
+export const TOP_MOMENTUM_STRONG_XTIME_VOL_MIN = LOCKED_SYSTEM_RULES.MIN_VOL_BAZAAR_XTIME_STRICT; // > 1.00X (Volume Bazaar X-Time)
+export const TOP_MOMENTUM_STRONG_ADX_MIN = LOCKED_SYSTEM_RULES.MIN_ADX; // >= 25.0
 
 export type TopMomentumStage =
   | 'BREAK_IGNITION'
@@ -711,9 +712,9 @@ export function evaluateTopMomentumOrderFlow(params: {
       ? cumDeltas[breakIdx] > 0 && (preBreakCvd <= cumDeltas[breakIdx] * 0.45 || barDeltas[breakIdx] > 0)
       : cumDeltas[breakIdx] < 0 && (preBreakCvd >= cumDeltas[breakIdx] * 0.45 || barDeltas[breakIdx] < 0);
 
-    // Mandatory Quantitative Thresholds: Strong RVOL >= 2.00, Strong X-Time Volume >= 2.00X, ADX >= 25+
-    const strongRvolPassed = rvol >= TOP_MOMENTUM_STRONG_RVOL_MIN;
-    const strongXTimeVolPassed = xTimeVolume >= TOP_MOMENTUM_STRONG_XTIME_VOL_MIN;
+    // Mandatory Quantitative Thresholds (Rule 3 LOCKED): Strong RVOL > 2.00, Vol Bazaar X-Time > 1.00X, ADX >= 25+
+    const strongRvolPassed = rvol > TOP_MOMENTUM_STRONG_RVOL_MIN;
+    const strongXTimeVolPassed = xTimeVolume > TOP_MOMENTUM_STRONG_XTIME_VOL_MIN;
     const adxPassed = adx >= TOP_MOMENTUM_STRONG_ADX_MIN;
 
     // Sub-pane checks on current bar
@@ -823,13 +824,13 @@ export function evaluateTopMomentumOrderFlow(params: {
       },
       {
         step: 5,
-        label: `Strong RVOL ≥ ${TOP_MOMENTUM_STRONG_RVOL_MIN.toFixed(2)}`,
+        label: `Strong RVOL > ${TOP_MOMENTUM_STRONG_RVOL_MIN.toFixed(2)}`,
         passed: strongRvolPassed,
-        detail: `RVOL ${rvol.toFixed(2)}x (Min ${TOP_MOMENTUM_STRONG_RVOL_MIN.toFixed(2)}x) • B/A ${bidAskRatio.toFixed(2)}x`,
+        detail: `RVOL ${rvol.toFixed(2)}x (Min > ${TOP_MOMENTUM_STRONG_RVOL_MIN.toFixed(2)}x) • B/A ${bidAskRatio.toFixed(2)}x`,
       },
       {
         step: 6,
-        label: `Strong X-Time Vol ≥ ${TOP_MOMENTUM_STRONG_XTIME_VOL_MIN.toFixed(2)}X`,
+        label: `Vol Bazaar X-Time > ${TOP_MOMENTUM_STRONG_XTIME_VOL_MIN.toFixed(2)}X`,
         passed: strongXTimeVolPassed,
         detail: `X-Time Vol ${xTimeVolume.toFixed(2)}X (Latest ${round2(latestVolX).toFixed(2)}X • Break ${round2(breakVolX).toFixed(2)}X)`,
       },
@@ -1015,7 +1016,7 @@ export function buildTopMomentumReport(params: {
     return {
       status: 'ok',
       scannerName: 'Top Momentum • Order Flow Early Ignition',
-      strategyName: '5m Order Flow Early Ignition • Strong RVOL ≥ 2.00 • X-Time Vol ≥ 2.00X • ADX 25+',
+      strategyName: '5m Order Flow Early Ignition • RVOL > 2.00 • Vol Bazaar X-Time > 1.00X • ADX 25+ • Best 10',
       generatedAt: new Date().toISOString(),
       istTime: `${nowParts.timeStr} IST`,
       isMidnightCleared: true,
@@ -1095,14 +1096,14 @@ export function buildTopMomentumReport(params: {
   sellSignals.sort(sortFreshFirst);
   exhaustedSignals.sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent));
 
-  const topBuys = buySignals.slice(0, 20);
-  const topSells = sellSignals.slice(0, 20);
-  const topExhausted = exhaustedSignals.slice(0, 12);
+  const topBuys = buySignals.slice(0, LOCKED_SYSTEM_RULES.MAX_STOCKS_PER_DIRECTION);
+  const topSells = sellSignals.slice(0, LOCKED_SYSTEM_RULES.MAX_STOCKS_PER_DIRECTION);
+  const topExhausted = exhaustedSignals.slice(0, 10);
 
   return {
     status: 'ok',
     scannerName: 'Top Momentum • Order Flow Early Ignition',
-    strategyName: '5m Order Flow Early Ignition • Strong RVOL ≥ 2.00 • X-Time Vol ≥ 2.00X • ADX 25+',
+    strategyName: '5m Order Flow Early Ignition • RVOL > 2.00 • Vol Bazaar X-Time > 1.00X • ADX 25+ • Best 10',
     generatedAt: new Date().toISOString(),
     istTime: `${nowParts.timeStr} IST`,
     isMidnightCleared: false,

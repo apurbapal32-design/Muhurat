@@ -40,10 +40,17 @@ import {
 import {
   computeUniversalStrongMetrics,
   stickyScannerRegistry,
+  UNIVERSAL_MAX_PER_DIRECTION,
   UNIVERSAL_STRONG_ADX_MIN,
   UNIVERSAL_STRONG_RVOL_MIN,
   UNIVERSAL_STRONG_XTIME_VOL_MIN,
 } from './scannerUniversalGate';
+import {
+  getLockedSessionWindowStatus,
+  LOCKED_SYSTEM_RULES,
+} from './systemFiveRules';
+import { dualAiTradeManagerDesk } from './aiTradeManagerAgent';
+import { scannerFleet20Manager } from './scannerFleet20Engine';
 
 const INDEX_SYMBOLS_UNIVERSE = new Set([
   'NIFTY',
@@ -1606,22 +1613,28 @@ export class ScannerService {
         .catch(() => {});
     }
 
-    // 1. DAILY 12:00:00 AM IST MIDNIGHT FLUSH (00:00:00 IST):
-    // Automatically empties previous session results & ledger as soon as IST calendar date rolls over
-    if (ist.dateStr !== this.sessionState.lastPurgeDateIST) {
+    const statusInfo = calculateMarketStatus();
+    const sched = this.getBrokerScheduleSync();
+    const rule1Window = getLockedSessionWindowStatus(new Date(), sched.isMarketOffDay);
+
+    // 1. RULE 1 LOCKED: DAILY 11:59:00 PM IST AUTO-FLUSH (23:59:00 - 23:59:59 IST) + NEW-DAY ROLLOVER:
+    // Automatically empties ALL scanning stocks at 23:59:00 IST same night & holds empty until 09:20:00 IST next market day!
+    if (rule1Window.secFromMidnight >= LOCKED_SYSTEM_RULES.DAILY_FLUSH_SEC) {
+      if (!this.sessionState.isMidnightCleared || this.sessionState.lastPurgeDateIST !== ist.dateStr) {
+        this.resetMidnightPurge(ist.dateStr, true);
+      }
+      return;
+    }
+
+    if (ist.dateStr !== this.sessionState.lastPurgeDateIST && !sched.isMarketOffDay && rule1Window.isFlushCleared) {
       this.resetMidnightPurge(ist.dateStr, true);
       return;
     }
 
-    const statusInfo = calculateMarketStatus();
-    const sched = this.getBrokerScheduleSync();
-    const DAILY_SCAN_START_MIN = 9 * 60 + 20; // Regular Trading Day scan starts at 09:20:00 AM IST
-
-    // 2. On REGULAR TRADING DAYS prior to 09:20:00 AM IST: hold Midnight Standby unless manually unlocked.
-    // On WEEKENDS (Sat/Sun), HOLIDAY OFF DAYS, and SPECIAL EVENT MARKET OFF DAYS: skip 09:20 hold & run Broker API Scanner immediately!
+    // 2. RULE 1 LOCKED: On REGULAR MARKET DAYS prior to 09:20:00 AM IST: hold EMPTY until 09:20:00 IST unless manually unlocked.
     if (
       !sched.isMarketOffDay &&
-      ist.minutesFromMidnight < DAILY_SCAN_START_MIN &&
+      rule1Window.secFromMidnight < LOCKED_SYSTEM_RULES.SCAN_START_SEC &&
       this.sessionState.manualOverrideDateIST !== ist.dateStr &&
       !this.sessionState.isMidnightCleared
     ) {
@@ -1629,25 +1642,25 @@ export class ScannerService {
       return;
     }
 
-    // 3A. WEEKEND (SAT/SUN), MARKET OFF DAY, OR SPECIAL EVENT MARKET OFF DAY BROKER API AUTO-SCAN:
-    // Automatically populates every scanner via Broker API (Upstox v2 + Option Chain + Completed Session Bars)
+    // 3A. WEEKEND (SAT/SUN), MARKET OFF DAY, OR SPECIAL EVENT MARKET OFF DAY (before 23:59:00 IST):
     const shouldRunOffDayScan =
       sched.isMarketOffDay &&
+      !rule1Window.isFlushCleared &&
       (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr);
 
-    // 3B. REGULAR TRADING-DAY 09:20:00 AM IST AUTO-SCAN — ZERO MANUAL ACTION REQUIRED:
+    // 3B. REGULAR MARKET-DAY 09:20:00 AM IST AUTO-SCAN (09:20:00 - 15:15:00 IST live window; post-15:15 rebuilds today's locked snapshot before 23:59):
     const shouldRunRegularScan =
       !sched.isMarketOffDay &&
-      (statusInfo.isOpen || (sched.isTradingDay && ist.minutesFromMidnight >= DAILY_SCAN_START_MIN)) &&
-      ist.minutesFromMidnight >= DAILY_SCAN_START_MIN &&
+      !rule1Window.isFlushCleared &&
+      rule1Window.secFromMidnight >= LOCKED_SYSTEM_RULES.SCAN_START_SEC &&
       (this.sessionState.isMidnightCleared || this.sessionState.lastScanDateIST !== ist.dateStr);
 
     if (shouldRunOffDayScan || shouldRunRegularScan) {
       const modeLabel = shouldRunOffDayScan
-        ? `BROKER API OFF-DAY SCAN (${sched.dayCategory}: ${sched.eventName || sched.weekday})`
-        : 'MARKET-DAY 09:20 AM IST AUTO-SCAN';
+        ? `UPSTOX OFF-DAY SNAPSHOT SCAN (${sched.dayCategory}: ${sched.eventName || sched.weekday})`
+        : 'MARKET-DAY 09:20 AM – 03:15 PM IST AUTO-SCAN';
       console.log(
-        `[ScannerService] 🚀 ${modeLabel} (${ist.dateStr} ${ist.timeStr} IST)! Populating formula-eligible stocks...`
+        `[ScannerService] 🚀 ${modeLabel} (${ist.dateStr} ${ist.timeStr} IST)! Populating Best 10 UP & Best 10 DOWN formula stocks...`
       );
       this.sessionState.isMidnightCleared = false;
       this.sessionState.lastPreOpenScanDateIST = ist.dateStr;
@@ -1659,7 +1672,7 @@ export class ScannerService {
 
       marketWebSocketServer.broadcastSystemEvent({
         type: 'new_day_scan_complete',
-        phase: shouldRunOffDayScan ? sched.dayCategory : 'REGULAR_0920',
+        phase: shouldRunOffDayScan ? sched.dayCategory : rule1Window.phase,
         isMidnightCleared: false,
         dateIST: ist.dateStr,
         stocksCount: this.stockScanResults.length,
@@ -1668,7 +1681,7 @@ export class ScannerService {
   }
 
   /**
-   * Resets and empties all scanner results at 12:00 AM midnight for the next trading day
+   * RULE 1 LOCKED: Resets and empties ALL scanner results & AI Agent Desk at 11:59:00 PM IST (23:59:00 IST)
    */
   public resetMidnightPurge(purgeDateIST?: string, broadcast: boolean = true): void {
     this.scanEpoch++;
@@ -1679,6 +1692,9 @@ export class ScannerService {
     this.alertLogs = [];
     this.dailySignalLedger = { dateIST: dateStr, entries: {} };
     this.saveDailySignalLedger();
+    stickyScannerRegistry.resetAll();
+    dualAiTradeManagerDesk.resetAll();
+    scannerFleet20Manager.resetAll();
     this.sessionState = {
       ...this.sessionState,
       lastPurgeDateIST: dateStr,
@@ -1694,10 +1710,10 @@ export class ScannerService {
     this.marketOverview.buyCount = 0;
     this.marketOverview.sellCount = 0;
     this.marketOverview.highRvolCount = 0;
-    this.marketOverview.marketStatus = 'MIDNIGHT_FLUSHED_AWAITING_MARKET_OPEN';
+    this.marketOverview.marketStatus = 'DAILY_2359_FLUSHED_AWAITING_0920_OPEN';
     this.marketOverview.lastScanTime = new Date().toISOString();
 
-    console.log(`[ScannerService] 🕛 12:00 AM IST MIDNIGHT FLUSH EXECUTED (${dateStr}). All scanners emptied.`);
+    console.log(`[ScannerService] 🕛 11:59 PM IST DAILY AUTO-FLUSH EXECUTED (${dateStr}). All scanners & Dual AI Desk emptied.`);
 
     if (broadcast) {
       marketWebSocketServer.broadcastSystemEvent({
@@ -1731,8 +1747,13 @@ export class ScannerService {
     const ist = getISTDateParts(new Date());
     const statusInfo = calculateMarketStatus();
     const sched = this.getBrokerScheduleSync();
+    const rule1Window = getLockedSessionWindowStatus(new Date(), sched.isMarketOffDay);
+    const effectiveCleared =
+      this.sessionState.isMidnightCleared ||
+      (rule1Window.isFlushCleared && this.sessionState.manualOverrideDateIST !== ist.dateStr);
+
     return {
-      isMidnightCleared: this.sessionState.isMidnightCleared,
+      isMidnightCleared: effectiveCleared,
       lastPurgeDateIST: this.sessionState.lastPurgeDateIST,
       lastPreOpenScanDateIST: this.sessionState.lastPreOpenScanDateIST,
       lastScanDateIST: this.sessionState.lastScanDateIST,
@@ -1746,8 +1767,10 @@ export class ScannerService {
       minutes: ist.minute,
       isMarketOpen: statusInfo.isOpen,
       marketSession: statusInfo.session,
-      stocksCount: this.stockScanResults.length,
+      stocksCount: effectiveCleared ? 0 : this.stockScanResults.length,
       quoteSource: this.lastQuoteSource,
+      fiveRulesWindow: rule1Window,
+      lockedRules: LOCKED_SYSTEM_RULES,
       brokerSchedule: {
         dayCategory: sched.dayCategory,
         isTradingDay: sched.isTradingDay,
@@ -1760,7 +1783,7 @@ export class ScannerService {
         description: sched.description,
         exchangeStatus: sched.exchangeStatus,
         brokerApiSource: sched.brokerApiSource,
-        isBrokerOffDayScanActive: sched.isMarketOffDay && !this.sessionState.isMidnightCleared,
+        isBrokerOffDayScanActive: sched.isMarketOffDay && !effectiveCleared,
         nextTradingDay: sched.nextTradingDay,
       },
     };
@@ -2746,8 +2769,8 @@ export class ScannerService {
       isPureStock(s) &&
       s.signal === 'BUY' &&
       s.changePercent >= 0.45 &&
-      (s.indicators.rvol || 0) >= UNIVERSAL_STRONG_RVOL_MIN &&
-      (s.indicators.xTimeVolume || 0) >= UNIVERSAL_STRONG_XTIME_VOL_MIN &&
+      (s.indicators.rvol || 0) > UNIVERSAL_STRONG_RVOL_MIN &&
+      (s.indicators.xTimeVolume || 0) > UNIVERSAL_STRONG_XTIME_VOL_MIN &&
       (s.indicators.adx || 0) >= UNIVERSAL_STRONG_ADX_MIN &&
       s.price >= (s.indicators.vwap || s.price) * 0.998 &&
       s.aiScore >= 65;
@@ -2756,8 +2779,8 @@ export class ScannerService {
       isPureStock(s) &&
       s.signal === 'SELL' &&
       s.changePercent <= -0.45 &&
-      (s.indicators.rvol || 0) >= UNIVERSAL_STRONG_RVOL_MIN &&
-      (s.indicators.xTimeVolume || 0) >= UNIVERSAL_STRONG_XTIME_VOL_MIN &&
+      (s.indicators.rvol || 0) > UNIVERSAL_STRONG_RVOL_MIN &&
+      (s.indicators.xTimeVolume || 0) > UNIVERSAL_STRONG_XTIME_VOL_MIN &&
       (s.indicators.adx || 0) >= UNIVERSAL_STRONG_ADX_MIN &&
       s.price <= (s.indicators.vwap || s.price) * 1.002 &&
       s.aiScore >= 65;
@@ -2769,12 +2792,13 @@ export class ScannerService {
       .filter(isEligibleSellFormula)
       .sort((a, b) => scoreFormulaSell(b) - scoreFormulaSell(a));
 
-    const cleared = this.sessionState.isMidnightCleared;
+    const sessionSnap = this.getSessionStatus();
+    const cleared = Boolean(sessionSnap.isMidnightCleared);
     const liveMap = new Map<string, ScannedStock>(
       this.stockScanResults.map((s) => [s.symbol.toUpperCase(), s])
     );
     const getBarsFn = (sym: string) =>
-      autonomousPriceService.getExtendedBars(sym) || this.stockCandles[sym];
+      autonomousPriceService.getExtendedBars(sym) || this.stockCandles.get(sym);
 
     const stabilizedBuy = stickyScannerRegistry.filterAndStabilizeRows<ScannedStock>({
       scannerKey: 'core-scanner:BUY',
@@ -2782,7 +2806,7 @@ export class ScannerService {
       liveStockMap: liveMap,
       getBarsFn,
       isMidnightCleared: cleared,
-      maxRows: 15,
+      maxRows: UNIVERSAL_MAX_PER_DIRECTION,
       getSymbol: (s) => s.symbol,
       getSide: () => 'BUY',
       getEntryPrice: (s) => s.fixedEntryPrice || s.risk?.entryPrice || s.price,
@@ -2824,7 +2848,7 @@ export class ScannerService {
       liveStockMap: liveMap,
       getBarsFn,
       isMidnightCleared: cleared,
-      maxRows: 15,
+      maxRows: UNIVERSAL_MAX_PER_DIRECTION,
       getSymbol: (s) => s.symbol,
       getSide: () => 'SELL',
       getEntryPrice: (s) => s.fixedEntryPrice || s.risk?.entryPrice || s.price,

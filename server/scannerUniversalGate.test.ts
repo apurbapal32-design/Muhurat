@@ -168,8 +168,8 @@ test('computeUniversalStrongMetrics enforces RVOL >= 2.00, X-Time Vol >= 2.00X, 
   assert.ok(strongMetrics.adx >= UNIVERSAL_STRONG_ADX_MIN);
   assert.equal(strongMetrics.passedAll, true);
 
-  // Weak X-Time volume (< 2.00X) must fail even with strong trend + explicit RVOL >= 2.00
-  const lowXTimeBars = makeTrendingBars({ count: 24, baseVol: 100_000, spikeVol: 140_000 });
+  // Weak Volume Bazaar X-Time volume (<= 1.00X) must fail even with strong trend + explicit RVOL > 2.00
+  const lowXTimeBars = makeTrendingBars({ count: 24, baseVol: 100_000, spikeVol: 95_000 });
   const weakXTime = computeUniversalStrongMetrics(lowXTimeBars, 2.3);
   assert.equal(weakXTime.strongXTimeVolPassed, false);
   assert.equal(weakXTime.passedAll, false);
@@ -252,7 +252,7 @@ test('StickyScannerRegistry rejects ineligible stocks and NEVER kicks out listed
   assert.equal(cycle2[0].listedAt, '09:30:00', 'Original listedAt timestamp must remain locked');
   assert.equal(cycle2[0].entryPrice, 279.0, 'Original entryPrice must remain locked');
 
-  // Cycle 3: Hard Stop Loss breached (price drops <= 274.0) -> cleanly exits
+  // Cycle 3 (RULE 4 LOCKED): Even after intraday pullback/SL touch, listed stock MUST NOT be removed before 23:59 IST flush!
   liveMap.set('BANKBARODA', makeMockStock('BANKBARODA', 273.5, -0.8, 2.1, 2.1, 26));
   const cycle3 = registry.filterAndStabilizeRows({
     scannerKey: 'money-flow:BUY',
@@ -264,7 +264,8 @@ test('StickyScannerRegistry rejects ineligible stocks and NEVER kicks out listed
     getSymbol: (r: any) => r.symbol,
     getSide: () => 'BUY',
   });
-  assert.equal(cycle3.length, 0, 'Stock must exit when hard stop-loss is breached');
+  assert.equal(cycle3.length, 1, 'Rule 4: Listed stock must remain locked on dashboard until 23:59 IST flush');
+  assert.equal(cycle3[0].price, 273.5, 'Live LTP must still update in-place');
 });
 
 test('StickyScannerRegistry clears completely on midnight flush', () => {

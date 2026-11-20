@@ -34,6 +34,17 @@ import {
 } from './server/scannerUniversalGate';
 import { aiTradingJournalService } from './server/aiTradingJournalEngine';
 import { sentinelAgentService } from './server/sentinelAgentService';
+import {
+  getLockedRulesDescriptorList,
+  getLockedSessionWindowStatus,
+  LOCKED_SYSTEM_RULES,
+} from './server/systemFiveRules';
+import { dualAiTradeManagerDesk } from './server/aiTradeManagerAgent';
+import {
+  SCANNER_FLEET_20_DEFINITIONS,
+  scannerFleet20Manager,
+  ScannerId20,
+} from './server/scannerFleet20Engine';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
 import { calculateMarketStatus } from './src/data/marketSchedule';
@@ -1560,6 +1571,132 @@ async function startServer() {
   };
   app.get('/api/top-momentum/scan', handleTopMomentumScan);
   app.get('/api/top-momentum', handleTopMomentumScan);
+
+  // LOCKED 5 SYSTEM RULES STATUS ENDPOINT
+  app.get('/api/system/five-rules', (_req, res) => {
+    try {
+      const sessionState = scannerService.getSessionStatus();
+      const accessToken = scannerService.getEffectiveUpstoxToken();
+      const upstoxConnected = upstoxService.isTokenVerified(accessToken);
+      const isMarketOffDay = Boolean(sessionState?.brokerSchedule?.isMarketOffDay);
+      const windowStatus = getLockedSessionWindowStatus(new Date(), isMarketOffDay);
+
+      res.json({
+        status: 'ok',
+        locked: true,
+        rulesConfig: LOCKED_SYSTEM_RULES,
+        rules: getLockedRulesDescriptorList(),
+        session: windowStatus,
+        isMidnightCleared: Boolean(sessionState?.isMidnightCleared),
+        upstox: {
+          provider: 'UPSTOX_API_V2',
+          connected: upstoxConnected,
+          feedSource: upstoxConnected ? 'UPSTOX_API_V2_LIVE' : sessionState?.quoteSource || 'UPSTOX_API_AUTONOMOUS_SYNC',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ status: 'error', error: error?.message || 'Failed to read 5 locked rules status' });
+    }
+  });
+
+  // DUAL AI TRADE MANAGEMENT AGENTS DESK ("He & She" — Aryan AI [Entry] & Aria AI [Exit & Trailing SL])
+  app.get('/api/ai-agent/desk', (_req, res) => {
+    try {
+      const scanData = scannerService.getScanResults();
+      const sessionState = scanData.sessionState || scannerService.getSessionStatus();
+      const accessToken = scannerService.getEffectiveUpstoxToken();
+      const upstoxConnected = upstoxService.isTokenVerified(accessToken);
+      const isMarketOffDay = Boolean(sessionState?.brokerSchedule?.isMarketOffDay);
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+      const report = dualAiTradeManagerDesk.syncAndBuildReport({
+        topBuyStocks: scanData.top10Buy || [],
+        topSellStocks: scanData.top10Sell || [],
+        allStocks: scanData.stocks || [],
+        isMarketOffDay,
+        liveFeedProvider: upstoxConnected ? 'UPSTOX_API_V2_LIVE' : sessionState?.quoteSource || 'UPSTOX_API_SYNC',
+        upstoxConnected,
+        forceCleared: isCleared,
+      });
+
+      res.json({
+        ...report,
+        lockedRules: LOCKED_SYSTEM_RULES,
+        rules: getLockedRulesDescriptorList(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ status: 'error', error: error?.message || 'Failed to compute Dual AI Trade Desk' });
+    }
+  });
+
+  // 20 SCANNERS × 20 ASSIGNED AI AGENTS MASTER FLEET ENDPOINT (All 5 Locked Rules Enforced)
+  const buildFleet20ReportNow = () => {
+    const scanData = scannerService.getScanResults();
+    const sessionState = scanData.sessionState || scannerService.getSessionStatus();
+    const accessToken = scannerService.getEffectiveUpstoxToken();
+    const upstoxConnected = upstoxService.isTokenVerified(accessToken);
+    const isMarketOffDay = Boolean(sessionState?.brokerSchedule?.isMarketOffDay);
+    const isCleared = Boolean(sessionState?.isMidnightCleared);
+
+    return scannerFleet20Manager.syncAll20Scanners({
+      allStocks: scanData.stocks || [],
+      getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+      candlesMap: scannerService.getAllCandlesMap(),
+      isMarketOffDay,
+      liveFeedProvider: upstoxConnected
+        ? 'UPSTOX_API_V2_LIVE'
+        : sessionState?.quoteSource || 'UPSTOX_API_SYNC',
+      upstoxConnected,
+      forceCleared: isCleared,
+    });
+  };
+
+  app.get('/api/scanners/fleet-20', (_req, res) => {
+    try {
+      const report = buildFleet20ReportNow();
+      res.json({
+        ...report,
+        rules: getLockedRulesDescriptorList(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        error: error?.message || 'Failed to build 20-Scanner × 20-AI-Agent Fleet report',
+      });
+    }
+  });
+
+  app.get('/api/scanners/fleet-20/:scannerId', (req, res) => {
+    try {
+      const rawId = String(req.params.scannerId || '').trim() as ScannerId20;
+      const valid = SCANNER_FLEET_20_DEFINITIONS.some((d) => d.scannerId === rawId);
+      if (!valid) {
+        return res.status(404).json({
+          status: 'error',
+          error: `Unknown scannerId '${rawId}'. Valid IDs: ${SCANNER_FLEET_20_DEFINITIONS.map((d) => d.scannerId).join(', ')}`,
+        });
+      }
+      const report = buildFleet20ReportNow();
+      const scanner = report.scanners.find((s) => s.scannerId === rawId)!;
+      res.json({
+        status: 'ok',
+        generatedAt: report.generatedAt,
+        totalScanners: report.totalScanners,
+        totalAiAgents: report.totalAiAgents,
+        session: report.session,
+        liveFeedProvider: report.liveFeedProvider,
+        upstoxConnected: report.upstoxConnected,
+        lockedRules: report.lockedRules,
+        scanner,
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        error: error?.message || 'Failed to fetch scanner AI agent report',
+      });
+    }
+  });
 
   // Autonomous Everyday AI Trading Journal (Max 5 BUY/SELL trades/day + MTM + Trail Lock + 5x Beep Alerts)
   const runAiJournalSync = async (forceScan: boolean = false, reqAccessToken?: string) => {

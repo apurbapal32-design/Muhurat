@@ -4,10 +4,12 @@ import { IntradayCandleBar } from './autonomousPriceService';
 import { ClaudeFnoBar, formatClockHHMMSS, parseClockSec } from './claudeFnoEngine';
 import { computeRvolFromBars } from './smartMoneyConceptsEngine';
 import { computeWilderAdx } from './topMomentumEngine';
+import { LOCKED_SYSTEM_RULES, passesRule3Thresholds } from './systemFiveRules';
 
-export const UNIVERSAL_STRONG_RVOL_MIN = 2.0;
-export const UNIVERSAL_STRONG_XTIME_VOL_MIN = 2.0;
-export const UNIVERSAL_STRONG_ADX_MIN = 25.0;
+export const UNIVERSAL_STRONG_RVOL_MIN = LOCKED_SYSTEM_RULES.MIN_RVOL_STRICT; // > 2.00
+export const UNIVERSAL_STRONG_XTIME_VOL_MIN = LOCKED_SYSTEM_RULES.MIN_VOL_BAZAAR_XTIME_STRICT; // > 1.00X (Volume Bazaar X-Time)
+export const UNIVERSAL_STRONG_ADX_MIN = LOCKED_SYSTEM_RULES.MIN_ADX; // >= 25.0
+export const UNIVERSAL_MAX_PER_DIRECTION = LOCKED_SYSTEM_RULES.MAX_STOCKS_PER_DIRECTION; // Best 10 UP / Best 10 DOWN
 
 export interface UniversalStrongMetrics {
   rvol: number;
@@ -236,9 +238,7 @@ export function computeUniversalStrongMetrics(
     adx = round2(explicitAdx as number);
   }
 
-  const strongRvolPassed = rvol >= UNIVERSAL_STRONG_RVOL_MIN;
-  const strongXTimeVolPassed = xTimeVolume >= UNIVERSAL_STRONG_XTIME_VOL_MIN;
-  const adxPassed = adx >= UNIVERSAL_STRONG_ADX_MIN;
+  const rule3 = passesRule3Thresholds(rvol, xTimeVolume, adx, true);
 
   return {
     rvol,
@@ -246,10 +246,10 @@ export function computeUniversalStrongMetrics(
     adx,
     plusDI,
     minusDI,
-    strongRvolPassed,
-    strongXTimeVolPassed,
-    adxPassed,
-    passedAll: strongRvolPassed && strongXTimeVolPassed && adxPassed,
+    strongRvolPassed: rule3.strongRvolPassed,
+    strongXTimeVolPassed: rule3.strongXTimeVolPassed,
+    adxPassed: rule3.adxPassed,
+    passedAll: rule3.passedAll,
   };
 }
 
@@ -287,14 +287,16 @@ export interface StabilizeParams<T> {
 }
 
 /**
- * Sticky Session Registry for all Scanners:
- * 1. STRICT ADMISSION: A stock can ONLY enter a scanner if it matches the scanner's
- *    existing formula AND passes Strong RVOL >= 2.00, Strong X-Time Volume >= 2.00X,
- *    and ADX(14) >= 25+. Ineligible stocks are NEVER shown.
- * 2. ZERO REFRESH KICK-OUT: Once a stock genuinely qualifies and is listed in a scanner,
- *    subsequent scanner refreshes update its live price/CHG%/metrics WITHOUT removing it
- *    on minor tick/bar flickers — unless Hard Stop Loss is breached, direction reverses
- *    sharply opposite to its locked side, exhaustion exit triggers, or 12:00 AM IST resets.
+ * Sticky Session Registry for all Scanners (LOCKED RULES 1, 2, 3, 4):
+ * 1. STRICT ADMISSION (Rule 2 & Rule 3): A stock can ONLY enter a scanner if it matches the scanner's
+ *    existing formula AND passes Strong RVOL > 2.00, Volume Bazaar X-Time Volume > 1.00X,
+ *    and ADX(14) >= 25+. Zero fake signals — if 0 qualify show 0, if 7 qualify show 7, max 10.
+ * 2. PERMANENT SAME-DAY LOCK (Rule 4): Once a stock is listed on the dashboard during the session,
+ *    it is NEVER removed on subsequent refreshes or intraday pullbacks until 23:59:00 IST auto-flush.
+ *    Already-listed stocks hold strict slot priority over newly arriving candidates so an 11th stock
+ *    can NEVER evict an already-listed stock.
+ * 3. CATEGORY-WISE Z -> A ORDER (Rule 4): Every scanner output is strictly sorted by LISTED AT
+ *    newest-first with Z -> A symbol tie-breaking.
  */
 export class StickyScannerRegistry {
   private sessionDateIST: string = '';
@@ -324,30 +326,6 @@ export class StickyScannerRegistry {
     this.sessionDateIST = dateIST;
   }
 
-  private isInvalidated(
-    entry: StickyEntry<any>,
-    liveStock: ScannedStock | undefined,
-    exhaustedSymbols?: Set<string>
-  ): boolean {
-    if (exhaustedSymbols && exhaustedSymbols.has(entry.symbol)) {
-      return true;
-    }
-    if (!liveStock || !Number.isFinite(liveStock.price) || liveStock.price <= 0) {
-      return false;
-    }
-    const lp = liveStock.price;
-    const chg = Number(liveStock.changePercent) || 0;
-
-    if (entry.side === 'BUY') {
-      if (entry.stopLoss > 0 && lp <= entry.stopLoss) return true;
-      if (entry.entryPrice > 0 && chg <= -0.5 && lp < entry.entryPrice * 0.992) return true;
-    } else {
-      if (entry.stopLoss > 0 && lp >= entry.stopLoss) return true;
-      if (entry.entryPrice > 0 && chg >= 0.5 && lp > entry.entryPrice * 1.008) return true;
-    }
-    return false;
-  }
-
   public filterAndStabilizeRows<T>(params: StabilizeParams<T>): T[] {
     const todayIST = params.dateIST || getISTDateParts().dateStr;
     this.ensureSession(todayIST, params.isMidnightCleared);
@@ -362,8 +340,14 @@ export class StickyScannerRegistry {
       this.scanners.set(params.scannerKey, bucket);
     }
 
+    const effectiveMax =
+      params.maxRows && params.maxRows > 0
+        ? params.maxRows
+        : UNIVERSAL_MAX_PER_DIRECTION;
+
     const bypassedRows: T[] = [];
-    const freshBySym = new Map<string, { row: T; metrics: UniversalStrongMetrics }>();
+    const freshMatchedMap = new Map<string, { row: T; metrics: UniversalStrongMetrics }>();
+    const brandNewEligible: Array<{ sym: string; row: T; metrics: UniversalStrongMetrics }> = [];
 
     for (const row of params.rows || []) {
       if (params.shouldBypassGate?.(row)) {
@@ -373,10 +357,6 @@ export class StickyScannerRegistry {
 
       const sym = String(params.getSymbol(row) || '').toUpperCase().trim();
       if (!sym) continue;
-      if (params.exhaustedSymbols?.has(sym)) {
-        bucket.delete(sym);
-        continue;
-      }
 
       const liveStock = params.liveStockMap.get(sym);
       const bars = params.getBarsFn(sym);
@@ -393,7 +373,7 @@ export class StickyScannerRegistry {
 
       const existing = bucket.get(sym);
       if (existing) {
-        // Already genuinely qualified earlier today — update live values, keep sticky
+        // RULE 4: Already listed today — NEVER remove; update live LTP/metrics in-place
         const stabilizedMetrics: UniversalStrongMetrics = {
           ...metrics,
           rvol: Math.max(metrics.rvol, existing.peakRvol),
@@ -414,55 +394,24 @@ export class StickyScannerRegistry {
           ? params.enrichRow(row, stabilizedMetrics, true)
           : defaultMergeLiveFields(existing.row, liveStock, row, stabilizedMetrics);
         existing.row = updatedRow;
-        freshBySym.set(sym, { row: updatedRow, metrics: stabilizedMetrics });
-      } else if (metrics.passedAll) {
-        // Brand-new strictly eligible qualification (existing formula + RVOL>=2 + XTime>=2 + ADX>=25)
-        const side = params.getSide(row);
-        const entryPrice = params.getEntryPrice ? params.getEntryPrice(row) : Number((row as any).entryPrice ?? (row as any).entry ?? (row as any).price ?? liveStock?.price ?? 0);
-        const stopLoss = params.getStopLoss ? params.getStopLoss(row) : Number((row as any).stopLoss ?? (row as any).sl ?? (row as any).stop ?? 0);
-        const enriched = params.enrichRow
-          ? params.enrichRow(row, metrics, false)
-          : defaultEnrichRow(row, metrics, false);
-
-        bucket.set(sym, {
-          symbol: sym,
-          side,
-          row: enriched,
-          entryPrice,
-          stopLoss,
-          peakRvol: metrics.rvol,
-          peakXTimeVolume: metrics.xTimeVolume,
-          peakAdx: metrics.adx,
-          lockedAtMs: Date.now(),
-        });
-        freshBySym.set(sym, { row: enriched, metrics });
+        freshMatchedMap.set(sym, { row: updatedRow, metrics: stabilizedMetrics });
+      } else if (metrics.passedAll && !params.exhaustedSymbols?.has(sym)) {
+        // Brand-new strictly eligible candidate (formula + RVOL > 2.00 + Vol Bazaar X-Time > 1.00X + ADX >= 25)
+        if (!freshMatchedMap.has(sym) && !brandNewEligible.some((c) => c.sym === sym)) {
+          brandNewEligible.push({ sym, row, metrics });
+        }
       }
     }
 
-    // Build final stabilized output: fresh eligible/updated rows + sticky retained rows that weren't invalidated
-    const result: T[] = [...bypassedRows];
-    const seenSyms = new Set<string>();
-
-    // First include all currently active fresh rows in their engine-ranked order
-    for (const [sym, item] of freshBySym.entries()) {
-      const entry = bucket.get(sym);
-      const liveStock = params.liveStockMap.get(sym);
-      if (entry && this.isInvalidated(entry, liveStock, params.exhaustedSymbols)) {
-        bucket.delete(sym);
+    // 1. First retain ALL previously locked stocks in the bucket (RULE 4: NEVER remove before 23:59 IST!)
+    const lockedRows: T[] = [];
+    for (const [sym, entry] of bucket.entries()) {
+      const freshItem = freshMatchedMap.get(sym);
+      if (freshItem) {
+        lockedRows.push(freshItem.row);
         continue;
       }
-      result.push(item.row);
-      seenSyms.add(sym);
-    }
-
-    // Then retain previously locked rows that temporarily flickered out during scanner refresh
-    for (const [sym, entry] of [...bucket.entries()]) {
-      if (seenSyms.has(sym)) continue;
       const liveStock = params.liveStockMap.get(sym);
-      if (this.isInvalidated(entry, liveStock, params.exhaustedSymbols)) {
-        bucket.delete(sym);
-        continue;
-      }
       const bars = params.getBarsFn(sym);
       const liveMetrics = computeUniversalStrongMetrics(
         bars,
@@ -484,15 +433,47 @@ export class StickyScannerRegistry {
         ? params.updateLiveRow(entry.row, liveStock, undefined, retainedMetrics)
         : defaultMergeLiveFields(entry.row, liveStock, undefined, retainedMetrics);
       entry.row = updated;
-      result.push(updated);
-      seenSyms.add(sym);
+      lockedRows.push(updated);
     }
 
-    const capped =
-      params.maxRows && params.maxRows > 0 && result.length > params.maxRows
-        ? result.slice(0, params.maxRows)
-        : result;
-    return sortRowsByListedAtDescZtoA(capped, params.getSymbol);
+    // 2. Only fill remaining open slots up to effectiveMax (Best 10) with top-ranked brand-new eligible stocks
+    //    So an 11th stock can NEVER evict an already-listed stock (RULE 2 + RULE 4)!
+    const openSlots = Math.max(0, effectiveMax - lockedRows.length);
+    const newlyAdmitted: T[] = [];
+    for (const cand of brandNewEligible.slice(0, openSlots)) {
+      const { sym, row, metrics } = cand;
+      const liveStock = params.liveStockMap.get(sym);
+      const side = params.getSide(row);
+      const entryPrice = params.getEntryPrice
+        ? params.getEntryPrice(row)
+        : Number((row as any).entryPrice ?? (row as any).entry ?? (row as any).price ?? liveStock?.price ?? 0);
+      const stopLoss = params.getStopLoss
+        ? params.getStopLoss(row)
+        : Number((row as any).stopLoss ?? (row as any).sl ?? (row as any).stop ?? 0);
+      const enriched = params.enrichRow
+        ? params.enrichRow(row, metrics, false)
+        : defaultEnrichRow(row, metrics, false);
+
+      bucket.set(sym, {
+        symbol: sym,
+        side,
+        row: enriched,
+        entryPrice,
+        stopLoss,
+        peakRvol: metrics.rvol,
+        peakXTimeVolume: metrics.xTimeVolume,
+        peakAdx: metrics.adx,
+        lockedAtMs: Date.now(),
+      });
+      newlyAdmitted.push(enriched);
+    }
+
+    const combined = [...bypassedRows.slice(0, effectiveMax), ...lockedRows, ...newlyAdmitted];
+    const finalRows =
+      bypassedRows.length > 0 && combined.length > effectiveMax
+        ? combined.slice(0, effectiveMax)
+        : combined;
+    return sortRowsByListedAtDescZtoA(finalRows, params.getSymbol);
   }
 }
 
@@ -600,6 +581,41 @@ function inferSide(row: any, fallback: 'BUY' | 'SELL' = 'BUY'): 'BUY' | 'SELL' {
   return fallback;
 }
 
+function stabilizeDualDirectionBest10<T>(
+  registry: StickyScannerRegistry,
+  baseKey: string,
+  rows: T[],
+  common: Omit<StabilizeParams<T>, 'scannerKey' | 'rows' | 'maxRows' | 'getSide'> & {
+    getSide: (row: T) => 'BUY' | 'SELL';
+  }
+): T[] {
+  const buys: T[] = [];
+  const sells: T[] = [];
+  for (const r of rows || []) {
+    if (common.shouldBypassGate?.(r)) {
+      buys.push(r);
+      continue;
+    }
+    if (common.getSide(r) === 'SELL') sells.push(r);
+    else buys.push(r);
+  }
+  const stabilizedBuy = registry.filterAndStabilizeRows({
+    ...common,
+    scannerKey: `${baseKey}:BUY`,
+    rows: buys,
+    maxRows: UNIVERSAL_MAX_PER_DIRECTION,
+    getSide: () => 'BUY',
+  });
+  const stabilizedSell = registry.filterAndStabilizeRows({
+    ...common,
+    scannerKey: `${baseKey}:SELL`,
+    rows: sells,
+    maxRows: UNIVERSAL_MAX_PER_DIRECTION,
+    getSide: () => 'SELL',
+  });
+  return sortRowsByListedAtDescZtoA([...stabilizedBuy, ...stabilizedSell], common.getSymbol);
+}
+
 export function applyUniversalGateToTopMomentumReport(
   report: any,
   stocks: ScannedStock[],
@@ -620,7 +636,7 @@ export function applyUniversalGateToTopMomentumReport(
     liveStockMap: liveMap,
     getBarsFn,
     isMidnightCleared: isCleared,
-    maxRows: 20,
+    maxRows: UNIVERSAL_MAX_PER_DIRECTION,
     exhaustedSymbols: exhaustedSyms,
     getSymbol: (r: any) => r.symbol,
     getSide: () => 'BUY',
@@ -637,7 +653,7 @@ export function applyUniversalGateToTopMomentumReport(
     liveStockMap: liveMap,
     getBarsFn,
     isMidnightCleared: isCleared,
-    maxRows: 20,
+    maxRows: UNIVERSAL_MAX_PER_DIRECTION,
     exhaustedSymbols: exhaustedSyms,
     getSymbol: (r: any) => r.symbol,
     getSide: () => 'SELL',
@@ -650,6 +666,12 @@ export function applyUniversalGateToTopMomentumReport(
 
   return {
     ...report,
+    universalThresholds: {
+      strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
+      strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
+      adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
+    },
     buySignals,
     sellSignals,
     buyCount: buySignals.length,
@@ -676,7 +698,7 @@ export function applyUniversalGateToMoneyFlowReport(
     liveStockMap: liveMap,
     getBarsFn,
     isMidnightCleared: isCleared,
-    maxRows: 25,
+    maxRows: UNIVERSAL_MAX_PER_DIRECTION,
     getSymbol: (r: any) => r.symbol,
     getSide: () => 'BUY',
     getEntryPrice: (r: any) => Number(r.entryPrice) || 0,
@@ -691,7 +713,7 @@ export function applyUniversalGateToMoneyFlowReport(
     liveStockMap: liveMap,
     getBarsFn,
     isMidnightCleared: isCleared,
-    maxRows: 25,
+    maxRows: UNIVERSAL_MAX_PER_DIRECTION,
     getSymbol: (r: any) => r.symbol,
     getSide: () => 'SELL',
     getEntryPrice: (r: any) => Number(r.entryPrice) || 0,
@@ -706,6 +728,7 @@ export function applyUniversalGateToMoneyFlowReport(
       strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
       strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
       adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
     },
     buySignals,
     sellSignals,
@@ -733,7 +756,7 @@ export function applyUniversalGateToMuhuratFlowReport(
     liveStockMap: liveMap,
     getBarsFn,
     isMidnightCleared: isCleared,
-    maxRows: 30,
+    maxRows: UNIVERSAL_MAX_PER_DIRECTION,
     getSymbol: (r: any) => r.symbol,
     getSide: () => 'BUY',
     getEntryPrice: (r: any) => Number(r.entryPrice) || 0,
@@ -748,7 +771,7 @@ export function applyUniversalGateToMuhuratFlowReport(
     liveStockMap: liveMap,
     getBarsFn,
     isMidnightCleared: isCleared,
-    maxRows: 30,
+    maxRows: UNIVERSAL_MAX_PER_DIRECTION,
     getSymbol: (r: any) => r.symbol,
     getSide: () => 'SELL',
     getEntryPrice: (r: any) => Number(r.entryPrice) || 0,
@@ -763,6 +786,7 @@ export function applyUniversalGateToMuhuratFlowReport(
       strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
       strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
       adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
     },
     buySignals,
     sellSignals,
@@ -791,14 +815,11 @@ export function applyUniversalGateToMostActiveFnoReport(
     r?.category === 'INDEX_OPTIONS' ||
     /CE$|PE$/.test(String(r?.contractName || r?.symbol || '').toUpperCase());
 
-  const runCat = (key: string, rows: any[], maxRows = 40) =>
-    registry.filterAndStabilizeRows({
-      scannerKey: `most-active-fno:${timeframe}:${key}`,
-      rows: rows || [],
+  const runDualCat = (key: string, rows: any[]) =>
+    stabilizeDualDirectionBest10(registry, `most-active-fno:${timeframe}:${key}`, rows || [], {
       liveStockMap: liveMap,
       getBarsFn,
       isMidnightCleared: isCleared,
-      maxRows,
       shouldBypassGate: isOptionRow,
       getSymbol: (r: any) => r.underlying || r.symbol,
       getSide: (r: any) => inferSide(r),
@@ -810,14 +831,14 @@ export function applyUniversalGateToMostActiveFnoReport(
 
   const nextCats = {
     ...cats,
-    mostActiveFno: runCat('mostActiveFno', cats.mostActiveFno),
-    topTradedByVolume: runCat('topTradedByVolume', cats.topTradedByVolume),
-    topTradedByValue: runCat('topTradedByValue', cats.topTradedByValue),
-    mostActiveUnderlying: runCat('mostActiveUnderlying', cats.mostActiveUnderlying),
-    mostActiveEquities: runCat('mostActiveEquities', cats.mostActiveEquities),
-    oiChangeLeaders: runCat('oiChangeLeaders', cats.oiChangeLeaders),
-    rankedFno: runCat('rankedFno', cats.rankedFno),
-    rankedEquities: runCat('rankedEquities', cats.rankedEquities),
+    mostActiveFno: runDualCat('mostActiveFno', cats.mostActiveFno),
+    topTradedByVolume: runDualCat('topTradedByVolume', cats.topTradedByVolume),
+    topTradedByValue: runDualCat('topTradedByValue', cats.topTradedByValue),
+    mostActiveUnderlying: runDualCat('mostActiveUnderlying', cats.mostActiveUnderlying),
+    mostActiveEquities: runDualCat('mostActiveEquities', cats.mostActiveEquities),
+    oiChangeLeaders: runDualCat('oiChangeLeaders', cats.oiChangeLeaders),
+    rankedFno: runDualCat('rankedFno', cats.rankedFno),
+    rankedEquities: runDualCat('rankedEquities', cats.rankedEquities),
   };
 
   const eqAll = nextCats.mostActiveFno.filter((r: any) => !isOptionRow(r));
@@ -827,6 +848,7 @@ export function applyUniversalGateToMostActiveFnoReport(
       strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
       strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
       adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
     },
     strictQualifiedBuyCount: eqAll.filter((r: any) => inferSide(r) === 'BUY').length,
     strictQualifiedSellCount: eqAll.filter((r: any) => inferSide(r) === 'SELL').length,
@@ -851,14 +873,11 @@ export function applyUniversalGateToClaudeFnoReport(
     r?.assetClass === 'INDEX_OPTION' ||
     /CE$|PE$/.test(String(r?.contractName || r?.symbol || '').toUpperCase());
 
-  const runCat = (key: string, rows: any[], maxRows = 40) =>
-    registry.filterAndStabilizeRows({
-      scannerKey: `claude-fno:${key}`,
-      rows: rows || [],
+  const runDualCat = (key: string, rows: any[]) =>
+    stabilizeDualDirectionBest10(registry, `claude-fno:${key}`, rows || [], {
       liveStockMap: liveMap,
       getBarsFn,
       isMidnightCleared: isCleared,
-      maxRows,
       shouldBypassGate: isOptionRow,
       getSymbol: (r: any) => r.underlying || r.symbol,
       getSide: (r: any) => inferSide(r),
@@ -870,12 +889,12 @@ export function applyUniversalGateToClaudeFnoReport(
 
   const nextCats = {
     ...cats,
-    qualifiedTrades: runCat('qualifiedTrades', cats.qualifiedTrades),
-    topVolAndValueQualified: runCat('topVolAndValueQualified', cats.topVolAndValueQualified),
-    equitiesFno: runCat('equitiesFno', cats.equitiesFno),
-    nearMissWatchlist: runCat('nearMissWatchlist', cats.nearMissWatchlist),
-    topVolumeRankings: runCat('topVolumeRankings', cats.topVolumeRankings),
-    topValueRankings: runCat('topValueRankings', cats.topValueRankings),
+    qualifiedTrades: runDualCat('qualifiedTrades', cats.qualifiedTrades),
+    topVolAndValueQualified: runDualCat('topVolAndValueQualified', cats.topVolAndValueQualified),
+    equitiesFno: runDualCat('equitiesFno', cats.equitiesFno),
+    nearMissWatchlist: runDualCat('nearMissWatchlist', cats.nearMissWatchlist),
+    topVolumeRankings: runDualCat('topVolumeRankings', cats.topVolumeRankings),
+    topValueRankings: runDualCat('topValueRankings', cats.topValueRankings),
   };
 
   return {
@@ -884,6 +903,7 @@ export function applyUniversalGateToClaudeFnoReport(
       strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
       strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
       adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
     },
     qualifiedCount: nextCats.qualifiedTrades.length,
     overlapQualifiedCount: nextCats.topVolAndValueQualified.length,
@@ -906,14 +926,27 @@ export function applyUniversalGateToSmcReport(
   const isCleared = Boolean(report?.isMidnightCleared);
   const cats = report?.categories || {};
 
-  const runCat = (key: string, rows: any[], maxRows = 50) =>
+  const runSingleCat = (key: string, rows: any[], fixedSide: 'BUY' | 'SELL') =>
     registry.filterAndStabilizeRows({
       scannerKey: `smc:${timeframe}:${key}`,
       rows: rows || [],
       liveStockMap: liveMap,
       getBarsFn,
       isMidnightCleared: isCleared,
-      maxRows,
+      maxRows: UNIVERSAL_MAX_PER_DIRECTION,
+      getSymbol: (r: any) => r.symbol,
+      getSide: () => fixedSide,
+      getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
+      getStopLoss: (r: any) => Number(r.stopLoss) || 0,
+      getRvol: (r: any) => Number(r.rvol) || 0,
+      getAdx: (r: any) => Number(r.adx) || 0,
+    });
+
+  const runDualCat = (key: string, rows: any[]) =>
+    stabilizeDualDirectionBest10(registry, `smc:${timeframe}:${key}`, rows || [], {
+      liveStockMap: liveMap,
+      getBarsFn,
+      isMidnightCleared: isCleared,
       getSymbol: (r: any) => r.symbol,
       getSide: (r: any) => inferSide(r),
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
@@ -923,12 +956,12 @@ export function applyUniversalGateToSmcReport(
     });
 
   const nextCats = {
-    allSetups: runCat('allSetups', cats.allSetups),
-    qualified5of5: runCat('qualified5of5', cats.qualified5of5),
-    buyDiscountSetups: runCat('buyDiscountSetups', cats.buyDiscountSetups),
-    sellPremiumSetups: runCat('sellPremiumSetups', cats.sellPremiumSetups),
-    unmitigatedObFvg: runCat('unmitigatedObFvg', cats.unmitigatedObFvg),
-    bosChochBreaker: runCat('bosChochBreaker', cats.bosChochBreaker),
+    allSetups: runDualCat('allSetups', cats.allSetups),
+    qualified5of5: runDualCat('qualified5of5', cats.qualified5of5),
+    buyDiscountSetups: runSingleCat('buyDiscountSetups', cats.buyDiscountSetups, 'BUY'),
+    sellPremiumSetups: runSingleCat('sellPremiumSetups', cats.sellPremiumSetups, 'SELL'),
+    unmitigatedObFvg: runDualCat('unmitigatedObFvg', cats.unmitigatedObFvg),
+    bosChochBreaker: runDualCat('bosChochBreaker', cats.bosChochBreaker),
   };
 
   return {
@@ -937,6 +970,7 @@ export function applyUniversalGateToSmcReport(
       strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
       strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
       adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
     },
     totalSetups: nextCats.allSetups.length,
     qualifiedCount: nextCats.qualified5of5.length,
@@ -960,14 +994,27 @@ export function applyUniversalGateToPriceActionReport(
   const isCleared = Boolean(report?.isMidnightCleared);
   const cats = report?.categories || {};
 
-  const runCat = (key: string, rows: any[], maxRows = 50) =>
+  const runSingleCat = (key: string, rows: any[], fixedSide: 'BUY' | 'SELL') =>
     registry.filterAndStabilizeRows({
       scannerKey: `price-action:${key}`,
       rows: rows || [],
       liveStockMap: liveMap,
       getBarsFn,
       isMidnightCleared: isCleared,
-      maxRows,
+      maxRows: UNIVERSAL_MAX_PER_DIRECTION,
+      getSymbol: (r: any) => r.symbol,
+      getSide: () => fixedSide,
+      getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
+      getStopLoss: (r: any) => Number(r.stopLoss) || 0,
+      getRvol: (r: any) => Number(r.rvol) || 0,
+      getAdx: (r: any) => Number(r.adx) || 0,
+    });
+
+  const runDualCat = (key: string, rows: any[]) =>
+    stabilizeDualDirectionBest10(registry, `price-action:${key}`, rows || [], {
+      liveStockMap: liveMap,
+      getBarsFn,
+      isMidnightCleared: isCleared,
       getSymbol: (r: any) => r.symbol,
       getSide: (r: any) => inferSide(r),
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
@@ -977,12 +1024,12 @@ export function applyUniversalGateToPriceActionReport(
     });
 
   const nextCats = {
-    allSignals: runCat('allSignals', cats.allSignals),
-    qualified9of9: runCat('qualified9of9', cats.qualified9of9),
-    buySignals: runCat('buySignals', cats.buySignals),
-    sellSignals: runCat('sellSignals', cats.sellSignals),
-    orbMomentum: runCat('orbMomentum', cats.orbMomentum),
-    demandSupplySweep: runCat('demandSupplySweep', cats.demandSupplySweep),
+    allSignals: runDualCat('allSignals', cats.allSignals),
+    qualified9of9: runDualCat('qualified9of9', cats.qualified9of9),
+    buySignals: runSingleCat('buySignals', cats.buySignals, 'BUY'),
+    sellSignals: runSingleCat('sellSignals', cats.sellSignals, 'SELL'),
+    orbMomentum: runDualCat('orbMomentum', cats.orbMomentum),
+    demandSupplySweep: runDualCat('demandSupplySweep', cats.demandSupplySweep),
   };
 
   return {
@@ -991,6 +1038,7 @@ export function applyUniversalGateToPriceActionReport(
       strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
       strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
       adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
     },
     totalScanned: nextCats.allSignals.length,
     qualifiedCount: nextCats.qualified9of9.length,
@@ -1016,14 +1064,28 @@ export function applyUniversalGateToIntradayStockReport(
 
   const isIndexTarget = (r: any) => Boolean(r?.isIndex) || String(r?.assetType || '').toUpperCase() === 'INDEX';
 
-  const runCat = (key: string, rows: any[], maxRows = 50) =>
+  const runSingleCat = (key: string, rows: any[], fixedSide: 'BUY' | 'SELL') =>
     registry.filterAndStabilizeRows({
       scannerKey: `intraday-stock:${key}`,
       rows: rows || [],
       liveStockMap: liveMap,
       getBarsFn,
       isMidnightCleared: isCleared,
-      maxRows,
+      maxRows: UNIVERSAL_MAX_PER_DIRECTION,
+      shouldBypassGate: isIndexTarget,
+      getSymbol: (r: any) => r.symbol,
+      getSide: () => fixedSide,
+      getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
+      getStopLoss: (r: any) => Number(r.stopLoss) || 0,
+      getRvol: (r: any) => Number(r.rvol) || 0,
+      getAdx: (r: any) => Number(r.adx) || 0,
+    });
+
+  const runDualCat = (key: string, rows: any[]) =>
+    stabilizeDualDirectionBest10(registry, `intraday-stock:${key}`, rows || [], {
+      liveStockMap: liveMap,
+      getBarsFn,
+      isMidnightCleared: isCleared,
       shouldBypassGate: isIndexTarget,
       getSymbol: (r: any) => r.symbol,
       getSide: (r: any) => inferSide(r),
@@ -1034,13 +1096,13 @@ export function applyUniversalGateToIntradayStockReport(
     });
 
   const nextCats = {
-    allSetups: runCat('allSetups', cats.allSetups),
-    cumDeltaConfirmed: runCat('cumDeltaConfirmed', cats.cumDeltaConfirmed),
-    qualifiedDfc: runCat('qualifiedDfc', cats.qualifiedDfc),
-    buySetups: runCat('buySetups', cats.buySetups),
-    sellSetups: runCat('sellSetups', cats.sellSetups),
-    gapUpBreakouts: runCat('gapUpBreakouts', cats.gapUpBreakouts),
-    gapDownBreakouts: runCat('gapDownBreakouts', cats.gapDownBreakouts),
+    allSetups: runDualCat('allSetups', cats.allSetups),
+    cumDeltaConfirmed: runDualCat('cumDeltaConfirmed', cats.cumDeltaConfirmed),
+    qualifiedDfc: runDualCat('qualifiedDfc', cats.qualifiedDfc),
+    buySetups: runSingleCat('buySetups', cats.buySetups, 'BUY'),
+    sellSetups: runSingleCat('sellSetups', cats.sellSetups, 'SELL'),
+    gapUpBreakouts: runSingleCat('gapUpBreakouts', cats.gapUpBreakouts, 'BUY'),
+    gapDownBreakouts: runSingleCat('gapDownBreakouts', cats.gapDownBreakouts, 'SELL'),
     indexTargets: cats.indexTargets || [],
   };
 
@@ -1050,6 +1112,7 @@ export function applyUniversalGateToIntradayStockReport(
       strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
       strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
       adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
     },
     totalScanned: nextCats.allSetups.length,
     qualifiedDfcCount: nextCats.qualifiedDfc.length,
@@ -1077,14 +1140,27 @@ export function applyUniversalGateToApexAlphaReport(
   const isCleared = Boolean(report?.isMidnightCleared);
   const cats = report?.categories || {};
 
-  const runCat = (key: string, rows: any[], maxRows = 40) =>
+  const runSingleCat = (key: string, rows: any[], fixedSide: 'BUY' | 'SELL') =>
     registry.filterAndStabilizeRows({
       scannerKey: `apex-alpha:${key}`,
       rows: rows || [],
       liveStockMap: liveMap,
       getBarsFn,
       isMidnightCleared: isCleared,
-      maxRows,
+      maxRows: UNIVERSAL_MAX_PER_DIRECTION,
+      getSymbol: (r: any) => r.symbol,
+      getSide: () => fixedSide,
+      getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
+      getStopLoss: (r: any) => Number(r.stopLoss) || 0,
+      getRvol: (r: any) => Number(r.rvol) || 0,
+      getAdx: (r: any) => Number(r.adx) || 0,
+    });
+
+  const runDualCat = (key: string, rows: any[]) =>
+    stabilizeDualDirectionBest10(registry, `apex-alpha:${key}`, rows || [], {
+      liveStockMap: liveMap,
+      getBarsFn,
+      isMidnightCleared: isCleared,
       getSymbol: (r: any) => r.symbol,
       getSide: (r: any) => inferSide(r),
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
@@ -1094,12 +1170,12 @@ export function applyUniversalGateToApexAlphaReport(
     });
 
   const nextCats = {
-    qualifiedAlpha: runCat('qualifiedAlpha', cats.qualifiedAlpha),
-    vwapCoilSetups: runCat('vwapCoilSetups', cats.vwapCoilSetups),
-    pdhPdlReclaim: runCat('pdhPdlReclaim', cats.pdhPdlReclaim),
-    buySetups: runCat('buySetups', cats.buySetups),
-    sellSetups: runCat('sellSetups', cats.sellSetups),
-    nearTriggerWatch: runCat('nearTriggerWatch', cats.nearTriggerWatch),
+    qualifiedAlpha: runDualCat('qualifiedAlpha', cats.qualifiedAlpha),
+    vwapCoilSetups: runDualCat('vwapCoilSetups', cats.vwapCoilSetups),
+    pdhPdlReclaim: runDualCat('pdhPdlReclaim', cats.pdhPdlReclaim),
+    buySetups: runSingleCat('buySetups', cats.buySetups, 'BUY'),
+    sellSetups: runSingleCat('sellSetups', cats.sellSetups, 'SELL'),
+    nearTriggerWatch: runDualCat('nearTriggerWatch', cats.nearTriggerWatch),
   };
 
   return {
@@ -1108,6 +1184,7 @@ export function applyUniversalGateToApexAlphaReport(
       strongRvolMin: UNIVERSAL_STRONG_RVOL_MIN,
       strongXTimeVolMin: UNIVERSAL_STRONG_XTIME_VOL_MIN,
       adxMin: UNIVERSAL_STRONG_ADX_MIN,
+      maxPerDirection: UNIVERSAL_MAX_PER_DIRECTION,
     },
     qualifiedCount: nextCats.qualifiedAlpha.length,
     coilCount: nextCats.vwapCoilSetups.length,

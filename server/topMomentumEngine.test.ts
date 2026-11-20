@@ -181,11 +181,11 @@ test('Strict Formula Rejects stocks failing Strong RVOL (< 2.00), Strong X-Time 
   });
   assert.equal(lowAdx, null, 'MUST reject setup when ADX < 25');
 
-  // 2. Fails X-Time Volume (< 2.00X) & RVOL (< 2.00) -> weak 260K break bar (~1.3X) MUST return null
+  // 2. Fails Vol Bazaar X-Time Volume (<= 1.00X) -> weak 180K break bar (~0.90X) MUST return null
   const weakVolBars: ClaudeFnoBar[] = [
     ...PREV_DAY_CONSOL,
-    makeBar('2026-11-19', '09:15:00', 275.0, 275.15, 272.5, 274.95, 210000),
-    makeBar('2026-11-19', '09:20:00', 274.95, 276.3, 274.85, 276.1, 260000), // Only ~1.3X!
+    makeBar('2026-11-19', '09:15:00', 275.0, 275.15, 272.5, 274.95, 190000),
+    makeBar('2026-11-19', '09:20:00', 274.95, 276.3, 274.85, 276.1, 180000), // <= 1.00X baseline!
   ];
   const lowXTime = evaluateTopMomentumOrderFlow({
     symbol: 'BANKBARODA',
@@ -204,7 +204,7 @@ test('Strict Formula Rejects stocks failing Strong RVOL (< 2.00), Strong X-Time 
     explicitRvol: 2.3,
     explicitAdx: 30.0,
   });
-  assert.equal(lowXTime, null, 'MUST reject setup when X-Time Volume < 2.00X');
+  assert.equal(lowXTime, null, 'MUST reject setup when Vol Bazaar X-Time Volume <= 1.00X');
 
   // 3. Fails RVOL (< 2.00) -> even if X-Time Vol >= 2.00X and ADX >= 25, RVOL < 2.00 MUST return null
   // Use smaller volume bars so computeRvolFromBars is < 2.0 while break bar is 2.1X prior bar avg
@@ -347,7 +347,7 @@ test('buildTopMomentumReport exposes updated thresholds and respects isMidnightC
   assert.equal(cleared.isMidnightCleared, true);
   assert.deepEqual(cleared.thresholds, {
     strongRvolMin: 2.0,
-    strongXTimeVolMin: 2.0,
+    strongXTimeVolMin: 1.0,
     adxMin: 25.0,
   });
   assert.equal(cleared.buySignals.length, 0);
