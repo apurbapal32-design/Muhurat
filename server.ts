@@ -45,6 +45,7 @@ import {
   scannerFleet20Manager,
   ScannerId20,
 } from './server/scannerFleet20Engine';
+import { btstScannerManager } from './server/btstScannerEngine';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
 import { calculateMarketStatus } from './src/data/marketSchedule';
@@ -1649,6 +1650,7 @@ async function startServer() {
         : sessionState?.quoteSource || 'UPSTOX_API_SYNC',
       upstoxConnected,
       forceCleared: isCleared,
+      indiaVix: scannerService.getIndiaVixPrice(),
     });
   };
 
@@ -1663,6 +1665,84 @@ async function startServer() {
       res.status(500).json({
         status: 'error',
         error: error?.message || 'Failed to build 20-Scanner × 20-AI-Agent Fleet report',
+      });
+    }
+  });
+
+  app.post('/api/scanners/fleet-20/autonomous-optimization/bulk', (req, res) => {
+    try {
+      const enabled = Boolean(req.body?.enabled);
+      scannerFleet20Manager.setAllAutonomousOptimization(enabled);
+      const report = buildFleet20ReportNow();
+      res.json({
+        ...report,
+        rules: getLockedRulesDescriptorList(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        error: error?.message || 'Failed to update bulk Autonomous Optimization state',
+      });
+    }
+  });
+
+  app.post('/api/scanners/fleet-20/global-reset', (_req, res) => {
+    try {
+      scannerFleet20Manager.performGlobalReset(new Date());
+      const report = buildFleet20ReportNow();
+      res.json({
+        ...report,
+        rules: getLockedRulesDescriptorList(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        error: error?.message || 'Failed to perform Global Reset across 20 AI agents',
+      });
+    }
+  });
+
+  app.post('/api/scanners/fleet-20/resume', (_req, res) => {
+    try {
+      scannerFleet20Manager.resumeFromGlobalReset();
+      const report = buildFleet20ReportNow();
+      res.json({
+        ...report,
+        rules: getLockedRulesDescriptorList(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        error: error?.message || 'Failed to resume live scanning for 20 AI agents',
+      });
+    }
+  });
+
+  app.post('/api/scanners/fleet-20/:scannerId/autonomous-optimization', (req, res) => {
+    try {
+      const rawId = String(req.params.scannerId || '').trim() as ScannerId20;
+      const valid = SCANNER_FLEET_20_DEFINITIONS.some((d) => d.scannerId === rawId);
+      if (!valid) {
+        return res.status(404).json({
+          status: 'error',
+          error: `Unknown scannerId '${rawId}'`,
+        });
+      }
+      const current = scannerFleet20Manager.isAutonomousOptimizationEnabled(rawId);
+      const nextEnabled =
+        typeof req.body?.enabled === 'boolean' ? req.body.enabled : !current;
+      scannerFleet20Manager.setAutonomousOptimization(rawId, nextEnabled);
+      const report = buildFleet20ReportNow();
+      const scanner = report.scanners.find((s) => s.scannerId === rawId)!;
+      res.json({
+        ...report,
+        scanner,
+        rules: getLockedRulesDescriptorList(),
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        error: error?.message || 'Failed to toggle Autonomous Optimization for agent',
       });
     }
   });
@@ -1685,6 +1765,7 @@ async function startServer() {
         totalScanners: report.totalScanners,
         totalAiAgents: report.totalAiAgents,
         session: report.session,
+        marketVolatility: report.marketVolatility,
         liveFeedProvider: report.liveFeedProvider,
         upstoxConnected: report.upstoxConnected,
         lockedRules: report.lockedRules,
@@ -1697,6 +1778,46 @@ async function startServer() {
       });
     }
   });
+
+  // WORLD-CLASS BTST / STBT SCANNER ENDPOINT (Recommended 2:45 PM – 3:20 PM IST • Assigned Agent: Vedant AI)
+  const handleBtstScannerRequest = async (req: express.Request, res: express.Response) => {
+    try {
+      const force = req.query.force === '1' || req.query.force === 'true';
+      const scanData = scannerService.getScanResults();
+      const sessionState = scanData.sessionState || scannerService.getSessionStatus();
+      const accessToken = scannerService.getEffectiveUpstoxToken();
+      const upstoxConnected = upstoxService.isTokenVerified(accessToken);
+      const isMarketOffDay = Boolean(sessionState?.brokerSchedule?.isMarketOffDay);
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+      const stocks = scanData.stocks || scannerService.getAllStocksDirect() || [];
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const report = btstScannerManager.syncAndBuildReport({
+        allStocks: stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        isMarketOffDay,
+        liveFeedProvider: upstoxConnected
+          ? 'UPSTOX_API_V2_LIVE'
+          : sessionState?.quoteSource || 'UPSTOX_API_SYNC',
+        upstoxConnected,
+        forceCleared: isCleared,
+        bypassCache: force,
+      });
+
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        error: error?.message || 'Failed to compute BTST Scanner report',
+      });
+    }
+  };
+  app.get('/api/btst-scanner/scan', handleBtstScannerRequest);
+  app.get('/api/btst-scanner', handleBtstScannerRequest);
 
   // Autonomous Everyday AI Trading Journal (Max 5 BUY/SELL trades/day + MTM + Trail Lock + 5x Beep Alerts)
   const runAiJournalSync = async (forceScan: boolean = false, reqAccessToken?: string) => {

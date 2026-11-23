@@ -51,6 +51,7 @@ import {
 } from './systemFiveRules';
 import { dualAiTradeManagerDesk } from './aiTradeManagerAgent';
 import { scannerFleet20Manager } from './scannerFleet20Engine';
+import { btstScannerManager } from './btstScannerEngine';
 
 const INDEX_SYMBOLS_UNIVERSE = new Set([
   'NIFTY',
@@ -1695,6 +1696,7 @@ export class ScannerService {
     stickyScannerRegistry.resetAll();
     dualAiTradeManagerDesk.resetAll();
     scannerFleet20Manager.resetAll();
+    btstScannerManager.clearAll(dateStr);
     this.sessionState = {
       ...this.sessionState,
       lastPurgeDateIST: dateStr,

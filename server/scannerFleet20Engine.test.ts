@@ -3,11 +3,18 @@ import assert from 'node:assert/strict';
 import {
   SCANNER_FLEET_20_DEFINITIONS,
   ScannerFleet20Manager,
+  classifyMarketVolatilityRegime,
+  computeVolatilityAdjustedStopLoss,
   evaluateStockForScanner20,
 } from './scannerFleet20Engine';
 import { ScannedStock } from '../src/types';
 
-function makeStock(overrides: Partial<ScannedStock> & { symbol: string }): ScannedStock {
+function makeStock(
+  overrides: Omit<Partial<ScannedStock>, 'indicators'> & {
+    symbol: string;
+    indicators?: Partial<ScannedStock['indicators']>;
+  }
+): ScannedStock {
   const price = overrides.price ?? 500;
   const chg = overrides.changePercent ?? 2.2;
   const isUp = chg >= 0;
@@ -214,3 +221,231 @@ test('Rule 1: Missing listedAt during post-scan hours never leaks post-15:15 clo
     }
   }
 });
+
+test('Autonomous Optimization: classifyMarketVolatilityRegime maps VIX into LOW/NORMAL/ELEVATED/EXTREME multipliers', () => {
+  const low = classifyMarketVolatilityRegime(11.4);
+  assert.equal(low.regime, 'LOW');
+  assert.ok(low.vixMultiplier < 1.0);
+
+  const normal = classifyMarketVolatilityRegime(15.2);
+  assert.equal(normal.regime, 'NORMAL');
+  assert.equal(normal.vixMultiplier, 1.0);
+
+  const elevated = classifyMarketVolatilityRegime(18.8);
+  assert.equal(elevated.regime, 'ELEVATED');
+  assert.ok(elevated.vixMultiplier > 1.15);
+
+  const extreme = classifyMarketVolatilityRegime(26.5);
+  assert.equal(extreme.regime, 'EXTREME');
+  assert.ok(extreme.vixMultiplier > elevated.vixMultiplier);
+});
+
+test('Autonomous Optimization: computeVolatilityAdjustedStopLoss widens SL in high VIX, tightens in low VIX, and never degrades trailed breakeven protection', () => {
+  // High VIX BUY -> widens SL lower (further cushion below entry)
+  const highBuy = computeVolatilityAdjustedStopLoss({
+    side: 'BUY',
+    entryPrice: 500,
+    initialStopLoss: 494,
+    baseStopLoss: 494,
+    liveLtp: 502,
+    atr: 8.5,
+    stockRangePct: 3.1,
+    indiaVix: 21.5,
+    isClosed: false,
+  });
+  assert.equal(highBuy.shiftDirection, 'WIDENED');
+  assert.ok(highBuy.adjustedStopLoss < 494, 'Elevated/high VIX BUY must widen SL downward');
+
+  // Low VIX BUY -> tightens SL higher (closer to entry)
+  const lowBuy = computeVolatilityAdjustedStopLoss({
+    side: 'BUY',
+    entryPrice: 500,
+    initialStopLoss: 492,
+    baseStopLoss: 492,
+    liveLtp: 502,
+    atr: 3.5,
+    stockRangePct: 1.0,
+    indiaVix: 11.2,
+    isClosed: false,
+  });
+  assert.equal(lowBuy.shiftDirection, 'TIGHTENED');
+  assert.ok(lowBuy.adjustedStopLoss > 492 && lowBuy.adjustedStopLoss < 500);
+
+  // High VIX SELL -> widens SL higher (above entry)
+  const highSell = computeVolatilityAdjustedStopLoss({
+    side: 'SELL',
+    entryPrice: 500,
+    initialStopLoss: 506,
+    baseStopLoss: 506,
+    liveLtp: 498,
+    atr: 8.5,
+    stockRangePct: 3.0,
+    indiaVix: 22.8,
+    isClosed: false,
+  });
+  assert.equal(highSell.shiftDirection, 'WIDENED');
+  assert.ok(highSell.adjustedStopLoss > 506, 'High VIX SELL must widen SL upward');
+
+  // Trailed-in-profit BUY -> must NEVER drop below breakeven floor even in extreme VIX
+  const trailedBuy = computeVolatilityAdjustedStopLoss({
+    side: 'BUY',
+    entryPrice: 500,
+    initialStopLoss: 494,
+    baseStopLoss: 504.5, // T1 trailed in profit
+    liveLtp: 511,
+    atr: 9.0,
+    stockRangePct: 3.5,
+    indiaVix: 25.0,
+    isClosed: false,
+  });
+  assert.ok(
+    trailedBuy.adjustedStopLoss >= 500.3,
+    'Trailed BUY position must preserve breakeven profit protection'
+  );
+  assert.ok(trailedBuy.adjustedStopLoss < 511);
+});
+
+test('Autonomous Optimization: per-agent toggle shifts SL live and toggling OFF cleanly restores exact base SL', () => {
+  const manager = new ScannerFleet20Manager();
+  const liveTime = new Date('2026-11-20T05:30:00Z');
+  const stock = makeStock({
+    symbol: 'VOLTEST',
+    price: 1000,
+    changePercent: 2.0,
+    indicators: { atr: 18, high: 1018, low: 982 },
+  });
+
+  // Baseline with Autonomous Optimization OFF
+  const baseRep = manager.syncAll20Scanners({
+    allStocks: [stock],
+    now: liveTime,
+    indiaVix: 20.4, // Elevated volatility
+  });
+  assert.equal(baseRep.marketVolatility.regime, 'ELEVATED');
+  assert.equal(baseRep.fleetSummary.autonomousOptimizedAgents, 0);
+  const baseSc0 = baseRep.scanners.find((s) => s.scannerId === 'top-momentum')!;
+  const baseSc1 = baseRep.scanners.find((s) => s.scannerId === 'money-flow')!;
+  assert.equal(baseSc0.agent.autonomousOptimization, false);
+  const baseSl0 = baseSc0.upTrades[0].activeStopLoss;
+  const baseSl1 = baseSc1.upTrades[0].activeStopLoss;
+
+  // Toggle ON only for top-momentum (Aryan AI)
+  assert.equal(manager.setAutonomousOptimization('top-momentum', true), true);
+  const optRep = manager.syncAll20Scanners({
+    allStocks: [stock],
+    now: liveTime,
+    indiaVix: 20.4,
+  });
+  assert.equal(optRep.fleetSummary.autonomousOptimizedAgents, 1);
+  const optSc0 = optRep.scanners.find((s) => s.scannerId === 'top-momentum')!;
+  const optSc1 = optRep.scanners.find((s) => s.scannerId === 'money-flow')!;
+
+  assert.equal(optSc0.agent.autonomousOptimization, true);
+  assert.equal(optSc0.upTrades[0].volatilityAdjusted, true);
+  assert.equal(optSc0.upTrades[0].baseStopLoss, baseSl0);
+  assert.notEqual(optSc0.upTrades[0].activeStopLoss, baseSl0);
+  assert.ok(optSc0.upTrades[0].activeStopLoss < baseSl0, 'Elevated VIX widens BUY SL');
+
+  // Unselected agent (money-flow) must remain completely unaffected
+  assert.equal(optSc1.agent.autonomousOptimization, false);
+  assert.equal(optSc1.upTrades[0].activeStopLoss, baseSl1);
+
+  // Toggle OFF -> must restore exact original baseStopLoss with zero drift
+  manager.setAutonomousOptimization('top-momentum', false);
+  const restoredRep = manager.syncAll20Scanners({
+    allStocks: [stock],
+    now: liveTime,
+    indiaVix: 20.4,
+  });
+  const restSc0 = restoredRep.scanners.find((s) => s.scannerId === 'top-momentum')!;
+  assert.equal(restSc0.agent.autonomousOptimization, false);
+  assert.equal(restSc0.upTrades[0].activeStopLoss, baseSl0);
+  assert.equal(restSc0.upTrades[0].volatilityAdjusted, false);
+
+  // Bulk enable all 20 agents
+  manager.setAllAutonomousOptimization(true);
+  const bulkRep = manager.syncAll20Scanners({
+    allStocks: [stock],
+    now: liveTime,
+    indiaVix: 20.4,
+  });
+  assert.equal(bulkRep.fleetSummary.autonomousOptimizedAgents, 20);
+  assert.ok(bulkRep.fleetSummary.volatilityShiftedStopLosses >= 1);
+});
+
+test('Global Reset clears all 20 agent statuses, stop-loss levels, Auto-Opt toggles, and profit counters across polls until resumed', () => {
+  const manager = new ScannerFleet20Manager();
+  const liveTime = new Date('2026-11-20T05:30:00Z');
+  const stock = makeStock({
+    symbol: 'RESETTEST',
+    price: 1000,
+    changePercent: 2.5,
+    indicators: { atr: 16, high: 1020, low: 984 },
+  });
+
+  // 1) Populate all 20 agents with active trades, profit & Autonomous Optimization ON
+  manager.setAllAutonomousOptimization(true);
+  const activeRep = manager.syncAll20Scanners({
+    allStocks: [stock],
+    now: liveTime,
+    indiaVix: 20.4,
+  });
+  assert.ok(activeRep.fleetSummary.totalManagedPositions > 0);
+  assert.equal(activeRep.fleetSummary.autonomousOptimizedAgents, 20);
+  assert.equal(activeRep.globalReset.active, false);
+
+  // Move price upward so P&L and trailing stop-loss levels are non-zero
+  const liftedStock = makeStock({
+    symbol: 'RESETTEST',
+    price: 1035,
+    changePercent: 4.0,
+    indicators: { atr: 16, high: 1040, low: 984 },
+  });
+  const profitRep = manager.syncAll20Scanners({
+    allStocks: [liftedStock],
+    now: liveTime,
+    indiaVix: 20.4,
+  });
+  assert.ok(profitRep.fleetSummary.fleetLivePnlRs > 0, 'Profit counter must be positive before reset');
+
+  // 2) Perform Global Reset
+  const resetState = manager.performGlobalReset(liveTime);
+  assert.equal(resetState.active, true);
+  assert.equal(resetState.resetCount, 1);
+
+  // 3) Sync repeatedly (simulating 5s background polls) — reset state must persist without re-admitting trades
+  const postResetRep = manager.syncAll20Scanners({
+    allStocks: [liftedStock],
+    now: liveTime,
+    indiaVix: 20.4,
+  });
+  assert.equal(postResetRep.globalReset.active, true);
+  assert.equal(postResetRep.fleetSummary.totalActiveScanners, 0);
+  assert.equal(postResetRep.fleetSummary.totalManagedPositions, 0);
+  assert.equal(postResetRep.fleetSummary.totalTrailingProtected, 0);
+  assert.equal(postResetRep.fleetSummary.totalTargetHits, 0);
+  assert.equal(postResetRep.fleetSummary.totalSlHits, 0);
+  assert.equal(postResetRep.fleetSummary.fleetLivePnlRs, 0);
+  assert.equal(postResetRep.fleetSummary.fleetWinRatePct, 0);
+  assert.equal(postResetRep.fleetSummary.autonomousOptimizedAgents, 0);
+  assert.equal(postResetRep.fleetSummary.volatilityShiftedStopLosses, 0);
+  for (const sc of postResetRep.scanners) {
+    assert.equal(sc.agent.status, 'STANDBY_RESET');
+    assert.equal(sc.agent.autonomousOptimization, false);
+    assert.equal(sc.summary.totalManaged, 0);
+    assert.equal(sc.summary.activeOpenCount, 0);
+    assert.equal(sc.summary.totalLivePnlRs, 0);
+  }
+
+  // 4) Resume live scan -> agents cleanly re-populate under baseline fixed ATR SL
+  manager.resumeFromGlobalReset();
+  const resumedRep = manager.syncAll20Scanners({
+    allStocks: [liftedStock],
+    now: liveTime,
+    indiaVix: 20.4,
+  });
+  assert.equal(resumedRep.globalReset.active, false);
+  assert.ok(resumedRep.fleetSummary.totalManagedPositions > 0);
+  assert.equal(resumedRep.fleetSummary.autonomousOptimizedAgents, 0);
+});
+

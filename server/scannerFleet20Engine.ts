@@ -519,6 +519,18 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
   },
 ]);
 
+export type VolatilityRegime = 'LOW' | 'NORMAL' | 'ELEVATED' | 'EXTREME';
+
+export type SlShiftDirection = 'WIDENED' | 'TIGHTENED' | 'UNCHANGED';
+
+export interface MarketVolatilityContext {
+  indiaVix: number;
+  regime: VolatilityRegime;
+  regimeLabel: string;
+  vixMultiplier: number;
+  updatedAt: string;
+}
+
 export interface FleetManagedTrade {
   scannerId: ScannerId20;
   scannerName: string;
@@ -539,7 +551,14 @@ export interface FleetManagedTrade {
   adx: number;
   entryPrice: number;
   initialStopLoss: number;
+  baseStopLoss: number;
   activeStopLoss: number;
+  volatilityAdjusted: boolean;
+  volatilityMultiplier: number;
+  slShiftRs: number;
+  slShiftPct: number;
+  slShiftDirection: SlShiftDirection;
+  stockAtrPct: number;
   target1: number;
   target2: number;
   positionQty: number;
@@ -556,6 +575,13 @@ export interface FleetManagedTrade {
   stickyLockedUntilFlush: true;
 }
 
+export interface FleetGlobalResetState {
+  active: boolean;
+  resetAtIso: string | null;
+  resetAtIST: string | null;
+  resetCount: number;
+}
+
 export interface FleetScannerReport {
   rank: number;
   scannerId: ScannerId20;
@@ -566,7 +592,12 @@ export interface FleetScannerReport {
   formulaSummary: string;
   isNewScanner: boolean;
   agent: AssignedAiAgentSpec & {
-    status: 'ACTIVE' | 'STANDBY_FLUSHED' | 'POST_MARKET_LOCKED';
+    status: 'ACTIVE' | 'STANDBY_FLUSHED' | 'STANDBY_RESET' | 'POST_MARKET_LOCKED';
+    autonomousOptimization: boolean;
+    volatilityRegime: VolatilityRegime;
+    volatilityMultiplier: number;
+    effectiveAtrSlMultiplier: number;
+    slShiftedCount: number;
   };
   summary: {
     totalManaged: number;
@@ -594,6 +625,8 @@ export interface Fleet20MasterReport {
   heAgentCount: number;
   sheAgentCount: number;
   session: LockedSessionWindowStatus;
+  marketVolatility: MarketVolatilityContext;
+  globalReset: FleetGlobalResetState;
   liveFeedProvider: string;
   upstoxConnected: boolean;
   lockedRules: typeof LOCKED_SYSTEM_RULES;
@@ -609,6 +642,8 @@ export interface Fleet20MasterReport {
     fleetWinRatePct: number;
     fleetLivePnlRs: number;
     avgRMultiple: number;
+    autonomousOptimizedAgents: number;
+    volatilityShiftedStopLosses: number;
   };
   scanners: FleetScannerReport[];
 }
@@ -634,6 +669,8 @@ interface PersistedFleetTrade {
   peakAdx: number;
   lastLtp: number;
   lastChangePercent: number;
+  lastAtr: number;
+  lastRangePct: number;
   t1Booked: boolean;
   closedStatus?: 'TARGET_HIT_EXIT' | 'SL_HIT_EXIT' | 'TIME_EXIT_1515';
   closedAtPrice?: number;
@@ -641,6 +678,209 @@ interface PersistedFleetTrade {
 
 function round2(n: number): number {
   return Number((Number.isFinite(n) ? n : 0).toFixed(2));
+}
+
+function clampNum(n: number, min: number, max: number): number {
+  if (!Number.isFinite(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}
+
+/**
+ * Classifies India VIX into an institutional volatility regime and baseline SL multiplier.
+ * - LOW (<13): Calm compression -> tighten SL (0.85x) to protect gains & avoid drift
+ * - NORMAL (13..17): Balanced intraday trend -> 1.00x baseline adaptive scaling
+ * - ELEVATED (17..22): High intraday noise -> widen SL (1.22x) to resist stop-hunts
+ * - EXTREME (>=22): Volatility shock -> wide protective shield (1.42x)
+ */
+export function classifyMarketVolatilityRegime(indiaVix: number): {
+  indiaVix: number;
+  regime: VolatilityRegime;
+  regimeLabel: string;
+  vixMultiplier: number;
+} {
+  const vix = round2(clampNum(Number(indiaVix) || 15.0, 7.0, 65.0));
+  if (vix < 13.0) {
+    return {
+      indiaVix: vix,
+      regime: 'LOW',
+      regimeLabel: 'Low Vol · Tighten SL',
+      vixMultiplier: 0.85,
+    };
+  }
+  if (vix < 17.0) {
+    return {
+      indiaVix: vix,
+      regime: 'NORMAL',
+      regimeLabel: 'Normal Vol · Adaptive',
+      vixMultiplier: 1.0,
+    };
+  }
+  if (vix < 22.0) {
+    return {
+      indiaVix: vix,
+      regime: 'ELEVATED',
+      regimeLabel: 'Elevated Vol · Widen SL',
+      vixMultiplier: 1.22,
+    };
+  }
+  return {
+    indiaVix: vix,
+    regime: 'EXTREME',
+    regimeLabel: 'Extreme Vol · Wide Shield',
+    vixMultiplier: 1.42,
+  };
+}
+
+export interface VolatilitySlAdjustmentResult {
+  adjustedStopLoss: number;
+  baseStopLoss: number;
+  slShiftRs: number;
+  slShiftPct: number;
+  shiftDirection: SlShiftDirection;
+  volatilityMultiplier: number;
+  stockAtrPct: number;
+  volatilityRegime: VolatilityRegime;
+  reason: string;
+}
+
+/**
+ * Pure volatility-driven stop-loss optimizer for Autonomous Optimization mode.
+ * Blends market-level India VIX regime (65%) with stock-specific ATR% & intraday range (35%)
+ * to automatically widen or tighten open stop-loss levels while never degrading a trailed profit lock into a loss.
+ */
+export function computeVolatilityAdjustedStopLoss(params: {
+  side: 'BUY' | 'SELL';
+  entryPrice: number;
+  initialStopLoss: number;
+  baseStopLoss: number;
+  liveLtp: number;
+  atr: number;
+  stockRangePct: number;
+  indiaVix: number;
+  isClosed: boolean;
+}): VolatilitySlAdjustmentResult {
+  const {
+    side,
+    entryPrice,
+    initialStopLoss,
+    baseStopLoss,
+    liveLtp,
+    atr,
+    stockRangePct,
+    indiaVix,
+    isClosed,
+  } = params;
+
+  const vixMeta = classifyMarketVolatilityRegime(indiaVix);
+  const refPrice = liveLtp > 0 ? liveLtp : entryPrice;
+  const effectiveAtr = atr > 0 ? atr : refPrice * 0.011;
+  const stockAtrPct = refPrice > 0 ? round2((effectiveAtr / refPrice) * 100) : 1.1;
+  const rangePct = clampNum(Number(stockRangePct) || stockAtrPct * 1.4, 0.3, 12.0);
+
+  // Stock-level volatility factor anchored around 1.15% average NSE F&O ATR
+  const stockFactor = clampNum(
+    0.92 + (stockAtrPct - 1.15) * 0.16 + Math.max(0, rangePct - 2.0) * 0.04,
+    0.82,
+    1.35
+  );
+  const volatilityMultiplier = round2(
+    clampNum(vixMeta.vixMultiplier * 0.65 + stockFactor * 0.35, 0.78, 1.5)
+  );
+
+  if (isClosed || refPrice <= 0 || entryPrice <= 0) {
+    return {
+      adjustedStopLoss: round2(baseStopLoss),
+      baseStopLoss: round2(baseStopLoss),
+      slShiftRs: 0,
+      slShiftPct: 0,
+      shiftDirection: 'UNCHANGED',
+      volatilityMultiplier,
+      stockAtrPct,
+      volatilityRegime: vixMeta.regime,
+      reason: 'Position closed — exit SL preserved',
+    };
+  }
+
+  const isBuy = side === 'BUY';
+  const baseRisk = Math.max(entryPrice * 0.0035, Math.abs(entryPrice - initialStopLoss));
+  const isTrailedPastEntry = isBuy
+    ? baseStopLoss >= entryPrice - 0.01
+    : baseStopLoss <= entryPrice + 0.01;
+
+  let adjustedStopLoss = baseStopLoss;
+
+  if (!isTrailedPastEntry) {
+    // Open initial stop-loss: scale stop-loss cushion directly by composite volatility multiplier
+    const scaledRisk = clampNum(
+      baseRisk * volatilityMultiplier,
+      entryPrice * 0.004,
+      entryPrice * 0.045
+    );
+    if (isBuy) {
+      const candidate = round2(entryPrice - scaledRisk);
+      // Never cross above live LTP (keep at least 0.35% below LTP so we don't artificially self-trigger)
+      const maxSafeSl = round2(Math.min(entryPrice * 0.9965, refPrice * 0.9965));
+      adjustedStopLoss = Math.min(candidate, maxSafeSl);
+    } else {
+      const candidate = round2(entryPrice + scaledRisk);
+      const minSafeSl = round2(Math.max(entryPrice * 1.0035, refPrice * 1.0035));
+      adjustedStopLoss = Math.max(candidate, minSafeSl);
+    }
+  } else {
+    // Trailed-in-profit position: optimize trailing cushion while strictly guaranteeing >= breakeven lock
+    const beFloor = isBuy
+      ? round2(entryPrice + baseRisk * 0.05)
+      : round2(entryPrice - baseRisk * 0.05);
+    const liveTrailGap = Math.max(0.05, isBuy ? refPrice - baseStopLoss : baseStopLoss - refPrice);
+    const adjustedTrailGap = clampNum(
+      liveTrailGap * volatilityMultiplier,
+      refPrice * 0.0025,
+      Math.max(liveTrailGap * 1.45, baseRisk * 1.35)
+    );
+    if (isBuy) {
+      const candidate = round2(refPrice - adjustedTrailGap);
+      const maxSafeSl = round2(refPrice * 0.997);
+      adjustedStopLoss = clampNum(candidate, beFloor, Math.max(beFloor, maxSafeSl));
+    } else {
+      const candidate = round2(refPrice + adjustedTrailGap);
+      const minSafeSl = round2(refPrice * 1.003);
+      adjustedStopLoss = clampNum(candidate, Math.min(beFloor, minSafeSl), beFloor);
+    }
+  }
+
+  adjustedStopLoss = round2(adjustedStopLoss);
+  const rawDiff = round2(adjustedStopLoss - baseStopLoss);
+  // Determine whether SL moved further away from LTP (WIDENED) or closer to LTP (TIGHTENED)
+  const baseCushion = isBuy ? refPrice - baseStopLoss : baseStopLoss - refPrice;
+  const newCushion = isBuy ? refPrice - adjustedStopLoss : adjustedStopLoss - refPrice;
+  const cushionDelta = round2(newCushion - baseCushion);
+
+  let shiftDirection: SlShiftDirection = 'UNCHANGED';
+  if (cushionDelta > 0.02) {
+    shiftDirection = 'WIDENED';
+  } else if (cushionDelta < -0.02) {
+    shiftDirection = 'TIGHTENED';
+  }
+
+  const slShiftPct = baseStopLoss > 0 ? round2((rawDiff / baseStopLoss) * 100) : 0;
+  const actionVerb =
+    shiftDirection === 'WIDENED'
+      ? `widened +₹${Math.abs(cushionDelta).toFixed(2)}`
+      : shiftDirection === 'TIGHTENED'
+      ? `tightened -₹${Math.abs(cushionDelta).toFixed(2)}`
+      : 'calibrated';
+
+  return {
+    adjustedStopLoss,
+    baseStopLoss: round2(baseStopLoss),
+    slShiftRs: rawDiff,
+    slShiftPct,
+    shiftDirection,
+    volatilityMultiplier,
+    stockAtrPct,
+    volatilityRegime: vixMeta.regime,
+    reason: `Auto-Opt (${vixMeta.regime} VIX ${vixMeta.indiaVix.toFixed(1)} · ATR ${stockAtrPct.toFixed(2)}% · ${volatilityMultiplier.toFixed(2)}×) ${actionVerb}`,
+  };
 }
 
 export interface ScannerFormulaEvaluation {
@@ -1266,6 +1506,13 @@ interface ScannerBookState {
 export class ScannerFleet20Manager {
   private sessionDateIST: string = '';
   private books: Map<ScannerId20, ScannerBookState> = new Map();
+  private autonomousOptimizationMap: Map<ScannerId20, boolean> = new Map();
+  private globalResetState: FleetGlobalResetState = {
+    active: false,
+    resetAtIso: null,
+    resetAtIST: null,
+    resetCount: 0,
+  };
   private readonly deskCapitalRs = 500_000;
 
   constructor() {
@@ -1274,7 +1521,50 @@ export class ScannerFleet20Manager {
         upBook: new Map(),
         downBook: new Map(),
       });
+      this.autonomousOptimizationMap.set(def.scannerId, false);
     }
+  }
+
+  public isAutonomousOptimizationEnabled(scannerId: ScannerId20): boolean {
+    return Boolean(this.autonomousOptimizationMap.get(scannerId));
+  }
+
+  public setAutonomousOptimization(scannerId: ScannerId20, enabled: boolean): boolean {
+    if (!this.books.has(scannerId)) return false;
+    this.autonomousOptimizationMap.set(scannerId, Boolean(enabled));
+    return true;
+  }
+
+  public setAllAutonomousOptimization(enabled: boolean): void {
+    const val = Boolean(enabled);
+    for (const def of SCANNER_FLEET_20_DEFINITIONS) {
+      this.autonomousOptimizationMap.set(def.scannerId, val);
+    }
+  }
+
+  public getGlobalResetState(): FleetGlobalResetState {
+    return { ...this.globalResetState };
+  }
+
+  public performGlobalReset(now: Date = new Date()): FleetGlobalResetState {
+    this.resetAll();
+    this.setAllAutonomousOptimization(false);
+    const sessionSnap = getLockedSessionWindowStatus(now, false);
+    this.globalResetState = {
+      active: true,
+      resetAtIso: now.toISOString(),
+      resetAtIST: sessionSnap.timeIST,
+      resetCount: this.globalResetState.resetCount + 1,
+    };
+    return { ...this.globalResetState };
+  }
+
+  public resumeFromGlobalReset(): FleetGlobalResetState {
+    this.globalResetState = {
+      ...this.globalResetState,
+      active: false,
+    };
+    return { ...this.globalResetState };
   }
 
   public resetAll(): void {
@@ -1287,11 +1577,19 @@ export class ScannerFleet20Manager {
   private ensureSession(session: LockedSessionWindowStatus): void {
     if (session.isFlushCleared) {
       this.resetAll();
+      this.globalResetState = {
+        ...this.globalResetState,
+        active: false,
+      };
       this.sessionDateIST = session.dateIST;
       return;
     }
     if (this.sessionDateIST && this.sessionDateIST !== session.dateIST) {
       this.resetAll();
+      this.globalResetState = {
+        ...this.globalResetState,
+        active: false,
+      };
     }
     this.sessionDateIST = session.dateIST;
   }
@@ -1305,6 +1603,7 @@ export class ScannerFleet20Manager {
     liveFeedProvider?: string;
     upstoxConnected?: boolean;
     forceCleared?: boolean;
+    indiaVix?: number;
   }): Fleet20MasterReport {
     const baseSession = getLockedSessionWindowStatus(
       params.now || new Date(),
@@ -1322,11 +1621,27 @@ export class ScannerFleet20Manager {
 
     this.ensureSession(session);
 
-    const agentStatus: 'ACTIVE' | 'STANDBY_FLUSHED' | 'POST_MARKET_LOCKED' = session.isFlushCleared
-      ? 'STANDBY_FLUSHED'
-      : session.isLiveScanWindow
-      ? 'ACTIVE'
-      : 'POST_MARKET_LOCKED';
+    const vixRegime = classifyMarketVolatilityRegime(
+      Number.isFinite(Number(params.indiaVix)) && Number(params.indiaVix) > 0
+        ? Number(params.indiaVix)
+        : 16.5
+    );
+    const marketVolatility: MarketVolatilityContext = {
+      ...vixRegime,
+      updatedAt: (params.now || new Date()).toISOString(),
+    };
+
+    const isManuallyReset = this.globalResetState.active && !session.isFlushCleared;
+    const isFleetEmptyMode = session.isFlushCleared || isManuallyReset;
+
+    const agentStatus: 'ACTIVE' | 'STANDBY_FLUSHED' | 'STANDBY_RESET' | 'POST_MARKET_LOCKED' =
+      session.isFlushCleared
+        ? 'STANDBY_FLUSHED'
+        : isManuallyReset
+        ? 'STANDBY_RESET'
+        : session.isLiveScanWindow
+        ? 'ACTIVE'
+        : 'POST_MARKET_LOCKED';
 
     const heAgentCount = SCANNER_FLEET_20_DEFINITIONS.filter(
       (d) => d.agent.genderLabel === 'He'
@@ -1348,7 +1663,7 @@ export class ScannerFleet20Manager {
       return params.candlesMap[sym] || params.candlesMap[sym.toUpperCase()];
     };
 
-    if (!session.isFlushCleared) {
+    if (!isFleetEmptyMode) {
       for (const stock of params.allStocks || []) {
         const sym = String(stock?.symbol || '').toUpperCase().trim();
         if (!sym) continue;
@@ -1379,11 +1694,13 @@ export class ScannerFleet20Manager {
     let totalWinPositions = 0;
     let fleetLivePnlRs = 0;
     let totalRSum = 0;
+    let autonomousOptimizedAgents = 0;
+    let volatilityShiftedStopLosses = 0;
 
     for (const def of SCANNER_FLEET_20_DEFINITIONS) {
       const bookState = this.books.get(def.scannerId)!;
 
-      if (!session.isFlushCleared) {
+      if (!isFleetEmptyMode) {
         // Gather eligible BUY & SELL candidates for this specific scanner formula
         const buyCandidates: Array<{
           stock: ScannedStock;
@@ -1483,6 +1800,16 @@ export class ScannerFleet20Manager {
               }
             }
 
+            const stockPriceRef = item.stock.price > 0 ? item.stock.price : plan.entryPrice;
+            const stockHigh = Number(item.stock.indicators?.high) || stockPriceRef;
+            const stockLow = Number(item.stock.indicators?.low) || stockPriceRef;
+            const stockAtr =
+              Number(item.stock.indicators?.atr) || Math.max(stockPriceRef * 0.009, (stockHigh - stockLow) * 0.5);
+            const stockRangePct =
+              stockPriceRef > 0 && stockHigh > stockLow
+                ? round2(((stockHigh - stockLow) / stockPriceRef) * 100)
+                : round2((stockAtr / Math.max(1, stockPriceRef)) * 140);
+
             book.set(sym, {
               symbol: sym,
               name: item.stock.name || sym,
@@ -1498,12 +1825,14 @@ export class ScannerFleet20Manager {
               target2: plan.target2,
               positionQty: plan.positionQty,
               riskCapitalRs: plan.riskCapitalRs,
-              peakFavorablePrice: item.stock.price > 0 ? item.stock.price : plan.entryPrice,
+              peakFavorablePrice: stockPriceRef,
               peakRvol: item.rvol,
               peakXTimeVolume: item.xTimeVolume,
               peakAdx: item.adx,
-              lastLtp: item.stock.price > 0 ? item.stock.price : plan.entryPrice,
+              lastLtp: stockPriceRef,
               lastChangePercent: Number(item.stock.changePercent) || 0,
+              lastAtr: round2(stockAtr),
+              lastRangePct: stockRangePct,
               t1Booked: false,
             });
           }
@@ -1513,8 +1842,13 @@ export class ScannerFleet20Manager {
         admitToBook(sellCandidates, bookState.downBook, 'SELL');
       }
 
+      const autoOptEnabled = this.isAutonomousOptimizationEnabled(def.scannerId);
+      if (autoOptEnabled) {
+        autonomousOptimizedAgents += 1;
+      }
+
       const materialize = (book: Map<string, PersistedFleetTrade>): FleetManagedTrade[] => {
-        if (session.isFlushCleared) return [];
+        if (isFleetEmptyMode) return [];
         const rows: FleetManagedTrade[] = [];
         for (const rec of book.values()) {
           const live = liveMap.get(rec.symbol);
@@ -1525,12 +1859,27 @@ export class ScannerFleet20Manager {
           const xTimeVolume = Math.max(rec.peakXTimeVolume, met?.xTimeVolume || 0);
           const adx = Math.max(rec.peakAdx, met?.adx || 0);
 
+          const liveHigh = Number(live?.indicators?.high) || ltp;
+          const liveLow = Number(live?.indicators?.low) || ltp;
+          const liveAtr =
+            Number(live?.indicators?.atr) ||
+            rec.lastAtr ||
+            Math.max(ltp * 0.009, (liveHigh - liveLow) * 0.5);
+          const liveRangePct =
+            ltp > 0 && liveHigh > liveLow
+              ? round2(((liveHigh - liveLow) / ltp) * 100)
+              : rec.lastRangePct || round2((liveAtr / Math.max(1, ltp)) * 140);
+
+          rec.lastAtr = round2(liveAtr);
+          rec.lastRangePct = liveRangePct;
+
           const lifecycle = evaluateAgentTradeLifecycle(
             rec,
             def.agent,
             ltp,
             session.isSquareOffReached
           );
+          // Persist the base unshifted SL so toggling Autonomous Optimization ON/OFF is 100% reversible
           rec.activeStopLoss = lifecycle.activeStopLoss;
           rec.peakFavorablePrice = lifecycle.peakFavorablePrice;
           rec.lastLtp = ltp;
@@ -1544,6 +1893,40 @@ export class ScannerFleet20Manager {
           ) {
             rec.closedStatus = lifecycle.actionStatus;
             rec.closedAtPrice = ltp;
+          }
+
+          const baseStopLoss = lifecycle.activeStopLoss;
+          let finalActiveStopLoss = baseStopLoss;
+          let volatilityAdjusted = false;
+          let volatilityMultiplier = 1.0;
+          let slShiftRs = 0;
+          let slShiftPct = 0;
+          let slShiftDirection: SlShiftDirection = 'UNCHANGED';
+          let stockAtrPct = ltp > 0 ? round2((liveAtr / ltp) * 100) : 1.1;
+          let finalDirective = lifecycle.agentDirective;
+
+          if (autoOptEnabled) {
+            const volAdj = computeVolatilityAdjustedStopLoss({
+              side: rec.side,
+              entryPrice: rec.entryPrice,
+              initialStopLoss: rec.initialStopLoss,
+              baseStopLoss,
+              liveLtp: ltp,
+              atr: liveAtr,
+              stockRangePct: liveRangePct,
+              indiaVix: marketVolatility.indiaVix,
+              isClosed: lifecycle.isClosed,
+            });
+            finalActiveStopLoss = volAdj.adjustedStopLoss;
+            volatilityMultiplier = volAdj.volatilityMultiplier;
+            slShiftRs = volAdj.slShiftRs;
+            slShiftPct = volAdj.slShiftPct;
+            slShiftDirection = volAdj.shiftDirection;
+            stockAtrPct = volAdj.stockAtrPct;
+            volatilityAdjusted = !lifecycle.isClosed && volAdj.shiftDirection !== 'UNCHANGED';
+            if (!lifecycle.isClosed) {
+              finalDirective = `${volAdj.reason} · SL ₹${finalActiveStopLoss.toFixed(2)} (Base ₹${baseStopLoss.toFixed(2)})`;
+            }
           }
 
           rows.push({
@@ -1566,7 +1949,14 @@ export class ScannerFleet20Manager {
             adx: round2(adx),
             entryPrice: rec.entryPrice,
             initialStopLoss: rec.initialStopLoss,
-            activeStopLoss: lifecycle.activeStopLoss,
+            baseStopLoss: round2(baseStopLoss),
+            activeStopLoss: round2(finalActiveStopLoss),
+            volatilityAdjusted,
+            volatilityMultiplier,
+            slShiftRs,
+            slShiftPct,
+            slShiftDirection,
+            stockAtrPct,
             target1: rec.target1,
             target2: rec.target2,
             positionQty: rec.positionQty,
@@ -1578,7 +1968,7 @@ export class ScannerFleet20Manager {
             livePnlRs: lifecycle.livePnlRs,
             actionStatus: lifecycle.actionStatus,
             actionBadge: lifecycle.actionBadge,
-            agentDirective: lifecycle.agentDirective,
+            agentDirective: finalDirective,
             isClosed: lifecycle.isClosed,
             stickyLockedUntilFlush: true,
           });
@@ -1589,6 +1979,20 @@ export class ScannerFleet20Manager {
       const upTrades = materialize(bookState.upBook);
       const downTrades = materialize(bookState.downBook);
       const allTrades = sortRowsByListedAtDescZtoA([...upTrades, ...downTrades], (r) => r.symbol);
+
+      const slShiftedCount = allTrades.filter((t) => t.volatilityAdjusted).length;
+      const openVolTrades = allTrades.filter((t) => !t.isClosed);
+      const agentVolMultiplier = autoOptEnabled
+        ? openVolTrades.length > 0
+          ? round2(
+              openVolTrades.reduce((acc, t) => acc + t.volatilityMultiplier, 0) /
+                openVolTrades.length
+            )
+          : marketVolatility.vixMultiplier
+        : 1.0;
+      const effectiveAtrSlMultiplier = round2(def.agent.atrSlMultiplier * agentVolMultiplier);
+
+      volatilityShiftedStopLosses += slShiftedCount;
 
       const activeOpenCount = allTrades.filter((t) => !t.isClosed).length;
       const trailingProtectedCount = allTrades.filter(
@@ -1629,6 +2033,11 @@ export class ScannerFleet20Manager {
         agent: {
           ...def.agent,
           status: agentStatus,
+          autonomousOptimization: autoOptEnabled,
+          volatilityRegime: marketVolatility.regime,
+          volatilityMultiplier: agentVolMultiplier,
+          effectiveAtrSlMultiplier,
+          slShiftedCount,
         },
         summary: {
           totalManaged: allTrades.length,
@@ -1657,6 +2066,8 @@ export class ScannerFleet20Manager {
       heAgentCount,
       sheAgentCount,
       session,
+      marketVolatility,
+      globalReset: { ...this.globalResetState },
       liveFeedProvider: params.liveFeedProvider || 'UPSTOX_API_V2',
       upstoxConnected: Boolean(params.upstoxConnected),
       lockedRules: LOCKED_SYSTEM_RULES,
@@ -1674,6 +2085,8 @@ export class ScannerFleet20Manager {
         fleetLivePnlRs,
         avgRMultiple:
           totalManagedPositions > 0 ? round2(totalRSum / totalManagedPositions) : 0,
+        autonomousOptimizedAgents,
+        volatilityShiftedStopLosses,
       },
       scanners: scannerReports,
     };

@@ -55,6 +55,62 @@ interface HeaderProps {
   onToggleExperienceMode?: (mode: 'beginner' | 'pro') => void;
 }
 
+interface NavTabConfig {
+  id: string;
+  label: string;
+  meta?: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}
+
+const BEGINNER_NAV_TABS: NavTabConfig[] = [
+  { id: 'beginner-home', label: 'Beginner Overview', Icon: Sparkles },
+  { id: 'agent-management', label: 'Agent Management', meta: '20', Icon: ShieldCheck },
+  { id: 'btst-scanner', label: 'BTST Scanner', meta: '2:45–3:20', Icon: Moon },
+  { id: 'momentum-dashboard', label: 'Live Momentum', meta: '15', Icon: Flame },
+  { id: 'tredye-dashboard', label: 'Tredye Flow Matrix', Icon: Activity },
+  { id: 'quant-screener', label: 'Quant Screener', Icon: BarChart3 },
+  { id: 'scanner', label: 'Stock Screener', Icon: Target },
+  { id: 'index-options', label: 'Options Radar', Icon: Zap },
+  { id: 'sector-performance', label: 'Sector Heatmap', Icon: PieChart },
+  { id: 'news', label: 'Market News', Icon: Newspaper },
+  { id: 'schedule', label: 'Market Timing', Icon: Clock },
+  { id: 'broker', label: 'Broker Account', Icon: Server },
+];
+
+const PRO_NAV_TABS: NavTabConfig[] = [
+  { id: 'agent-management', label: 'Agent Management', meta: '20', Icon: ShieldCheck },
+  { id: 'btst-scanner', label: 'BTST Scanner', meta: '2:45–3:20', Icon: Moon },
+  { id: 'v9-vega-greeks', label: 'V9 Vega & Greeks', Icon: Zap },
+  { id: 'momentum-dashboard', label: 'Live Momentum', meta: '15', Icon: Flame },
+  { id: 'tredye-dashboard', label: 'Tredye Flow Matrix', Icon: Activity },
+  { id: 'quant-screener', label: 'Quant Screener', Icon: BarChart3 },
+  { id: 'top-volume-fno', label: 'Top-Volume F&O', Icon: Layers },
+  { id: 'scanner', label: 'Scanner', Icon: Target },
+  { id: 'inst-scanner', label: 'Institutional VWAP & OI', Icon: Building2 },
+  { id: 'smart-money-scanner', label: 'Smart Money', Icon: Sparkles },
+  { id: 'institutional-deals', label: 'Bulk & Block Deals', Icon: Building2 },
+  { id: 'sector-performance', label: 'Sector Heatmap', Icon: PieChart },
+  { id: 'gift-nifty', label: 'GIFT Nifty', Icon: Globe },
+  { id: 'smf-screener', label: 'SMF Screener', Icon: Flame },
+  { id: 'hws-v1', label: 'HWS-V1 Setup', Icon: ShieldCheck },
+  { id: 'auction-v2', label: 'Auction Strategy V2', Icon: Award },
+  { id: 'gap-rs', label: 'Gap & RS Quant', Icon: BarChart3 },
+  { id: 'formula-diagnostics', label: 'Formula Diagnostics', Icon: Activity },
+  { id: 'holly', label: 'Holly AI Engine', Icon: Brain },
+  { id: 'segment-signals', label: 'Segment Signals', Icon: Target },
+  { id: 'correlation-matrix', label: 'Correlation Matrix', Icon: Layers },
+  { id: 'ai-analysis', label: 'AI Report', Icon: Zap },
+  { id: 'oi-ai', label: 'Live OI & Recs', Icon: Brain },
+  { id: 'news', label: 'News & Actions', Icon: Newspaper },
+  { id: 'backtest', label: 'Backtest', Icon: History },
+  { id: 'schedule', label: 'Hours & Holidays', Icon: Calendar },
+  { id: 'strategy-matrix', label: 'Target & SL Matrix', Icon: ShieldAlert },
+  { id: 'volatility', label: 'Market Volatility', Icon: BarChart3 },
+  { id: 'alerts', label: 'Alerts', Icon: AlertTriangle },
+  { id: 'broker', label: 'Broker API', Icon: Server },
+  { id: 'python-code', label: 'Python Export', Icon: ShieldCheck },
+];
+
 export const Header: React.FC<HeaderProps> = ({
   overview,
   broker,
@@ -267,52 +323,50 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Main Navigation bar */}
-      <div className="px-3 sm:px-6 py-3 flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+      {/* Top Brand, Mode & Controls Row */}
+      <div className="px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold shadow-md transition-all shrink-0 ${
+              className={`w-9 h-9 rounded-lg flex items-center justify-center font-semibold border transition-colors shrink-0 ${
                 isDark
-                  ? 'bg-gradient-to-br from-indigo-500 to-emerald-500 text-slate-950 shadow-indigo-500/10'
-                  : 'bg-gradient-to-br from-indigo-600 to-emerald-600 text-white shadow-indigo-500/20'
+                  ? 'bg-slate-900 border-slate-700 text-sky-400'
+                  : 'bg-slate-100 border-slate-300 text-sky-700'
               }`}
             >
-              <Zap className="w-5 h-5 fill-current" />
+              <Zap className="w-4 h-4" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-black italic tracking-tight uppercase whitespace-nowrap">
+                <h1 className="font-display text-base sm:text-lg font-semibold tracking-tight whitespace-nowrap">
                   INTRA-SCAN{' '}
                   <span
-                    className={`not-italic font-bold ${
-                      isDark ? 'text-emerald-400' : 'text-emerald-600'
+                    className={`font-semibold ${
+                      isDark ? 'text-sky-400' : 'text-sky-600'
                     }`}
                   >
                     AI v2.4
                   </span>
                 </h1>
                 <span
-                  className={`px-2 py-0.5 text-[10px] font-mono font-bold rounded tracking-widest uppercase border shrink-0 ${
-                    isDark
-                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                      : 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                  className={`font-mono text-[10px] font-medium tracking-wider uppercase shrink-0 ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
                   NSE 5M
                 </span>
               </div>
-              <p className="text-[10px] font-mono opacity-60 tracking-[0.18em] uppercase hidden sm:block">
-                NSE: NIFTY 200 UNIVERSE QUANT SCAN
+              <p className="text-[10.5px] font-display opacity-60 hidden sm:block">
+                NSE Nifty 200 Institutional Quant Terminal
               </p>
             </div>
           </div>
 
-          {/* Experience Mode Switcher (Pills) */}
+          {/* Formal Experience Mode Switcher */}
           {onToggleExperienceMode && (
             <div
-              className={`p-1 rounded-xl border flex items-center gap-1 text-xs font-bold shrink-0 ${
-                isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-100 border-slate-300'
+              className={`p-0.5 rounded-lg border flex items-center gap-0.5 text-xs font-display shrink-0 ${
+                isDark ? 'bg-slate-950/90 border-slate-800' : 'bg-slate-100 border-slate-200'
               }`}
             >
               <button
@@ -321,28 +375,36 @@ export const Header: React.FC<HeaderProps> = ({
                   onToggleExperienceMode('beginner');
                   setActiveTab('beginner-home');
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`h-7 px-2.5 rounded-md transition-[background-color,color] duration-200 flex items-center gap-1.5 cursor-pointer ${
                   experienceMode === 'beginner'
-                    ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
-                    : 'opacity-70 hover:opacity-100'
+                    ? isDark
+                      ? 'bg-slate-800 text-slate-50 font-semibold'
+                      : 'bg-white text-slate-950 font-semibold shadow-2xs'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200 font-medium'
+                    : 'text-slate-600 hover:text-slate-950 font-medium'
                 }`}
               >
-                <Sparkles className="w-3.5 h-3.5" />
+                <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="hidden sm:inline">Beginner</span>
               </button>
               <button
                 type="button"
                 onClick={() => {
                   onToggleExperienceMode('pro');
-                  if (activeTab === 'beginner-home') setActiveTab('v9-vega-greeks');
+                  if (activeTab === 'beginner-home') setActiveTab('agent-management');
                 }}
-                className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`h-7 px-2.5 rounded-md transition-[background-color,color] duration-200 flex items-center gap-1.5 cursor-pointer ${
                   experienceMode === 'pro'
-                    ? 'bg-purple-600 text-white font-black shadow-sm'
-                    : 'opacity-70 hover:opacity-100'
+                    ? isDark
+                      ? 'bg-slate-800 text-slate-50 font-semibold'
+                      : 'bg-white text-slate-950 font-semibold shadow-2xs'
+                    : isDark
+                    ? 'text-slate-400 hover:text-slate-200 font-medium'
+                    : 'text-slate-600 hover:text-slate-950 font-medium'
                 }`}
               >
-                <Zap className="w-3.5 h-3.5" />
+                <Zap className="w-3.5 h-3.5 text-sky-500" />
                 <span className="hidden sm:inline">Pro Quant</span>
               </button>
             </div>
@@ -378,675 +440,134 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Tab Navigation buttons */}
-        <div className="flex-1 max-w-full min-w-0">
-          <ScrollContainer isDark={isDark} scrollAmount={280}>
+        {/* Full-Width Formal Unified Navigation Menu Tabs (Dedicated Second Row) */}
+        <div
+          className={`order-last w-full pt-2.5 border-t ${
+            isDark ? 'border-slate-800/80' : 'border-slate-200/80'
+          }`}
+        >
+          <ScrollContainer isDark={isDark} scrollAmount={300}>
             <nav
-              className={`flex items-center gap-1 p-1 rounded-xl border text-xs font-mono font-bold uppercase transition-colors overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap scroll-smooth shrink-0 ${
+              role="tablist"
+              aria-label="Primary Workspace Navigation"
+              className={`flex items-center gap-1 p-1 rounded-xl border font-display transition-colors duration-200 overflow-x-auto max-w-full custom-scrollbar whitespace-nowrap scroll-smooth shrink-0 ${
                 isDark
-                  ? 'bg-slate-950/80 border-slate-800'
-                  : 'bg-slate-100 border-slate-200'
+                  ? 'bg-slate-950/85 border-slate-800/90'
+                  : 'bg-slate-100/90 border-slate-200/90'
               }`}
             >
+              {(experienceMode === 'beginner' ? BEGINNER_NAV_TABS : PRO_NAV_TABS).map(
+                ({ id, label, meta, Icon }) => {
+                  const isActive = activeTab === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => setActiveTab(id)}
+                      className={`group relative h-9 px-3.5 rounded-lg flex items-center gap-2 shrink-0 whitespace-nowrap border text-[12.5px] tracking-[-0.01em] leading-none cursor-pointer transition-[background-color,color,border-color,transform,box-shadow] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/60 ${
+                        isActive
+                          ? isDark
+                            ? 'bg-slate-800/95 text-slate-50 border-slate-700/90 font-semibold shadow-sm'
+                            : 'bg-white text-slate-950 border-slate-200/95 font-semibold shadow-sm'
+                          : isDark
+                          ? 'bg-transparent text-slate-400 border-transparent font-medium hover:text-slate-100 hover:bg-slate-900/80 hover:border-slate-800/80'
+                          : 'bg-transparent text-slate-600 border-transparent font-medium hover:text-slate-950 hover:bg-white/70 hover:border-slate-200/70'
+                      }`}
+                    >
+                      <Icon
+                        className={`w-3.5 h-3.5 shrink-0 transition-colors duration-200 ${
+                          isActive
+                            ? isDark
+                              ? 'text-sky-400'
+                              : 'text-sky-600'
+                            : isDark
+                            ? 'text-slate-500 group-hover:text-slate-300'
+                            : 'text-slate-400 group-hover:text-slate-700'
+                        }`}
+                      />
+                      <span>{label}</span>
+                      {meta && (
+                        <span
+                          className={`font-mono tabular-nums text-[10.5px] font-medium transition-colors duration-200 ${
+                            isActive
+                              ? isDark
+                                ? 'text-sky-400'
+                                : 'text-sky-600'
+                              : isDark
+                              ? 'text-slate-500 group-hover:text-slate-400'
+                              : 'text-slate-400 group-hover:text-slate-600'
+                          }`}
+                        >
+                          {meta}
+                        </span>
+                      )}
+                      <span
+                        aria-hidden="true"
+                        className={`pointer-events-none absolute left-3 right-3 bottom-0 h-[2px] rounded-full transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                          isDark ? 'bg-sky-400' : 'bg-sky-600'
+                        } ${isActive ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0 group-hover:opacity-35 group-hover:scale-x-75'}`}
+                      />
+                    </button>
+                  );
+                }
+              )}
+
+              <span
+                aria-hidden="true"
+                className={`w-px h-5 mx-1 shrink-0 ${isDark ? 'bg-slate-800' : 'bg-slate-300/80'}`}
+              />
+
               {experienceMode === 'beginner' ? (
-                <>
-                  <button
-                    onClick={() => setActiveTab('beginner-home')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'beginner-home'
-                        ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-md font-black ring-2 ring-emerald-400/40'
-                        : isDark
-                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
-                        : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                    }`}
-                  >
-                    <Sparkles className="w-3.5 h-3.5 fill-current" />
-                    <span>🌟 Beginner Dashboard</span>
-                    <span className="px-1.5 py-0.2 text-[9px] bg-slate-950 text-emerald-400 font-black rounded uppercase">
-                      EASY
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('momentum-dashboard')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'momentum-dashboard'
-                        ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-slate-950 border-amber-300 shadow-md font-black ring-2 ring-amber-400/40'
-                        : isDark
-                        ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
-                        : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
-                    }`}
-                  >
-                    <Flame className="w-3.5 h-3.5 text-amber-400 fill-current animate-bounce" />
-                    <span>⚡ Live Momentum Cockpit</span>
-                    <span className="px-1.5 py-0.2 text-[9px] bg-slate-950 text-amber-300 font-black rounded uppercase">
-                      TOP 15
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('tredye-dashboard')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'tredye-dashboard'
-                        ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 text-white border-indigo-400 shadow-md font-black ring-2 ring-indigo-400/40'
-                        : isDark
-                        ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/20'
-                        : 'bg-indigo-50 text-indigo-800 border-indigo-300 hover:bg-indigo-100'
-                    }`}
-                  >
-                    <Activity className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-                    <span>⚡ Tredye Flow Matrix</span>
-                    <span className="px-1.5 py-0.2 text-[9px] bg-slate-950 text-indigo-300 font-black rounded uppercase">
-                      PRO UI/UX
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('quant-screener')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'quant-screener'
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md font-black ring-2 ring-amber-400/40'
-                        : isDark
-                        ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
-                        : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
-                    }`}
-                  >
-                    <Flame className="w-3.5 h-3.5 text-amber-400 fill-current animate-pulse" />
-                    <span>🔥 Quant Screener Board</span>
-                    <span className="px-1.5 py-0.2 text-[9px] bg-slate-950 text-amber-400 font-black rounded uppercase">
-                      BUY/SALE
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('scanner')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'scanner'
-                        ? isDark
-                          ? 'bg-indigo-600 text-white shadow-md'
-                          : 'bg-white text-indigo-700 shadow-sm border-slate-200'
-                        : 'opacity-70 hover:opacity-100 border-transparent'
-                    }`}
-                  >
-                    <Activity className="w-3.5 h-3.5" />
-                    <span>Stock Screener</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('index-options')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'index-options'
-                        ? 'bg-cyan-600 text-white border-cyan-400 shadow-md font-black'
-                        : isDark
-                        ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/20'
-                        : 'bg-cyan-50 text-cyan-800 border-cyan-300 hover:bg-cyan-100'
-                    }`}
-                  >
-                    <Zap className="w-3.5 h-3.5 text-cyan-300" />
-                    <span>Options Radar</span>
-                    <span className="px-1.5 py-0.2 text-[9px] bg-cyan-400 text-slate-950 font-black rounded uppercase">
-                      CALL / PUT
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('sector-performance')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'sector-performance'
-                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30 font-black'
-                        : isDark
-                        ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/20'
-                        : 'bg-indigo-50 text-indigo-700 border-indigo-300 hover:bg-indigo-100'
-                    }`}
-                  >
-                    <PieChart className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Sector Heatmap &amp; RS</span>
-                    <span className="px-1.5 py-0.2 text-[9px] bg-indigo-500 text-white font-black rounded uppercase">
-                      HEATMAP
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('news')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'news'
-                        ? 'bg-amber-600 text-white border-amber-400 shadow-md font-black'
-                        : 'opacity-70 hover:opacity-100 border-transparent'
-                    }`}
-                  >
-                    <Newspaper className="w-3.5 h-3.5" />
-                    <span>Live Market News</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('schedule')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'schedule'
-                        ? 'bg-slate-700 text-white border-slate-500 shadow-md font-black'
-                        : 'opacity-70 hover:opacity-100 border-transparent'
-                    }`}
-                  >
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Market Timing</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('broker')}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                      activeTab === 'broker'
-                        ? 'bg-slate-700 text-white border-slate-500 shadow-md font-black'
-                        : 'opacity-70 hover:opacity-100 border-transparent'
-                    }`}
-                  >
-                    <Server className="w-3.5 h-3.5" />
-                    <span>Broker Account</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      onToggleExperienceMode?.('pro');
-                      setActiveTab('v9-vega-greeks');
-                    }}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ml-2 ${
-                      isDark
-                        ? 'bg-purple-600/20 text-purple-300 border-purple-500/40 hover:bg-purple-600/30'
-                        : 'bg-purple-100 text-purple-900 border-purple-300 hover:bg-purple-200'
-                    }`}
-                  >
-                    <Zap className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Switch to Pro Quant Mode ⚡</span>
-                  </button>
-                </>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onToggleExperienceMode?.('pro');
+                    setActiveTab('agent-management');
+                  }}
+                  className={`h-9 px-3.5 rounded-lg flex items-center gap-2 shrink-0 whitespace-nowrap border text-[12.5px] font-medium tracking-[-0.01em] leading-none cursor-pointer transition-[background-color,color,border-color,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98] ${
+                    isDark
+                      ? 'bg-slate-900/80 text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-white'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-950'
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5 text-sky-500" />
+                  <span>Pro Workspace</span>
+                </button>
               ) : (
                 <>
                   <button
+                    type="button"
                     onClick={() => {
                       onToggleExperienceMode?.('beginner');
                       setActiveTab('beginner-home');
                     }}
-                    className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border mr-1 ${
+                    className={`h-9 px-3.5 rounded-lg flex items-center gap-2 shrink-0 whitespace-nowrap border text-[12.5px] font-medium tracking-[-0.01em] leading-none cursor-pointer transition-[background-color,color,border-color,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98] ${
                       isDark
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
-                        : 'bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200'
+                        ? 'bg-slate-900/80 text-slate-300 border-slate-800 hover:bg-slate-800 hover:text-white'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-slate-950'
                     }`}
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>🔰 Beginner Mode</span>
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Beginner Mode</span>
                   </button>
-              <button
-                onClick={() => setActiveTab('v9-vega-greeks')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'v9-vega-greeks'
-                    ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 text-white border-purple-400 shadow-md shadow-purple-500/30 font-black ring-2 ring-purple-400/40'
-                    : isDark
-                    ? 'bg-purple-500/15 text-purple-300 border-purple-500/40 hover:bg-purple-500/25'
-                    : 'bg-purple-50 text-purple-900 border-purple-300 hover:bg-purple-100'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
-                <span>🚀 V9 Vega + Greeks Engine</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-gradient-to-r from-purple-400 to-emerald-400 text-slate-950 font-black rounded uppercase">
-                  V1→V9 QUANT
-                </span>
-              </button>
 
-              <button
-                onClick={() => setActiveTab('momentum-dashboard')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'momentum-dashboard'
-                    ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-slate-950 border-amber-300 shadow-md shadow-amber-500/30 font-black ring-2 ring-amber-400/50'
-                    : isDark
-                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                    : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                <Flame className="w-3.5 h-3.5 text-amber-400 fill-current animate-bounce" />
-                <span>⚡ Live Momentum Cockpit</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-slate-950 text-amber-300 font-black rounded uppercase">
-                  TOP 15 DYNAMIC
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('tredye-dashboard')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'tredye-dashboard'
-                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white border-indigo-400 shadow-md shadow-indigo-600/30 font-black ring-2 ring-indigo-400/50'
-                    : isDark
-                    ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/25'
-                    : 'bg-indigo-50 text-indigo-900 border-indigo-300 hover:bg-indigo-100'
-                }`}
-              >
-                <Activity className="w-3.5 h-3.5 text-indigo-300 animate-pulse" />
-                <span>⚡ Tredye Flow &amp; Divergence Matrix</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-indigo-400 text-slate-950 font-black rounded uppercase">
-                  TREDYE
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('quant-screener')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'quant-screener'
-                    ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-950 border-amber-300 shadow-md font-black ring-2 ring-amber-400/50'
-                    : isDark
-                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                    : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                <Flame className="w-3.5 h-3.5 text-amber-400 fill-current animate-pulse" />
-                <span>🔥 Quant Screener (Listed / Entry / Exit)</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-slate-950 text-amber-400 font-black rounded uppercase">
-                  5 MODELS
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('top-volume-fno')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'top-volume-fno'
-                    ? 'bg-gradient-to-r from-amber-500 via-orange-600 to-indigo-600 text-white border-amber-400 shadow-md shadow-amber-500/30 font-black'
-                    : isDark
-                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                    : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                <Flame className="w-3.5 h-3.5 text-amber-400 fill-current animate-pulse" />
-                <span>Top-Volume F&amp;O Engine</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-amber-400 text-slate-950 font-black rounded uppercase">
-                  TOP N
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('scanner')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'scanner'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Activity className="w-3.5 h-3.5" />
-                <span>Scanner</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('inst-scanner')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'inst-scanner'
-                    ? 'bg-purple-600 text-white border-purple-500 shadow-md shadow-purple-600/30 font-black'
-                    : isDark
-                    ? 'bg-purple-500/10 text-purple-300 border-purple-500/30 hover:bg-purple-500/20'
-                    : 'bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
-                <span>Institutional VWAP & OI Scanner</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-purple-500 text-white font-black rounded uppercase">
-                  PRO
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('smart-money-scanner')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'smart-money-scanner'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/30 font-black'
-                    : isDark
-                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                <span>Smart Money &amp; Accumulation Scanner</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-emerald-400 text-slate-950 font-black rounded uppercase">
-                  WYCKOFF + SMC
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('institutional-deals')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'institutional-deals'
-                    ? 'bg-blue-600 text-white border-blue-400 shadow-md shadow-blue-600/30 font-black'
-                    : isDark
-                    ? 'bg-blue-500/15 text-blue-300 border-blue-500/40 hover:bg-blue-500/25'
-                    : 'bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100'
-                }`}
-              >
-                <Building2 className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
-                <span>Bulk &amp; Block Deals</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-blue-400 text-slate-950 font-black rounded uppercase">
-                  FLOW
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('sector-performance')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'sector-performance'
-                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30 font-black'
-                    : isDark
-                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/20'
-                    : 'bg-indigo-50 text-indigo-700 border-indigo-300 hover:bg-indigo-100'
-                }`}
-              >
-                <PieChart className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Sector Heatmap &amp; RS</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-indigo-500 text-white font-black rounded uppercase">
-                  HEATMAP
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('gift-nifty')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'gift-nifty'
-                    ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/30 font-black'
-                    : isDark
-                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
-                    : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                <Globe className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                <span>GIFT Nifty AI</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-amber-400 text-slate-950 font-black rounded uppercase">
-                  LIVE
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('smf-screener')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'smf-screener'
-                    ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-600 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/40 font-black ring-2 ring-amber-400/50'
-                    : isDark
-                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                    : 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                <Flame className="w-3.5 h-3.5 text-amber-400 fill-current animate-pulse" />
-                <span>SMF Institutional Screener</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-gradient-to-r from-amber-400 to-orange-400 text-slate-950 font-black rounded uppercase">
-                  100 PTS • 8C
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('hws-v1')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'hws-v1'
-                    ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-600 text-white border-emerald-400 shadow-lg shadow-emerald-600/40 font-black ring-2 ring-emerald-400/40'
-                    : isDark
-                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25'
-                    : 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-300 animate-pulse" />
-                <span>HWS-V1 Institutional Setup</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-gradient-to-r from-emerald-400 to-teal-300 text-slate-950 font-black rounded uppercase">
-                  100 PTS • 5P
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('auction-v2')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'auction-v2'
-                    ? 'bg-gradient-to-r from-amber-600 via-orange-600 to-emerald-600 text-white border-amber-400 shadow-lg shadow-amber-600/40 font-black'
-                    : isDark
-                    ? 'bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25'
-                    : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                <Award className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                <span>Auction Strategy V2</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-gradient-to-r from-amber-400 to-emerald-400 text-slate-950 font-black rounded uppercase">
-                  AMT 70%
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('gap-rs')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'gap-rs'
-                    ? 'bg-amber-600 text-white border-amber-500 shadow-md shadow-amber-600/30 font-black'
-                    : isDark
-                    ? 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20'
-                    : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
-                }`}
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
-                <span>Gap &amp; RS Quant Scanner</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-emerald-400 text-slate-950 font-black rounded uppercase">
-                  100 PTS
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('formula-diagnostics')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'formula-diagnostics'
-                    ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30 font-black'
-                    : isDark
-                    ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/20'
-                    : 'bg-indigo-50 text-indigo-700 border-indigo-300 hover:bg-indigo-100'
-                }`}
-              >
-                <Activity className="w-3.5 h-3.5 text-indigo-300 animate-pulse" />
-                <span>Formula Diagnostics</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-indigo-400 text-slate-950 font-black rounded uppercase">
-                  7 VECTORS
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('holly')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'holly'
-                    ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 text-white border-purple-400 shadow-lg shadow-purple-600/40 font-black'
-                    : isDark
-                    ? 'bg-purple-500/15 text-purple-300 border-purple-500/40 hover:bg-purple-500/25'
-                    : 'bg-purple-50 text-purple-700 border-purple-300 hover:bg-purple-100'
-                }`}
-              >
-                <Brain className="w-3.5 h-3.5 text-pink-300 animate-pulse" />
-                <span>Holly AI Engine</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-gradient-to-r from-pink-400 to-purple-400 text-slate-950 font-black rounded uppercase">
-                  AI QUANT
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('segment-signals')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'segment-signals'
-                    ? 'bg-emerald-600 text-white border-emerald-500 shadow-md shadow-emerald-600/30 font-black'
-                    : isDark
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
-                    : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100'
-                }`}
-              >
-                <Target className="w-3.5 h-3.5 text-emerald-300 animate-pulse" />
-                <span>Segment Signals (BUY/SELL)</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-amber-400 text-slate-950 font-black rounded uppercase">
-                  90%+ ACC
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('correlation-matrix')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap border ${
-                  activeTab === 'correlation-matrix'
-                    ? 'bg-gradient-to-r from-teal-600 via-cyan-600 to-indigo-600 text-white border-cyan-400 shadow-lg shadow-cyan-600/30 font-black'
-                    : isDark
-                    ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/20'
-                    : 'bg-cyan-50 text-cyan-800 border-cyan-300 hover:bg-cyan-100'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
-                <span>Signal Correlation Matrix</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-cyan-400 text-slate-950 font-black rounded uppercase">
-                  CLUSTERS
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('ai-analysis')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'ai-analysis'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5" />
-                <span>AI Report</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('oi-ai')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'oi-ai'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Brain className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Live OI & AI Recs</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('news')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'news'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Newspaper className="w-3.5 h-3.5" />
-                <span>News & Actions</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('backtest')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'backtest'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <History className="w-3.5 h-3.5" />
-                <span>Backtest</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('schedule')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'schedule'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Calendar className="w-3.5 h-3.5" />
-                <span>Hours & Holidays</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('strategy-matrix')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'strategy-matrix'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
-                <span>Target & SL Matrix</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('volatility')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'volatility'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Market Volatility</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('alerts')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'alerts'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Alerts</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('broker')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'broker'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <Server className="w-3.5 h-3.5" />
-                <span>Broker API</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('python-code')}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  activeTab === 'python-code'
-                    ? isDark
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-white text-indigo-700 shadow-sm border border-slate-200/80'
-                    : 'opacity-70 hover:opacity-100'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Python Export</span>
-              </button>
-
-              <button
-                onClick={onOpenUtmModal}
-                className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap ${
-                  isDark
-                    ? 'text-emerald-400 hover:bg-emerald-500/10'
-                    : 'text-emerald-700 hover:bg-emerald-100'
-                }`}
-                title="Create UTM links for Mobile or Laptop sharing"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>UTM Link</span>
-              </button>
-            </>
-          )}
+                  <button
+                    type="button"
+                    onClick={onOpenUtmModal}
+                    className={`h-9 px-3.5 rounded-lg flex items-center gap-2 shrink-0 whitespace-nowrap border text-[12.5px] font-medium tracking-[-0.01em] leading-none cursor-pointer transition-[background-color,color,border-color,transform] duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-[0.98] ${
+                      isDark
+                        ? 'bg-transparent text-slate-400 border-transparent hover:bg-slate-900/80 hover:text-slate-100 hover:border-slate-800'
+                        : 'bg-transparent text-slate-600 border-transparent hover:bg-white/70 hover:text-slate-950 hover:border-slate-200'
+                    }`}
+                    title="Create UTM links for Mobile or Laptop sharing"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Share Link</span>
+                  </button>
+                </>
+              )}
             </nav>
           </ScrollContainer>
         </div>

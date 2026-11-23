@@ -39,6 +39,8 @@ import { TredyeQuantDashboardView } from './components/TredyeQuantDashboardView'
 import { StockDetailModal } from './components/StockDetailModal';
 import { TopPickCards } from './components/TopPickCards';
 import { UtmGeneratorModal } from './components/UtmGeneratorModal';
+import { AgentManagementDashboard } from './components/AgentManagementDashboard';
+import { BtstScannerDashboard } from './components/BtstScannerDashboard';
 import {
   INITIAL_BULK_ORDERS,
   INITIAL_CORPORATE_ACTIONS,
@@ -75,6 +77,17 @@ export default function App() {
   });
 
   const [activeTab, setActiveTab] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname.toLowerCase();
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = (params.get('tab') || '').toLowerCase();
+      if (pathname.includes('agent-management') || tabParam === 'agent-management') {
+        return 'agent-management';
+      }
+      if (pathname.includes('btst-scanner') || tabParam === 'btst-scanner') {
+        return 'btst-scanner';
+      }
+    }
     const savedMode = localStorage.getItem('app_experience_mode');
     return savedMode === 'pro' ? 'v9-vega-greeks' : 'beginner-home';
   });
@@ -462,32 +475,58 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pb-12">
-        {activeTab !== 'scanner' && activeTab !== 'beginner-home' && (
+        {activeTab !== 'scanner' && activeTab !== 'beginner-home' && activeTab !== 'agent-management' && activeTab !== 'btst-scanner' && (
           <div
-            className={`mb-5 flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl border shadow-lg backdrop-blur-md transition-colors ${
+            className={`mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl border transition-colors ${
               theme === 'light'
-                ? 'bg-white border-slate-200 text-slate-900 shadow-sm'
-                : 'bg-slate-900/80 border-slate-800/80 text-slate-100'
+                ? 'bg-white border-slate-200 text-slate-900'
+                : 'bg-slate-900/90 border-slate-800 text-slate-100'
             }`}
           >
             <button
+              type="button"
               onClick={() => setActiveTab(experienceMode === 'beginner' ? 'beginner-home' : 'scanner')}
-              className={`px-4 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 border transition-all cursor-pointer ${
-                theme === 'dark'
-                  ? 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-500 shadow-lg shadow-indigo-600/30'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-md'
+              className={`px-3 py-1.5 rounded-lg text-xs font-display font-medium flex items-center gap-2 border transition-colors cursor-pointer ${
+                theme === 'light'
+                  ? 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
+                  : 'bg-slate-950 hover:bg-slate-800 text-slate-200 border-slate-700'
               }`}
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>{experienceMode === 'beginner' ? '← Back to Beginner Dashboard' : '← Back to Master Scanner Dashboard'}</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{experienceMode === 'beginner' ? 'Back to Beginner Overview' : 'Back to Scanner'}</span>
             </button>
-            <div className="flex items-center gap-2 text-xs font-mono">
-              <span className="opacity-50">Current Page:</span>
-              <span className="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-bold uppercase">
-                {activeTab.replace('-', ' ')}
+            <div className="flex items-center gap-2 text-xs font-display">
+              <span className="opacity-55">Workspace</span>
+              <span aria-hidden="true" className="opacity-40">/</span>
+              <span className="font-semibold capitalize">
+                {activeTab.replace(/-/g, ' ')}
               </span>
             </div>
           </div>
+        )}
+
+        {activeTab === 'agent-management' && (
+          <AgentManagementDashboard
+            theme={theme}
+            onSelectSymbol={(sym) => {
+              const matched = stocks.find(
+                (s) => s.symbol.toUpperCase() === sym.toUpperCase()
+              );
+              if (matched) setSelectedStock(matched);
+            }}
+          />
+        )}
+
+        {activeTab === 'btst-scanner' && (
+          <BtstScannerDashboard
+            theme={theme}
+            onSelectSymbol={(sym) => {
+              const matched = stocks.find(
+                (s) => s.symbol.toUpperCase() === sym.toUpperCase()
+              );
+              if (matched) setSelectedStock(matched);
+            }}
+          />
         )}
 
         {activeTab === 'beginner-home' && (
@@ -974,9 +1013,9 @@ export default function App() {
           data-testid="ui-notification-stack"
           role="region"
           aria-label="Live Alert Notifications"
-          className="fixed top-20 right-4 z-50 flex flex-col gap-2.5 w-full max-w-sm pointer-events-none"
+          className="fixed bottom-4 right-4 z-40 flex flex-col gap-2 w-full max-w-xs sm:max-w-sm pointer-events-none"
         >
-          {uiNotifications.map(({ id, alert }) => {
+          {uiNotifications.slice(0, 2).map(({ id, alert }) => {
             const isCumDelta = alert.alertCategory === 'CUMULATIVE_DELTA';
             const isBullish =
               alert.cumulativeDeltaDirection === 'ABOVE' ||

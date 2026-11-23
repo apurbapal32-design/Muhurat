@@ -160,27 +160,158 @@
       padding: 1px 6px;
       border-radius: 4px;
     }
-    .sidebar-link {
+    /* =====================================================================
+       FORMAL UNIFIED NAVIGATION MENU SYSTEM (Plus Jakarta Sans + Smooth Motion)
+       ===================================================================== */
+    .sidebar-section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.55rem 0.75rem;
-      border-radius: 0.45rem;
-      font-size: 0.815rem;
-      color: #94a3b8;
+      padding: 0.45rem 0.65rem 0.3rem;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #64748b;
+      user-select: none;
+    }
+    .sidebar-section-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 10px;
+      font-weight: 500;
+      color: #475569;
+    }
+    .sidebar-link {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      min-height: 36px;
+      padding: 0.45rem 0.7rem 0.45rem 0.85rem;
+      border-radius: 0.5rem;
+      border: 1px solid transparent;
+      background: transparent;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-size: 12.5px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: #cbd5e1;
+      text-align: left;
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition:
+        background-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 180ms cubic-bezier(0.16, 1, 0.3, 1),
+        color 160ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sidebar-link::before {
+      content: '';
+      position: absolute;
+      left: 3px;
+      top: 7px;
+      bottom: 7px;
+      width: 3px;
+      border-radius: 999px;
+      background-color: #38bdf8;
+      opacity: 0;
+      transform: scaleY(0.3);
+      transition:
+        opacity 180ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
     }
     .sidebar-link:hover {
-      background-color: #121826;
-      color: #ffffff;
-      border-left: 2px solid var(--neon-cyan);
+      background-color: rgba(148, 163, 184, 0.08);
+      border-color: rgba(148, 163, 184, 0.14);
+      color: #f8fafc;
+      transform: translateX(2px);
+    }
+    .sidebar-link:hover::before {
+      opacity: 0.45;
+      transform: scaleY(0.75);
+    }
+    .sidebar-link:focus-visible {
+      outline: 2px solid #38bdf8;
+      outline-offset: 1px;
     }
     .sidebar-link.active {
-      background: linear-gradient(90deg, rgba(0, 229, 255, 0.12) 0%, rgba(13, 18, 31, 0.3) 100%);
-      color: var(--neon-cyan);
-      font-weight: 700;
-      border-left: 3px solid var(--neon-cyan);
+      background-color: rgba(14, 165, 233, 0.13);
+      border-color: rgba(56, 189, 248, 0.32);
+      color: #f8fafc;
+      font-weight: 600;
+      transform: translateX(0);
+    }
+    .sidebar-link.active::before {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+    .sidebar-link .nav-label-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-width: 0;
+      flex: 1;
+    }
+    .sidebar-link .nav-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .sidebar-link .nav-icon {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      color: #64748b;
+      transition: color 160ms cubic-bezier(0.16, 1, 0.3, 1), transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sidebar-link:hover .nav-icon,
+    .sidebar-link.active .nav-icon {
+      color: #38bdf8;
+    }
+    .sidebar-link .nav-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      font-size: 10.5px;
+      font-weight: 500;
+      color: #64748b;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: color 160ms ease;
+    }
+    .sidebar-link:hover .nav-meta {
+      color: #94a3b8;
+    }
+    .sidebar-link.active .nav-meta {
+      color: #7dd3fc;
+    }
+    .sidebar-link.nav-hidden {
+      display: none !important;
+    }
+    @keyframes navReveal {
+      from {
+        opacity: 0;
+        transform: translate3d(-6px, 0, 0);
+      }
+      to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+    }
+    #sidebar-drawer.drawer-open .sidebar-section-group {
+      animation: navReveal 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .sidebar-link,
+      .sidebar-link::before,
+      .sidebar-link .nav-icon,
+      #sidebar-drawer,
+      #sidebar-backdrop,
+      .animate-fade-in {
+        transition: none !important;
+        animation: none !important;
+      }
     }
 
     /* Heatmap Tile Micro-Transitions */
@@ -244,11 +375,8 @@
       animation: fadeInUpTab 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    .sidebar-link {
-      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-    }
     .sidebar-link:active {
-      transform: scale(0.97);
+      transform: scale(0.985);
     }
 
     /* Buildup Pills */
@@ -414,41 +542,9 @@
       z-index: 0;
     }
 
-    /* Fixed Curved Holographic Viewport Framing Brackets (From Photo) */
+    /* Disabled legacy neon viewport brackets for clean institutional framing */
     .cyber-viewport-bracket-left, .cyber-viewport-bracket-right {
-      position: fixed;
-      top: 58px;
-      bottom: 50px;
-      width: 18px;
-      pointer-events: none;
-      z-index: 45;
-      opacity: 0.85;
-      transition: opacity 0.3s ease;
-    }
-    .cyber-viewport-bracket-left {
-      left: 3px;
-      border-left: 2.5px solid #ff2865;
-      border-top: 2.5px solid #ff2865;
-      border-bottom: 2.5px solid #ff2865;
-      border-top-left-radius: 16px;
-      border-bottom-left-radius: 16px;
-      filter: drop-shadow(0 0 6px #ff2865) drop-shadow(0 0 14px rgba(255, 40, 101, 0.6));
-      animation: cyber-bracket-glow 3.5s infinite ease-in-out;
-    }
-    .cyber-viewport-bracket-right {
-      right: 3px;
-      border-right: 2.5px solid #ff2865;
-      border-top: 2.5px solid #ff2865;
-      border-bottom: 2.5px solid #ff2865;
-      border-top-right-radius: 16px;
-      border-bottom-right-radius: 16px;
-      filter: drop-shadow(0 0 6px #ff2865) drop-shadow(0 0 14px rgba(255, 40, 101, 0.6));
-      animation: cyber-bracket-glow 3.5s infinite ease-in-out;
-    }
-    @media (max-width: 768px) {
-      .cyber-viewport-bracket-left, .cyber-viewport-bracket-right {
-        display: none;
-      }
+      display: none !important;
     }
 
     /* Universal Cyber Glass Cards & Panels Across Entire Dashboard */
@@ -478,33 +574,30 @@
       box-shadow: 0 4px 25px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 40, 101, 0.35) !important;
     }
 
-    /* Sidebar Drawer Cyber Styling */
+    /* Formal Institutional Sidebar Surface */
     #sidebar-drawer {
-      background: rgba(11, 7, 24, 0.97) !important;
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-right: 1px solid rgba(138, 75, 255, 0.35) !important;
-      box-shadow: 10px 0 35px rgba(0, 0, 0, 0.85), inset -1px 0 20px rgba(120, 50, 255, 0.15) !important;
+      background: #0b1120 !important;
+      border-right: 1px solid #1e293b !important;
+      box-shadow: 12px 0 36px rgba(2, 6, 23, 0.72) !important;
     }
-
-    /* Sidebar Navigation Links */
-    .sidebar-link {
-      color: #cbd5e1 !important;
-      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-      border-left: 2px solid transparent !important;
+    .nav-search-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: 0.5rem;
+      padding: 0.45rem 0.65rem 0.45rem 2rem;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-size: 12px;
+      color: #f1f5f9;
+      outline: none;
+      transition: border-color 160ms ease, background-color 160ms ease;
     }
-    .sidebar-link:hover {
-      background: rgba(35, 18, 65, 0.6) !important;
-      color: #ffffff !important;
-      border-left: 2px solid #ff2865 !important;
-      box-shadow: 0 0 18px rgba(255, 40, 101, 0.3) !important;
+    .nav-search-input::placeholder {
+      color: #64748b;
     }
-    .sidebar-link.active {
-      background: linear-gradient(90deg, rgba(255, 40, 101, 0.24) 0%, rgba(138, 75, 255, 0.18) 50%, rgba(13, 8, 28, 0.5) 100%) !important;
-      color: #00e5ff !important;
-      font-weight: 700;
-      border-left: 3px solid #ff2865 !important;
-      box-shadow: 0 0 20px rgba(255, 40, 101, 0.4), inset 0 0 12px rgba(0, 229, 255, 0.15) !important;
+    .nav-search-input:focus {
+      border-color: #38bdf8;
+      background: #0b1326;
     }
 
     /* Cyber Tables Styling Across All 26 Tables */
@@ -531,13 +624,14 @@
       box-shadow: inset 3px 0 0 #ff2865, inset 0 0 18px rgba(255, 40, 101, 0.12) !important;
     }
 
-    /* Mobile Bottom Navigation Bar */
+    /* Formal Mobile Bottom Navigation Bar */
     #mobile-bottom-nav, nav[class*="fixed bottom-0"] {
-      background: rgba(12, 7, 26, 0.95) !important;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(138, 75, 255, 0.35) !important;
-      box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.85), 0 -1px 0 rgba(255, 40, 101, 0.3) !important;
+      background: rgba(11, 17, 32, 0.96) !important;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-top: 1px solid #1e293b !important;
+      box-shadow: 0 -8px 24px rgba(2, 6, 23, 0.65) !important;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     }
 
     /* Modal Windows (Order Modal, Signal Studio, Sentinel, News) */
@@ -559,6 +653,58 @@
       border-color: #00e5ff !important;
       box-shadow: 0 0 15px rgba(0, 229, 255, 0.45) !important;
       outline: none !important;
+    }
+
+    /* Scoped Formal Institutional Overrides for Navigation Drawer & Agent Management */
+    #sidebar-drawer input.nav-search-input,
+    #tab-ai-fleet-20 input,
+    #tab-ai-fleet-20 select {
+      background-color: #0f172a !important;
+      border-color: #1e293b !important;
+      color: #f1f5f9 !important;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+      box-shadow: none !important;
+    }
+    #sidebar-drawer input.nav-search-input:focus,
+    #tab-ai-fleet-20 input:focus,
+    #tab-ai-fleet-20 select:focus {
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2) !important;
+    }
+    #tab-ai-fleet-20 {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    #tab-ai-fleet-20 .card,
+    #tab-ai-fleet-20 .glass-panel,
+    #tab-ai-fleet-20 .glass-card {
+      background: #0f172a !important;
+      border-color: #1e293b !important;
+      box-shadow: 0 1px 2px rgba(2, 6, 23, 0.4) !important;
+      backdrop-filter: none !important;
+    }
+    #tab-ai-fleet-20 .card:hover,
+    #tab-ai-fleet-20 .glass-card:hover {
+      border-color: #334155 !important;
+      box-shadow: 0 4px 14px rgba(2, 6, 23, 0.45) !important;
+    }
+    #tab-ai-fleet-20 table thead {
+      background: #0b1120 !important;
+      border-bottom: 1px solid #1e293b !important;
+    }
+    #tab-ai-fleet-20 table thead th {
+      color: #94a3b8 !important;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.04em !important;
+      border-bottom: 1px solid #1e293b !important;
+    }
+    #tab-ai-fleet-20 table tbody tr {
+      border-bottom: 1px solid rgba(30, 41, 59, 0.85) !important;
+    }
+    #tab-ai-fleet-20 table tbody tr:hover {
+      background: rgba(30, 41, 59, 0.45) !important;
+      box-shadow: none !important;
     }
 
     /* Cyber Scrollbars */
@@ -789,25 +935,22 @@
         <!-- MOBILE SIDEBAR BACKDROP OVERLAY -->
     <div id="sidebar-backdrop" onclick="closeSidebarMenu()" class="backdrop-closed fixed inset-0 bg-black/75 backdrop-blur-md z-[55]"></div>
 
-    <aside id="sidebar-drawer" class="drawer-closed w-72 max-w-[85vw] bg-[#080b12] border-r border-[#172033] p-3.5 pb-24 md:pb-6 flex flex-col justify-between overflow-y-auto flex-shrink-0 z-[60] fixed inset-y-0 left-0 shadow-[15px_0_50px_rgba(0,0,0,0.9)]">
-      <div class="space-y-4">
-        <!-- Drawer Header with Auto-Close & Dock Controls (Desktop, Tablet, Mobile, APK) -->
-        <div class="flex items-center justify-between pb-2.5 mb-2 border-b border-[#172033]">
-          <div class="flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span class="font-bold text-white text-xs tracking-wider uppercase font-mono">Navigation Menu</span>
-          </div>
+    <aside id="sidebar-drawer" aria-label="Primary Navigation" class="drawer-closed w-72 max-w-[85vw] bg-[#0b1120] border-r border-slate-800 p-3.5 pb-24 md:pb-6 flex flex-col justify-between overflow-y-auto flex-shrink-0 z-[60] fixed inset-y-0 left-0">
+      <div class="space-y-3.5">
+        <!-- Formal Drawer Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <span class="font-semibold text-slate-100 text-[13px] tracking-tight">Navigation Menu</span>
           <div class="flex items-center gap-1.5">
-            <!-- Pin/Dock Toggle (Desktop & Tablet) -->
-            <button onclick="togglePinSidebar()" id="btn-pin-sidebar" class="hidden md:flex px-2 py-1 rounded-lg bg-[#121927] hover:bg-[#1a253d] active:scale-95 border border-[#23314f] text-[11px] font-mono text-slate-300 hover:text-cyan-300 transition items-center gap-1" title="Pin / Dock Sidebar side-by-side">
-              <span id="pin-icon">📌</span>
+            <button type="button" onclick="togglePinSidebar()" id="btn-pin-sidebar" class="hidden md:inline-flex px-2.5 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-[11px] font-medium text-slate-300 hover:text-white transition-colors items-center gap-1.5 cursor-pointer" title="Dock sidebar side-by-side">
+              <span id="pin-icon" aria-hidden="true" class="text-[10px]">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
+              </span>
               <span id="pin-label">Dock</span>
             </button>
 
-            <!-- Close Button with Smooth Slide Animation -->
-            <button onclick="closeSidebarMenu()" class="text-slate-400 hover:text-white px-2 py-1 rounded-lg bg-[#121927] hover:bg-[#1a253d] active:scale-95 border border-[#23314f] transition-all text-xs flex items-center gap-1 font-mono cursor-pointer" title="Close Menu (Auto-closes on tab click)">
+            <button type="button" onclick="closeSidebarMenu()" class="text-slate-400 hover:text-white px-2 py-1 rounded-md bg-slate-900 hover:bg-slate-800 border border-slate-700/80 transition-colors text-[11px] font-medium inline-flex items-center gap-1 cursor-pointer" title="Close Navigation Menu">
               <span>Close</span>
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
         </div>
@@ -838,272 +981,354 @@
           <svg class="w-3.5 h-3.5 text-amber-400 group-hover:translate-y-0.5 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
         </a>
 
-        <!-- Home: Muhurat Overview -->
-                <!-- Muhurat Home -->
-        <div id="nav-home" class="sidebar-link active" onclick="switchTab('home')" title="Muhurat Home">
-          <span class="flex items-center gap-2 font-semibold">
-            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-            Muhurat Home
-          </span>
+        <!-- Quick Navigation Search -->
+        <div class="relative">
+          <label for="sidebar-nav-filter" class="sr-only">Filter navigation tabs and scanners</label>
+          <svg class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+          <input id="sidebar-nav-filter" type="search" placeholder="Search tabs, scanners, agents..." oninput="filterSidebarNavigation(this.value)" onkeydown="handleSidebarSearchKeydown(event)" class="nav-search-input" autocomplete="off" />
         </div>
 
-        <!-- Section: Pre-Open Market Session (09:00 - 09:15 AM IST) -->
-        <div class="space-y-1 mb-2">
-          <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
-            <span>Pre-Open Session</span>
-            <span class="text-[9px] text-amber-300 font-mono font-bold animate-pulse">09:00 - 09:15 AM</span>
+        <!-- Section 1: Workspace & Command -->
+        <div class="sidebar-section-group space-y-0.5" data-nav-section="workspace">
+          <div class="sidebar-section-header">
+            <span>Workspace</span>
+            <span class="sidebar-section-meta">Core</span>
           </div>
-          <div id="nav-pre-open" class="sidebar-link border-l-2 border-amber-400 bg-amber-500/10 hover:bg-amber-500/20 cursor-pointer" onclick="switchTab('pre-open')" title="NSE / BSE Pre-Open Market Session (09:00 - 09:15 AM IST) - Equilibrium Price Discovery, Order Book & Gap Analytics">
-            <span class="flex items-center gap-1.5">
-              <span class="text-amber-400 text-sm">🌅</span>
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-300 to-rose-300 font-extrabold text-[11px]">Pre-Open Market Session</span>
+
+          <button type="button" id="nav-home" class="sidebar-link active" onclick="switchTab('home')" title="Muhurat Home">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              <span class="nav-label">Muhurat Home</span>
             </span>
-            <span class="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-amber-500/25 to-rose-500/25 text-amber-200 border border-amber-400/40 rounded font-mono font-bold animate-pulse">09:08 IEP</span>
-          </div>
-        </div>
+            <span class="nav-meta">Cockpit</span>
+          </button>
 
-        <!-- Claude AI Options Hub • ALL INDICES -->
-        <!-- Section: Support & Resistance • Fast Finder & Trap AI -->
-        <div class="space-y-1 mb-2">
-          <div class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
-            <span>Support & Resistance AI</span>
-            <span class="text-[9px] text-amber-300 font-mono font-bold animate-pulse">FAST S&amp;R</span>
-          </div>
-          <div id="nav-support-resistance" class="sidebar-link border-l-2 border-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 cursor-pointer" onclick="switchTab('support-resistance')" title="Fast Find Support &amp; Resistance for All F&amp;O Stocks &amp; Indices with Trap &amp; Breakout Strategies">
-            <span class="flex items-center gap-1.5">
-              <span class="text-cyan-400 text-sm">🎯</span>
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-amber-200 to-rose-300 font-extrabold text-[11px]">Fast S&amp;R Finder &amp; Trap AI</span>
+          <button type="button" id="nav-ai-fleet-20" class="sidebar-link" onclick="switchTab('ai-fleet-20')" title="Agent Management — 20 AI Agents, Assigned Scanners, Stock Lists & Active Stop-Loss Levels">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 4v5c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V7l7-4z"/><path stroke-linecap="round" stroke-linejoin="round" d="M9.5 12.2l1.8 1.8 3.5-3.8"/></svg>
+              <span class="nav-label">Agent Management</span>
             </span>
-            <span class="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-cyan-500/25 to-rose-500/25 text-cyan-200 border border-cyan-400/40 rounded font-mono font-bold animate-pulse">New AI Hub</span>
-          </div>
+            <span class="nav-meta">20 AI</span>
+          </button>
+
+          <button type="button" id="nav-btst-scanner" class="sidebar-link" onclick="switchTab('btst-scanner')" title="BTST Scanner — Closing Dominance & Overnight Edge (2:45 PM – 3:20 PM IST) · Vedant AI">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+              <span class="nav-label">BTST Scanner</span>
+            </span>
+            <span class="nav-meta">2:45–3:20</span>
+          </button>
+
+          <button type="button" id="nav-pre-open" class="sidebar-link" onclick="switchTab('pre-open')" title="NSE / BSE Pre-Open Market Session (09:00 - 09:15 IST)">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2"/></svg>
+              <span class="nav-label">Pre-Open Session</span>
+            </span>
+            <span class="nav-meta">09:08 IEP</span>
+          </button>
+
+          <button type="button" id="nav-support-resistance" class="sidebar-link" onclick="switchTab('support-resistance')" title="Support &amp; Resistance Finder and Trap AI">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M12 2v2m0 16v2M2 12h2m16 0h2"/></svg>
+              <span class="nav-label">Support &amp; Resistance</span>
+            </span>
+            <span class="nav-meta">Levels</span>
+          </button>
+
+          <button type="button" id="nav-indices-options" class="sidebar-link" onclick="switchTab('indices-options')" title="Claude AI Options Hub across All Indices">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              <span class="nav-label">AI Options Hub</span>
+            </span>
+            <span class="nav-meta">Indices</span>
+          </button>
         </div>
 
-        <div id="nav-indices-options" class="sidebar-link" onclick="switchTab('indices-options')" title="Claude AI Options Hub • ALL INDICES">
-          <span class="flex items-center gap-2 font-semibold">
-            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            Claude AI Options Hub
-          </span>
-          <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500/20 text-cyan-300 font-mono">ALL INDICES</span>
-        </div>
-
-        <!-- Section: Market Structure & Sector Heatmap -->
-        <div class="space-y-1">
-          <div class="text-[10px] font-bold text-cyan-400 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
+        <!-- Section 2: Market Structure -->
+        <div class="sidebar-section-group space-y-0.5 pt-2 border-t border-slate-800/80" data-nav-section="market-structure">
+          <div class="sidebar-section-header">
             <span>Market Structure</span>
-            <span class="text-[9px] text-emerald-400 font-mono font-bold">LIVE OI</span>
+            <span class="sidebar-section-meta">Live OI</span>
           </div>
-          <div id="nav-heatmap" class="sidebar-link" onclick="switchTab('heatmap')">
-            <span class="flex items-center gap-1.5 font-bold text-white">
-              <span>🗺 Full Sector Heatmap</span>
+
+          <button type="button" id="nav-heatmap" class="sidebar-link" onclick="switchTab('heatmap')">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              <span class="nav-label">Sector Heatmap</span>
             </span>
-            <span class="text-[10px] text-cyan-400 font-mono font-bold">12 SECTORS</span>
-          </div>
-          <div id="nav-sector-rank" class="sidebar-link" onclick="switchTab('sector-rank')">
-            <span>Sector Rotation & Rank</span>
-            <span class="text-[10px] text-emerald-400 font-mono font-bold">Turnover</span>
-          </div>
-          <div id="nav-nifty" class="sidebar-link" onclick="switchTab('nifty')">
-            <span>NIFTY Option Chain & CPR</span>
-            <span class="text-[10px] text-slate-400 font-mono">Max Pain</span>
-          </div>
-          <div id="nav-news" class="sidebar-link" onclick="switchTab('news')">
-            <span>News & Catalysts</span>
-            <span class="text-[10px] text-amber-400 font-mono font-bold">Sentiment</span>
-          </div>
+            <span class="nav-meta">12 Sectors</span>
+          </button>
+
+          <button type="button" id="nav-sector-rank" class="sidebar-link" onclick="switchTab('sector-rank')">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 7h4v4"/></svg>
+              <span class="nav-label">Sector Rotation</span>
+            </span>
+            <span class="nav-meta">Turnover</span>
+          </button>
+
+          <button type="button" id="nav-nifty" class="sidebar-link" onclick="switchTab('nifty')">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"/></svg>
+              <span class="nav-label">NIFTY Option Chain</span>
+            </span>
+            <span class="nav-meta">CPR</span>
+          </button>
+
+          <button type="button" id="nav-news" class="sidebar-link" onclick="switchTab('news')">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2"/></svg>
+              <span class="nav-label">News &amp; Catalysts</span>
+            </span>
+            <span class="nav-meta">Sentiment</span>
+          </button>
         </div>
 
-        <!-- Section: Candidate Engines -->
-        <div class="space-y-1">
-          <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
-            <span>Candidate Engines</span>
-            <span class="text-[9px] text-cyan-300 font-mono font-bold">20 SCANNERS &bull; 20 AI</span>
+        <!-- Section 3: 20 Scanners · 20 Dedicated AI Agents -->
+        <div class="sidebar-section-group space-y-0.5 pt-2 border-t border-slate-800/80" data-nav-section="scanners-20">
+          <div class="sidebar-section-header">
+            <span>20 Scanners · 20 AI</span>
+            <span class="sidebar-section-meta">09:20–15:15</span>
           </div>
-          <!-- 20 SCANNERS x 20 ASSIGNED AI AGENTS COMMAND HUB -->
-          <div id="nav-ai-fleet-20" class="sidebar-link border-l-2 border-cyan-400 bg-gradient-to-r from-cyan-500/15 to-emerald-500/10 hover:from-cyan-500/25 hover:to-emerald-500/20" onclick="switchTab('ai-fleet-20')" title="All 20 Scanners × 20 Dedicated AI Agents Managing Stock List, Entry, Trailing SL & Exit">
-            <span class="flex items-center gap-1.5">
-              <span>🤖</span>
-              <span class="text-cyan-200 font-extrabold text-[11px]">20 Scanners &bull; 20 AI Hub</span>
+
+          <button type="button" id="nav-momentum" class="sidebar-link" onclick="switchTab('momentum')" title="Scanner #01 Top Momentum — Aryan AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">01</span>
+              <span class="nav-label">Top Momentum</span>
             </span>
-            <span class="text-[9px] px-1.5 py-0.2 bg-emerald-500/25 text-emerald-200 border border-emerald-400/40 rounded font-mono font-bold">20×20</span>
-          </div>
-          <!-- NEXT-GEN 10-SKILL CLAUDE AI ASSISTANT & SENTINEL -->
-          <div id="nav-claude-10skills" class="sidebar-link" onclick="switchTab('claude-10skills')">
-            <span class="flex items-center gap-1.5">
-              <span class="text-cyan-400">🧠</span>
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-emerald-300 to-amber-300 font-extrabold text-[11px]">10-Skill AI &amp; Sentinel</span>
+            <span class="nav-meta">Aryan AI</span>
+          </button>
+
+          <button type="button" id="nav-money-flow" class="sidebar-link" onclick="switchTab('money-flow')" title="Scanner #02 Money Flow — Aria AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">02</span>
+              <span class="nav-label">Money Flow</span>
             </span>
-            <span class="text-[9px] px-1.5 py-0.2 bg-cyan-500/20 text-cyan-200 border border-cyan-400/40 rounded font-mono font-bold">v5.0 PRO</span>
-          </div>
-          <!-- NEW: WORLD #1 AI TRADING STRATEGY • ⚡ OMNI-QUANTUM DEEP ALPHA v4.0 -->
-          <div id="nav-world-strategy" class="sidebar-link" onclick="switchTab('world-strategy')">
-            <span class="flex items-center gap-1.5">
-              <span class="text-amber-400">⚡</span>
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-cyan-300 font-extrabold text-[11px]">World #1 AI Strategy</span>
+            <span class="nav-meta">Aria AI</span>
+          </button>
+
+          <button type="button" id="nav-most-active-fno" class="sidebar-link" onclick="switchTab('most-active-fno')" title="Scanner #03 Most Active F&amp;O — Kabir AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">03</span>
+              <span class="nav-label">Most Active F&amp;O</span>
             </span>
-            <span class="text-[9px] px-1.5 py-0.2 bg-gradient-to-r from-amber-500/25 via-emerald-500/25 to-cyan-500/25 text-amber-200 border border-amber-400/40 rounded font-mono font-bold animate-pulse">Omni v4.0</span>
-          </div>
-          <div id="nav-money-flow" class="sidebar-link border-l-2 border-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20" onclick="switchTab('money-flow')" title="Smart Money Flow + Supertrend(10,2) + Hull Suite(HMA 55) + BOS/CHoCH + Order Block">
-            <span class="flex items-center gap-1.5">
-              <span>🌊 Money Flow</span>
-              <span class="text-[9px] px-1 py-0.2 bg-cyan-500/25 text-cyan-200 border border-cyan-400/40 rounded font-bold">New</span>
+            <span class="nav-meta">Kabir AI</span>
+          </button>
+
+          <button type="button" id="nav-claude-fno" class="sidebar-link" onclick="switchTab('claude-fno')" title="Scanner #04 Claude F&amp;O Scorecard — Ananya AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">04</span>
+              <span class="nav-label">Claude F&amp;O 10-Pt</span>
             </span>
-            <span class="text-[10px] text-cyan-300 font-mono font-bold">ST &bull; HMA55</span>
-          </div>
-          <div id="nav-most-active-fno" class="sidebar-link border-l-2 border-amber-400 bg-amber-500/10 hover:bg-amber-500/20" onclick="switchTab('most-active-fno')" title="Most Active FNO & (Index Options): PDH/PDL, ORB 15m, HH/HL & LH/LL, Body Strength, S&R Breakout, Raw Traded Volume, 09:20-14:45 Entry, OI Change & R:R">
-            <span class="flex items-center gap-1.5">
-              <span>🔥 Most Active FNO &amp; (Index Options)</span>
-              <span class="text-[9px] px-1 py-0.2 bg-amber-500/25 text-amber-200 border border-amber-400/40 rounded font-bold">Pro</span>
+            <span class="nav-meta">Ananya AI</span>
+          </button>
+
+          <button type="button" id="nav-smart-money-concepts" class="sidebar-link" onclick="switchTab('smart-money-concepts')" title="Scanner #05 Smart Money Concepts (ICT) — Rohan AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">05</span>
+              <span class="nav-label">Smart Money (ICT)</span>
             </span>
-            <span class="text-[10px] text-amber-300 font-mono font-bold">FNO &bull; OPT</span>
-          </div>
-          <div id="nav-claude-fno" class="sidebar-link border-l-2 border-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20" onclick="switchTab('claude-fno')" title="Claude FNO & (Index Options): 10-Point Scorecard (Score>=8, VWAP, 1H+30m), Top Vol+Val Overlap, Entry/SL/Target/Qty(1% Risk)/1:2 RR & 2% Daily Loss Halt">
-            <span class="flex items-center gap-1.5">
-              <span>⚡ Claude FNO &amp; (Index Options)</span>
-              <span class="text-[9px] px-1 py-0.2 bg-emerald-500/25 text-emerald-200 border border-emerald-400/40 rounded font-bold">10-PT</span>
+            <span class="nav-meta">Rohan AI</span>
+          </button>
+
+          <button type="button" id="nav-price-action" class="sidebar-link" onclick="switchTab('price-action')" title="Scanner #06 Price Action 9/9 — Diya AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">06</span>
+              <span class="nav-label">Price Action 9/9</span>
             </span>
-            <span class="text-[10px] text-emerald-300 font-mono font-bold">1:2 RR &bull; OPT</span>
-          </div>
-          <div id="nav-smart-money-concepts" class="sidebar-link border-l-2 border-purple-400 bg-purple-500/10 hover:bg-purple-500/20" onclick="switchTab('smart-money-concepts')" title="Smart Money Concepts (ICT): Market Structure (SH/SL, HH/HL, LH/LL, BOS, CHoCH), Liquidity Sweeps (BSL/SSL/EQH/EQL), 3-Candle FVG & CE, Order Blocks & Breakers, Premium/Discount & OTE 0.705, 5-Point Checklist & Position Sizing">
-            <span class="flex items-center gap-1.5">
-              <span>🏛️ Smart Money Concepts</span>
-              <span class="text-[9px] px-1 py-0.2 bg-purple-500/25 text-purple-200 border border-purple-400/40 rounded font-bold">ICT</span>
+            <span class="nav-meta">Diya AI</span>
+          </button>
+
+          <button type="button" id="nav-apex-alpha" class="sidebar-link" onclick="switchTab('apex-alpha')" title="Scanner #07 Apex Alpha Strategy — Siddharth AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">07</span>
+              <span class="nav-label">Apex Alpha</span>
             </span>
-            <span class="text-[10px] text-purple-300 font-mono font-bold">BOS &bull; FVG &bull; OB</span>
-          </div>
-          <div id="nav-price-action" class="sidebar-link border-l-2 border-teal-400 bg-teal-500/10 hover:bg-teal-500/20" onclick="switchTab('price-action')" title="Price Action: 14 Institutional Modules (Market Structure, S&R, Volume/RVOL, Candle Strength, Breakout, Demand/Supply, Liquidity Sweep, BOS/CHoCH, VWAP-Free ORB, RS vs NIFTY, MTF Alignment, R:R >= 2) & Exact 9/9 BUY/SELL Signal Gate">
-            <span class="flex items-center gap-1.5">
-              <span>📐 Price Action</span>
-              <span class="text-[9px] px-1 py-0.2 bg-teal-500/25 text-teal-200 border border-teal-400/40 rounded font-bold">9/9</span>
+            <span class="nav-meta">Siddharth</span>
+          </button>
+
+          <button type="button" id="nav-intraday-stock" class="sidebar-link" onclick="switchTab('intraday-stock')" title="Scanner #08 Intraday Stock DFC 5m — Kavya AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">08</span>
+              <span class="nav-label">Intraday DFC 5m</span>
             </span>
-            <span class="text-[10px] text-teal-300 font-mono font-bold">14-MOD &bull; D&amp;S</span>
-          </div>
-          <div id="nav-apex-alpha" class="sidebar-link" onclick="switchTab('apex-alpha')" title="Apex Alpha Strategy (Backtested #1): VWAP Compression Coil + PDH/PDL Reclaim + NIFTY/Sector Regime & +0.9R Trail Lock">
-            <span class="flex items-center gap-1.5">
-              <span>🏆 Apex Alpha Strategy</span>
-              <span class="text-[9px] px-1 py-0.2 bg-emerald-500/20 text-emerald-300 border border-emerald-400/35 rounded font-bold">PF 1.87</span>
+            <span class="nav-meta">Kavya AI</span>
+          </button>
+
+          <button type="button" id="nav-strong" class="sidebar-link" onclick="switchTab('strong')" title="Scanner #09 Muhurat Strong — Arjun AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">09</span>
+              <span class="nav-label">Muhurat Strong</span>
             </span>
-            <span class="text-[10px] text-emerald-300 font-mono font-bold">61.2% WIN</span>
-          </div>
-          <div id="nav-intraday-stock" class="sidebar-link border-l-2 border-orange-400 bg-orange-500/10 hover:bg-orange-500/20" onclick="switchTab('intraday-stock')" title="Intraday Stock (Secret Formula): 5m Day First Candle (DFC) High/Low Closing Breakout, Next Qualified Entry Candle, Gap Up/Down vs PDH/PDL, SL = DFC Low/High, Target 1 = DFC HL Diff & Target 2 @ 3:25 PM">
-            <span class="flex items-center gap-1.5">
-              <span>🎯 Intraday Stock</span>
-              <span class="text-[9px] px-1 py-0.2 bg-orange-500/25 text-orange-200 border border-orange-400/40 rounded font-bold">DFC 5m</span>
+            <span class="nav-meta">Arjun AI</span>
+          </button>
+
+          <button type="button" id="nav-sonic" class="sidebar-link" onclick="switchTab('sonic')" title="Scanner #10 Muhurat Pulse — Nisha AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">10</span>
+              <span class="nav-label">Muhurat Pulse</span>
             </span>
-            <span class="text-[10px] text-orange-300 font-mono font-bold">HL &bull; 3:25</span>
-          </div>
-          <div id="nav-strong" class="sidebar-link" onclick="switchTab('strong')">
-            <span>Muhurat Strong</span>
-            <span class="text-[10px] text-emerald-400 font-mono font-bold">ORB 15m</span>
-          </div>
-          <div id="nav-sonic" class="sidebar-link" onclick="switchTab('sonic')">
-            <span>Muhurat Pulse</span>
-            <span class="text-[10px] text-amber-400 font-mono font-bold">RVOL &bull; OI</span>
-          </div>
-          <div id="nav-titan" class="sidebar-link" onclick="switchTab('titan')">
-            <span>Muhurat Flow</span>
-            <span class="text-[10px] text-sky-400 font-mono font-bold">Whales</span>
-          </div>
-          <div id="nav-elite" class="sidebar-link" onclick="switchTab('elite')">
-            <span class="flex items-center gap-1.5">
-              <span>Muhurat Elite</span>
-              <span class="text-[9px] px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded font-bold">New</span>
+            <span class="nav-meta">Nisha AI</span>
+          </button>
+
+          <button type="button" id="nav-titan" class="sidebar-link" onclick="switchTab('titan')" title="Scanner #11 Muhurat Flow — Dev AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">11</span>
+              <span class="nav-label">Muhurat Flow</span>
             </span>
-            <span class="text-[10px] text-rose-400 font-mono font-bold">3m Squeeze</span>
-          </div>
-          <div id="nav-elite-pro" class="sidebar-link" onclick="switchTab('elite-pro')">
-            <span class="flex items-center gap-1.5">
-              <span>Muhurat Elite Pro</span>
-              <span class="text-[9px] px-1 py-0.2 bg-amber-500/20 text-amber-300 rounded font-bold">New</span>
+            <span class="nav-meta">Dev AI</span>
+          </button>
+
+          <button type="button" id="nav-elite" class="sidebar-link" onclick="switchTab('elite')" title="Scanner #12 Muhurat Elite — Riya AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">12</span>
+              <span class="nav-label">Muhurat Elite</span>
             </span>
-            <span class="text-[10px] text-rose-400 font-mono font-bold">6m Waves</span>
-          </div>
-          <div id="nav-titan-cash" class="sidebar-link" onclick="switchTab('titan-cash')">
-            <span>Muhurat Flow Cash</span>
-            <span class="text-[10px] text-rose-400 font-mono font-bold">Delivery Dist</span>
-          </div>
-          <div id="nav-cloud-ai" class="sidebar-link" onclick="switchTab('cloud-ai')">
-            <span class="flex items-center gap-1.5">
-              <span>Claude AI Trading Skill</span>
-              <span class="text-[9px] px-1 py-0.2 bg-purple-500/20 text-purple-300 rounded font-bold animate-pulse">Signals</span>
+            <span class="nav-meta">Riya AI</span>
+          </button>
+
+          <button type="button" id="nav-elite-pro" class="sidebar-link" onclick="switchTab('elite-pro')" title="Scanner #13 Muhurat Elite Pro — Ishaan AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">13</span>
+              <span class="nav-label">Muhurat Elite Pro</span>
             </span>
-            <span class="text-[10px] text-purple-400 font-mono font-bold">Auto Setups</span>
-          </div>
-          <div id="nav-momentum" class="sidebar-link" onclick="switchTab('momentum')">
-            <span>Top Momentum</span>
-            <span class="text-[10px] text-emerald-400 font-mono font-bold">Up &bull; Down</span>
-          </div>
-          <div id="nav-liquidity" class="sidebar-link" onclick="switchTab('liquidity')">
-            <span>Market Liquidity</span>
-            <span class="text-[10px] text-amber-400 font-mono font-bold">Top Traded</span>
-          </div>
-          <div id="nav-vwap-surge" class="sidebar-link border-l-2 border-sky-400 bg-sky-500/10 hover:bg-sky-500/20" onclick="switchTab('vwap-surge')" title="Scanner #19 — VWAP Deviation & Gamma Surge managed by Agent #19 Vikram AI (He)">
-            <span class="flex items-center gap-1.5">
-              <span>⚡ VWAP Gamma Surge</span>
-              <span class="text-[9px] px-1 py-0.2 bg-sky-500/25 text-sky-200 border border-sky-400/40 rounded font-bold">#19</span>
+            <span class="nav-meta">Ishaan AI</span>
+          </button>
+
+          <button type="button" id="nav-titan-cash" class="sidebar-link" onclick="switchTab('titan-cash')" title="Scanner #14 Muhurat Flow Cash — Tara AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">14</span>
+              <span class="nav-label">Muhurat Flow Cash</span>
             </span>
-            <span class="text-[10px] text-sky-300 font-mono font-bold">Vikram AI</span>
-          </div>
-          <div id="nav-oi-short-cover" class="sidebar-link border-l-2 border-fuchsia-400 bg-fuchsia-500/10 hover:bg-fuchsia-500/20" onclick="switchTab('oi-short-cover')" title="Scanner #20 — OI Breakout & Short-Covering Trap managed by Agent #20 Meera AI (She)">
-            <span class="flex items-center gap-1.5">
-              <span>🧲 OI Short-Cover Trap</span>
-              <span class="text-[9px] px-1 py-0.2 bg-fuchsia-500/25 text-fuchsia-200 border border-fuchsia-400/40 rounded font-bold">#20</span>
+            <span class="nav-meta">Tara AI</span>
+          </button>
+
+          <button type="button" id="nav-cloud-ai" class="sidebar-link" onclick="switchTab('cloud-ai')" title="Scanner #15 Claude AI Trading Skill — Nikhil AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">15</span>
+              <span class="nav-label">Claude AI Signals</span>
             </span>
-            <span class="text-[10px] text-fuchsia-300 font-mono font-bold">Meera AI</span>
-          </div>
+            <span class="nav-meta">Nikhil AI</span>
+          </button>
+
+          <button type="button" id="nav-world-strategy" class="sidebar-link" onclick="switchTab('world-strategy')" title="Scanner #16 World AI Strategy — Priya AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">16</span>
+              <span class="nav-label">World AI Strategy</span>
+            </span>
+            <span class="nav-meta">Priya AI</span>
+          </button>
+
+          <button type="button" id="nav-claude-10skills" class="sidebar-link" onclick="switchTab('claude-10skills')" title="Scanner #17 10-Skill AI &amp; Sentinel — Vivaan AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">17</span>
+              <span class="nav-label">10-Skill Sentinel</span>
+            </span>
+            <span class="nav-meta">Vivaan AI</span>
+          </button>
+
+          <button type="button" id="nav-liquidity" class="sidebar-link" onclick="switchTab('liquidity')" title="Scanner #18 Market Liquidity — Zoya AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">18</span>
+              <span class="nav-label">Market Liquidity</span>
+            </span>
+            <span class="nav-meta">Zoya AI</span>
+          </button>
+
+          <button type="button" id="nav-vwap-surge" class="sidebar-link" onclick="switchTab('vwap-surge')" title="Scanner #19 VWAP Deviation &amp; Gamma Surge — Vikram AI (He)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">19</span>
+              <span class="nav-label">VWAP Gamma Surge</span>
+            </span>
+            <span class="nav-meta">Vikram AI</span>
+          </button>
+
+          <button type="button" id="nav-oi-short-cover" class="sidebar-link" onclick="switchTab('oi-short-cover')" title="Scanner #20 OI Breakout &amp; Short-Cover Trap — Meera AI (She)">
+            <span class="nav-label-wrap">
+              <span class="nav-meta w-5">20</span>
+              <span class="nav-label">OI Short-Cover Trap</span>
+            </span>
+            <span class="nav-meta">Meera AI</span>
+          </button>
         </div>
 
-        <!-- Section: Administration & Admin Plan -->
-        <div class="space-y-1">
-          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1 flex items-center justify-between">
-            <span>Administration</span>
-            <span class="text-[9px] text-amber-400 font-mono font-bold">ADMIN PLAN</span>
+        <!-- Section 4: Tools & Administration -->
+        <div class="sidebar-section-group space-y-0.5 pt-2 border-t border-slate-800/80" data-nav-section="tools">
+          <div class="sidebar-section-header">
+            <span>Tools &amp; Admin</span>
+            <span class="sidebar-section-meta">Desk</span>
           </div>
-          <div id="nav-admin-plan" class="sidebar-link" onclick="switchTab('admin-plan')">
-            <span class="flex items-center gap-1.5">
-              <span>👑 Admin Plan Control</span>
+
+          <button type="button" id="nav-watchlist" class="sidebar-link" onclick="switchTab('watchlist')">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+              <span class="nav-label">Watchlist</span>
             </span>
-            <span class="px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[9px] font-extrabold font-mono">MASTER</span>
-          </div>
+            <span class="nav-meta" id="watchlist-count-badge">218</span>
+          </button>
+
+          <button type="button" id="nav-journal" class="sidebar-link" onclick="switchTab('journal')">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              <span class="nav-label">AI Trading Journal</span>
+            </span>
+            <span id="nav-journal-quota-badge" class="nav-meta">0/5 AI</span>
+          </button>
+
+          <button type="button" id="nav-custom-tables" class="sidebar-link" onclick="switchTab('custom-tables')">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 3v18M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+              <span class="nav-label">Custom Tables</span>
+            </span>
+            <span class="nav-meta">Filter</span>
+          </button>
+
+          <button type="button" id="nav-admin-plan" class="sidebar-link" onclick="switchTab('admin-plan')">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span class="nav-label">Admin Plan Control</span>
+            </span>
+            <span class="nav-meta">Master</span>
+          </button>
         </div>
 
-        <!-- Section: Tools -->
-        <div class="space-y-1">
-          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">Tools</div>
-          <div id="nav-watchlist" class="sidebar-link" onclick="switchTab('watchlist')">
-            <span>Watchlist</span>
-            <span class="badge-lock text-cyan-400" id="watchlist-count-badge">218 STOCKS</span>
+        <!-- Section 5: Learning Center -->
+        <div class="sidebar-section-group space-y-0.5 pt-2 border-t border-slate-800/80" data-nav-section="learning">
+          <div class="sidebar-section-header">
+            <span>Learning Center</span>
+            <span class="sidebar-section-meta">Guides</span>
           </div>
-          <div id="nav-journal" class="sidebar-link" onclick="switchTab('journal')">
-            <span>AI Trading Journal</span>
-            <span id="nav-journal-quota-badge" class="badge-lock text-emerald-400 tabular-nums">0/5 AI</span>
-          </div>
-          <div id="nav-custom-tables" class="sidebar-link" onclick="switchTab('custom-tables')">
-            <span>Custom Tables</span>
-            <span class="badge-lock">Multi-filter</span>
-          </div>
+
+          <button type="button" id="nav-learn-started" class="sidebar-link" onclick="switchTab('learn-started')">
+            <span class="nav-label-wrap">
+              <span class="nav-label">How to Get Started</span>
+            </span>
+          </button>
+          <button type="button" id="nav-learn-ai" class="sidebar-link" onclick="switchTab('learn-ai')">
+            <span class="nav-label-wrap">
+              <span class="nav-label">Advanced AI Indicator</span>
+            </span>
+          </button>
+          <button type="button" id="nav-learn-strategy" class="sidebar-link" onclick="switchTab('learn-strategy')">
+            <span class="nav-label-wrap">
+              <span class="nav-label">Stock Selection Strategy</span>
+            </span>
+          </button>
+          <button type="button" id="nav-learn-nifty" class="sidebar-link" onclick="switchTab('learn-nifty')">
+            <span class="nav-label-wrap">
+              <span class="nav-label">Nifty Strategy</span>
+            </span>
+          </button>
         </div>
 
-        <!-- Section: Learning Center -->
-        <div class="space-y-1">
-          <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-1">Learning Center</div>
-          <div id="nav-learn-started" class="sidebar-link" onclick="switchTab('learn-started')">
-            <span>How to Get Started</span>
-          </div>
-          <div id="nav-learn-ai" class="sidebar-link" onclick="switchTab('learn-ai')">
-            <span>Advanced AI Indicator</span>
-          </div>
-          <div id="nav-learn-strategy" class="sidebar-link" onclick="switchTab('learn-strategy')">
-            <span>Stock Selection Strategy</span>
-          </div>
-          <div id="nav-learn-nifty" class="sidebar-link" onclick="switchTab('learn-nifty')">
-            <span>Nifty Strategy</span>
-          </div>
+        <div id="sidebar-nav-empty" class="hidden py-6 text-center text-xs text-slate-500">
+          No matching tabs found.
         </div>
       </div>
 
-      <div class="pt-4 mt-4 border-t border-[#172033] text-[10px] font-mono text-slate-500">
-        <div class="text-cyan-400 font-extrabold tracking-wider">Finwurl Enterprises Private Limited &bull; <span class="text-amber-400 font-bold">Powered by FinURL</span></div>
-        <div class="text-emerald-400">Upstox & Autonomous Live Feed</div>
+      <div class="pt-4 mt-4 border-t border-slate-800/80 text-[11px] text-slate-500 space-y-0.5">
+        <div class="text-slate-300 font-medium">Finwurl Enterprises Private Limited</div>
+        <div class="text-[10px] font-mono text-slate-500">Upstox API &amp; Autonomous Live Feed</div>
       </div>
     </aside>
 
@@ -5957,64 +6182,108 @@
       </section>
 
       <!-- ============================================================ -->
-      <!-- TAB: 20 SCANNERS × 20 ASSIGNED AI AGENTS COMMAND CENTER      -->
+      <!-- TAB: AGENT MANAGEMENT — 20 AI AGENTS & ACTIVE STOP-LOSSES    -->
       <!-- ============================================================ -->
-      <section id="tab-ai-fleet-20" class="tab-pane hidden space-y-5 font-mono">
-        <div class="card p-4 md:p-5 rounded-2xl border border-cyan-500/40 bg-gradient-to-br from-[#081020] via-[#0c1428] to-[#111226] shadow-2xl">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b border-[#1c273c]">
+      <section id="tab-ai-fleet-20" class="tab-pane hidden space-y-5">
+        <div class="rounded-xl border border-slate-800 bg-[#0f172a] p-5">
+          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-4 border-b border-slate-800">
             <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-black text-[10px]">🤖 20 SCANNERS &times; 20 AI AGENTS</span>
-                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-black text-[10px]">🔒 5 CORE RULES LOCKED</span>
-                <h2 class="text-base md:text-lg font-black text-white">20 SCANNERS &bull; 20 DEDICATED AI TRADE MANAGEMENT AGENTS</h2>
+              <div class="flex items-center gap-2 flex-wrap text-xs text-slate-400">
+                <span>Autonomous Trade Operations</span>
+                <span aria-hidden="true">/</span>
+                <span class="font-mono tabular-nums">20 Dedicated AI Agents</span>
+                <span aria-hidden="true">&middot;</span>
+                <span id="fleet20-phase-badge" class="font-mono tabular-nums text-slate-300">09:20–15:15 IST Scan &middot; 23:59 Flush</span>
+                <span aria-hidden="true">&middot;</span>
+                <span id="fleet20-vix-badge" class="font-mono tabular-nums font-medium text-sky-400">India VIX -- &middot; Syncing Vol</span>
               </div>
-              <p class="text-xs text-slate-300 mt-1 font-sans">
-                Every single scanner (#01 to #20) is assigned its own dedicated AI Agent (10 He + 10 She) managing Stock List (Best 10 UP &amp; Best 10 DOWN), Entry, Initial SL, +1R Breakeven Trail, T1 Partial Book (+1.5R), T2 Exit (+2.5R), and 15:15 Square-Off with zero fake signals.
+              <h2 class="text-xl font-semibold tracking-tight text-slate-100 mt-1">Agent Management</h2>
+              <p class="text-xs text-slate-400 mt-1 max-w-3xl leading-relaxed">
+                Live operational status of all 20 scanner-assigned AI agents (10 He, 10 She), their assigned scanner, current stock list, active stop-loss levels, and per-agent Autonomous Volatility Optimization.
               </p>
             </div>
-            <div class="flex items-center gap-2 flex-wrap text-[11px]">
-              <span id="fleet20-phase-badge" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/35 font-bold">🕒 09:20–15:15 SCAN • 11:59 PM FLUSH</span>
-              <button type="button" onclick="Fleet20Client.refresh()" class="px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-black cursor-pointer">↻ Refresh All 20 Agents</button>
+            <div class="flex items-center gap-2 flex-wrap text-xs shrink-0">
+              <button type="button" id="fleet20-bulk-auto-opt-btn" onclick="Fleet20Client.toggleBulkAutoOpt()" class="px-3.5 py-2 rounded-lg border border-slate-700 bg-[#0b1120] hover:bg-slate-800 text-slate-200 font-medium transition-colors cursor-pointer whitespace-nowrap">
+                Enable All Auto-Opt (0/20)
+              </button>
+              <button type="button" id="fleet20-global-reset-btn" data-testid="dash-global-reset-btn" onclick="Fleet20Client.openGlobalResetModal()" class="px-3.5 py-2 rounded-lg border border-rose-500/35 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-medium transition-colors cursor-pointer whitespace-nowrap">
+                Global Reset
+              </button>
+              <a href="/agent-management" class="px-3.5 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium transition-colors whitespace-nowrap">
+                Full Agent Workspace &rarr;
+              </a>
+              <button type="button" onclick="Fleet20Client.refresh()" class="px-3.5 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold transition-colors cursor-pointer whitespace-nowrap">
+                Refresh Agents
+              </button>
             </div>
           </div>
 
-          <!-- Global Fleet KPI Bar -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 my-4 text-center">
-            <div class="p-2.5 rounded-xl bg-[#070c17] border border-[#1a2640]">
-              <div class="text-[9.5px] text-slate-400 uppercase font-bold">Total Scanners</div>
-              <div id="fleet20-kpi-scanners" class="text-white font-black text-base mt-0.5">20 / 20</div>
+          <!-- Active Global Reset Banner -->
+          <div id="fleet20-reset-banner" data-testid="dash-global-reset-banner" role="status" class="hidden mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-100">
+            <div>
+              <span class="font-semibold text-amber-300">Global Reset Active</span>
+              <span id="fleet20-reset-banner-text" class="text-amber-200/90"> — All 20 AI agent statuses, stop-loss levels, Autonomous Optimization switches, and profit counters were cleared.</span>
             </div>
-            <div class="p-2.5 rounded-xl bg-[#070c17] border border-[#1a2640]">
-              <div class="text-[9.5px] text-slate-400 uppercase font-bold">Assigned AI Agents</div>
-              <div id="fleet20-kpi-agents" class="text-cyan-300 font-black text-base mt-0.5">20 (10 He / 10 She)</div>
+            <button type="button" id="fleet20-resume-btn" data-testid="dash-resume-fleet-btn" onclick="Fleet20Client.resumeLiveFleet()" class="px-3.5 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0">
+              Resume Live Scan
+            </button>
+          </div>
+
+          <!-- Global Fleet KPI Bar (Single Elevation, Hairline Dividers) -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-800 border-b border-slate-800 my-4 bg-[#0b1120] rounded-lg border">
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Active Agents</div>
+              <div id="fleet20-kpi-scanners" class="text-slate-100 font-mono tabular-nums font-semibold text-lg mt-0.5">20 / 20</div>
             </div>
-            <div class="p-2.5 rounded-xl bg-[#070c17] border border-[#1a2640]">
-              <div class="text-[9.5px] text-slate-400 uppercase font-bold">Managed Trades</div>
-              <div id="fleet20-kpi-trades" class="text-white font-black text-base mt-0.5">0 (0▲/0▼)</div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Autonomous Opt</div>
+              <div id="fleet20-kpi-agents" class="text-sky-400 font-mono tabular-nums font-semibold text-lg mt-0.5">0 / 20 ON</div>
+              <div id="fleet20-kpi-autoopt-sub" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">0 vol-shifted SL</div>
             </div>
-            <div class="p-2.5 rounded-xl bg-[#070c17] border border-[#1a2640]">
-              <div class="text-[9.5px] text-slate-400 uppercase font-bold">Trail / T2 Exits</div>
-              <div id="fleet20-kpi-exits" class="text-emerald-300 font-black text-base mt-0.5">0 / 0</div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Managed Stocks</div>
+              <div id="fleet20-kpi-trades" class="text-slate-100 font-mono tabular-nums font-semibold text-lg mt-0.5">0</div>
+              <div id="fleet20-kpi-trades-sub" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">0 UP &middot; 0 DOWN</div>
             </div>
-            <div class="p-2.5 rounded-xl bg-[#070c17] border border-[#1a2640]">
-              <div class="text-[9.5px] text-slate-400 uppercase font-bold">Fleet Win Rate</div>
-              <div id="fleet20-kpi-winrate" class="text-amber-300 font-black text-base mt-0.5">0.0%</div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Trailing SL / T2 Exits</div>
+              <div id="fleet20-kpi-exits" class="text-emerald-400 font-mono tabular-nums font-semibold text-lg mt-0.5">0 / 0</div>
             </div>
-            <div class="p-2.5 rounded-xl bg-[#070c17] border border-[#1a2640]">
-              <div class="text-[9.5px] text-slate-400 uppercase font-bold">Total Live P&amp;L</div>
-              <div id="fleet20-kpi-pnl" class="text-emerald-400 font-black text-base mt-0.5">₹0</div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Fleet Win Rate</div>
+              <div id="fleet20-kpi-winrate" class="text-slate-100 font-mono tabular-nums font-semibold text-lg mt-0.5">0.0%</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Fleet Live P&amp;L</div>
+              <div id="fleet20-kpi-pnl" class="text-emerald-400 font-mono tabular-nums font-semibold text-lg mt-0.5">₹0</div>
             </div>
           </div>
 
-          <!-- Filter Bar for the 20 Scanners / Agents -->
-          <div class="flex items-center justify-between flex-wrap gap-2 mb-3 text-[11px]">
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <button type="button" onclick="Fleet20Client.setGenderFilter('ALL')" id="fleet20-gender-ALL" class="px-2.5 py-1 rounded-lg bg-cyan-500 text-black font-black cursor-pointer">All 20 Agents</button>
-              <button type="button" onclick="Fleet20Client.setGenderFilter('He')" id="fleet20-gender-He" class="px-2.5 py-1 rounded-lg bg-[#131e33] text-emerald-300 border border-emerald-500/30 font-bold cursor-pointer">👨‍💼 He Agents (10)</button>
-              <button type="button" onclick="Fleet20Client.setGenderFilter('She')" id="fleet20-gender-She" class="px-2.5 py-1 rounded-lg bg-[#131e33] text-rose-300 border border-rose-500/30 font-bold cursor-pointer">👩‍💼 She Agents (10)</button>
+          <!-- Filter & Search Bar for the 20 Agents -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 mb-4 text-xs">
+            <div class="relative flex-1 max-w-sm">
+              <label for="fleet20-search-input" class="sr-only">Search agent, assigned scanner, or stock symbol</label>
+              <svg class="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+              <input id="fleet20-search-input" type="search" oninput="Fleet20Client.setSearchQuery(this.value)" placeholder="Search agent, scanner, or stock symbol..." class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0b1120] border border-slate-800 text-slate-100 placeholder:text-slate-500 text-xs outline-none focus:border-sky-500" />
             </div>
-            <div class="flex items-center gap-1.5 flex-wrap">
-              <select id="fleet20-category-select" onchange="Fleet20Client.setCategoryFilter(this.value)" aria-label="Filter Scanners by Category" class="bg-[#0d1526] text-slate-200 border border-[#243452] rounded-lg px-2.5 py-1 text-[11px] font-bold">
+
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="inline-flex items-center p-0.5 rounded-lg bg-[#0b1120] border border-slate-800" role="group" aria-label="Filter agents by He or She">
+                <button type="button" onclick="Fleet20Client.setGenderFilter('ALL')" id="fleet20-gender-ALL" class="px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer transition-colors">All 20</button>
+                <button type="button" onclick="Fleet20Client.setGenderFilter('He')" id="fleet20-gender-He" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">He (10)</button>
+                <button type="button" onclick="Fleet20Client.setGenderFilter('She')" id="fleet20-gender-She" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">She (10)</button>
+              </div>
+
+              <select id="fleet20-status-select" onchange="Fleet20Client.setStatusFilter(this.value)" aria-label="Filter Agents by Stop-Loss Status" class="bg-[#0b1120] text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-medium outline-none focus:border-sky-500">
+                <option value="ALL">All Statuses</option>
+                <option value="ACTIVE_OPEN">Open Stop-Loss</option>
+                <option value="TRAILING_SL">Trailing SL Protected</option>
+                <option value="WATCH_SL">Tight SL Watch (&le;1%)</option>
+                <option value="AUTO_OPT">Autonomous Opt ON</option>
+                <option value="STANDBY">Standby (0 Stocks)</option>
+              </select>
+
+              <select id="fleet20-category-select" onchange="Fleet20Client.setCategoryFilter(this.value)" aria-label="Filter Scanners by Category" class="bg-[#0b1120] text-slate-200 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs font-medium outline-none focus:border-sky-500">
                 <option value="ALL">All Categories (20)</option>
                 <option value="MOMENTUM">Momentum</option>
                 <option value="ORDER_FLOW">Order Flow</option>
@@ -6026,50 +6295,139 @@
             </div>
           </div>
 
-          <!-- 20-Scanner × 20-Agent Roster Grid -->
-          <div id="fleet20-roster-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-            <div class="col-span-full py-8 text-center text-slate-400">Loading 20 Scanners &amp; 20 AI Agents...</div>
+          <!-- Session Performance Summary Table (Win/Loss Ratio & Total Profit Realized) -->
+          <div id="fleet20-perf-summary-panel" class="mb-5 rounded-xl border border-slate-800 bg-[#0b1120] overflow-hidden">
+            <div class="px-4 py-3.5 border-b border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h3 class="text-sm font-semibold text-slate-100">Session Performance Summary</h3>
+                  <span id="fleet20-perf-agent-count" class="text-[11px] font-mono tabular-nums text-slate-400">(20 Agents)</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">
+                  Current trading session Win/Loss ratio and total profit realized (T2 exits, 50% T1 partial bookings, and closed exits). Click headers to sort or click a row to inspect stop-loss levels.
+                </p>
+              </div>
+              <div class="flex items-center gap-4 shrink-0 text-xs">
+                <div>
+                  <div class="text-[10.5px] text-slate-400">Fleet Win/Loss Ratio</div>
+                  <div id="fleet20-perf-fleet-wl" class="font-mono tabular-nums font-semibold text-slate-100 mt-0.5">&mdash;</div>
+                </div>
+                <div class="w-px h-7 bg-slate-800" aria-hidden="true"></div>
+                <div>
+                  <div class="text-[10.5px] text-slate-400">Total Profit Realized</div>
+                  <div id="fleet20-perf-fleet-realized" class="font-mono tabular-nums font-semibold text-emerald-400 mt-0.5">₹0</div>
+                </div>
+              </div>
+            </div>
+            <div class="overflow-x-auto max-h-[360px] overflow-y-auto custom-scrollbar">
+              <table id="table-fleet20-performance" class="w-full text-left border-collapse text-xs">
+                <thead class="sticky top-0 z-10 bg-[#090e1a] border-b border-slate-800">
+                  <tr class="text-[11px] text-slate-400">
+                    <th class="py-2.5 pl-4 pr-2.5 whitespace-nowrap">
+                      <button type="button" onclick="Fleet20Client.sortPerformanceTable('rank')" class="inline-flex items-center gap-1 hover:text-sky-400 transition-colors cursor-pointer font-semibold">AI Agent <span id="perf-sort-rank" class="text-[10px] opacity-60">↕</span></button>
+                    </th>
+                    <th class="py-2.5 px-2.5 whitespace-nowrap font-semibold">Assigned Scanner</th>
+                    <th class="py-2.5 px-2.5 text-right whitespace-nowrap">
+                      <button type="button" onclick="Fleet20Client.sortPerformanceTable('totalTrades')" class="inline-flex items-center gap-1 hover:text-sky-400 transition-colors cursor-pointer font-semibold">Session Trades <span id="perf-sort-totalTrades" class="text-[10px] opacity-60">↕</span></button>
+                    </th>
+                    <th class="py-2.5 px-2.5 text-right whitespace-nowrap font-semibold">Wins / Losses</th>
+                    <th class="py-2.5 px-2.5 text-right whitespace-nowrap">
+                      <button type="button" onclick="Fleet20Client.sortPerformanceTable('winLossRatio')" class="inline-flex items-center gap-1 hover:text-sky-400 transition-colors cursor-pointer font-semibold">Win/Loss Ratio <span id="perf-sort-winLossRatio" class="text-[10px] opacity-60">↕</span></button>
+                    </th>
+                    <th class="py-2.5 px-2.5 text-right whitespace-nowrap">
+                      <button type="button" onclick="Fleet20Client.sortPerformanceTable('winRatePct')" class="inline-flex items-center gap-1 hover:text-sky-400 transition-colors cursor-pointer font-semibold">Win Rate <span id="perf-sort-winRatePct" class="text-[10px] opacity-60">↕</span></button>
+                    </th>
+                    <th class="py-2.5 px-2.5 text-right whitespace-nowrap">
+                      <button type="button" onclick="Fleet20Client.sortPerformanceTable('realizedPnlRs')" class="inline-flex items-center gap-1 hover:text-sky-400 transition-colors cursor-pointer font-semibold">Profit Realized <span id="perf-sort-realizedPnlRs" class="text-[10px] text-sky-400">↓</span></button>
+                    </th>
+                    <th class="py-2.5 px-2.5 text-right whitespace-nowrap font-semibold">Open P&amp;L</th>
+                    <th class="py-2.5 pl-2.5 pr-4 text-right whitespace-nowrap">
+                      <button type="button" onclick="Fleet20Client.sortPerformanceTable('totalSessionPnlRs')" class="inline-flex items-center gap-1 hover:text-sky-400 transition-colors cursor-pointer font-semibold">Total Session P&amp;L <span id="perf-sort-totalSessionPnlRs" class="text-[10px] opacity-60">↕</span></button>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-fleet20-performance" class="divide-y divide-slate-800/80">
+                  <tr><td colspan="9" class="py-6 text-center text-slate-400 text-xs">Loading session performance for all 20 AI agents...</td></tr>
+                </tbody>
+                <tfoot id="tfoot-fleet20-performance" class="sticky bottom-0 z-10 bg-[#090e1a] border-t border-slate-700 text-slate-100 font-semibold"></tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- 20-Agent Management Grid (Status, Assigned Scanner, Stock List & Active Stop-Loss Levels) -->
+          <div id="fleet20-roster-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5">
+            <div class="col-span-full py-8 text-center text-slate-400 text-xs">Loading 20 AI agents and active stop-loss levels...</div>
           </div>
         </div>
 
-        <!-- Selected Scanner + Assigned AI Agent Trade Management Ledger -->
-        <div id="fleet20-inspector-panel" class="card p-4 md:p-5 rounded-2xl border border-emerald-500/35 bg-[#09111f] shadow-2xl">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[#1c273c] mb-3">
+        <!-- Selected Agent Stock List & Active Stop-Loss Levels Inspector -->
+        <div id="fleet20-inspector-panel" class="rounded-xl border border-slate-800 bg-[#0f172a] p-5">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-slate-800 mb-4">
             <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span id="fleet20-sel-badge" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-black text-[10px]">SCANNER #01 &bull; AI-AGENT-01</span>
-                <h3 id="fleet20-sel-title" class="text-sm md:text-base font-black text-white">Top Momentum (Order Flow) &mdash; Managed by Aryan AI (He)</h3>
-              </div>
-              <p id="fleet20-sel-subtitle" class="text-[11px] text-slate-300 mt-1 font-sans">Formula &amp; Risk Mandate loading...</p>
+              <div id="fleet20-sel-badge" class="text-xs font-mono tabular-nums text-slate-400">Scanner 01 &middot; AI-AGENT-01</div>
+              <h3 id="fleet20-sel-title" class="text-base font-semibold text-slate-100 mt-0.5">Aryan AI (He) &mdash; Top Momentum (Order Flow)</h3>
+              <p id="fleet20-sel-subtitle" class="text-xs text-slate-400 mt-0.5">Loading assigned scanner mandate and active stop-loss levels...</p>
             </div>
-            <div class="flex items-center gap-1.5 flex-wrap text-[11px]">
-              <button type="button" onclick="Fleet20Client.setInspectorSide('ALL')" id="fleet20-side-ALL" class="px-2.5 py-1 rounded-lg bg-cyan-500 text-black font-black cursor-pointer">All</button>
-              <button type="button" onclick="Fleet20Client.setInspectorSide('BUY')" id="fleet20-side-BUY" class="px-2.5 py-1 rounded-lg bg-[#131e33] text-emerald-300 border border-emerald-500/30 font-bold cursor-pointer">▲ UP Best 10</button>
-              <button type="button" onclick="Fleet20Client.setInspectorSide('SELL')" id="fleet20-side-SELL" class="px-2.5 py-1 rounded-lg bg-[#131e33] text-rose-300 border border-rose-500/30 font-bold cursor-pointer">▼ DOWN Best 10</button>
-              <button type="button" id="fleet20-open-tab-btn" onclick="Fleet20Client.openSelectedScannerTab()" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 font-bold cursor-pointer">Open Full Scanner Tab &rarr;</button>
+            <div class="flex items-center gap-2 flex-wrap text-xs">
+              <div id="fleet20-inspector-autoopt-wrap" class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border border-slate-800 bg-[#0b1120] text-slate-300">
+                <span id="fleet20-inspector-autoopt-label" class="font-medium whitespace-nowrap">Autonomous Opt</span>
+                <button type="button" role="switch" aria-checked="false" id="fleet20-inspector-autoopt-toggle" onclick="Fleet20Client.toggleSelectedInspectorAutoOpt()" class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-slate-700 bg-slate-800 transition-colors cursor-pointer">
+                  <span id="fleet20-inspector-autoopt-knob" aria-hidden="true" class="inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform translate-x-0.5"></span>
+                </button>
+              </div>
+              <div class="inline-flex items-center p-0.5 rounded-lg bg-[#0b1120] border border-slate-800">
+                <button type="button" onclick="Fleet20Client.setInspectorSide('ALL')" id="fleet20-side-ALL" class="px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer">All</button>
+                <button type="button" onclick="Fleet20Client.setInspectorSide('BUY')" id="fleet20-side-BUY" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer">Buy (UP)</button>
+                <button type="button" onclick="Fleet20Client.setInspectorSide('SELL')" id="fleet20-side-SELL" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer">Sell (DOWN)</button>
+              </div>
+              <button type="button" id="fleet20-open-tab-btn" onclick="Fleet20Client.openSelectedScannerTab()" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 font-medium cursor-pointer transition-colors">Open Scanner Tab &rarr;</button>
             </div>
           </div>
 
-          <div class="overflow-x-auto rounded-xl border border-[#172033] bg-[#070b14]">
-            <table id="table-fleet20-inspector" class="w-full text-left border-collapse text-[11px] font-mono">
+          <div class="overflow-x-auto rounded-lg border border-slate-800 bg-[#0b1120]">
+            <table id="table-fleet20-inspector" class="w-full text-left border-collapse text-xs">
               <thead>
-                <tr class="bg-[#0d1526] text-slate-400 border-b border-[#1c273c] text-[10px] uppercase">
-                  <th class="py-2 px-2.5">Symbol &amp; Qty</th>
-                  <th class="py-2 px-2">Side</th>
-                  <th class="py-2 px-2">Listed At (Z&rarr;A)</th>
-                  <th class="py-2 px-2 text-right">Agent Entry</th>
-                  <th class="py-2 px-2 text-right">Live LTP</th>
-                  <th class="py-2 px-2 text-right">Init / Active SL</th>
-                  <th class="py-2 px-2 text-right">T1 / T2</th>
-                  <th class="py-2 px-2 text-right">RVOL / VolX / ADX</th>
-                  <th class="py-2 px-2 text-right">Live R / P&amp;L</th>
-                  <th class="py-2 px-2.5">AI Agent Exit &amp; SL Directive</th>
+                <tr class="bg-[#090e1a] text-slate-400 border-b border-slate-800 text-[11px]">
+                  <th class="py-2.5 px-3 font-medium">Stock &amp; Qty</th>
+                  <th class="py-2.5 px-2.5 font-medium">Direction</th>
+                  <th class="py-2.5 px-2.5 font-medium">Listed At (Z&rarr;A)</th>
+                  <th class="py-2.5 px-2.5 text-right font-medium">Entry / LTP</th>
+                  <th class="py-2.5 px-2.5 text-right font-medium">Active SL / Init SL</th>
+                  <th class="py-2.5 px-2.5 font-medium min-w-[175px]">SL Cushion &amp; Ladder</th>
+                  <th class="py-2.5 px-2.5 text-right font-medium">T1 / T2</th>
+                  <th class="py-2.5 px-2.5 text-right font-medium">RVOL / VolX / ADX</th>
+                  <th class="py-2.5 px-2.5 text-right font-medium">Live R / P&amp;L</th>
+                  <th class="py-2.5 px-3 font-medium">Agent SL &amp; Exit Action</th>
                 </tr>
               </thead>
-              <tbody id="tbody-fleet20-inspector">
-                <tr><td colspan="10" class="py-5 text-center text-slate-400">Select any of the 20 Scanners above to inspect its AI Agent stock list...</td></tr>
+              <tbody id="tbody-fleet20-inspector" class="divide-y divide-slate-800/80">
+                <tr><td colspan="10" class="py-6 text-center text-slate-400">Select any of the 20 AI agents above to inspect its stock list and active stop-loss levels...</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Global Reset Confirmation Dialog -->
+        <div id="modal-fleet20-global-reset" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80" onclick="if (event.target === this) Fleet20Client.closeGlobalResetModal()">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="dash-reset-dialog-title" aria-describedby="dash-reset-dialog-desc" data-testid="dash-global-reset-dialog" class="w-full max-w-md rounded-xl border border-slate-700 bg-[#0f172a] p-6 text-slate-100 shadow-2xl">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 id="dash-reset-dialog-title" class="text-base font-semibold tracking-tight text-slate-100">Confirm Global Reset (All 20 Agents)</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Resets fleet statuses, stop-loss levels, and session profit counters</p>
+              </div>
+              <button type="button" aria-label="Close confirmation dialog" onclick="Fleet20Client.closeGlobalResetModal()" class="p-1 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-100 cursor-pointer">&times;</button>
+            </div>
+            <div id="dash-reset-dialog-desc" class="mt-4 space-y-3 text-xs text-slate-300 leading-relaxed">
+              <p>This will immediately reset all <strong class="font-semibold text-slate-100">20 AI agents</strong> to a clean standby baseline:</p>
+              <ul id="dash-reset-dialog-summary" class="rounded-lg border border-slate-800 bg-[#0b1120] p-3.5 space-y-2 font-mono tabular-nums text-[11.5px] text-slate-300">
+                <li class="flex items-center justify-between gap-2"><span>Agent Statuses</span><span class="font-semibold">All 20 &rarr; Reset &middot; Standby</span></li>
+              </ul>
+              <p class="text-slate-400">Live scanning remains paused in Standby until you click <strong class="text-slate-200">Resume Live Scan</strong>.</p>
+            </div>
+            <div class="mt-5 pt-4 border-t border-slate-800 flex items-center justify-end gap-2.5">
+              <button type="button" data-testid="dash-global-reset-cancel-btn" onclick="Fleet20Client.closeGlobalResetModal()" class="px-3.5 py-2 text-xs font-medium rounded-lg border border-slate-700 bg-[#0b1120] text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
+              <button type="button" id="fleet20-confirm-reset-btn" data-testid="dash-global-reset-confirm-btn" onclick="Fleet20Client.confirmGlobalReset()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-500 text-white transition-colors cursor-pointer">Confirm Global Reset</button>
+            </div>
           </div>
         </div>
       </section>
@@ -6178,6 +6536,182 @@
               </thead>
               <tbody id="tbody-oi-short-cover">
                 <tr><td colspan="10" class="py-5 text-center text-slate-400">Syncing Meera AI (Scanner #20)...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TAB: BTST SCANNER — CLOSING DOMINANCE & OVERNIGHT EDGE       -->
+      <!-- Recommended Scan Window: 2:45 PM – 3:20 PM IST · Vedant AI   -->
+      <!-- ============================================================ -->
+      <section id="tab-btst-scanner" class="tab-pane hidden space-y-5">
+        <div class="rounded-xl border border-slate-800 bg-[#0f172a] p-5">
+          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-4 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap text-xs text-slate-400">
+                <span>Overnight Institutional Scanner</span>
+                <span aria-hidden="true">/</span>
+                <span class="font-mono tabular-nums text-sky-400 font-medium">Recommended Scan Window: 2:45 PM – 3:20 PM IST</span>
+                <span aria-hidden="true">&middot;</span>
+                <span id="btst-window-phase-label" class="font-mono tabular-nums text-slate-300">Syncing IST Window...</span>
+              </div>
+              <h2 class="text-xl font-semibold tracking-tight text-slate-100 mt-1">BTST Scanner &mdash; Closing Dominance &amp; Overnight Edge</h2>
+              <p class="text-xs text-slate-400 mt-1 max-w-3xl leading-relaxed">
+                Screens NSE 200 equities for institutional closing accumulation (BTST Best 10 UP) and closing distribution (STBT Best 10 DOWN) passing CLV range dominance, Rule 3 liquidity (RVOL &gt; 2.00, Vol Bazaar X-Time &gt; 1.00X, ADX 25+), VWAP/EMA(9/21) authority, and F&amp;O carry conviction. Managed end-to-end by <strong class="text-slate-200">Vedant AI (AI-AGENT-BTST)</strong>.
+              </p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap text-xs shrink-0">
+              <a href="/btst-scanner" class="px-3.5 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium transition-colors whitespace-nowrap">
+                Dedicated BTST View &rarr;
+              </a>
+              <button type="button" id="btst-btn-formula" onclick="BtstScannerClient.toggleFormula()" class="px-3.5 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium transition-colors cursor-pointer whitespace-nowrap">
+                BTST Formula
+              </button>
+              <button type="button" id="btst-btn-scan" onclick="BtstScannerClient.load(true)" class="px-3.5 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold transition-colors cursor-pointer whitespace-nowrap">
+                Scan Now
+              </button>
+            </div>
+          </div>
+
+          <!-- Vedant AI & Session KPI Strip (Single Elevation, Hairline Dividers) -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-800 border border-slate-800 my-4 bg-[#0b1120] rounded-lg">
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Assigned AI Agent</div>
+              <div id="btst-kpi-agent" class="text-slate-100 font-semibold text-sm mt-0.5">Vedant AI (He)</div>
+              <div id="btst-kpi-agent-sub" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">AI-AGENT-BTST &middot; 1% Risk</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Recommended Window</div>
+              <div class="text-sky-400 font-mono tabular-nums font-semibold text-sm mt-0.5">2:45 PM &ndash; 3:20 PM</div>
+              <div id="btst-kpi-clock" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">IST --:--:--</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">BTST UP (Best 10)</div>
+              <div id="btst-kpi-up" class="text-emerald-400 font-mono tabular-nums font-semibold text-lg mt-0.5">0 / 10</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Zero Fake Signals</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">STBT DOWN (Best 10)</div>
+              <div id="btst-kpi-down" class="text-rose-400 font-mono tabular-nums font-semibold text-lg mt-0.5">0 / 10</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Short Overnight Carry</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Avg Score &middot; Gap Edge</div>
+              <div id="btst-kpi-score" class="text-slate-100 font-mono tabular-nums font-semibold text-lg mt-0.5">0 &middot; 0%</div>
+              <div id="btst-kpi-aplus" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">0 A+ Prime Picks</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Vedant Live MTM</div>
+              <div id="btst-kpi-pnl" class="text-emerald-400 font-mono tabular-nums font-semibold text-lg mt-0.5">₹0</div>
+              <div id="btst-kpi-wl" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">W/L: &mdash;</div>
+            </div>
+          </div>
+
+          <!-- Guidance Line -->
+          <div id="btst-window-guidance" class="text-xs text-slate-300 bg-[#0b1120] border border-slate-800 rounded-lg px-3.5 py-2.5 mb-4">
+            Recommended execution window: 2:45 PM &ndash; 3:20 PM IST. Vedant AI evaluates institutional closing dominance with ATR overnight gap-risk stop-loss protection.
+          </div>
+
+          <!-- Collapsible 6-Pillar World-Class BTST Formula Breakdown -->
+          <div id="btst-formula-panel" class="hidden bg-[#0b1120] border border-slate-800 rounded-lg p-4 mb-4">
+            <div class="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-slate-800">
+              <div class="text-xs font-semibold text-slate-100">World-Class 6-Pillar Institutional BTST / STBT Formula</div>
+              <div class="text-[11px] font-mono tabular-nums text-slate-400">Overnight SL: 1.35&times;ATR &middot; Next-Day T1: 1.5R (50% Book) &middot; T2: 2.6R Runner</div>
+            </div>
+            <div id="btst-formula-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3 text-xs"></div>
+          </div>
+
+          <!-- Search & Direction Filter Controls -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+            <div class="relative flex-1 max-w-sm">
+              <label for="btst-search-input" class="sr-only">Search BTST symbol, sector, or buildup</label>
+              <svg class="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+              <input id="btst-search-input" type="search" oninput="BtstScannerClient.setSearch(this.value)" placeholder="Search symbol, sector, or buildup..." class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0b1120] border border-slate-800 text-slate-100 placeholder:text-slate-500 text-xs outline-none focus:border-sky-500" />
+            </div>
+            <div class="inline-flex items-center p-0.5 rounded-lg bg-[#0b1120] border border-slate-800" role="group" aria-label="Filter BTST scanner by direction">
+              <button type="button" id="btst-dir-ALL" onclick="BtstScannerClient.setDirection('ALL')" class="px-3 py-1.5 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer transition-colors">All Picks</button>
+              <button type="button" id="btst-dir-BUY" onclick="BtstScannerClient.setDirection('BUY')" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">BTST UP (Best 10)</button>
+              <button type="button" id="btst-dir-SELL" onclick="BtstScannerClient.setDirection('SELL')" class="px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">STBT DOWN (Best 10)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Stock 7-Factor Formula Audit Panel -->
+        <div id="btst-audit-panel" class="hidden rounded-xl border border-slate-800 bg-[#0f172a] p-4">
+          <div class="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-800">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div id="btst-audit-gauge" class="shrink-0"></div>
+              <div class="min-w-0">
+                <div id="btst-audit-title" class="text-sm font-semibold text-slate-100"></div>
+                <div id="btst-audit-directive" class="text-xs text-slate-400 mt-0.5"></div>
+              </div>
+            </div>
+            <button type="button" onclick="BtstScannerClient.closeAudit()" class="px-2.5 py-1 rounded-md border border-slate-700 bg-[#0b1120] text-slate-300 hover:text-white text-xs cursor-pointer">Close Audit</button>
+          </div>
+          <div id="btst-audit-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5 mt-3"></div>
+        </div>
+
+        <!-- Table 1: BTST Upside Best 10 (UP) -->
+        <div id="btst-up-section" class="rounded-xl border border-slate-800 bg-[#0f172a] overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-emerald-400">BTST Upside Leaders (Best 10 UP)</span>
+              <span id="btst-up-count-label" class="text-xs font-mono tabular-nums text-slate-400">&middot; 0 / 10 Qualified</span>
+            </div>
+            <span class="text-xs font-mono tabular-nums text-slate-400">CLV &ge; 68% &middot; Above VWAP &middot; Sorted Listed At Z &rarr; A</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-[#0b1120] text-slate-400 border-b border-slate-800 text-[11px] font-medium">
+                  <th class="py-2.5 px-3">Stock &amp; Sector</th>
+                  <th class="py-2.5 px-2.5">AI Confidence</th>
+                  <th class="py-2.5 px-2.5">Listed At</th>
+                  <th class="py-2.5 px-2.5 text-right">LTP / Chg%</th>
+                  <th class="py-2.5 px-2.5 text-right">Close CLV</th>
+                  <th class="py-2.5 px-2.5 text-right">RVOL / VolX / ADX</th>
+                  <th class="py-2.5 px-2.5 text-right">Vedant Entry</th>
+                  <th class="py-2.5 px-2.5 text-right">Overnight SL</th>
+                  <th class="py-2.5 px-2.5 text-right">Next-Day T1 / T2</th>
+                  <th class="py-2.5 px-3">Vedant AI Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-btst-up" class="divide-y divide-slate-800/70">
+                <tr><td colspan="10" class="py-6 text-center text-slate-400">Evaluating NSE 200 universe for BTST Upside leaders...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Table 2: STBT Downside Best 10 (DOWN) -->
+        <div id="btst-down-section" class="rounded-xl border border-slate-800 bg-[#0f172a] overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-rose-400">STBT Downside Leaders (Best 10 DOWN)</span>
+              <span id="btst-down-count-label" class="text-xs font-mono tabular-nums text-slate-400">&middot; 0 / 10 Qualified</span>
+            </div>
+            <span class="text-xs font-mono tabular-nums text-slate-400">CLV &le; 32% &middot; Below VWAP &middot; Sorted Listed At Z &rarr; A</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-[#0b1120] text-slate-400 border-b border-slate-800 text-[11px] font-medium">
+                  <th class="py-2.5 px-3">Stock &amp; Sector</th>
+                  <th class="py-2.5 px-2.5">AI Confidence</th>
+                  <th class="py-2.5 px-2.5">Listed At</th>
+                  <th class="py-2.5 px-2.5 text-right">LTP / Chg%</th>
+                  <th class="py-2.5 px-2.5 text-right">Close CLV</th>
+                  <th class="py-2.5 px-2.5 text-right">RVOL / VolX / ADX</th>
+                  <th class="py-2.5 px-2.5 text-right">Vedant Entry</th>
+                  <th class="py-2.5 px-2.5 text-right">Overnight SL</th>
+                  <th class="py-2.5 px-2.5 text-right">Next-Day T1 / T2</th>
+                  <th class="py-2.5 px-3">Vedant AI Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-btst-down" class="divide-y divide-slate-800/70">
+                <tr><td colspan="10" class="py-6 text-center text-slate-400">Evaluating NSE 200 universe for STBT Downside leaders...</td></tr>
               </tbody>
             </table>
           </div>
@@ -8284,7 +8818,7 @@
           backdrop.classList.add('backdrop-closed');
         }
         if (pinLabel) pinLabel.textContent = 'Undock';
-        if (pinIcon) pinIcon.textContent = '🔓';
+        if (pinIcon) pinIcon.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
       } else {
         if (drawer) {
           drawer.classList.remove('drawer-pinned');
@@ -8295,9 +8829,44 @@
           backdrop.classList.add('backdrop-open');
         }
         if (pinLabel) pinLabel.textContent = 'Dock';
-        if (pinIcon) pinIcon.textContent = '📌';
+        if (pinIcon) pinIcon.innerHTML = '<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>';
       }
     }
+
+    // Sidebar Quick Filter (Search across all tabs, 20 scanners & AI agent names)
+    function filterSidebarNavigation(rawQuery) {
+      const q = String(rawQuery || '').trim().toLowerCase();
+      const drawer = document.getElementById('sidebar-drawer');
+      if (!drawer) return;
+      const sections = drawer.querySelectorAll('.sidebar-section-group');
+      let totalVisible = 0;
+      sections.forEach(section => {
+        const links = section.querySelectorAll('.sidebar-link');
+        let sectionVisible = 0;
+        links.forEach(link => {
+          const haystack = ((link.textContent || '') + ' ' + (link.getAttribute('title') || '')).toLowerCase();
+          const match = !q || haystack.includes(q);
+          link.classList.toggle('nav-hidden', !match);
+          if (match) sectionVisible++;
+        });
+        section.classList.toggle('hidden', sectionVisible === 0);
+        totalVisible += sectionVisible;
+      });
+      const emptyEl = document.getElementById('sidebar-nav-empty');
+      if (emptyEl) emptyEl.classList.toggle('hidden', totalVisible > 0);
+    }
+
+    function handleSidebarSearchKeydown(ev) {
+      if (ev.key === 'Enter') {
+        const firstVisible = document.querySelector('#sidebar-drawer .sidebar-link:not(.nav-hidden)');
+        if (firstVisible) firstVisible.click();
+      } else if (ev.key === 'Escape') {
+        ev.target.value = '';
+        filterSidebarNavigation('');
+      }
+    }
+    window.filterSidebarNavigation = filterSidebarNavigation;
+    window.handleSidebarSearchKeydown = handleSidebarSearchKeydown;
 
     // Aliases for full backward compatibility
     window.toggleMobileMenu = toggleSidebarMenu;
@@ -8412,6 +8981,10 @@
           if (typeof Fleet20Client !== 'undefined') {
             Fleet20Client.renderAll();
             Fleet20Client.refresh();
+          }
+        } else if (tabId === 'btst-scanner') {
+          if (typeof BtstScannerClient !== 'undefined') {
+            BtstScannerClient.load(false);
           }
         }
       } catch (err) {
@@ -13943,7 +14516,388 @@ function renderJournal() {
         renderVisibleTable('table-top-traded-downside', liqDn, false);
       }
       renderVisibleTable('table-most-active', DATA.most_active_volume, true);
+      if (typeof BtstScannerClient !== 'undefined' && BtstScannerClient.lastReport && isElementVisiblePane(document.getElementById('tab-btst-scanner'))) {
+        BtstScannerClient.render();
+      }
     }
+
+    // ============================================================
+    // ZERO-LAG BTST / STBT SCANNER CLIENT (2:45 PM – 3:20 PM IST • VEDANT AI)
+    // ============================================================
+    const BtstScannerClient = {
+      lastReport: null,
+      loading: false,
+      direction: 'ALL',
+      search: '',
+      showFormula: false,
+      selectedSymbol: null,
+      _timer: null,
+
+      fmtInr(v) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return '₹0.00';
+        return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      },
+
+      fmtSignedInr(v) {
+        const n = Math.round(Number(v) || 0);
+        const sign = n > 0 ? '+' : n < 0 ? '-' : '';
+        return sign + '₹' + Math.abs(n).toLocaleString('en-IN');
+      },
+
+      esc(str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      },
+
+      ensurePolling() {
+        if (this._timer) return;
+        this._timer = setInterval(() => {
+          const pane = document.getElementById('tab-btst-scanner');
+          if (pane && !pane.classList.contains('hidden')) {
+            this.load(false);
+          }
+        }, 6000);
+      },
+
+      async load(force) {
+        this.ensurePolling();
+        if (this.loading && !force) return;
+        this.loading = true;
+        const btn = document.getElementById('btst-btn-scan');
+        if (btn && force) {
+          btn.disabled = true;
+          btn.textContent = 'Scanning...';
+        }
+        try {
+          const res = await fetch('/api/btst-scanner/scan' + (force ? '?force=1' : ''), {
+            cache: 'no-store',
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          if (data && data.status === 'ok') {
+            this.lastReport = data;
+            this.render();
+          }
+        } catch (err) {
+          console.warn('BTST Scanner fetch error:', err);
+          const upBody = document.getElementById('tbody-btst-up');
+          if (upBody && !this.lastReport) {
+            upBody.innerHTML = '<tr><td colspan="10" class="py-6 text-center text-rose-400">Unable to reach BTST Scanner engine. Click Scan Now to retry.</td></tr>';
+          }
+        } finally {
+          this.loading = false;
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Scan Now';
+          }
+        }
+      },
+
+      setDirection(dir) {
+        this.direction = dir;
+        ['ALL', 'BUY', 'SELL'].forEach((k) => {
+          const el = document.getElementById('btst-dir-' + k);
+          if (!el) return;
+          if (k === dir) {
+            el.className = 'px-3 py-1.5 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer transition-colors';
+          } else {
+            el.className = 'px-3 py-1.5 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors';
+          }
+        });
+        this.render();
+      },
+
+      setSearch(q) {
+        this.search = String(q || '').trim().toLowerCase();
+        this.render();
+      },
+
+      toggleFormula() {
+        this.showFormula = !this.showFormula;
+        const panel = document.getElementById('btst-formula-panel');
+        const btn = document.getElementById('btst-btn-formula');
+        if (panel) panel.classList.toggle('hidden', !this.showFormula);
+        if (btn) btn.textContent = this.showFormula ? 'Hide Formula' : 'BTST Formula';
+      },
+
+      selectRow(symbol) {
+        this.selectedSymbol = this.selectedSymbol === symbol ? null : symbol;
+        this.renderAuditPanel();
+      },
+
+      closeAudit() {
+        this.selectedSymbol = null;
+        this.renderAuditPanel();
+      },
+
+      filterList(rows) {
+        if (!Array.isArray(rows)) return [];
+        if (!this.search) return rows;
+        const q = this.search;
+        return rows.filter((r) =>
+          String(r.symbol || '').toLowerCase().includes(q) ||
+          String(r.name || '').toLowerCase().includes(q) ||
+          String(r.sector || '').toLowerCase().includes(q) ||
+          String(r.buildup || '').toLowerCase().includes(q)
+        );
+      },
+
+      computeConfidence(row) {
+        const clamp = (v, min, max) => (Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : min);
+        const totalChecks = Math.max(1, Array.isArray(row.checks) ? row.checks.length : Number(row.totalConditions) || 7);
+        const passedChecks = Array.isArray(row.checks)
+          ? row.checks.filter((c) => c && c.passed).length
+          : clamp(Number(row.conditionsMet) || 0, 0, totalChecks);
+        const checksPct = (passedChecks / totalChecks) * 100;
+        const btstFormulaScore = clamp(Number(row.btstScore) || 0, 0, 100);
+        const gapEdgePct = clamp(Number(row.gapEdgeProbabilityPct) || 0, 0, 100);
+        const deliveryCarryPct = clamp(Number(row.deliveryConvictionPct) || 0, 0, 100);
+        const score = Math.round(
+          clamp(btstFormulaScore * 0.45 + checksPct * 0.25 + gapEdgePct * 0.18 + deliveryCarryPct * 0.12, 0, 100)
+        );
+        let tier = 'Caution';
+        let strokeHex = '#f43f5e';
+        let textClass = 'text-rose-400';
+        if (score >= 82) {
+          tier = 'High';
+          strokeHex = '#10b981';
+          textClass = 'text-emerald-400';
+        } else if (score >= 70) {
+          tier = 'Strong';
+          strokeHex = '#0ea5e9';
+          textClass = 'text-sky-400';
+        } else if (score >= 55) {
+          tier = 'Moderate';
+          strokeHex = '#f59e0b';
+          textClass = 'text-amber-400';
+        }
+        return {
+          score,
+          tier,
+          strokeHex,
+          textClass,
+          passedChecks,
+          totalChecks,
+          gapEdgePct: Math.round(gapEdgePct),
+          btstFormulaScore: Math.round(btstFormulaScore),
+          ariaLabel: `${row.symbol} AI Confluence Confidence ${score} out of 100 (${tier}, ${passedChecks}/${totalChecks} checks passed)`,
+        };
+      },
+
+      renderConfidenceGaugeSvg(row, size = 'sm', showDetails = true) {
+        const m = this.computeConfidence(row);
+        const isLarge = size === 'lg';
+        const px = isLarge ? 56 : 40;
+        const strokeWidth = isLarge ? 4.5 : 3.5;
+        const center = px / 2;
+        const radius = center - strokeWidth - 1;
+        const circumference = 2 * Math.PI * radius;
+        const arcLength = circumference * 0.75;
+        const progressDashOffset = Number((arcLength * (1 - m.score / 100)).toFixed(2));
+        const trackDashArray = `${arcLength.toFixed(2)} ${circumference.toFixed(2)}`;
+        const sizeCls = isLarge ? 'w-14 h-14' : 'w-10 h-10';
+        const numCls = isLarge ? 'text-sm' : 'text-[11px]';
+        const symSafe = this.esc(row.symbol);
+        const titleTxt = this.esc(`AI Confluence Confidence: ${m.score}/100 (${m.tier}) · ${m.passedChecks}/${m.totalChecks} checks · Formula ${m.btstFormulaScore} · Gap Edge ${m.gapEdgePct}%`);
+        const detailsHtml = showDetails
+          ? `<div class="min-w-0 leading-tight text-left">
+              <div class="text-[11px] font-semibold ${m.textClass}">${m.tier}<span class="ml-1 font-mono tabular-nums font-normal text-slate-400">${m.passedChecks}/${m.totalChecks}</span></div>
+              <div class="text-[10px] font-mono tabular-nums text-slate-400 whitespace-nowrap">Gap ${m.gapEdgePct}% &middot; ${this.esc(row.convictionGrade)}</div>
+            </div>`
+          : '';
+        return `<div class="inline-flex items-center gap-2.5 shrink-0" role="meter" aria-valuenow="${m.score}" aria-valuemin="0" aria-valuemax="100" aria-label="${this.esc(m.ariaLabel)}" data-testid="confidence-gauge-${symSafe}" data-confidence-score="${m.score}" title="${titleTxt}">
+          <div class="relative flex items-center justify-center shrink-0 ${sizeCls}">
+            <svg width="${px}" height="${px}" viewBox="0 0 ${px} ${px}" class="block" aria-hidden="true">
+              <g transform="rotate(135 ${center} ${center})">
+                <circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#1e293b" stroke-width="${strokeWidth}" stroke-dasharray="${trackDashArray}" stroke-linecap="round"></circle>
+                <circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="${m.strokeHex}" stroke-width="${strokeWidth}" stroke-dasharray="${trackDashArray}" stroke-dashoffset="${progressDashOffset}" stroke-linecap="round" class="transition-[stroke-dashoffset] duration-200 ease-out"></circle>
+              </g>
+            </svg>
+            <span class="absolute font-mono tabular-nums font-semibold leading-none ${numCls} text-slate-100">${m.score}</span>
+          </div>
+          ${detailsHtml}
+        </div>`;
+      },
+
+      renderAuditPanel() {
+        const panel = document.getElementById('btst-audit-panel');
+        if (!panel || !this.lastReport) return;
+        if (!this.selectedSymbol) {
+          panel.classList.add('hidden');
+          return;
+        }
+        const all = [...(this.lastReport.upPicks || []), ...(this.lastReport.downPicks || [])];
+        const row = all.find((r) => r.symbol === this.selectedSymbol);
+        if (!row) {
+          panel.classList.add('hidden');
+          return;
+        }
+        panel.classList.remove('hidden');
+        const gaugeEl = document.getElementById('btst-audit-gauge');
+        const titleEl = document.getElementById('btst-audit-title');
+        const dirEl = document.getElementById('btst-audit-directive');
+        const gridEl = document.getElementById('btst-audit-grid');
+        const conf = this.computeConfidence(row);
+        if (gaugeEl) {
+          gaugeEl.innerHTML = this.renderConfidenceGaugeSvg(row, 'lg', false);
+        }
+        if (titleEl) {
+          titleEl.innerHTML = `${this.esc(row.symbol)} &middot; ${row.setupType === 'BTST_LONG' ? 'BTST Long Carry' : 'STBT Short Carry'} &middot; <span class="font-mono tabular-nums ${conf.textClass}">AI Confidence ${conf.score}/100 (${conf.tier})</span> <span class="text-xs font-mono tabular-nums text-slate-400">&middot; Formula ${row.btstScore} (${this.esc(row.convictionGrade)})</span>`;
+        }
+        if (dirEl) dirEl.textContent = row.agentDirective || '';
+        if (gridEl && Array.isArray(row.checks)) {
+          gridEl.innerHTML = row.checks
+            .map((chk) => {
+              const tone = chk.passed ? 'text-emerald-400' : 'text-amber-400';
+              return `<div class="p-2.5 rounded-lg border border-slate-800 bg-[#0b1120] text-xs">
+                <div class="text-[10px] text-slate-400">${this.esc(chk.label)}</div>
+                <div class="font-mono tabular-nums font-semibold mt-1 ${tone}">${this.esc(chk.value)}</div>
+                <div class="text-[10px] font-mono text-slate-500">Gate: ${this.esc(chk.threshold)}</div>
+              </div>`;
+            })
+            .join('');
+        }
+      },
+
+      renderTableRows(tbodyId, rows, isBuy, isCleared) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        if (!rows || rows.length === 0) {
+          const msg = isCleared
+            ? 'BTST Scanner auto-flushed at 23:59 IST. Awaits next market session.'
+            : `No ${isBuy ? 'BTST UP' : 'STBT DOWN'} stocks currently pass all 7 strict institutional gates (Zero Fake Signals enforced).`;
+          tbody.innerHTML = `<tr><td colspan="10" class="py-7 px-4 text-center text-slate-400">${msg}</td></tr>`;
+          return;
+        }
+        const html = rows
+          .map((row) => {
+            const chgCls = row.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400';
+            const clvCls = isBuy ? 'text-emerald-400' : 'text-rose-400';
+            const symSafe = this.esc(row.symbol);
+            const activeCls = this.selectedSymbol === row.symbol ? 'bg-sky-500/10' : 'hover:bg-slate-800/40';
+            const gaugeHtml = this.renderConfidenceGaugeSvg(row, 'sm', true);
+            return `<tr onclick="BtstScannerClient.selectRow('${symSafe}')" class="cursor-pointer transition-colors ${activeCls}">
+              <td class="py-2.5 px-3">
+                <div class="font-semibold text-slate-100">${symSafe}</div>
+                <div class="text-[11px] text-slate-400 truncate max-w-[155px]">${this.esc(row.sector)} &middot; ${this.esc(row.buildup)}</div>
+              </td>
+              <td class="py-2.5 px-2.5 whitespace-nowrap">
+                ${gaugeHtml}
+              </td>
+              <td class="py-2.5 px-2.5 font-mono tabular-nums whitespace-nowrap text-slate-200">
+                <div>${this.esc(row.listedAt)}</div>
+                <div class="text-[10px] text-slate-400">Qty ${row.positionQty}</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="font-semibold text-slate-100">${this.fmtInr(row.price)}</div>
+                <div class="text-[11px] font-medium ${chgCls}">${row.changePercent >= 0 ? '+' : ''}${Number(row.changePercent).toFixed(2)}%</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="font-semibold ${clvCls}">${row.clvPct}%</div>
+                <div class="text-[10px] text-slate-400">${row.vsVwapPct >= 0 ? '+' : ''}${Number(row.vsVwapPct).toFixed(2)}% VWAP</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap text-slate-200">
+                <div>${Number(row.rvol).toFixed(2)}x &middot; ${Number(row.xTimeVolume).toFixed(2)}X</div>
+                <div class="text-[10px] text-slate-400">ADX ${Number(row.adx).toFixed(1)} &middot; Carry ${row.deliveryConvictionPct}%</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap text-slate-200">
+                <div class="font-medium">${this.fmtInr(row.entryPrice)}</div>
+                <div class="text-[10px] text-slate-400">${Number(row.entryZoneLow).toFixed(1)}&ndash;${Number(row.entryZoneHigh).toFixed(1)}</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="font-semibold text-amber-400">${this.fmtInr(row.activeStopLoss)}</div>
+                <div class="text-[10px] text-slate-400">-${Number(row.slDistancePct).toFixed(2)}% (${this.esc(row.plannedRR)})</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="text-emerald-400 font-medium">T1 ${this.fmtInr(row.nextDayTarget1)}</div>
+                <div class="text-[10px] text-slate-400">T2 ${this.fmtInr(row.nextDayTarget2)}</div>
+              </td>
+              <td class="py-2.5 px-3 max-w-[240px]">
+                <div class="font-medium text-sky-400 text-[11px] truncate">${this.esc(row.agentActionBadge)}</div>
+                <div class="text-[10px] text-slate-400 truncate" title="${this.esc(row.agentDirective)}">${this.esc(row.agentDirective)}</div>
+              </td>
+            </tr>`;
+          })
+          .join('');
+        tbody.innerHTML = html;
+      },
+
+      render() {
+        const rep = this.lastReport;
+        if (!rep) return;
+
+        const phaseEl = document.getElementById('btst-window-phase-label');
+        if (phaseEl && rep.window) phaseEl.textContent = rep.window.phaseLabel;
+
+        const guidanceEl = document.getElementById('btst-window-guidance');
+        if (guidanceEl && rep.window) guidanceEl.textContent = rep.window.guidanceNote;
+
+        const agentEl = document.getElementById('btst-kpi-agent');
+        if (agentEl && rep.agent) agentEl.textContent = `${rep.agent.name} (${rep.agent.genderLabel})`;
+
+        const agentSubEl = document.getElementById('btst-kpi-agent-sub');
+        if (agentSubEl && rep.agent) agentSubEl.textContent = `${rep.agent.agentId} · ${rep.agent.riskPerTradePct}% Risk`;
+
+        const clockEl = document.getElementById('btst-kpi-clock');
+        if (clockEl) clockEl.textContent = `IST ${rep.istTime || '--:--:--'}`;
+
+        const upEl = document.getElementById('btst-kpi-up');
+        if (upEl) upEl.textContent = `${rep.summary.upCount} / 10`;
+
+        const dnEl = document.getElementById('btst-kpi-down');
+        if (dnEl) dnEl.textContent = `${rep.summary.downCount} / 10`;
+
+        const scoreEl = document.getElementById('btst-kpi-score');
+        if (scoreEl) scoreEl.textContent = `${rep.summary.avgBtstScore} · ${rep.summary.avgGapProbabilityPct}%`;
+
+        const aplusEl = document.getElementById('btst-kpi-aplus');
+        if (aplusEl) aplusEl.textContent = `${rep.summary.aPlusCount} A+ Prime Picks`;
+
+        const pnlEl = document.getElementById('btst-kpi-pnl');
+        if (pnlEl) {
+          pnlEl.textContent = this.fmtSignedInr(rep.summary.totalLivePnlRs);
+          pnlEl.className = `font-mono tabular-nums font-semibold text-lg mt-0.5 ${rep.summary.totalLivePnlRs >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+
+        const wlEl = document.getElementById('btst-kpi-wl');
+        if (wlEl) wlEl.textContent = `W/L: ${rep.summary.winLossRatioLabel || '—'}`;
+
+        // Render 6-Pillar Formula Grid once
+        const fGrid = document.getElementById('btst-formula-grid');
+        if (fGrid && Array.isArray(rep.formulaPillars) && fGrid.children.length === 0) {
+          fGrid.innerHTML = rep.formulaPillars
+            .map((p) => `<div class="space-y-1">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-slate-200">${String(p.step).padStart(2, '0')}. ${this.esc(p.title)}</span>
+                <span class="font-mono tabular-nums text-sky-400">${p.weightPct}%</span>
+              </div>
+              <p class="text-[11px] text-slate-400 leading-relaxed">${this.esc(p.rule)}</p>
+            </div>`)
+            .join('');
+        }
+
+        const upRows = this.filterList(rep.upPicks || []);
+        const dnRows = this.filterList(rep.downPicks || []);
+
+        const upCountLbl = document.getElementById('btst-up-count-label');
+        if (upCountLbl) upCountLbl.textContent = `· ${upRows.length} / 10 Qualified`;
+        const dnCountLbl = document.getElementById('btst-down-count-label');
+        if (dnCountLbl) dnCountLbl.textContent = `· ${dnRows.length} / 10 Qualified`;
+
+        const upSec = document.getElementById('btst-up-section');
+        const dnSec = document.getElementById('btst-down-section');
+        if (upSec) upSec.classList.toggle('hidden', this.direction === 'SELL');
+        if (dnSec) dnSec.classList.toggle('hidden', this.direction === 'BUY');
+
+        this.renderTableRows('tbody-btst-up', upRows, true, rep.isMidnightCleared);
+        this.renderTableRows('tbody-btst-down', dnRows, false, rep.isMidnightCleared);
+        this.renderAuditPanel();
+      },
+    };
 
     // ============================================================
     // DUAL AI TRADE MANAGEMENT DESK CLIENT (ARYAN AI [HE] & ARIA AI [SHE])
@@ -14092,6 +15046,8 @@ function renderJournal() {
       homeScannerId: 'LEAD_DESK',
       genderFilter: 'ALL',
       categoryFilter: 'ALL',
+      statusFilter: 'ALL',
+      searchQuery: '',
       inspectorSide: 'ALL',
       dedicatedSide: { 'vwap-surge': 'ALL', 'oi-short-cover': 'ALL' },
       _timer: null,
@@ -14099,14 +15055,142 @@ function renderJournal() {
         this.refresh();
         if (this._timer) clearInterval(this._timer);
         this._timer = setInterval(() => this.refresh(), 5000);
+        if (!this._escBound) {
+          this._escBound = true;
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this.closeGlobalResetModal();
+          });
+        }
       },
       async refresh() {
         try {
-          const res = await fetch('/api/scanners/fleet-20');
+          const res = await fetch('/api/scanners/fleet-20', { cache: 'no-store' });
           if (!res.ok) return;
           this.lastData = await res.json();
           this.renderAll();
         } catch (e) {}
+      },
+      async toggleAutoOpt(scannerId, nextEnabled) {
+        try {
+          const res = await fetch(`/api/scanners/fleet-20/${encodeURIComponent(scannerId)}/autonomous-optimization`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled: Boolean(nextEnabled) }),
+          });
+          if (!res.ok) return;
+          this.lastData = await res.json();
+          this.renderAll();
+        } catch (e) {}
+      },
+      async toggleSelectedInspectorAutoOpt() {
+        const sc = (this.lastData?.scanners || []).find(s => s.scannerId === this.selectedScannerId);
+        if (!sc) return;
+        await this.toggleAutoOpt(sc.scannerId, !sc.agent?.autonomousOptimization);
+      },
+      async toggleBulkAutoOpt() {
+        const total = Number(this.lastData?.totalAiAgents || 20);
+        const curOn = Number(this.lastData?.fleetSummary?.autonomousOptimizedAgents || 0);
+        const nextEnabled = curOn < total;
+        try {
+          const res = await fetch('/api/scanners/fleet-20/autonomous-optimization/bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled: nextEnabled }),
+          });
+          if (!res.ok) return;
+          this.lastData = await res.json();
+          this.renderAll();
+        } catch (e) {}
+      },
+      openGlobalResetModal() {
+        const modal = document.getElementById('modal-fleet20-global-reset');
+        const listEl = document.getElementById('dash-reset-dialog-summary');
+        const fs = this.lastData?.fleetSummary || {};
+        const openSlCount = (this.lastData?.scanners || []).reduce((acc, sc) => acc + Number(sc.summary?.activeOpenCount || 0), 0);
+        if (listEl) {
+          listEl.innerHTML = `
+            <li class="flex items-center justify-between gap-2"><span>Agent Statuses</span><span class="font-semibold">${fs.totalActiveScanners || 0}/20 &rarr; Reset &middot; Standby</span></li>
+            <li class="flex items-center justify-between gap-2"><span>Active / Trailed Stop-Losses</span><span class="font-semibold">${openSlCount} open (${fs.totalTrailingProtected || 0} trailed) &rarr; 0</span></li>
+            <li class="flex items-center justify-between gap-2"><span>Autonomous Volatility Opt</span><span class="font-semibold">${fs.autonomousOptimizedAgents || 0}/20 ON &rarr; 0/20 Fixed ATR</span></li>
+            <li class="flex items-center justify-between gap-2"><span>Profit &amp; Win/Loss Counters</span><span class="font-semibold">${this.formatRs(fs.fleetLivePnlRs || 0)} &rarr; ₹0 (0W / 0L)</span></li>
+          `;
+        }
+        if (modal) modal.classList.remove('hidden');
+      },
+      closeGlobalResetModal() {
+        const modal = document.getElementById('modal-fleet20-global-reset');
+        if (modal) modal.classList.add('hidden');
+      },
+      async confirmGlobalReset() {
+        const confirmBtn = document.getElementById('fleet20-confirm-reset-btn');
+        if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Resetting Fleet...'; }
+        try {
+          const res = await fetch('/api/scanners/fleet-20/global-reset', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          if (!res.ok) return;
+          this.lastData = await res.json();
+          this.closeGlobalResetModal();
+          this.renderAll();
+        } catch (e) {} finally {
+          if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Confirm Global Reset'; }
+        }
+      },
+      async resumeLiveFleet() {
+        const resumeBtn = document.getElementById('fleet20-resume-btn');
+        if (resumeBtn) { resumeBtn.disabled = true; resumeBtn.textContent = 'Resuming...'; }
+        try {
+          const res = await fetch('/api/scanners/fleet-20/resume', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          if (!res.ok) return;
+          this.lastData = await res.json();
+          this.renderAll();
+        } catch (e) {} finally {
+          if (resumeBtn) { resumeBtn.disabled = false; resumeBtn.textContent = 'Resume Live Scan'; }
+        }
+      },
+      computeSlMetrics(t) {
+        const isBuy = t.side === 'BUY';
+        const ltp = Number(t.liveLtp || t.entryPrice || 0);
+        const activeSl = Number(t.activeStopLoss || t.initialStopLoss || 0);
+        const initSl = Number(t.initialStopLoss || activeSl || 0);
+        const entry = Number(t.entryPrice || ltp || 0);
+        const t2 = Number(t.target2 || entry || 0);
+        const diff = isBuy ? (ltp - activeSl) : (activeSl - ltp);
+        const distPct = ltp > 0 ? Math.round((diff / ltp) * 10000) / 100 : 0;
+        const tightened = isBuy ? activeSl > initSl + 0.005 : activeSl < initSl - 0.005;
+        let stage = 'Initial SL';
+        if (t.actionStatus === 'TARGET_HIT_EXIT') stage = 'T2 Exited';
+        else if (t.actionStatus === 'SL_HIT_EXIT') stage = 'SL Triggered';
+        else if (t.actionStatus === 'TIME_EXIT_1515') stage = '15:15 Exit';
+        else if (t.actionStatus === 'BOOK_PARTIAL_T1') stage = 'T1 Trail (+0.75R)';
+        else if (t.actionStatus === 'TRAIL_SL_BREAKEVEN' || tightened) stage = 'Breakeven Trail';
+        const proximity = t.isClosed ? 'CLOSED' : (distPct <= 0.45 ? 'CRITICAL' : distPct <= 1.0 ? 'WATCH' : 'SAFE');
+        const span = isBuy ? (t2 - initSl) : (initSl - t2);
+        const toPct = (p) => span > 0.0001 ? Math.max(0, Math.min(100, ((isBuy ? (p - initSl) : (initSl - p)) / span) * 100)) : 50;
+        return {
+          distPct,
+          tightened,
+          stage,
+          proximity,
+          entryPct: Math.round(toPct(entry)),
+          slPct: Math.round(toPct(activeSl)),
+          ltpPct: Math.round(toPct(ltp)),
+        };
+      },
+      deriveAgentStatus(sc, isFlushCleared) {
+        if (isFlushCleared || sc.agent?.status === 'FLUSH_CLEARED') return { label: 'Cleared (23:59)', cls: 'text-slate-400' };
+        if (sc.agent?.status === 'STANDBY_RESET') return { label: 'Reset · Standby', cls: 'text-slate-400' };
+        const s = sc.summary || {};
+        if (!s.totalManaged) return { label: 'Standby (0 Eligible)', cls: 'text-slate-400' };
+        if (s.trailingProtectedCount > 0) return { label: 'Trailing SL Active', cls: 'text-emerald-400' };
+        if (s.activeOpenCount > 0) return { label: 'Guarding Active SL', cls: 'text-sky-400' };
+        if (s.targetHitCount > 0 && s.targetHitCount >= (s.slHitCount || 0)) return { label: 'Targets Booked', cls: 'text-emerald-400' };
+        if (s.slHitCount > 0) return { label: 'SL Exits Logged', cls: 'text-rose-400' };
+        return { label: 'Session Managed', cls: 'text-amber-300' };
       },
       selectHomeScanner(scannerId) {
         this.homeScannerId = scannerId || 'LEAD_DESK';
@@ -14124,17 +15208,22 @@ function renderJournal() {
         const panel = document.getElementById('fleet20-inspector-panel');
         if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       },
+      setSearchQuery(q) {
+        this.searchQuery = String(q || '').trim().toLowerCase();
+        this.renderFleetTabRoster();
+      },
+      setStatusFilter(st) {
+        this.statusFilter = st || 'ALL';
+        this.renderFleetTabRoster();
+      },
       setGenderFilter(g) {
         this.genderFilter = g || 'ALL';
         ['ALL', 'He', 'She'].forEach(k => {
           const btn = document.getElementById('fleet20-gender-' + k);
           if (!btn) return;
-          if (k === this.genderFilter) {
-            btn.className = 'px-2.5 py-1 rounded-lg bg-cyan-500 text-black font-black cursor-pointer';
-          } else {
-            const tone = k === 'He' ? 'text-emerald-300 border-emerald-500/30' : k === 'She' ? 'text-rose-300 border-rose-500/30' : 'text-slate-300 border-slate-600/40';
-            btn.className = `px-2.5 py-1 rounded-lg bg-[#131e33] ${tone} border font-bold cursor-pointer`;
-          }
+          btn.className = k === this.genderFilter
+            ? 'px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer transition-colors'
+            : 'px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors';
         });
         this.renderFleetTabRoster();
       },
@@ -14147,12 +15236,9 @@ function renderJournal() {
         ['ALL', 'BUY', 'SELL'].forEach(k => {
           const btn = document.getElementById('fleet20-side-' + k);
           if (!btn) return;
-          if (k === this.inspectorSide) {
-            btn.className = 'px-2.5 py-1 rounded-lg bg-cyan-500 text-black font-black cursor-pointer';
-          } else {
-            const tone = k === 'BUY' ? 'text-emerald-300 border-emerald-500/30' : k === 'SELL' ? 'text-rose-300 border-rose-500/30' : 'text-slate-300 border-slate-600/40';
-            btn.className = `px-2.5 py-1 rounded-lg bg-[#131e33] ${tone} border font-bold cursor-pointer`;
-          }
+          btn.className = k === this.inspectorSide
+            ? 'px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer'
+            : 'px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer';
         });
         this.renderFleetTabInspector();
       },
@@ -14181,39 +15267,93 @@ function renderJournal() {
       },
       renderTradeRowsHtml(trades, isFlushCleared) {
         if (isFlushCleared) {
-          return `<tr><td colspan="10" class="py-5 px-4 text-center text-amber-300 font-bold">🕛 11:59 PM IST Auto-Flush Active — All 20 Scanners &amp; 20 AI Agents emptied until 09:20:00 AM IST next market day.</td></tr>`;
+          return `<tr><td colspan="10" class="py-5 px-4 text-center text-amber-300 font-medium">23:59 IST Auto-Flush Active — All 20 Scanners &amp; 20 AI Agents emptied until 09:20:00 IST next market day.</td></tr>`;
         }
         if (!trades || trades.length === 0) {
-          return `<tr><td colspan="10" class="py-5 px-4 text-center text-slate-400">Zero fake signals: 0 stocks currently meet this scanner's formula + Rule 3 (RVOL &gt; 2.00 • Vol Bazaar X-Time &gt; 1.00X • ADX 25+).</td></tr>`;
+          return `<tr><td colspan="10" class="py-5 px-4 text-center text-slate-400">Zero fake signals: 0 stocks currently meet this scanner's formula + Rule 3 (RVOL &gt; 2.00 &middot; Vol Bazaar X-Time &gt; 1.00X &middot; ADX 25+).</td></tr>`;
         }
         return trades.map(t => {
           const isBuy = t.side === 'BUY';
-          const sideCls = isBuy ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' : 'bg-rose-500/20 text-rose-300 border-rose-500/40';
           const pnlCls = Number(t.livePnlRs) >= 0 ? 'text-emerald-400' : 'text-rose-400';
-          const statusCls = t.actionStatus === 'TARGET_HIT_EXIT' || t.actionStatus === 'BOOK_PARTIAL_T1'
-            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-            : t.actionStatus === 'TRAIL_SL_BREAKEVEN'
-              ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-              : t.actionStatus === 'SL_HIT_EXIT'
-                ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-                : 'bg-amber-500/15 text-amber-200 border-amber-500/35';
           return `
             <tr class="border-b border-[#141e33] hover:bg-[#101a2e]/70 transition">
               <td class="py-2 px-2.5">
-                <button type="button" onclick="openTradingViewChart('${t.symbol}')" class="font-black text-white hover:text-cyan-300 cursor-pointer text-left">${t.symbol}</button>
-                <div class="text-[9.5px] text-slate-400">${t.sector} &bull; Qty ${t.positionQty} &bull; Score ${t.formulaScore}</div>
+                <button type="button" onclick="openTradingViewChart('${t.symbol}')" class="font-semibold text-white hover:text-sky-300 cursor-pointer text-left">${t.symbol}</button>
+                <div class="text-[10px] text-slate-400 font-mono tabular-nums">${t.sector} &middot; Qty ${t.positionQty}</div>
               </td>
-              <td class="py-2 px-2"><span class="px-1.5 py-0.5 rounded border text-[9.5px] font-black ${sideCls}">${isBuy ? '▲ BUY' : '▼ SELL'}</span></td>
-              <td class="py-2 px-2 text-cyan-300 font-bold">🕒 ${t.listedAt || '--'}</td>
-              <td class="py-2 px-2 text-right font-bold text-slate-100">₹${Number(t.entryPrice || 0).toFixed(2)}</td>
-              <td class="py-2 px-2 text-right font-bold ${Number(t.changePercent) >= 0 ? 'text-emerald-300' : 'text-rose-300'}">₹${Number(t.liveLtp || 0).toFixed(2)}<div class="text-[9px]">${Number(t.changePercent) >= 0 ? '+' : ''}${Number(t.changePercent || 0).toFixed(2)}%</div></td>
-              <td class="py-2 px-2 text-right font-bold text-amber-300">₹${Number(t.activeStopLoss || 0).toFixed(2)}<div class="text-[9px] text-slate-400">Init ₹${Number(t.initialStopLoss || 0).toFixed(1)}</div></td>
-              <td class="py-2 px-2 text-right text-slate-300">₹${Number(t.target1 || 0).toFixed(1)} / <span class="text-emerald-300">₹${Number(t.target2 || 0).toFixed(1)}</span></td>
-              <td class="py-2 px-2 text-right text-cyan-200">${Number(t.rvol || 0).toFixed(2)}x / ${Number(t.xTimeVolume || 0).toFixed(2)}X<div class="text-[9px] text-slate-400">ADX ${Number(t.adx || 0).toFixed(1)}</div></td>
-              <td class="py-2 px-2 text-right font-black ${pnlCls}">${Number(t.liveRMultiple) >= 0 ? '+' : ''}${Number(t.liveRMultiple || 0).toFixed(2)}R<div class="text-[9.5px]">${this.formatRs(t.livePnlRs)}</div></td>
+              <td class="py-2 px-2 font-medium ${isBuy ? 'text-emerald-400' : 'text-rose-400'}">${isBuy ? '▲ BUY' : '▼ SELL'}</td>
+              <td class="py-2 px-2 text-sky-300 font-mono tabular-nums">${t.listedAt || '--'}</td>
+              <td class="py-2 px-2 text-right font-mono tabular-nums text-slate-100">₹${Number(t.entryPrice || 0).toFixed(2)}</td>
+              <td class="py-2 px-2 text-right font-mono tabular-nums ${Number(t.changePercent) >= 0 ? 'text-emerald-300' : 'text-rose-300'}">₹${Number(t.liveLtp || 0).toFixed(2)}<div class="text-[10px]">${Number(t.changePercent) >= 0 ? '+' : ''}${Number(t.changePercent || 0).toFixed(2)}%</div></td>
+              <td class="py-2 px-2 text-right font-mono tabular-nums text-amber-300">₹${Number(t.activeStopLoss || 0).toFixed(2)}<div class="text-[10px] text-slate-400">Init ₹${Number(t.initialStopLoss || 0).toFixed(1)}</div></td>
+              <td class="py-2 px-2 text-right font-mono tabular-nums text-slate-300">₹${Number(t.target1 || 0).toFixed(1)} / <span class="text-emerald-300">₹${Number(t.target2 || 0).toFixed(1)}</span></td>
+              <td class="py-2 px-2 text-right font-mono tabular-nums text-sky-200">${Number(t.rvol || 0).toFixed(2)}x / ${Number(t.xTimeVolume || 0).toFixed(2)}X<div class="text-[10px] text-slate-400">ADX ${Number(t.adx || 0).toFixed(1)}</div></td>
+              <td class="py-2 px-2 text-right font-mono tabular-nums font-semibold ${pnlCls}">${Number(t.liveRMultiple) >= 0 ? '+' : ''}${Number(t.liveRMultiple || 0).toFixed(2)}R<div class="text-[10px]">${this.formatRs(t.livePnlRs)}</div></td>
               <td class="py-2 px-2.5">
-                <span class="inline-block px-2 py-0.5 rounded border text-[9.5px] font-black ${statusCls}">${t.actionBadge}</span>
-                <div class="text-[9px] text-slate-400 font-sans mt-0.5 max-w-[240px] truncate" title="${t.agentDirective}">${t.agentDirective}</div>
+                <div class="font-medium text-slate-200 text-[11px]">${t.actionBadge}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5 max-w-[230px] truncate" title="${t.agentDirective}">${t.agentDirective}</div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      },
+      renderInspectorRowsHtml(trades, isFlushCleared) {
+        if (isFlushCleared) {
+          return `<tr><td colspan="10" class="py-6 px-4 text-center text-slate-400">23:59 IST daily flush is active. All 20 AI agents reset cleanly until 09:20 IST next market day.</td></tr>`;
+        }
+        if (!trades || trades.length === 0) {
+          return `<tr><td colspan="10" class="py-6 px-4 text-center text-slate-400">0 eligible stocks match this scanner's formula + Rule 3 (RVOL &gt; 2.00 &middot; Vol Bazaar X-Time &gt; 1.00X &middot; ADX 25+).</td></tr>`;
+        }
+        return trades.map(t => {
+          const isBuy = t.side === 'BUY';
+          const m = this.computeSlMetrics(t);
+          const pnlPos = Number(t.livePnlRs) >= 0;
+          const cushionCls = m.proximity === 'CLOSED' ? 'text-slate-400' : m.proximity === 'CRITICAL' ? 'text-rose-400 font-semibold' : m.proximity === 'WATCH' ? 'text-amber-400 font-semibold' : 'text-emerald-400';
+          return `
+            <tr class="hover:bg-slate-800/40 transition-colors">
+              <td class="py-2.5 px-3">
+                <button type="button" onclick="openTradingViewChart('${t.symbol}')" class="font-semibold text-slate-100 hover:text-sky-300 cursor-pointer text-left">${t.symbol}</button>
+                <div class="text-[10.5px] text-slate-400 font-mono tabular-nums">${t.sector} &middot; Qty ${t.positionQty}</div>
+              </td>
+              <td class="py-2.5 px-2.5 font-medium whitespace-nowrap ${isBuy ? 'text-emerald-400' : 'text-rose-400'}">${isBuy ? 'Buy (UP)' : 'Sell (DOWN)'}</td>
+              <td class="py-2.5 px-2.5 font-mono tabular-nums text-slate-200 whitespace-nowrap">${t.listedAt || '--'}</td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="text-slate-100">₹${Number(t.entryPrice || 0).toFixed(2)}</div>
+                <div class="text-[10.5px] ${Number(t.changePercent) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">LTP ₹${Number(t.liveLtp || 0).toFixed(2)}</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="font-semibold ${t.volatilityAdjusted ? 'text-sky-400' : m.tightened ? 'text-emerald-400' : 'text-amber-300'}" data-testid="dash-inspector-sl-${t.symbol}">₹${Number(t.activeStopLoss || 0).toFixed(2)}</div>
+                ${t.volatilityAdjusted
+                  ? `<div class="text-[10px] text-sky-300/90">Vol ${t.slShiftDirection === 'WIDENED' ? 'widened' : 'tightened'} &middot; Base ₹${Number(t.baseStopLoss || t.initialStopLoss || 0).toFixed(2)}</div>`
+                  : `<div class="text-[10.5px] text-slate-400">Init ₹${Number(t.initialStopLoss || 0).toFixed(2)}</div>`}
+              </td>
+              <td class="py-2.5 px-2.5">
+                <div class="flex items-center justify-between gap-2 text-[10.5px] mb-1">
+                  <span class="text-slate-200 font-medium">${m.stage}</span>
+                  <span class="font-mono tabular-nums ${cushionCls}">${m.proximity === 'CLOSED' ? 'Closed' : (m.distPct >= 0 ? '+' : '') + m.distPct.toFixed(2) + '%'}</span>
+                </div>
+                <div class="relative h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                  <div class="absolute inset-y-0 left-0 bg-emerald-500/35" style="width:${m.slPct}%"></div>
+                  <div class="absolute inset-y-0 w-0.5 bg-amber-400" style="left:${m.slPct}%"></div>
+                  <div class="absolute inset-y-0 w-0.5 bg-slate-400" style="left:${m.entryPct}%"></div>
+                  <div class="absolute inset-y-0 w-1.5 rounded-full -ml-[3px] ${m.proximity === 'CRITICAL' ? 'bg-rose-500' : pnlPos ? 'bg-emerald-400' : 'bg-sky-400'}" style="left:${m.ltpPct}%"></div>
+                </div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="text-slate-300">₹${Number(t.target1 || 0).toFixed(1)}</div>
+                <div class="text-[10.5px] text-emerald-400">₹${Number(t.target2 || 0).toFixed(1)}</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap text-slate-300">
+                <div>${Number(t.rvol || 0).toFixed(2)}x / ${Number(t.xTimeVolume || 0).toFixed(2)}X</div>
+                <div class="text-[10.5px] text-slate-400">ADX ${Number(t.adx || 0).toFixed(1)}</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap font-semibold ${pnlPos ? 'text-emerald-400' : 'text-rose-400'}">
+                <div>${Number(t.liveRMultiple) >= 0 ? '+' : ''}${Number(t.liveRMultiple || 0).toFixed(2)}R</div>
+                <div class="text-[10.5px]">${this.formatRs(t.livePnlRs)}</div>
+              </td>
+              <td class="py-2.5 px-3">
+                <div class="font-medium text-slate-100 text-[11px]">${t.actionBadge}</div>
+                <div class="text-[10.5px] text-slate-400 max-w-[230px] truncate" title="${t.agentDirective}">${t.agentDirective}</div>
               </td>
             </tr>
           `;
@@ -14227,28 +15367,27 @@ function renderJournal() {
         const leadBtn = document.getElementById('home-fleet-btn-lead');
         const fs = data.fleetSummary || {};
         if (sumEl) {
-          sumEl.innerHTML = `<span class="text-white">${fs.totalActiveScanners || 0}/20 Active</span> &bull; <span class="text-cyan-300">${fs.totalManagedPositions || 0} Trades</span> (<span class="text-emerald-300">${fs.totalUpPositions || 0}▲</span>/<span class="text-rose-300">${fs.totalDownPositions || 0}▼</span>) &bull; Fleet P&amp;L <span class="${Number(fs.fleetLivePnlRs) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${this.formatRs(fs.fleetLivePnlRs)}</span>`;
+          sumEl.innerHTML = `<span class="text-white">${fs.totalActiveScanners || 0}/20 Active</span> &middot; <span class="text-sky-300">${fs.totalManagedPositions || 0} Trades</span> (<span class="text-emerald-300">${fs.totalUpPositions || 0} UP</span> / <span class="text-rose-300">${fs.totalDownPositions || 0} DN</span>) &middot; Live P&amp;L <span class="${Number(fs.fleetLivePnlRs) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${this.formatRs(fs.fleetLivePnlRs)}</span>`;
         }
         if (leadBtn) {
           leadBtn.className = this.homeScannerId === 'LEAD_DESK'
-            ? 'px-2 py-1 rounded-lg bg-cyan-500 text-black font-black text-[10px] cursor-pointer'
-            : 'px-2 py-1 rounded-lg bg-[#131e33] text-slate-300 border border-slate-600/40 font-bold text-[10px] cursor-pointer';
+            ? 'px-2.5 py-1 rounded-md bg-sky-500 text-slate-950 font-semibold text-[11px] cursor-pointer'
+            : 'px-2.5 py-1 rounded-md bg-slate-900 text-slate-300 border border-slate-700 font-medium text-[11px] cursor-pointer';
         }
         if (!gridEl) return;
         gridEl.innerHTML = (data.scanners || []).map(sc => {
           const isSel = this.homeScannerId === sc.scannerId;
-          const isHe = sc.agent.genderLabel === 'He';
           const pnl = Number(sc.summary?.totalLivePnlRs || 0);
           return `
-            <button type="button" onclick="Fleet20Client.selectHomeScanner('${sc.scannerId}')" class="p-2 rounded-lg text-left border transition cursor-pointer ${isSel ? 'bg-cyan-500/20 border-cyan-400 shadow-lg' : 'bg-[#0a1222] hover:bg-[#111c33] border-[#1a2742]'}">
-              <div class="flex items-center justify-between gap-1">
-                <span class="text-[9px] font-black text-slate-400">#${String(sc.rank).padStart(2, '0')}</span>
-                <span class="text-[9px] font-black ${isHe ? 'text-emerald-300' : 'text-rose-300'}">${isHe ? '👨‍💼' : '👩‍💼'} ${sc.agent.name}</span>
+            <button type="button" onclick="Fleet20Client.selectHomeScanner('${sc.scannerId}')" class="p-2.5 rounded-lg text-left border transition-colors cursor-pointer ${isSel ? 'bg-sky-500/15 border-sky-400' : 'bg-[#0b1120] hover:bg-slate-900 border-slate-800'}">
+              <div class="flex items-center justify-between gap-1 text-[10px]">
+                <span class="font-mono tabular-nums text-slate-400">${String(sc.rank).padStart(2, '0')} &middot; ${sc.agent.genderLabel}</span>
+                <span class="font-medium text-slate-200 truncate">${sc.agent.name}</span>
               </div>
-              <div class="text-[10px] font-bold text-white truncate mt-0.5" title="${sc.scannerName}">${sc.scannerName}</div>
-              <div class="flex items-center justify-between mt-1 text-[9.5px]">
-                <span class="text-slate-300"><span class="text-emerald-400">${sc.summary.upCount}▲</span>/<span class="text-rose-400">${sc.summary.downCount}▼</span></span>
-                <span class="font-black ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${this.formatRs(pnl)}</span>
+              <div class="text-[11px] font-medium text-white truncate mt-0.5" title="${sc.scannerName}">${sc.scannerName}</div>
+              <div class="flex items-center justify-between mt-1 text-[10px] font-mono tabular-nums">
+                <span class="text-slate-400"><span class="text-emerald-400">${sc.summary.upCount}▲</span> / <span class="text-rose-400">${sc.summary.downCount}▼</span></span>
+                <span class="font-semibold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${this.formatRs(pnl)}</span>
               </div>
             </button>
           `;
@@ -14278,58 +15417,346 @@ function renderJournal() {
         const data = this.lastData;
         if (!data) return;
         const fs = data.fleetSummary || {};
+        const isFlushCleared = Boolean(data.session?.isFlushCleared);
         const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
         setTxt('fleet20-kpi-scanners', `${fs.totalActiveScanners || 0} / ${data.totalScanners || 20}`);
-        setTxt('fleet20-kpi-agents', `${data.totalAiAgents || 20} (${data.heAgentCount || 10} He / ${data.sheAgentCount || 10} She)`);
-        setTxt('fleet20-kpi-trades', `${fs.totalManagedPositions || 0} (${fs.totalUpPositions || 0}▲/${fs.totalDownPositions || 0}▼)`);
+        const optOnCount = Number(fs.autonomousOptimizedAgents || 0);
+        const volShiftedCount = Number(fs.volatilityShiftedStopLosses || 0);
+        setTxt('fleet20-kpi-agents', `${optOnCount} / ${data.totalAiAgents || 20} ON`);
+        setTxt('fleet20-kpi-autoopt-sub', `${volShiftedCount} vol-shifted SL`);
+        const bulkBtn = document.getElementById('fleet20-bulk-auto-opt-btn');
+        if (bulkBtn) {
+          bulkBtn.textContent = optOnCount >= (data.totalAiAgents || 20)
+            ? 'Disable All Auto-Opt'
+            : `Enable All Auto-Opt (${optOnCount}/${data.totalAiAgents || 20})`;
+          bulkBtn.className = optOnCount > 0
+            ? 'px-3.5 py-2 rounded-lg border border-sky-500/40 bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 font-medium transition-colors cursor-pointer whitespace-nowrap'
+            : 'px-3.5 py-2 rounded-lg border border-slate-700 bg-[#0b1120] hover:bg-slate-800 text-slate-200 font-medium transition-colors cursor-pointer whitespace-nowrap';
+        }
+        const vixEl = document.getElementById('fleet20-vix-badge');
+        if (vixEl && data.marketVolatility) {
+          const mv = data.marketVolatility;
+          vixEl.textContent = `India VIX ${Number(mv.indiaVix || 0).toFixed(2)} (${mv.regimeLabel})`;
+          vixEl.className = mv.regime === 'EXTREME'
+            ? 'font-mono tabular-nums font-medium text-rose-400'
+            : mv.regime === 'ELEVATED'
+            ? 'font-mono tabular-nums font-medium text-amber-400'
+            : 'font-mono tabular-nums font-medium text-sky-400';
+        }
+        setTxt('fleet20-kpi-trades', `${fs.totalManagedPositions || 0}`);
+        setTxt('fleet20-kpi-trades-sub', `${fs.totalUpPositions || 0} UP · ${fs.totalDownPositions || 0} DOWN`);
         setTxt('fleet20-kpi-exits', `${fs.totalTrailingProtected || 0} / ${fs.totalTargetHits || 0}`);
         setTxt('fleet20-kpi-winrate', `${Number(fs.fleetWinRatePct || 0).toFixed(1)}%`);
         const pnlEl = document.getElementById('fleet20-kpi-pnl');
         if (pnlEl) {
           const p = Number(fs.fleetLivePnlRs || 0);
           pnlEl.textContent = this.formatRs(p);
-          pnlEl.className = p >= 0 ? 'text-emerald-400 font-black text-base mt-0.5' : 'text-rose-400 font-black text-base mt-0.5';
+          pnlEl.className = p >= 0 ? 'text-emerald-400 font-mono tabular-nums font-semibold text-lg mt-0.5' : 'text-rose-400 font-mono tabular-nums font-semibold text-lg mt-0.5';
         }
         const phaseEl = document.getElementById('fleet20-phase-badge');
         if (phaseEl && data.session) {
-          phaseEl.textContent = `🕒 ${data.session.phaseLabel}`;
+          phaseEl.textContent = data.session.phaseLabel;
+        }
+        const resetBanner = document.getElementById('fleet20-reset-banner');
+        const resetBannerTxt = document.getElementById('fleet20-reset-banner-text');
+        if (resetBanner) {
+          if (data.globalReset?.active) {
+            resetBanner.classList.remove('hidden');
+            if (resetBannerTxt) {
+              const atStr = data.globalReset.resetAtIST ? ` at ${data.globalReset.resetAtIST} IST` : '';
+              resetBannerTxt.textContent = ` — All 20 AI agent statuses, stop-loss levels, Autonomous Optimization switches, and profit counters were cleared${atStr}.`;
+            }
+          } else {
+            resetBanner.classList.add('hidden');
+          }
         }
 
         const grid = document.getElementById('fleet20-roster-grid');
         if (!grid) return;
+        const q = this.searchQuery;
         const filtered = (data.scanners || []).filter(sc => {
           if (this.genderFilter !== 'ALL' && sc.agent.genderLabel !== this.genderFilter) return false;
           if (this.categoryFilter !== 'ALL' && sc.category !== this.categoryFilter) return false;
+          const openTrades = (sc.allTrades || []).filter(t => !t.isClosed);
+          const trailedCount = openTrades.filter(t => this.computeSlMetrics(t).tightened || t.actionStatus === 'TRAIL_SL_BREAKEVEN' || t.actionStatus === 'BOOK_PARTIAL_T1').length;
+          const tightCount = openTrades.filter(t => { const p = this.computeSlMetrics(t).proximity; return p === 'CRITICAL' || p === 'WATCH'; }).length;
+          if (this.statusFilter === 'ACTIVE_OPEN' && openTrades.length === 0) return false;
+          if (this.statusFilter === 'TRAILING_SL' && trailedCount === 0) return false;
+          if (this.statusFilter === 'WATCH_SL' && tightCount === 0) return false;
+          if (this.statusFilter === 'AUTO_OPT' && !sc.agent?.autonomousOptimization) return false;
+          if (this.statusFilter === 'STANDBY' && (sc.summary?.totalManaged || 0) > 0) return false;
+          if (q) {
+            const hay = `${sc.agent.name} ${sc.agent.agentId} ${sc.scannerName} ${sc.scannerId} ${(sc.allTrades || []).map(t => t.symbol).join(' ')}`.toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
           return true;
         });
 
+        this.renderPerformanceSummaryTable(filtered, isFlushCleared);
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `<div class="col-span-full py-8 text-center text-slate-400 text-xs">No AI agents match the current search or status filter.</div>`;
+          return;
+        }
+
         grid.innerHTML = filtered.map(sc => {
           const isSel = sc.scannerId === this.selectedScannerId;
-          const isHe = sc.agent.genderLabel === 'He';
           const pnl = Number(sc.summary?.totalLivePnlRs || 0);
+          const st = this.deriveAgentStatus(sc, isFlushCleared);
+          const allTrades = sc.allTrades || [];
+          const openTrades = allTrades.filter(t => !t.isClosed);
+          const trailedCount = openTrades.filter(t => this.computeSlMetrics(t).tightened || t.actionStatus === 'TRAIL_SL_BREAKEVEN' || t.actionStatus === 'BOOK_PARTIAL_T1').length;
+          const autoOpt = Boolean(sc.agent?.autonomousOptimization);
+          const volMult = Number(sc.agent?.volatilityMultiplier || 1).toFixed(2);
+          const shiftedCnt = Number(sc.agent?.slShiftedCount || 0);
+          const preview = allTrades.slice(0, 3);
+          const extra = Math.max(0, allTrades.length - preview.length);
+          const stockRowsHtml = preview.length === 0
+            ? `<div class="py-3 text-center text-[11px] text-slate-500">${isFlushCleared ? 'Cleared by 23:59 flush' : '0 eligible stocks'}</div>`
+            : `<div class="space-y-1">
+                <div class="flex items-center justify-between text-[10px] text-slate-500"><span>Stock List</span><span>${autoOpt ? 'Vol SL &middot; Buffer' : 'Active SL &middot; Buffer'}</span></div>
+                ${preview.map(t => {
+                  const m = this.computeSlMetrics(t);
+                  const isBuy = t.side === 'BUY';
+                  const slColor = t.volatilityAdjusted ? 'text-sky-400 font-semibold' : (m.tightened ? 'text-emerald-400' : 'text-amber-300');
+                  return `<div class="flex items-center justify-between gap-2 text-[11px]">
+                    <span class="truncate"><span class="${isBuy ? 'text-emerald-400' : 'text-rose-400'} font-mono">${isBuy ? '▲' : '▼'}</span> <span class="text-slate-100 font-medium">${t.symbol}</span></span>
+                    <span class="font-mono tabular-nums shrink-0"><span class="${slColor}" data-testid="dash-card-sl-${sc.scannerId}-${t.symbol}">₹${Number(t.activeStopLoss || 0).toFixed(2)}</span> <span class="text-[10px] text-slate-400">${t.isClosed ? 'Exit' : m.distPct.toFixed(1) + '%'}</span></span>
+                  </div>`;
+                }).join('')}
+                ${extra > 0 ? `<div class="text-[10px] font-mono tabular-nums text-slate-500 pt-0.5">+${extra} more managed ${extra === 1 ? 'stock' : 'stocks'}</div>` : ''}
+              </div>`;
+
           return `
-            <div class="p-3 rounded-xl border transition flex flex-col justify-between ${isSel ? 'bg-[#0e1b34] border-cyan-400 shadow-lg' : 'bg-[#080f1e] border-[#192640] hover:border-cyan-500/40'}">
+            <article class="p-3.5 rounded-xl border transition-colors flex flex-col justify-between ${isSel ? 'bg-[#121e36] border-sky-400 ring-1 ring-sky-400/30' : 'bg-[#0b1120] border-slate-800 hover:border-slate-700'}">
               <div>
-                <div class="flex items-center justify-between gap-1.5">
-                  <span class="px-1.5 py-0.5 rounded bg-[#121e36] text-cyan-300 text-[9.5px] font-black">#${String(sc.rank).padStart(2, '0')} &bull; ${sc.shortTag}</span>
-                  <span class="px-1.5 py-0.5 rounded text-[9.5px] font-black ${isHe ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/35' : 'bg-rose-500/20 text-rose-300 border border-rose-500/35'}">${isHe ? '👨‍💼' : '👩‍💼'} ${sc.agent.name} (${sc.agent.genderLabel})</span>
+                <div class="flex items-center justify-between gap-2 text-[11px]">
+                  <span class="font-mono tabular-nums text-slate-400">${String(sc.rank).padStart(2, '0')} &middot; ${sc.agent.genderLabel}</span>
+                  <span class="font-medium truncate ${st.cls}">${st.label}</span>
                 </div>
-                <div class="font-black text-white text-xs mt-2">${sc.scannerName}</div>
-                <div class="text-[10px] text-slate-400 font-sans mt-0.5 line-clamp-2">${sc.agent.role}</div>
+                <div class="font-semibold text-slate-100 text-sm mt-1.5">${sc.agent.name}</div>
+                <div class="text-xs text-slate-300 truncate mt-0.5" title="${sc.scannerName}">Scanner: ${sc.scannerName}</div>
+                <div class="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-800/80 text-[11px] font-mono tabular-nums">
+                  <span class="text-slate-400">${openTrades.length} Active SL &middot; ${trailedCount} Trail</span>
+                  <span class="font-semibold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${this.formatRs(pnl)}</span>
+                </div>
+                <div class="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-slate-800/80">
+                  <div class="min-w-0">
+                    <div class="text-[11px] font-medium text-slate-200 leading-tight">Autonomous Opt ${autoOpt ? '<span class="ml-1 font-mono text-[10px] text-sky-400 font-semibold">ON</span>' : ''}</div>
+                    <div class="text-[10px] font-mono tabular-nums text-slate-400 truncate mt-0.5">${autoOpt ? `Vol &times;${volMult} &middot; ${shiftedCnt} SL shifted` : `Fixed ATR &times;${sc.agent.atrSlMultiplier}`}</div>
+                  </div>
+                  <button type="button" role="switch" aria-checked="${autoOpt}" aria-label="Toggle Autonomous Optimization for ${sc.agent.name}" data-testid="dash-auto-opt-toggle-${sc.scannerId}" onclick="Fleet20Client.toggleAutoOpt('${sc.scannerId}', ${!autoOpt})" class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border transition-colors cursor-pointer ${autoOpt ? 'bg-sky-500 border-sky-400' : 'bg-slate-800 border-slate-700'}">
+                    <span aria-hidden="true" class="inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${autoOpt ? 'translate-x-4' : 'translate-x-0.5'}"></span>
+                  </button>
+                </div>
+                <div class="mt-2 pt-2 border-t border-slate-800/80">${stockRowsHtml}</div>
               </div>
-              <div class="mt-3 pt-2.5 border-t border-[#162238] space-y-2">
-                <div class="flex items-center justify-between text-[10.5px]">
-                  <span class="text-slate-300">Stocks: <strong class="text-emerald-400">${sc.summary.upCount}▲</strong> / <strong class="text-rose-400">${sc.summary.downCount}▼</strong></span>
-                  <span class="font-black ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${this.formatRs(pnl)}</span>
-                </div>
-                <div class="flex items-center justify-between gap-1.5">
-                  <button type="button" onclick="Fleet20Client.selectInspectorScanner('${sc.scannerId}')" class="flex-1 py-1 px-2 rounded-lg text-[10px] font-black cursor-pointer ${isSel ? 'bg-cyan-500 text-black' : 'bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 border border-cyan-500/35'}">Inspect Stock List</button>
-                  <button type="button" onclick="switchTab('${sc.tabId}')" class="py-1 px-2 rounded-lg bg-[#131e33] hover:bg-[#1c2b47] text-slate-300 border border-[#243452] text-[10px] font-bold cursor-pointer" title="Open ${sc.scannerName} Tab">Tab &rarr;</button>
-                </div>
+              <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center gap-1.5">
+                <button type="button" onclick="Fleet20Client.selectInspectorScanner('${sc.scannerId}')" class="flex-1 py-1.5 px-2.5 rounded-lg text-[11px] font-medium cursor-pointer transition-colors ${isSel ? 'bg-sky-500 text-slate-950 font-semibold' : 'bg-slate-800/90 hover:bg-slate-800 text-slate-200'}">${isSel ? 'Viewing SL Ladder' : 'Inspect Stock List & SL'}</button>
+                <button type="button" onclick="switchTab('${sc.tabId}')" class="py-1.5 px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/80 text-[11px] font-medium cursor-pointer transition-colors" title="Open ${sc.scannerName} Tab">Tab &rarr;</button>
               </div>
-            </div>
+            </article>
           `;
         }).join('');
+      },
+      perfSortKey: 'realizedPnlRs',
+      perfSortDir: 'desc',
+      computeTradeRealizedRs(t) {
+        if (t.isClosed) return Math.round((Number(t.livePnlRs) || 0) * 100) / 100;
+        if (t.actionStatus === 'BOOK_PARTIAL_T1') {
+          const entry = Number(t.entryPrice) || 0;
+          const t1 = Number(t.target1) || entry;
+          const qty = Number(t.positionQty) || 0;
+          const move = t.side === 'BUY' ? (t1 - entry) : (entry - t1);
+          return Math.round(move * qty * 0.5 * 100) / 100;
+        }
+        return 0;
+      },
+      formatWinLossRatio(wins, losses) {
+        if (wins === 0 && losses === 0) return '—';
+        if (losses === 0) return `${wins} : 0`;
+        return `${(wins / losses).toFixed(2)} : 1`;
+      },
+      sortPerformanceTable(key) {
+        if (this.perfSortKey === key) {
+          this.perfSortDir = this.perfSortDir === 'desc' ? 'asc' : 'desc';
+        } else {
+          this.perfSortKey = key;
+          this.perfSortDir = key === 'rank' ? 'asc' : 'desc';
+        }
+        ['rank', 'totalTrades', 'winLossRatio', 'winRatePct', 'realizedPnlRs', 'totalSessionPnlRs'].forEach(k => {
+          const el = document.getElementById('perf-sort-' + k);
+          if (!el) return;
+          if (k === this.perfSortKey) {
+            el.textContent = this.perfSortDir === 'desc' ? '↓' : '↑';
+            el.className = 'text-[10px] text-sky-400';
+          } else {
+            el.textContent = '↕';
+            el.className = 'text-[10px] opacity-60';
+          }
+        });
+        this.renderFleetTabRoster();
+      },
+      renderPerformanceSummaryTable(scanners, isFlushCleared) {
+        const tbody = document.getElementById('tbody-fleet20-performance');
+        const tfoot = document.getElementById('tfoot-fleet20-performance');
+        const countEl = document.getElementById('fleet20-perf-agent-count');
+        const wlEl = document.getElementById('fleet20-perf-fleet-wl');
+        const realEl = document.getElementById('fleet20-perf-fleet-realized');
+        if (!tbody) return;
+
+        let sumTrades = 0, sumClosed = 0, sumOpen = 0, sumWins = 0, sumLosses = 0, sumRealized = 0, sumSession = 0;
+        const rows = (scanners || []).map(sc => {
+          const trades = sc.allTrades || [];
+          let closed = 0, partialT1 = 0, wins = 0, losses = 0, breakeven = 0, realized = 0, sessionPnl = 0;
+          for (const t of trades) {
+            const p = Number(t.livePnlRs) || 0;
+            sessionPnl += p;
+            if (t.isClosed) closed += 1;
+            else if (t.actionStatus === 'BOOK_PARTIAL_T1') partialT1 += 1;
+            realized += this.computeTradeRealizedRs(t);
+            if (p > 0) wins += 1;
+            else if (p < 0) losses += 1;
+            else breakeven += 1;
+          }
+          const totalTrades = trades.length;
+          const openTrades = Math.max(0, totalTrades - closed);
+          const realizedRounded = Math.round(realized * 100) / 100;
+          const sessionRounded = Math.round((totalTrades > 0 ? sessionPnl : Number(sc.summary?.totalLivePnlRs || 0)) * 100) / 100;
+          const unrealizedRounded = Math.round((sessionRounded - realizedRounded) * 100) / 100;
+          const winLossRatio = losses > 0 ? (wins / losses) : (wins > 0 ? Infinity : 0);
+          const winRatePct = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+
+          sumTrades += totalTrades;
+          sumClosed += closed;
+          sumOpen += openTrades;
+          sumWins += wins;
+          sumLosses += losses;
+          sumRealized += realizedRounded;
+          sumSession += sessionRounded;
+
+          return {
+            rank: sc.rank,
+            scannerId: sc.scannerId,
+            scannerName: sc.scannerName,
+            agentName: sc.agent.name,
+            agentGender: sc.agent.genderLabel,
+            totalTrades,
+            closed,
+            openTrades,
+            partialT1,
+            wins,
+            losses,
+            breakeven,
+            winLossRatio,
+            winLossLabel: this.formatWinLossRatio(wins, losses),
+            winRatePct,
+            realizedPnlRs: realizedRounded,
+            unrealizedPnlRs: unrealizedRounded,
+            totalSessionPnlRs: sessionRounded,
+            autonomousOptimization: Boolean(sc.agent?.autonomousOptimization),
+          };
+        });
+
+        const dir = this.perfSortDir === 'asc' ? 1 : -1;
+        const key = this.perfSortKey || 'realizedPnlRs';
+        rows.sort((a, b) => {
+          if (key === 'rank') return (a.rank - b.rank) * dir;
+          if (key === 'winLossRatio') {
+            const aInf = !Number.isFinite(a.winLossRatio);
+            const bInf = !Number.isFinite(b.winLossRatio);
+            if (aInf && bInf) return (a.wins - b.wins) * dir || (a.rank - b.rank);
+            if (aInf) return 1 * dir;
+            if (bInf) return -1 * dir;
+            if (a.winLossRatio !== b.winLossRatio) return (a.winLossRatio - b.winLossRatio) * dir;
+            return (a.wins - b.wins) * dir || (a.rank - b.rank);
+          }
+          const diff = (a[key] - b[key]) * dir;
+          return diff !== 0 ? diff : (a.rank - b.rank);
+        });
+
+        const fleetWlLabel = this.formatWinLossRatio(sumWins, sumLosses);
+        const fleetWinRate = sumTrades > 0 ? ((sumWins / sumTrades) * 100).toFixed(1) + '%' : '—';
+        const sumUnrealized = Math.round((sumSession - sumRealized) * 100) / 100;
+
+        if (countEl) countEl.textContent = `(${rows.length} Agents)`;
+        if (wlEl) wlEl.innerHTML = `${fleetWlLabel} <span class="text-[11px] font-normal text-slate-400">(${sumWins}W / ${sumLosses}L &middot; ${fleetWinRate})</span>`;
+        if (realEl) {
+          realEl.textContent = this.formatRs(sumRealized);
+          realEl.className = `font-mono tabular-nums font-semibold mt-0.5 ${sumRealized >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+
+        if (rows.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-400 text-xs">${isFlushCleared ? 'All 20 AI agent session ledgers cleared by 23:59 IST flush.' : 'No AI agents match the current filter.'}</td></tr>`;
+          if (tfoot) tfoot.innerHTML = '';
+          return;
+        }
+
+        const pnlTone = v => v > 0 ? 'text-emerald-400' : v < 0 ? 'text-rose-400' : 'text-slate-400';
+        tbody.innerHTML = rows.map(r => {
+          const isSel = r.scannerId === this.selectedScannerId;
+          const realizedSub = (r.closed > 0 || r.partialT1 > 0)
+            ? `${r.closed} closed${r.partialT1 > 0 ? ` · ${r.partialT1} T1` : ''}`
+            : 'No exits yet';
+          const ratioCls = (r.wins > 0 && (r.losses === 0 || r.winLossRatio >= 1.5))
+            ? 'text-emerald-400'
+            : (r.losses > r.wins ? 'text-rose-400' : 'text-slate-200');
+          return `
+            <tr onclick="Fleet20Client.selectInspectorScanner('${r.scannerId}')" class="cursor-pointer transition-colors ${isSel ? 'bg-sky-500/10' : 'hover:bg-slate-800/45'}">
+              <td class="py-2.5 pl-4 pr-2.5 whitespace-nowrap">
+                <span class="font-mono tabular-nums text-[11px] text-slate-400 mr-1.5">${String(r.rank).padStart(2, '0')}</span>
+                <span class="font-semibold text-slate-100">${r.agentName}</span>
+                <span class="text-[10.5px] font-mono text-slate-400 ml-1.5">${r.agentGender}</span>
+                ${r.autonomousOptimization ? '<span class="text-[10px] font-mono text-sky-400 font-medium ml-1.5">Auto-Opt</span>' : ''}
+              </td>
+              <td class="py-2.5 px-2.5 max-w-[230px]">
+                <div class="truncate text-slate-200" title="${r.scannerName}">${r.scannerName}</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="text-slate-100 font-medium">${r.totalTrades}</div>
+                <div class="text-[10px] text-slate-400">${r.closed} closed &middot; ${r.openTrades} open</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <span class="text-emerald-400 font-semibold">${r.wins}W</span>
+                <span class="text-slate-500 mx-0.5">/</span>
+                <span class="text-rose-400 font-semibold">${r.losses}L</span>
+                ${r.breakeven > 0 ? `<div class="text-[10px] text-slate-400">${r.breakeven} flat</div>` : ''}
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <span class="font-semibold ${ratioCls}">${r.winLossLabel}</span>
+                ${r.wins > 0 && r.losses === 0 ? `<div class="text-[10px] text-emerald-400">Zero losses</div>` : ''}
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap text-slate-200">
+                ${r.totalTrades > 0 ? r.winRatePct.toFixed(1) + '%' : '—'}
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">
+                <div class="font-semibold ${pnlTone(r.realizedPnlRs)}">${this.formatRs(r.realizedPnlRs)}</div>
+                <div class="text-[10px] text-slate-400">${realizedSub}</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap ${pnlTone(r.unrealizedPnlRs)}">
+                ${this.formatRs(r.unrealizedPnlRs)}
+              </td>
+              <td class="py-2.5 pl-2.5 pr-4 text-right font-mono tabular-nums whitespace-nowrap font-semibold ${pnlTone(r.totalSessionPnlRs)}">
+                ${this.formatRs(r.totalSessionPnlRs)}
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        if (tfoot) {
+          tfoot.innerHTML = `
+            <tr>
+              <td colspan="2" class="py-2.5 pl-4 pr-2.5 text-xs">Fleet Session Total (${rows.length} Agents)</td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">${sumTrades} <span class="text-[10px] font-normal text-slate-400">(${sumClosed}c / ${sumOpen}o)</span></td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap"><span class="text-emerald-400">${sumWins}W</span> <span class="text-slate-500 font-normal">/</span> <span class="text-rose-400">${sumLosses}L</span></td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">${fleetWlLabel}</td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap">${fleetWinRate}</td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap ${pnlTone(sumRealized)}">${this.formatRs(sumRealized)}</td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums whitespace-nowrap ${pnlTone(sumUnrealized)}">${this.formatRs(sumUnrealized)}</td>
+              <td class="py-2.5 pl-2.5 pr-4 text-right font-mono tabular-nums whitespace-nowrap ${pnlTone(sumSession)}">${this.formatRs(sumSession)}</td>
+            </tr>
+          `;
+        }
       },
       renderFleetTabInspector() {
         const data = this.lastData;
@@ -14340,12 +15767,45 @@ function renderJournal() {
         const titleEl = document.getElementById('fleet20-sel-title');
         const subEl = document.getElementById('fleet20-sel-subtitle');
         const tbody = document.getElementById('tbody-fleet20-inspector');
-        if (badgeEl) badgeEl.textContent = `SCANNER #${String(sc.rank).padStart(2, '0')} • ${sc.agent.agentId}`;
-        if (titleEl) titleEl.textContent = `${sc.scannerName} — Managed by ${sc.agent.name} (${sc.agent.genderLabel})`;
-        if (subEl) subEl.textContent = `${sc.formulaSummary} • ${sc.agent.specialty}`;
+        const st = this.deriveAgentStatus(sc, Boolean(data.session?.isFlushCleared));
+        if (badgeEl) badgeEl.textContent = `Scanner ${String(sc.rank).padStart(2, '0')} · ${sc.agent.agentId} · ${st.label}`;
+        if (titleEl) titleEl.textContent = `${sc.agent.name} (${sc.agent.genderLabel}) — ${sc.scannerName}`;
+        const autoOptOn = Boolean(sc.agent?.autonomousOptimization);
+        const effAtr = Number(sc.agent?.effectiveAtrSlMultiplier || sc.agent?.atrSlMultiplier || 1.1).toFixed(2);
+        const vixTxt = data.marketVolatility ? Number(data.marketVolatility.indiaVix || 0).toFixed(2) : '--';
+        if (subEl) {
+          subEl.textContent = autoOptOn
+            ? `${sc.agent.role} · Autonomous Opt ON (Vol ATR ×${effAtr} · VIX ${vixTxt} · ${sc.agent.slShiftedCount || 0} SLs shifted)`
+            : `${sc.agent.role} · ${sc.formulaSummary}`;
+        }
+        const wrapEl = document.getElementById('fleet20-inspector-autoopt-wrap');
+        const lblEl = document.getElementById('fleet20-inspector-autoopt-label');
+        const tglEl = document.getElementById('fleet20-inspector-autoopt-toggle');
+        const knobEl = document.getElementById('fleet20-inspector-autoopt-knob');
+        if (wrapEl) {
+          wrapEl.className = autoOptOn
+            ? 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border border-sky-500/40 bg-sky-500/10 text-sky-200'
+            : 'inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border border-slate-800 bg-[#0b1120] text-slate-300';
+        }
+        if (lblEl) {
+          lblEl.textContent = autoOptOn
+            ? `Autonomous Opt ×${Number(sc.agent?.volatilityMultiplier || 1).toFixed(2)}`
+            : 'Autonomous Opt';
+        }
+        if (tglEl) {
+          tglEl.setAttribute('aria-checked', String(autoOptOn));
+          tglEl.className = autoOptOn
+            ? 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-sky-400 bg-sky-500 transition-colors cursor-pointer'
+            : 'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-slate-700 bg-slate-800 transition-colors cursor-pointer';
+        }
+        if (knobEl) {
+          knobEl.className = autoOptOn
+            ? 'inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform translate-x-4'
+            : 'inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform translate-x-0.5';
+        }
         if (!tbody) return;
         const rows = this.inspectorSide === 'BUY' ? sc.upTrades : this.inspectorSide === 'SELL' ? sc.downTrades : sc.allTrades;
-        tbody.innerHTML = this.renderTradeRowsHtml(rows, Boolean(data.session?.isFlushCleared));
+        tbody.innerHTML = this.renderInspectorRowsHtml(rows, Boolean(data.session?.isFlushCleared));
       },
       renderDedicatedScanner(scannerId) {
         const data = this.lastData;
