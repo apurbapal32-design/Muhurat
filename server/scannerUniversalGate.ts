@@ -704,6 +704,7 @@ export function applyUniversalGateToMoneyFlowReport(
     getEntryPrice: (r: any) => Number(r.entryPrice) || 0,
     getStopLoss: (r: any) => Number(r.stopLoss) || 0,
     getRvol: (r: any) => Number(r.rvol) || 0,
+    getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
     getAdx: (r: any) => Number(r.adx) || 0,
   });
 
@@ -719,6 +720,7 @@ export function applyUniversalGateToMoneyFlowReport(
     getEntryPrice: (r: any) => Number(r.entryPrice) || 0,
     getStopLoss: (r: any) => Number(r.stopLoss) || 0,
     getRvol: (r: any) => Number(r.rvol) || 0,
+    getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
     getAdx: (r: any) => Number(r.adx) || 0,
   });
 
@@ -762,6 +764,7 @@ export function applyUniversalGateToMuhuratFlowReport(
     getEntryPrice: (r: any) => Number(r.entryPrice) || 0,
     getStopLoss: (r: any) => Number(r.stopLoss) || 0,
     getRvol: (r: any) => Number(r.rvol) || 0,
+    getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
     getAdx: (r: any) => Number(r.adx) || 0,
   });
 
@@ -777,6 +780,7 @@ export function applyUniversalGateToMuhuratFlowReport(
     getEntryPrice: (r: any) => Number(r.entryPrice) || 0,
     getStopLoss: (r: any) => Number(r.stopLoss) || 0,
     getRvol: (r: any) => Number(r.rvol) || 0,
+    getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
     getAdx: (r: any) => Number(r.adx) || 0,
   });
 
@@ -826,6 +830,7 @@ export function applyUniversalGateToMostActiveFnoReport(
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.ltp ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
       getRvol: (r: any) => Number(r.rvol) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -884,6 +889,7 @@ export function applyUniversalGateToClaudeFnoReport(
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.ltp ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
       getRvol: (r: any) => Number(r.rvol) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -939,6 +945,7 @@ export function applyUniversalGateToSmcReport(
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
       getRvol: (r: any) => Number(r.rvol) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -952,6 +959,7 @@ export function applyUniversalGateToSmcReport(
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
       getRvol: (r: any) => Number(r.rvol) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -1007,6 +1015,7 @@ export function applyUniversalGateToPriceActionReport(
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
       getRvol: (r: any) => Number(r.rvol) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -1020,6 +1029,7 @@ export function applyUniversalGateToPriceActionReport(
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
       getRvol: (r: any) => Number(r.rvol) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -1078,6 +1088,7 @@ export function applyUniversalGateToIntradayStockReport(
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
       getRvol: (r: any) => Number(r.rvol) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -1092,6 +1103,7 @@ export function applyUniversalGateToIntradayStockReport(
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
       getRvol: (r: any) => Number(r.rvol) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -1152,7 +1164,8 @@ export function applyUniversalGateToApexAlphaReport(
       getSide: () => fixedSide,
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
-      getRvol: (r: any) => Number(r.rvol) || 0,
+      getRvol: (r: any) => Number(r.rvol ?? r.rvol5m) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 
@@ -1165,7 +1178,8 @@ export function applyUniversalGateToApexAlphaReport(
       getSide: (r: any) => inferSide(r),
       getEntryPrice: (r: any) => Number(r.entryPrice ?? r.price) || 0,
       getStopLoss: (r: any) => Number(r.stopLoss) || 0,
-      getRvol: (r: any) => Number(r.rvol) || 0,
+      getRvol: (r: any) => Number(r.rvol ?? r.rvol5m) || 0,
+      getXTimeVol: (r: any) => Number(r.xTimeVolume ?? r.barVolRatio) || 0,
       getAdx: (r: any) => Number(r.adx) || 0,
     });
 

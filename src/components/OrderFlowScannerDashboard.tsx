@@ -57,6 +57,7 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [showFormula, setShowFormula] = useState<boolean>(false);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
+  const [nextRefreshSec, setNextRefreshSec] = useState<number>(60);
 
   const loadReport = useCallback(async (force: boolean = false) => {
     if (force) setRefreshing(true);
@@ -68,6 +69,7 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
       const data: OrderFlowScanReport = await res.json();
       setReport(data);
       setError(null);
+      setNextRefreshSec(60);
       setSelectedSymbol((prev) => {
         const all = [...(data.upPicks || []), ...(data.downPicks || [])];
         if (prev && all.some((r) => r.symbol === prev)) return prev;
@@ -81,10 +83,19 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
     }
   }, []);
 
+  // Auto-refresh Order Flow Scanner strictly every 60 seconds with 1s countdown
   useEffect(() => {
     loadReport(false);
-    const id = window.setInterval(() => loadReport(false), 6000);
-    return () => window.clearInterval(id);
+    const refreshId = window.setInterval(() => {
+      loadReport(false);
+    }, 60_000);
+    const tickId = window.setInterval(() => {
+      setNextRefreshSec((prev) => (prev <= 1 ? 60 : prev - 1));
+    }, 1000);
+    return () => {
+      window.clearInterval(refreshId);
+      window.clearInterval(tickId);
+    };
   }, [loadReport]);
 
   const matchesFilters = useCallback(
@@ -245,7 +256,7 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
                     </td>
 
                     <td className="py-2.5 px-2.5 font-mono tabular-nums">
-                      <div>{row.listedAt}</div>
+                      <div>{row.listedAt} IST</div>
                       <div className={`text-[10px] ${mutedText}`}>Locked</div>
                     </td>
 
@@ -386,6 +397,16 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap text-xs shrink-0">
+            <span
+              data-testid="order-flow-refresh-timer"
+              className={`px-3 py-2 rounded-lg border font-mono tabular-nums whitespace-nowrap ${
+                isLight
+                  ? 'border-slate-300 bg-slate-50 text-slate-700'
+                  : 'border-slate-800 bg-[#0b1120] text-slate-300'
+              }`}
+            >
+              Auto-refresh 60s &middot; {nextRefreshSec}s
+            </span>
             <button
               type="button"
               data-testid="order-flow-formula-toggle"

@@ -259,8 +259,12 @@ export function calculateBollingerBands(closes: number[], period: number = 20, m
  */
 export function calculateCPRAndPivots(high: number, low: number, close: number) {
   const pivot = (high + low + close) / 3;
-  const bc = (high + low) / 2;
-  const tc = pivot - bc + pivot;
+  const rawBC = (high + low) / 2;
+  const rawTC = pivot - rawBC + pivot;
+  // Normalize CPR bounds: on bearish prior days (close < midpoint), rawTC < rawBC.
+  // Top Central Pivot (TC) must always be >= Bottom Central Pivot (BC).
+  const bc = Math.min(rawBC, rawTC);
+  const tc = Math.max(rawBC, rawTC);
 
   const pivotR1 = 2 * pivot - low;
   const pivotS1 = 2 * pivot - high;

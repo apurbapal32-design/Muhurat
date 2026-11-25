@@ -82,7 +82,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'UP • DOWN',
     tabId: 'momentum',
     category: 'MOMENTUM',
-    formulaSummary: 'VWAP + EMA(13/21) Momentum Thrust + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'VWAP + Strict EMA(13/21) Thrust + RSI(54-82/18-46) + Close Dominance + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-01',
       agentNumber: 1,
@@ -104,7 +104,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'ST • HMA55',
     tabId: 'money-flow',
     category: 'ORDER_FLOW',
-    formulaSummary: 'Supertrend(10,2) + Institutional Order Flow + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Supertrend(10,2) + EMA(13/21) + VWAP + Order Flow (Bid/Ask or CVD) + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-02',
       agentNumber: 2,
@@ -126,7 +126,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'FNO • OPT',
     tabId: 'most-active-fno',
     category: 'FNO_OI',
-    formulaSummary: 'High Turnover F&O + PDH/PDL & ORB 15m + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'F&O Turnover >= ₹25Cr + VWAP + PDH/PDL or Range Breakout + Non-Conflicting OI + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-03',
       agentNumber: 3,
@@ -148,7 +148,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: '10-PT • 1:2R',
     tabId: 'claude-fno',
     category: 'FNO_OI',
-    formulaSummary: '10-Pt Institutional F&O Score + VWAP + OI Confirmation + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: '10-Pt Scorecard (>=68) + VWAP + EMA(13/21) + RSI(54-78/22-46) + Strict OI Alignment + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-04',
       agentNumber: 4,
@@ -170,7 +170,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'BOS • FVG • OB',
     tabId: 'smart-money-concepts',
     category: 'PRICE_ACTION',
-    formulaSummary: 'ICT BOS/CHoCH + Discount/Premium OB + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'ICT BOS/Swing Structure + VWAP + EMA21 + Order-Book Aligned Range Dominance + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-05',
       agentNumber: 5,
@@ -192,7 +192,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: '9/9 • D&S',
     tabId: 'price-action',
     category: 'PRICE_ACTION',
-    formulaSummary: 'Pure Demand/Supply + Swing Structure Breakout + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Pure Demand/Supply + VWAP + EMA(13/21) + PDH/PDL Structure Breakout + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-06',
       agentNumber: 6,
@@ -214,7 +214,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'PF 1.87 • WIN',
     tabId: 'apex-alpha',
     category: 'QUANT_AI',
-    formulaSummary: 'VWAP Compression Coil + PDH/PDL Reclaim + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Tight VWAP Coil Reclaim (±0.12% to ±2.8%) + EMA(13/21) + RSI(52-76/24-48) + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-07',
       agentNumber: 7,
@@ -236,7 +236,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'DFC 5m • HL',
     tabId: 'intraday-stock',
     category: 'PRICE_ACTION',
-    formulaSummary: '5m Day First Candle High/Low Breakout + PDH/PDL + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: '5m Day Open Clearance + VWAP + EMA(13/21) + Order Flow + Close Dominance + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-08',
       agentNumber: 8,
@@ -258,7 +258,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'ORB 15m',
     tabId: 'strong',
     category: 'MUHURAT_CORE',
-    formulaSummary: '15m Opening Range Breakout + CPR TC/BC Clear + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: '15m ORB Open + Normalized CPR TC/BC Clear + VWAP + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-09',
       agentNumber: 9,
@@ -280,7 +280,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'RVOL • OI',
     tabId: 'sonic',
     category: 'MUHURAT_CORE',
-    formulaSummary: 'Abnormal RVOL Spike + Fresh OI Buildup + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Abnormal RVOL >= 2.25 + VolX >= 1.20X + VWAP + Symmetric OI Buildup/Unwind + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-10',
       agentNumber: 10,
@@ -302,7 +302,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'WHALES',
     tabId: 'titan',
     category: 'ORDER_FLOW',
-    formulaSummary: 'Institutional Whale Order Imbalance + VWAP + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Whale Turnover >= ₹25Cr + Strict Bid/Ask Imbalance (>=1.08/<=0.92) + VWAP + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-11',
       agentNumber: 11,
@@ -324,7 +324,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: '3m SQUEEZE',
     tabId: 'elite',
     category: 'MUHURAT_CORE',
-    formulaSummary: 'Bollinger Squeeze Release + RSI Momentum + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Bollinger Expansion + VWAP + MACD Impulse + Non-Exhausted RSI(56-80/20-44) + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-12',
       agentNumber: 12,
@@ -346,7 +346,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: '6m WAVES',
     tabId: 'elite-pro',
     category: 'MUHURAT_CORE',
-    formulaSummary: 'EMA(13/21/34) Trend Wave + MACD Impulse + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Strict EMA(13/21/34) Ribbon Stack + VWAP + Positive/Negative MACD Impulse + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-13',
       agentNumber: 13,
@@ -368,7 +368,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'DELIVERY DIST',
     tabId: 'titan-cash',
     category: 'ORDER_FLOW',
-    formulaSummary: 'High Cash Value Accumulation + Bid-Ask Dominance + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Cash Value >= ₹20Cr + VWAP + Bid-Ask Dominance (>=1.05/<=0.95) + Range Close + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-14',
       agentNumber: 14,
@@ -390,7 +390,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'AUTO SETUPS',
     tabId: 'cloud-ai',
     category: 'QUANT_AI',
-    formulaSummary: 'Multi-Factor AI Confluence Score >= 72 + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Multi-Factor AI Score >= 72 + VWAP + EMA(13/21) + RSI + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-15',
       agentNumber: 15,
@@ -412,7 +412,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'OMNI v4.0',
     tabId: 'world-strategy',
     category: 'QUANT_AI',
-    formulaSummary: '6-Layer Quantum CVD + Virgin CPR + VWAP + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: '6-Layer AI (>=70) + Supertrend + EMA(13/21) + Normalized CPR + VWAP + Flow + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-16',
       agentNumber: 16,
@@ -434,7 +434,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'v5.0 PRO',
     tabId: 'claude-10skills',
     category: 'QUANT_AI',
-    formulaSummary: '10-Skill Consensus + Trend/Vol/OI Alignment + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: '10-Skill Consensus (AI>=68, ADX>=26) + VWAP + EMA(13/21) + RSI + OI Guard + RVOL > 2.00 + VolX > 1.00X',
     agent: {
       agentId: 'AI-AGENT-17',
       agentNumber: 17,
@@ -456,7 +456,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     shortTag: 'TOP TRADED',
     tabId: 'liquidity',
     category: 'ORDER_FLOW',
-    formulaSummary: 'Top Institutional Value Traded + Directional VWAP + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'Institutional Value >= ₹35Cr + Directional VWAP + Close Dominance + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-18',
       agentNumber: 18,
@@ -479,7 +479,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     tabId: 'vwap-surge',
     category: 'MOMENTUM',
     isNewScanner: true,
-    formulaSummary: 'VWAP Expansion Band (>±0.6% VWAP) + ATR Surge + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'VWAP Expansion Band (±0.55% to ±4.50%) + ATR Range Surge + RSI(56-82/18-44) + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-19',
       agentNumber: 19,
@@ -502,7 +502,7 @@ export const SCANNER_FLEET_20_DEFINITIONS: readonly ScannerDefinition20[] = Obje
     tabId: 'oi-short-cover',
     category: 'FNO_OI',
     isNewScanner: true,
-    formulaSummary: 'Short-Covering / Long-Unwinding Trap + PCR Shift + RVOL > 2.00 + VolX > 1.00X + ADX 25+',
+    formulaSummary: 'VWAP-Aligned Short-Covering / Long-Unwinding Trap + Extreme PCR (>=1.15/<=0.85) or OI Δ >=2% + RVOL > 2.00 + VolX > 1.00X + DI-Aligned ADX 25+',
     agent: {
       agentId: 'AI-AGENT-20',
       agentNumber: 20,
@@ -899,7 +899,9 @@ export function evaluateStockForScanner20(
   stock: ScannedStock,
   rvol: number,
   xTimeVolume: number,
-  adx: number
+  adx: number,
+  explicitPlusDI?: number,
+  explicitMinusDI?: number
 ): ScannerFormulaEvaluation | null {
   const rule3 = passesRule3Thresholds(rvol, xTimeVolume, adx, true);
   if (!rule3.passedAll) return null;
@@ -918,28 +920,54 @@ export function evaluateStockForScanner20(
   const ema34 = Number(ind?.ema34) || price;
   const rsi = Number(ind?.rsi) || 50;
   const macdHist = Number(ind?.macdHist) || 0;
+  const atr = Number(ind?.atr) || 0;
   const pdh = Number(ind?.pdh) || 0;
   const pdl = Number(ind?.pdl) || 0;
-  const cprTC = Number(ind?.cprTC) || 0;
-  const cprBC = Number(ind?.cprBC) || 0;
+  const swingHigh = Number(ind?.swingHigh) || 0;
+  const swingLow = Number(ind?.swingLow) || 0;
+  const rawCprTC = Number(ind?.cprTC) || 0;
+  const rawCprBC = Number(ind?.cprBC) || 0;
+  // Normalize CPR bounds safely in case an upstream feed passes inverted TC < BC on bearish prior days
+  const topCpr = rawCprTC > 0 && rawCprBC > 0 ? Math.max(rawCprTC, rawCprBC) : rawCprTC;
+  const botCpr = rawCprTC > 0 && rawCprBC > 0 ? Math.min(rawCprTC, rawCprBC) : rawCprBC;
   const bbUpper = Number(ind?.bbUpper) || 0;
+  const bbMiddle = Number(ind?.bbMiddle) || 0;
   const bbLower = Number(ind?.bbLower) || 0;
   const stDir = ind?.supertrendDirection || (chg >= 0 ? 'BUY' : 'SELL');
   const oiState = stock.oiData?.buildup || ind?.oiState || 'NEUTRAL';
   const oiChgPct = Number(stock.oiData?.changeInOIPercent ?? ind?.oiChangePct ?? 0);
   const pcr = Number(stock.oiData?.pcr ?? ind?.pcr ?? 1.0);
   const bidAsk = Number(stock.bidAskRatio) || 1.0;
+  const cumDelta = Number((stock as any).cumulativeDelta ?? (stock as any).netOrderFlow ?? 0);
   const aiScore = Number(stock.aiScore) || 65;
   const turnoverCr = (Number(stock.volume) * price) / 1e7;
   const vwapDistPct = vwap > 0 ? ((price - vwap) / vwap) * 100 : 0;
   const dayRangePct = high > low ? ((price - low) / (high - low)) * 100 : 50;
+  const plusDI = Number(explicitPlusDI ?? ind?.plusDi ?? 0);
+  const minusDI = Number(explicitMinusDI ?? ind?.minusDi ?? 0);
 
-  // Determine natural directional bias (must clearly move UP or DOWN; flat/neutral rejected)
-  const isUpBias = chg > 0.15 && (price >= vwap * 0.999 || stDir === 'BUY');
-  const isDownBias = chg < -0.15 && (price <= vwap * 1.001 || stDir === 'SELL');
+  // 1. Strict VWAP-aligned directional bias (prevents counter-VWAP dead-cat bounce / Supertrend-lag traps)
+  const isUpBias = chg > 0.15 && price >= vwap * 0.997;
+  const isDownBias = chg < -0.15 && price <= vwap * 1.003;
   if (!isUpBias && !isDownBias) return null;
 
   const side: 'BUY' | 'SELL' = isUpBias ? 'BUY' : 'SELL';
+
+  // 2. DI-Aligned ADX Trend Guard: ADX is directionless; when +DI/-DI are available, enforce trend direction
+  if (plusDI > 0 || minusDI > 0) {
+    if (side === 'BUY' && !(plusDI > minusDI)) return null;
+    if (side === 'SELL' && !(minusDI > plusDI)) return null;
+  }
+
+  // 3. Universal Anti-Exhaustion & Opposing-Wick Trap Guard (prevents buying climax blow-offs & shooting stars)
+  if (Math.abs(vwapDistPct) > 6.5) return null;
+  if (side === 'BUY' && rsi > 86) return null;
+  if (side === 'SELL' && rsi < 14) return null;
+  if (high > low) {
+    if (side === 'BUY' && dayRangePct < 35) return null;
+    if (side === 'SELL' && dayRangePct > 65) return null;
+  }
+
   const absChg = Math.abs(chg);
   const baseStrength = Math.min(
     99,
@@ -954,37 +982,66 @@ export function evaluateStockForScanner20(
 
   switch (scannerId) {
     case 'top-momentum': {
+      // #01: Strict VWAP + EMA(13/21) alignment, non-chasing VWAP band, healthy RSI & upper/lower range control
       const ok =
         side === 'BUY'
-          ? price > vwap && ema13 >= ema21 * 0.998 && chg >= 0.45
-          : price < vwap && ema13 <= ema21 * 1.002 && chg <= -0.45;
+          ? price > vwap &&
+            ema13 > ema21 &&
+            chg >= 0.45 &&
+            vwapDistPct <= 4.2 &&
+            dayRangePct >= 48 &&
+            rsi >= 54 &&
+            rsi <= 82
+          : price < vwap &&
+            ema13 < ema21 &&
+            chg <= -0.45 &&
+            vwapDistPct >= -4.2 &&
+            dayRangePct <= 52 &&
+            rsi <= 46 &&
+            rsi >= 18;
       if (!ok) return null;
       return {
         side,
         score: Math.min(99, baseStrength + (absChg >= 1.5 ? 6 : 2)),
-        reason: `${side === 'BUY' ? 'VWAP+EMA13/21 Thrust' : 'VWAP+EMA13/21 Breakdown'} • ${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`,
+        reason: `${side === 'BUY' ? 'VWAP+EMA13/21 Thrust' : 'VWAP+EMA13/21 Breakdown'} • RSI ${rsi.toFixed(0)} • ${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%`,
       };
     }
 
     case 'money-flow': {
+      // #02: Supertrend + VWAP + EMA(13/21) + genuine Order Flow (Bid/Ask or CVD — never bypassed by price alone)
       const ok =
         side === 'BUY'
-          ? stDir === 'BUY' && price >= vwap && (bidAsk >= 1.02 || chg >= 0.5)
-          : stDir === 'SELL' && price <= vwap && (bidAsk <= 0.98 || chg <= -0.5);
+          ? stDir === 'BUY' &&
+            price > vwap &&
+            ema13 >= ema21 &&
+            chg >= 0.5 &&
+            (bidAsk >= 1.05 || cumDelta > 0)
+          : stDir === 'SELL' &&
+            price < vwap &&
+            ema13 <= ema21 &&
+            chg <= -0.5 &&
+            (bidAsk <= 0.95 || cumDelta < 0);
       if (!ok) return null;
       return {
         side,
-        score: Math.min(99, baseStrength + (stDir === side ? 5 : 0)),
-        reason: `Supertrend ${stDir} + Smart Money Flow • Bid/Ask ${bidAsk.toFixed(2)}`,
+        score: Math.min(99, baseStrength + 5),
+        reason: `Supertrend ${stDir} + Institutional Flow • Bid/Ask ${bidAsk.toFixed(2)}`,
       };
     }
 
     case 'most-active-fno': {
+      // #03: Heavy F&O turnover + VWAP + real PDH/PDL or intraday range breakout + non-conflicting OI
       const ok =
         turnoverCr >= 25 &&
         (side === 'BUY'
-          ? price > vwap && (pdh <= 0 || price >= pdh * 0.992 || chg >= 0.6)
-          : price < vwap && (pdl <= 0 || price <= pdl * 1.008 || chg <= -0.6));
+          ? price > vwap &&
+            oiState !== 'SHORT_BUILDUP' &&
+            ((pdh > 0 && price >= pdh * 0.995) ||
+              (price > open && dayRangePct >= 62 && chg >= 0.75))
+          : price < vwap &&
+            oiState !== 'LONG_BUILDUP' &&
+            ((pdl > 0 && price <= pdl * 1.005) ||
+              (price < open && dayRangePct <= 38 && chg <= -0.75)));
       if (!ok) return null;
       return {
         side,
@@ -994,11 +1051,26 @@ export function evaluateStockForScanner20(
     }
 
     case 'claude-fno': {
+      // #04: 10-Pt Institutional F&O Scorecard (>=68) + VWAP + EMA + healthy RSI + strict non-conflicting OI
       const ok =
-        aiScore >= 65 &&
+        aiScore >= 68 &&
         (side === 'BUY'
-          ? price > vwap && rsi >= 52 && (oiState === 'LONG_BUILDUP' || oiState === 'SHORT_COVERING' || chg >= 0.6)
-          : price < vwap && rsi <= 48 && (oiState === 'SHORT_BUILDUP' || oiState === 'LONG_UNWINDING' || chg <= -0.6));
+          ? price > vwap &&
+            ema13 >= ema21 &&
+            rsi >= 54 &&
+            rsi <= 78 &&
+            oiState !== 'SHORT_BUILDUP' &&
+            (oiState === 'LONG_BUILDUP' ||
+              oiState === 'SHORT_COVERING' ||
+              (oiState === 'NEUTRAL' && pcr >= 0.98))
+          : price < vwap &&
+            ema13 <= ema21 &&
+            rsi <= 46 &&
+            rsi >= 22 &&
+            oiState !== 'LONG_BUILDUP' &&
+            (oiState === 'SHORT_BUILDUP' ||
+              oiState === 'LONG_UNWINDING' ||
+              (oiState === 'NEUTRAL' && pcr <= 1.02)));
       if (!ok) return null;
       return {
         side,
@@ -1008,23 +1080,49 @@ export function evaluateStockForScanner20(
     }
 
     case 'smart-money-concepts': {
+      // #05: ICT BOS/OB — Open + VWAP + EMA21 + range dominance + order-book & structural swing/PDH alignment
       const ok =
         side === 'BUY'
-          ? price > open && dayRangePct >= 62 && price >= ema21 * 0.998
-          : price < open && dayRangePct <= 38 && price <= ema21 * 1.002;
+          ? price > open &&
+            price > vwap &&
+            price >= ema21 &&
+            dayRangePct >= 60 &&
+            bidAsk >= 0.98 &&
+            (swingHigh <= 0 || price >= swingHigh * 0.98 || pdh <= 0 || price >= pdh * 0.992)
+          : price < open &&
+            price < vwap &&
+            price <= ema21 &&
+            dayRangePct <= 40 &&
+            bidAsk <= 1.02 &&
+            (swingLow <= 0 || price <= swingLow * 1.02 || pdl <= 0 || price <= pdl * 1.008);
       if (!ok) return null;
       return {
         side,
-        score: Math.min(99, baseStrength + (side === 'BUY' ? Math.round((dayRangePct - 50) * 0.15) : Math.round((50 - dayRangePct) * 0.15))),
+        score: Math.min(
+          99,
+          baseStrength +
+            (side === 'BUY'
+              ? Math.round((dayRangePct - 50) * 0.15)
+              : Math.round((50 - dayRangePct) * 0.15))
+        ),
         reason: `ICT ${side === 'BUY' ? 'Bullish BOS/OB' : 'Bearish BOS/OB'} • Range Pos ${dayRangePct.toFixed(0)}%`,
       };
     }
 
     case 'price-action': {
+      // #06: Pure Demand/Supply + VWAP + EMA(13/21) + close dominance + PDH/PDL structural breakout
       const ok =
         side === 'BUY'
-          ? price > open && price > vwap && (pdh <= 0 || price >= pdh * 0.995 || dayRangePct >= 68)
-          : price < open && price < vwap && (pdl <= 0 || price <= pdl * 1.005 || dayRangePct <= 32);
+          ? price > open &&
+            price > vwap &&
+            ema13 >= ema21 &&
+            dayRangePct >= 60 &&
+            (pdh <= 0 || price >= pdh * 0.995 || dayRangePct >= 72)
+          : price < open &&
+            price < vwap &&
+            ema13 <= ema21 &&
+            dayRangePct <= 40 &&
+            (pdl <= 0 || price <= pdl * 1.005 || dayRangePct <= 28);
       if (!ok) return null;
       return {
         side,
@@ -1034,10 +1132,23 @@ export function evaluateStockForScanner20(
     }
 
     case 'apex-alpha': {
+      // #07: Tight non-chasing VWAP coil reclaim (±0.12%..±2.8%) + strict EMA(13/21) + RSI + close quality
       const ok =
         side === 'BUY'
-          ? price >= vwap && vwapDistPct >= 0.1 && vwapDistPct <= 3.5 && ema13 >= ema21 * 0.997
-          : price <= vwap && vwapDistPct <= -0.1 && vwapDistPct >= -3.5 && ema13 <= ema21 * 1.003;
+          ? price > vwap &&
+            vwapDistPct >= 0.12 &&
+            vwapDistPct <= 2.8 &&
+            ema13 >= ema21 &&
+            rsi >= 52 &&
+            rsi <= 76 &&
+            dayRangePct >= 48
+          : price < vwap &&
+            vwapDistPct <= -0.12 &&
+            vwapDistPct >= -2.8 &&
+            ema13 <= ema21 &&
+            rsi <= 48 &&
+            rsi >= 24 &&
+            dayRangePct <= 52;
       if (!ok) return null;
       return {
         side,
@@ -1047,10 +1158,21 @@ export function evaluateStockForScanner20(
     }
 
     case 'intraday-stock': {
+      // #08: DFC 5m Open Clearance + VWAP + EMA(13/21) + close dominance + order-book confirmation
       const ok =
         side === 'BUY'
-          ? price > open * 1.003 && price > vwap && chg >= 0.4
-          : price < open * 0.997 && price < vwap && chg <= -0.4;
+          ? price >= open * 1.0035 &&
+            price > vwap &&
+            chg >= 0.45 &&
+            ema13 >= ema21 &&
+            dayRangePct >= 55 &&
+            bidAsk >= 0.98
+          : price <= open * 0.9965 &&
+            price < vwap &&
+            chg <= -0.45 &&
+            ema13 <= ema21 &&
+            dayRangePct <= 45 &&
+            bidAsk <= 1.02;
       if (!ok) return null;
       return {
         side,
@@ -1060,10 +1182,19 @@ export function evaluateStockForScanner20(
     }
 
     case 'strong': {
+      // #09: 15m ORB + normalized CPR TC/BC clearance + VWAP + directional open + close dominance
       const ok =
         side === 'BUY'
-          ? price > vwap && (cprTC <= 0 || price >= cprTC * 0.996) && chg >= 0.5
-          : price < vwap && (cprBC <= 0 || price <= cprBC * 1.004) && chg <= -0.5;
+          ? price > vwap &&
+            price > open &&
+            (topCpr <= 0 || price >= topCpr * 0.998) &&
+            chg >= 0.5 &&
+            dayRangePct >= 55
+          : price < vwap &&
+            price < open &&
+            (botCpr <= 0 || price <= botCpr * 1.002) &&
+            chg <= -0.5 &&
+            dayRangePct <= 45;
       if (!ok) return null;
       return {
         side,
@@ -1073,9 +1204,20 @@ export function evaluateStockForScanner20(
     }
 
     case 'sonic': {
+      // #10: Abnormal RVOL >= 2.25 + VolX >= 1.2 + VWAP + symmetric OI confirmation on BOTH BUY & SELL
       const ok =
         rvol >= 2.25 &&
-        (side === 'BUY' ? chg >= 0.35 && oiChgPct >= -5 : chg <= -0.35);
+        xTimeVolume >= 1.2 &&
+        (side === 'BUY'
+          ? price > vwap &&
+            chg >= 0.45 &&
+            (oiChgPct >= 1.0 || oiState === 'LONG_BUILDUP' || oiState === 'SHORT_COVERING')
+          : price < vwap &&
+            chg <= -0.45 &&
+            (oiChgPct >= 1.0 ||
+              oiChgPct <= -1.0 ||
+              oiState === 'SHORT_BUILDUP' ||
+              oiState === 'LONG_UNWINDING'));
       if (!ok) return null;
       return {
         side,
@@ -1085,35 +1227,50 @@ export function evaluateStockForScanner20(
     }
 
     case 'titan': {
+      // #11: Whale Flow — Turnover >= 25Cr + VWAP + strict Bid/Ask Whale Imbalance (no price-only bypass!)
       const ok =
-        turnoverCr >= 20 &&
-        (side === 'BUY' ? bidAsk >= 1.0 || chg >= 0.6 : bidAsk <= 1.0 || chg <= -0.6);
+        turnoverCr >= 25 &&
+        (side === 'BUY'
+          ? price > vwap && bidAsk >= 1.08 && chg >= 0.45 && dayRangePct >= 50
+          : price < vwap && bidAsk <= 0.92 && chg <= -0.45 && dayRangePct <= 50);
       if (!ok) return null;
       return {
         side,
         score: Math.min(99, baseStrength + (turnoverCr >= 100 ? 6 : 2)),
-        reason: `Whale Flow ₹${turnoverCr.toFixed(0)}Cr • VolX ${xTimeVolume.toFixed(2)}X`,
+        reason: `Whale Flow ₹${turnoverCr.toFixed(0)}Cr • Bid/Ask ${bidAsk.toFixed(2)} • VolX ${xTimeVolume.toFixed(2)}X`,
       };
     }
 
     case 'elite': {
-      const bbBreak =
+      // #12: 3m Bollinger Squeeze Release + VWAP + MACD impulse + non-exhausted RSI
+      const ok =
         side === 'BUY'
-          ? (bbUpper > 0 && price >= bbUpper * 0.992) || rsi >= 56
-          : (bbLower > 0 && price <= bbLower * 1.008) || rsi <= 44;
-      if (!bbBreak) return null;
+          ? price > vwap &&
+            macdHist >= 0 &&
+            rsi >= 56 &&
+            rsi <= 80 &&
+            ((bbUpper > 0 && price >= bbUpper * 0.99) ||
+              (bbMiddle > 0 && price >= bbMiddle && rsi >= 58))
+          : price < vwap &&
+            macdHist <= 0 &&
+            rsi <= 44 &&
+            rsi >= 20 &&
+            ((bbLower > 0 && price <= bbLower * 1.01) ||
+              (bbMiddle > 0 && price <= bbMiddle && rsi <= 42));
+      if (!ok) return null;
       return {
         side,
         score: Math.min(99, baseStrength + 3),
-        reason: `3m Squeeze Release • RSI ${rsi.toFixed(1)} • ADX ${adx.toFixed(1)}`,
+        reason: `3m Squeeze Release • RSI ${rsi.toFixed(1)} • MACD ${macdHist >= 0 ? '+' : ''}${macdHist.toFixed(2)}`,
       };
     }
 
     case 'elite-pro': {
+      // #13: 6m Trend Waves — strict EMA(13/21/34) ribbon stack + VWAP + true directional MACD impulse
       const ok =
         side === 'BUY'
-          ? ema13 >= ema21 * 0.998 && ema21 >= ema34 * 0.996 && macdHist >= -0.2
-          : ema13 <= ema21 * 1.002 && ema21 <= ema34 * 1.004 && macdHist <= 0.2;
+          ? price > vwap && ema13 >= ema21 && ema21 >= ema34 && macdHist > 0 && rsi >= 52
+          : price < vwap && ema13 <= ema21 && ema21 <= ema34 && macdHist < 0 && rsi <= 48;
       if (!ok) return null;
       return {
         side,
@@ -1123,19 +1280,28 @@ export function evaluateStockForScanner20(
     }
 
     case 'titan-cash': {
+      // #14: Cash Delivery Accumulation — Turnover >= 20Cr + VWAP + Bid-Ask dominance + close dominance
       const ok =
-        turnoverCr >= 15 &&
-        (side === 'BUY' ? chg >= 0.4 && dayRangePct >= 58 : chg <= -0.4 && dayRangePct <= 42);
+        turnoverCr >= 20 &&
+        (side === 'BUY'
+          ? price > vwap && bidAsk >= 1.05 && chg >= 0.45 && dayRangePct >= 58
+          : price < vwap && bidAsk <= 0.95 && chg <= -0.45 && dayRangePct <= 42);
       if (!ok) return null;
       return {
         side,
         score: Math.min(99, baseStrength + 2),
-        reason: `Cash Delivery Flow ₹${turnoverCr.toFixed(0)}Cr • Range ${dayRangePct.toFixed(0)}%`,
+        reason: `Cash Delivery Flow ₹${turnoverCr.toFixed(0)}Cr • Bid/Ask ${bidAsk.toFixed(2)} • Range ${dayRangePct.toFixed(0)}%`,
       };
     }
 
     case 'cloud-ai': {
-      const ok = aiScore >= 62 && absChg >= 0.35;
+      // #15: Claude AI Auto Setup — enforces stated AI Score >= 72 + VWAP + EMA(13/21) + RSI alignment
+      const ok =
+        aiScore >= 72 &&
+        absChg >= 0.45 &&
+        (side === 'BUY'
+          ? price > vwap && ema13 >= ema21 && rsi >= 52
+          : price < vwap && ema13 <= ema21 && rsi <= 48);
       if (!ok) return null;
       return {
         side,
@@ -1145,33 +1311,55 @@ export function evaluateStockForScanner20(
     }
 
     case 'world-strategy': {
+      // #16: Omni-Quantum 6-Layer — AI>=70 + VWAP + Supertrend + EMA(13/21) + Normalized CPR + Order Flow
       const ok =
-        aiScore >= 65 &&
+        aiScore >= 70 &&
         (side === 'BUY'
-          ? price > vwap && stDir === 'BUY' && chg >= 0.5
-          : price < vwap && stDir === 'SELL' && chg <= -0.5);
+          ? price > vwap &&
+            stDir === 'BUY' &&
+            ema13 >= ema21 &&
+            (bidAsk >= 1.02 || cumDelta > 0) &&
+            (topCpr <= 0 || price >= topCpr * 0.996) &&
+            dayRangePct >= 55 &&
+            chg >= 0.55
+          : price < vwap &&
+            stDir === 'SELL' &&
+            ema13 <= ema21 &&
+            (bidAsk <= 0.98 || cumDelta < 0) &&
+            (botCpr <= 0 || price <= botCpr * 1.004) &&
+            dayRangePct <= 45 &&
+            chg <= -0.55);
       if (!ok) return null;
       return {
         side,
         score: Math.min(99, baseStrength + 5),
-        reason: `Omni-Quantum 6-Layer ${side} • VWAP+ST+Flow Aligned`,
+        reason: `Omni-Quantum 6-Layer ${side} • VWAP+ST+CPR+Flow Aligned`,
       };
     }
 
     case 'claude-10skills': {
+      // #17: 10-Skill Sentinel — ADX >= 26 + AI Score >= 68 + VWAP + EMA(13/21) + RSI + OI guard
       const ok =
         adx >= 26 &&
-        (side === 'BUY' ? price >= vwap && rsi >= 50 : price <= vwap && rsi <= 50);
+        aiScore >= 68 &&
+        (side === 'BUY'
+          ? price > vwap && ema13 >= ema21 && rsi >= 53 && rsi <= 79 && oiState !== 'SHORT_BUILDUP'
+          : price < vwap && ema13 <= ema21 && rsi <= 47 && rsi >= 21 && oiState !== 'LONG_BUILDUP');
       if (!ok) return null;
       return {
         side,
         score: Math.min(99, baseStrength + 4),
-        reason: `10-Skill Sentinel Confirmed • ADX ${adx.toFixed(1)} • RSI ${rsi.toFixed(0)}`,
+        reason: `10-Skill Sentinel (${aiScore}) • ADX ${adx.toFixed(1)} • RSI ${rsi.toFixed(0)}`,
       };
     }
 
     case 'liquidity': {
-      const ok = turnoverCr >= 30 && absChg >= 0.3;
+      // #18: Market Liquidity — Turnover >= 35Cr + Directional VWAP + close dominance
+      const ok =
+        turnoverCr >= 35 &&
+        (side === 'BUY'
+          ? price > vwap && chg >= 0.4 && dayRangePct >= 50
+          : price < vwap && chg <= -0.4 && dayRangePct <= 50);
       if (!ok) return null;
       return {
         side,
@@ -1181,11 +1369,23 @@ export function evaluateStockForScanner20(
     }
 
     case 'vwap-surge': {
-      // NEW SCANNER #19: VWAP Deviation & Gamma Surge
+      // #19: VWAP Deviation & Gamma Surge — ±0.55%..±4.50% band + ATR range expansion + RSI + close control
+      const atrExpanded = atr <= 0 || high - low >= atr * 0.9;
       const ok =
-        side === 'BUY'
-          ? vwapDistPct >= 0.35 && rsi >= 55 && chg >= 0.65
-          : vwapDistPct <= -0.35 && rsi <= 45 && chg <= -0.65;
+        atrExpanded &&
+        (side === 'BUY'
+          ? vwapDistPct >= 0.55 &&
+            vwapDistPct <= 4.5 &&
+            rsi >= 56 &&
+            rsi <= 82 &&
+            chg >= 0.65 &&
+            dayRangePct >= 55
+          : vwapDistPct <= -0.55 &&
+            vwapDistPct >= -4.5 &&
+            rsi <= 44 &&
+            rsi >= 18 &&
+            chg <= -0.65 &&
+            dayRangePct <= 45);
       if (!ok) return null;
       return {
         side,
@@ -1195,26 +1395,28 @@ export function evaluateStockForScanner20(
     }
 
     case 'oi-short-cover': {
-      // NEW SCANNER #20: OI Breakout & Short-Covering Trap
+      // #20: OI Breakout & Short-Covering Trap — VWAP aligned + genuine directional trap (neutral pcr=1.00 NEVER passes!)
       const trapBuy =
         side === 'BUY' &&
+        price > vwap &&
+        chg >= 0.5 &&
         (oiState === 'SHORT_COVERING' ||
-          oiState === 'LONG_BUILDUP' ||
-          pcr >= 0.95 ||
-          oiChgPct >= 2.0) &&
-        chg >= 0.4;
+          (oiState === 'LONG_BUILDUP' && oiChgPct >= 2.0) ||
+          pcr >= 1.15);
       const trapSell =
         side === 'SELL' &&
+        price < vwap &&
+        chg <= -0.5 &&
         (oiState === 'LONG_UNWINDING' ||
-          oiState === 'SHORT_BUILDUP' ||
-          pcr <= 1.05 ||
-          oiChgPct <= -1.0 ||
-          oiChgPct >= 2.0) &&
-        chg <= -0.4;
+          (oiState === 'SHORT_BUILDUP' && oiChgPct >= 2.0) ||
+          pcr <= 0.85);
       if (!trapBuy && !trapSell) return null;
       return {
         side,
-        score: Math.min(99, baseStrength + (oiState === 'SHORT_COVERING' || oiState === 'LONG_UNWINDING' ? 7 : 3)),
+        score: Math.min(
+          99,
+          baseStrength + (oiState === 'SHORT_COVERING' || oiState === 'LONG_UNWINDING' ? 7 : 3)
+        ),
         reason: `OI Trap (${oiState.replace('_', ' ')}) • PCR ${pcr.toFixed(2)} • OI Δ ${oiChgPct >= 0 ? '+' : ''}${oiChgPct.toFixed(1)}%`,
       };
     }
@@ -1223,6 +1425,7 @@ export function evaluateStockForScanner20(
 
 /**
  * Pure entry, stop-loss, and target calculation customized for each of the 20 assigned AI Agents.
+ * Enforces bounded intraday NSE structural risk (0.40%..2.50%) so T1 (1.5R) & T2 (2.5R) remain achievable.
  */
 export function computeAgentEntryPlan(
   stock: ScannedStock,
@@ -1251,20 +1454,34 @@ export function computeAgentEntryPlan(
     Number(stock.indicators?.atr) || entryPrice * 0.008
   );
 
-  let initialStopLoss =
+  const candidateStopLoss =
     Number(stock.fixedStopLoss) > 0
       ? Number(stock.fixedStopLoss)
       : Number(stock.risk?.stopLoss) > 0
       ? Number(stock.risk!.stopLoss)
       : 0;
 
+  const minRiskDist = entryPrice * 0.004;
+  const maxRiskDist = entryPrice * 0.025;
+  const boundedAtrDist = Math.min(
+    entryPrice * 0.022,
+    Math.max(entryPrice * 0.0045, atr * agent.atrSlMultiplier)
+  );
+
+  let initialStopLoss = 0;
   if (side === 'BUY') {
-    if (!(initialStopLoss > 0 && initialStopLoss < entryPrice * 0.997)) {
-      initialStopLoss = round2(entryPrice - atr * agent.atrSlMultiplier);
+    const candDist = entryPrice - candidateStopLoss;
+    if (candidateStopLoss > 0 && candDist >= minRiskDist && candDist <= maxRiskDist) {
+      initialStopLoss = round2(candidateStopLoss);
+    } else {
+      initialStopLoss = round2(entryPrice - boundedAtrDist);
     }
   } else {
-    if (!(initialStopLoss > entryPrice * 1.003)) {
-      initialStopLoss = round2(entryPrice + atr * agent.atrSlMultiplier);
+    const candDist = candidateStopLoss - entryPrice;
+    if (candidateStopLoss > 0 && candDist >= minRiskDist && candDist <= maxRiskDist) {
+      initialStopLoss = round2(candidateStopLoss);
+    } else {
+      initialStopLoss = round2(entryPrice + boundedAtrDist);
     }
   }
 
@@ -1295,7 +1512,41 @@ export function computeAgentEntryPlan(
 }
 
 /**
- * Pure Stop-Loss, Breakeven Trail, T1 Partial Booking, T2 Exit & 15:15 Square-Off evaluator
+ * Computes exact realized/MTM P&L, % return, and R-multiple accounting for 50% partial booking at T1.
+ */
+function computeBlendedPositionMetrics(
+  rec: PersistedFleetTrade,
+  riskPerShare: number,
+  runnerPrice: number,
+  t1Booked: boolean
+): { blendedMove: number; rMultiple: number; pnlPct: number; pnlRs: number } {
+  const runnerMove =
+    rec.side === 'BUY' ? runnerPrice - rec.entryPrice : rec.entryPrice - runnerPrice;
+  const qty = Math.max(1, rec.positionQty);
+
+  if (!t1Booked || qty < 2) {
+    return {
+      blendedMove: runnerMove,
+      rMultiple: round2(runnerMove / riskPerShare),
+      pnlPct: rec.entryPrice > 0 ? round2((runnerMove / rec.entryPrice) * 100) : 0,
+      pnlRs: round2(runnerMove * qty),
+    };
+  }
+
+  const t1Qty = Math.floor(qty / 2);
+  const remQty = qty - t1Qty;
+  const t1Move =
+    rec.side === 'BUY' ? rec.target1 - rec.entryPrice : rec.entryPrice - rec.target1;
+  const pnlRs = round2(t1Move * t1Qty + runnerMove * remQty);
+  const blendedMove = pnlRs / qty;
+  const rMultiple = round2(blendedMove / riskPerShare);
+  const pnlPct = rec.entryPrice > 0 ? round2((blendedMove / rec.entryPrice) * 100) : 0;
+
+  return { blendedMove, rMultiple, pnlPct, pnlRs };
+}
+
+/**
+ * Pure Stop-Loss, Breakeven Trail, T1 Partial Booking (50% locked), T2 Exit & 15:15 Square-Off evaluator
  * personalized with the assigned AI Agent's name and trailing stop rules.
  */
 export function evaluateAgentTradeLifecycle(
@@ -1325,15 +1576,9 @@ export function evaluateAgentTradeLifecycle(
     peakFav = Math.min(peakFav, effectivePrice);
   }
 
-  const priceMove =
-    rec.side === 'BUY' ? effectivePrice - rec.entryPrice : rec.entryPrice - effectivePrice;
   const peakMove =
     rec.side === 'BUY' ? peakFav - rec.entryPrice : rec.entryPrice - peakFav;
-
-  const liveRMultiple = round2(priceMove / riskPerShare);
   const peakR = peakMove / riskPerShare;
-  const livePnlPct = rec.entryPrice > 0 ? round2((priceMove / rec.entryPrice) * 100) : 0;
-  const livePnlRs = round2(priceMove * rec.positionQty);
 
   let activeStopLoss = rec.activeStopLoss || rec.initialStopLoss;
   let t1Booked = rec.t1Booked;
@@ -1359,18 +1604,23 @@ export function evaluateAgentTradeLifecycle(
         : Math.min(activeStopLoss, beLvl);
   }
 
+  const liveBlended = computeBlendedPositionMetrics(rec, riskPerShare, effectivePrice, t1Booked);
+  const rawRunnerR =
+    (rec.side === 'BUY' ? effectivePrice - rec.entryPrice : rec.entryPrice - effectivePrice) /
+    riskPerShare;
+
   if (rec.closedStatus === 'TARGET_HIT_EXIT') {
     const exitP = rec.closedAtPrice || rec.target2;
-    const closedMove = rec.side === 'BUY' ? exitP - rec.entryPrice : rec.entryPrice - exitP;
+    const closed = computeBlendedPositionMetrics(rec, riskPerShare, exitP, true);
     return {
       activeStopLoss,
       peakFavorablePrice: peakFav,
-      liveRMultiple: round2(closedMove / riskPerShare),
-      livePnlPct: rec.entryPrice > 0 ? round2((closedMove / rec.entryPrice) * 100) : 0,
-      livePnlRs: round2(closedMove * rec.positionQty),
+      liveRMultiple: closed.rMultiple,
+      livePnlPct: closed.pnlPct,
+      livePnlRs: closed.pnlRs,
       actionStatus: 'TARGET_HIT_EXIT',
       actionBadge: '🏆 T2 HIT • FULL EXIT',
-      agentDirective: `${agent.name} (${agent.genderLabel}) booked 100% T2 exit @ ₹${exitP.toFixed(2)}. Locked till 23:59 IST.`,
+      agentDirective: `${agent.name} (${agent.genderLabel}) booked 50% T1 + 50% T2 exit @ ₹${exitP.toFixed(2)} (+${closed.rMultiple.toFixed(2)}R blended). Locked till 23:59 IST.`,
       isClosed: true,
       t1Booked: true,
     };
@@ -1378,18 +1628,18 @@ export function evaluateAgentTradeLifecycle(
 
   if (rec.closedStatus === 'SL_HIT_EXIT') {
     const exitP = rec.closedAtPrice || activeStopLoss;
-    const closedMove = rec.side === 'BUY' ? exitP - rec.entryPrice : rec.entryPrice - exitP;
-    const profitTrail = closedMove >= 0;
+    const closed = computeBlendedPositionMetrics(rec, riskPerShare, exitP, t1Booked);
+    const profitTrail = closed.blendedMove >= 0;
     return {
       activeStopLoss,
       peakFavorablePrice: peakFav,
-      liveRMultiple: round2(closedMove / riskPerShare),
-      livePnlPct: rec.entryPrice > 0 ? round2((closedMove / rec.entryPrice) * 100) : 0,
-      livePnlRs: round2(closedMove * rec.positionQty),
+      liveRMultiple: closed.rMultiple,
+      livePnlPct: closed.pnlPct,
+      livePnlRs: closed.pnlRs,
       actionStatus: 'SL_HIT_EXIT',
       actionBadge: profitTrail ? '🛡️ TRAIL SL • PROFIT LOCKED' : '🛑 SL HIT • RISK CAPPED',
       agentDirective: profitTrail
-        ? `${agent.name} (${agent.genderLabel}) locked profit on Trailing SL @ ₹${exitP.toFixed(2)}.`
+        ? `${agent.name} (${agent.genderLabel}) locked profit on Trailing SL @ ₹${exitP.toFixed(2)} (+${closed.rMultiple.toFixed(2)}R).`
         : `${agent.name} (${agent.genderLabel}) executed protective Stop-Loss @ ₹${exitP.toFixed(2)} (1% cap).`,
       isClosed: true,
       t1Booked,
@@ -1399,15 +1649,16 @@ export function evaluateAgentTradeLifecycle(
   const hitT2 =
     rec.side === 'BUY' ? effectivePrice >= rec.target2 : effectivePrice <= rec.target2;
   if (hitT2) {
+    const t2Blended = computeBlendedPositionMetrics(rec, riskPerShare, effectivePrice, true);
     return {
       activeStopLoss,
       peakFavorablePrice: peakFav,
-      liveRMultiple,
-      livePnlPct,
-      livePnlRs,
+      liveRMultiple: t2Blended.rMultiple,
+      livePnlPct: t2Blended.pnlPct,
+      livePnlRs: t2Blended.pnlRs,
       actionStatus: 'TARGET_HIT_EXIT',
       actionBadge: '🏆 T2 HIT • FULL EXIT',
-      agentDirective: `${agent.name} (${agent.genderLabel}) booked 100% T2 target @ ₹${effectivePrice.toFixed(2)} (+${liveRMultiple.toFixed(2)}R).`,
+      agentDirective: `${agent.name} (${agent.genderLabel}) booked 50% T1 + 50% T2 target @ ₹${effectivePrice.toFixed(2)} (+${t2Blended.rMultiple.toFixed(2)}R blended).`,
       isClosed: true,
       t1Booked: true,
     };
@@ -1416,17 +1667,18 @@ export function evaluateAgentTradeLifecycle(
   const hitSl =
     rec.side === 'BUY' ? effectivePrice <= activeStopLoss : effectivePrice >= activeStopLoss;
   if (hitSl) {
-    const profitTrail = priceMove >= 0;
+    const slBlended = computeBlendedPositionMetrics(rec, riskPerShare, effectivePrice, t1Booked);
+    const profitTrail = slBlended.blendedMove >= 0;
     return {
       activeStopLoss,
       peakFavorablePrice: peakFav,
-      liveRMultiple,
-      livePnlPct,
-      livePnlRs,
+      liveRMultiple: slBlended.rMultiple,
+      livePnlPct: slBlended.pnlPct,
+      livePnlRs: slBlended.pnlRs,
       actionStatus: 'SL_HIT_EXIT',
       actionBadge: profitTrail ? '🛡️ TRAIL SL • PROFIT LOCKED' : '🛑 SL HIT • RISK CAPPED',
       agentDirective: profitTrail
-        ? `${agent.name} (${agent.genderLabel}) triggered Trailing SL profit exit @ ₹${activeStopLoss.toFixed(2)}.`
+        ? `${agent.name} (${agent.genderLabel}) triggered Trailing SL profit exit @ ₹${activeStopLoss.toFixed(2)} (+${slBlended.rMultiple.toFixed(2)}R).`
         : `${agent.name} (${agent.genderLabel}) triggered hard SL guard @ ₹${activeStopLoss.toFixed(2)}.`,
       isClosed: true,
       t1Booked,
@@ -1437,9 +1689,9 @@ export function evaluateAgentTradeLifecycle(
     return {
       activeStopLoss,
       peakFavorablePrice: peakFav,
-      liveRMultiple,
-      livePnlPct,
-      livePnlRs,
+      liveRMultiple: liveBlended.rMultiple,
+      livePnlPct: liveBlended.pnlPct,
+      livePnlRs: liveBlended.pnlRs,
       actionStatus: 'TIME_EXIT_1515',
       actionBadge: '⏰ 03:15 PM EXIT',
       agentDirective: `${agent.name} (${agent.genderLabel}) squared off @ ₹${effectivePrice.toFixed(2)} (15:15 cutoff). Visible till 23:59 IST.`,
@@ -1448,13 +1700,14 @@ export function evaluateAgentTradeLifecycle(
     };
   }
 
-  if (t1Booked || liveRMultiple >= agent.target1R) {
+  if (t1Booked || rawRunnerR >= agent.target1R) {
+    const partialBlended = computeBlendedPositionMetrics(rec, riskPerShare, effectivePrice, true);
     return {
       activeStopLoss,
       peakFavorablePrice: peakFav,
-      liveRMultiple,
-      livePnlPct,
-      livePnlRs,
+      liveRMultiple: partialBlended.rMultiple,
+      livePnlPct: partialBlended.pnlPct,
+      livePnlRs: partialBlended.pnlRs,
       actionStatus: 'BOOK_PARTIAL_T1',
       actionBadge: '🎯 T1 BOOKED • TRAIL +0.75R',
       agentDirective: `${agent.name} (${agent.genderLabel}) booked 50% at T1 ₹${rec.target1.toFixed(2)} & trailed SL to ₹${activeStopLoss.toFixed(2)}.`,
@@ -1467,9 +1720,9 @@ export function evaluateAgentTradeLifecycle(
     return {
       activeStopLoss,
       peakFavorablePrice: peakFav,
-      liveRMultiple,
-      livePnlPct,
-      livePnlRs,
+      liveRMultiple: liveBlended.rMultiple,
+      livePnlPct: liveBlended.pnlPct,
+      livePnlRs: liveBlended.pnlRs,
       actionStatus: 'TRAIL_SL_BREAKEVEN',
       actionBadge: '🛡️ BREAKEVEN SL LOCKED',
       agentDirective: `${agent.name} (${agent.genderLabel}) shifted SL to risk-free breakeven ₹${activeStopLoss.toFixed(2)}.`,
@@ -1481,9 +1734,9 @@ export function evaluateAgentTradeLifecycle(
   return {
     activeStopLoss,
     peakFavorablePrice: peakFav,
-    liveRMultiple,
-    livePnlPct,
-    livePnlRs,
+    liveRMultiple: liveBlended.rMultiple,
+    livePnlPct: liveBlended.pnlPct,
+    livePnlRs: liveBlended.pnlRs,
     actionStatus: 'HOLD_ACTIVE',
     actionBadge: '⚡ ACTIVE • SL GUARDED',
     agentDirective: `${agent.name} (${agent.genderLabel}) guarding SL ₹${activeStopLoss.toFixed(2)} • BE trail arms @ +${agent.trailBreakevenR}R.`,
@@ -1651,7 +1904,10 @@ export class ScannerFleet20Manager {
     ).length;
 
     const liveMap = new Map<string, ScannedStock>();
-    const metricsCache = new Map<string, { rvol: number; xTimeVolume: number; adx: number }>();
+    const metricsCache = new Map<
+      string,
+      { rvol: number; xTimeVolume: number; adx: number; plusDI: number; minusDI: number }
+    >();
 
     const lookupBars = (sym: string): IntradayCandleBar[] | Candle[] | undefined => {
       const ext = params.getExtendedBarsFn?.(sym);
@@ -1675,10 +1931,14 @@ export class ScannerFleet20Manager {
           Number(stock.indicators?.adx) || 0,
           Number(stock.indicators?.xTimeVolume) || 0
         );
+        const plusDI = m.plusDI > 0 ? m.plusDI : Number(stock.indicators?.plusDi) || 0;
+        const minusDI = m.minusDI > 0 ? m.minusDI : Number(stock.indicators?.minusDi) || 0;
         metricsCache.set(sym, {
           rvol: m.rvol,
           xTimeVolume: m.xTimeVolume,
           adx: m.adx,
+          plusDI,
+          minusDI,
         });
       }
     }
@@ -1728,7 +1988,9 @@ export class ScannerFleet20Manager {
             stock,
             met.rvol,
             met.xTimeVolume,
-            met.adx
+            met.adx,
+            met.plusDI,
+            met.minusDI
           );
           if (!evalRes) continue;
           if (evalRes.side === 'BUY') {

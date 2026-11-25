@@ -1213,8 +1213,9 @@ export function evaluateOrderFlowCandidate(params: {
   rawBars?: IntradayCandleBar[];
   candlesMap?: CandlesLookup;
   session: LockedSessionWindowStatus;
+  isIncrementalLiveAdmission?: boolean;
 }): OrderFlowSignalRow | null {
-  const { stock, bars, rawBars, candlesMap, session } = params;
+  const { stock, bars, rawBars, candlesMap, session, isIncrementalLiveAdmission } = params;
   if (!stock || !stock.symbol) return null;
   const symbol = String(stock.symbol).toUpperCase().trim();
   if (!symbol || INDEX_BLACKLIST.has(symbol) || stock.sector === 'Indices') return null;
@@ -1430,11 +1431,15 @@ export function evaluateOrderFlowCandidate(params: {
   const headlineSignal = headlineParts.slice(0, 2).join(' + ');
 
   const turnoverCr = round2((totalDayVolume * price) / 1e7);
-  const listedSec = clamp(
-    bars.length > 0 ? bars[bars.length - 1].secIST : session.secFromMidnight,
-    LOCKED_SYSTEM_RULES.SCAN_START_SEC,
-    LOCKED_SYSTEM_RULES.SCAN_END_SEC
-  );
+  const listedSec = resolveOrderFlowListedAtSec({
+    bars,
+    direction,
+    poc: volumeProfile.poc,
+    vwap,
+    stockListedAt: stock.listedAt,
+    session,
+    isIncrementalLiveAdmission: Boolean(isIncrementalLiveAdmission),
+  });
   const listedAt = formatClockHHMMSS(listedSec);
 
   const formulaReason = `VP ${volumeProfile.priceZoneLabel} (VAH ₹${volumeProfile.vah.toFixed(2)} · POC ₹${volumeProfile.poc.toFixed(2)} · VAL ₹${volumeProfile.val.toFixed(2)}) · ${signals.stackedImbalance.summary} · ${signals.delta.summary}`;
@@ -1486,6 +1491,106 @@ export function evaluateOrderFlowCandidate(params: {
   };
 }
 
+function parseClockToSecIST(clock: string | undefined): number | null {
+  if (!clock) return null;
+  const m = String(clock).trim().match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  const ss = Number(m[3] || 0);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm) || !Number.isFinite(ss)) return null;
+  if (hh < 0 || hh > 23 || mm < 0 || mm > 59 || ss < 0 || ss > 59) return null;
+  return hh * 3600 + mm * 60 + ss;
+}
+
+/**
+ * Resolves the authentic IST listing timestamp (HH:MM:SS) for an Order Flow signal:
+ * 1. During live incremental refreshes (09:20-15:15 IST after initial session hydration),
+ *    records the exact live IST second the stock first qualified on the scanner.
+ * 2. On initial hydration / post-scan / off-day snapshots, walks intraday 5m candles
+ *    chronologically inside 09:20-15:15 IST to find the stock's genuine first institutional
+ *    Order Flow ignition bar (POC/VWAP clearance + directional volume impulse), so every
+ *    stock reflects its real breakout time rather than collapsing onto 15:15:00.
+ * 3. Falls back cleanly to a valid in-window stock.listedAt or clamped session clock.
+ */
+export function resolveOrderFlowListedAtSec(params: {
+  bars: ClaudeFnoBar[];
+  direction: 'BUY' | 'SELL';
+  poc: number;
+  vwap: number;
+  stockListedAt?: string;
+  session: LockedSessionWindowStatus;
+  isIncrementalLiveAdmission?: boolean;
+}): number {
+  const { bars, direction, poc, vwap, stockListedAt, session, isIncrementalLiveAdmission } = params;
+  const minSec = LOCKED_SYSTEM_RULES.SCAN_START_SEC;
+  const maxSec = LOCKED_SYSTEM_RULES.SCAN_END_SEC;
+  const isBuy = direction === 'BUY';
+
+  if (isIncrementalLiveAdmission && session.isLiveScanWindow) {
+    return clamp(session.secFromMidnight, minSec, maxSec);
+  }
+
+  const upperSecCap = session.isLiveScanWindow
+    ? Math.min(maxSec, Math.max(minSec, session.secFromMidnight))
+    : maxSec;
+
+  const windowBars = (bars || [])
+    .filter((b) => Number.isFinite(b.secIST) && b.secIST >= minSec && b.secIST <= upperSecCap)
+    .sort((a, b) => a.secIST - b.secIST);
+
+  if (windowBars.length > 0) {
+    const avgBarVol =
+      windowBars.reduce((sum, b) => sum + Math.max(0, b.volume), 0) /
+      Math.max(1, windowBars.length);
+    const bullPivot = poc > 0 && vwap > 0 ? Math.min(poc, vwap) : poc || vwap;
+    const bearPivot = poc > 0 && vwap > 0 ? Math.max(poc, vwap) : poc || vwap;
+
+    // 1. First genuine Order Flow ignition bar (directional close + POC/VWAP clearance + volume surge)
+    for (const b of windowBars) {
+      const range = Math.max(0.01, b.high - b.low);
+      const bodyRatio = Math.abs(b.close - b.open) / range;
+      const dirCandle = isBuy ? b.close > b.open : b.close < b.open;
+      const pivotCleared = isBuy
+        ? bullPivot <= 0 || b.close >= bullPivot * 0.998
+        : bearPivot <= 0 || b.close <= bearPivot * 1.002;
+      const volumeSurge =
+        b.volume >= avgBarVol * 1.45 || (b.volume >= avgBarVol * 1.15 && bodyRatio >= 0.55);
+
+      if (dirCandle && pivotCleared && volumeSurge) {
+        return clamp(b.secIST, minSec, maxSec);
+      }
+    }
+
+    // 2. Fallback: strongest directional volume impulse candle inside 09:20-15:15 IST
+    let bestDirectionalBar: ClaudeFnoBar | null = null;
+    for (const b of windowBars) {
+      const dirCandle = isBuy ? b.close >= b.open : b.close <= b.open;
+      if (!dirCandle) continue;
+      if (!bestDirectionalBar || b.volume > bestDirectionalBar.volume) {
+        bestDirectionalBar = b;
+      }
+    }
+    if (bestDirectionalBar) {
+      return clamp(bestDirectionalBar.secIST, minSec, maxSec);
+    }
+
+    // 3. Fallback: peak-volume bar inside 09:20-15:15 IST
+    let peakVolBar = windowBars[0];
+    for (const b of windowBars) {
+      if (b.volume > peakVolBar.volume) peakVolBar = b;
+    }
+    return clamp(peakVolBar.secIST, minSec, maxSec);
+  }
+
+  const parsedStockSec = parseClockToSecIST(stockListedAt);
+  if (parsedStockSec !== null && parsedStockSec >= minSec && parsedStockSec <= upperSecCap) {
+    return parsedStockSec;
+  }
+
+  return clamp(session.secFromMidnight, minSec, maxSec);
+}
+
 /**
  * Stateful Order Flow Scanner Manager enforcing all 5 Locked Rules:
  * - Same-day sticky lock until 23:59:00 IST auto-flush
@@ -1495,6 +1600,7 @@ export function evaluateOrderFlowCandidate(params: {
  */
 export class OrderFlowScannerManager {
   private sessionDateIST = '';
+  private hasHydratedSession = false;
   private stickyUp = new Map<string, OrderFlowSignalRow>();
   private stickyDown = new Map<string, OrderFlowSignalRow>();
   private lastReport: OrderFlowScanReport | null = null;
@@ -1504,6 +1610,7 @@ export class OrderFlowScannerManager {
     this.stickyUp.clear();
     this.stickyDown.clear();
     this.sessionDateIST = dateIST;
+    this.hasHydratedSession = false;
     this.lastReport = null;
     this.lastComputedAtMs = 0;
   }
@@ -1570,6 +1677,8 @@ export class OrderFlowScannerManager {
     const freshUp: OrderFlowSignalRow[] = [];
     const freshDown: OrderFlowSignalRow[] = [];
 
+    const isIncrementalLiveAdmission = this.hasHydratedSession && session.isLiveScanWindow;
+
     for (const stock of params.allStocks) {
       const sym = String(stock.symbol || '').toUpperCase().trim();
       if (!sym) continue;
@@ -1585,6 +1694,7 @@ export class OrderFlowScannerManager {
         rawBars,
         candlesMap: params.candlesMap,
         session,
+        isIncrementalLiveAdmission,
       });
 
       if (!evaluated) continue;
@@ -1692,6 +1802,7 @@ export class OrderFlowScannerManager {
       now,
     });
 
+    this.hasHydratedSession = true;
     this.lastReport = report;
     this.lastComputedAtMs = Date.now();
     return report;

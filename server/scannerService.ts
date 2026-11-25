@@ -1991,8 +1991,16 @@ export class ScannerService {
         if (q?.open && q.open > 0) scannedStock.indicators.open = round2(q.open, scannedStock.price);
         scannedStock.indicators.high = dayHigh;
         scannedStock.indicators.low = dayLow;
-        if (q?.rsi) scannedStock.indicators.rsi = round2(q.rsi, scannedStock.indicators.rsi);
-        if (q?.ema20) scannedStock.indicators.ema21 = round2(q.ema20, scannedStock.indicators.ema21);
+        if (q?.rsi && evalCandles.length < 15) {
+          scannedStock.indicators.rsi = round2(q.rsi, scannedStock.indicators.rsi);
+        }
+        if (q?.ema20) {
+          (scannedStock.indicators as any).ema20 = round2(q.ema20, scannedStock.indicators.ema21);
+          // Preserve intraday 5m EMA(13/21/34) consistency: never overwrite intraday ema21 with daily ema20 when intraday bars exist
+          if (evalCandles.length < 4) {
+            scannedStock.indicators.ema21 = round2(q.ema20, scannedStock.indicators.ema21);
+          }
+        }
         if (q?.sma50) scannedStock.indicators.ema50 = round2(q.sma50, scannedStock.indicators.ema50);
         scannedStock.fyersData = this.buildFyersQuoteFromUnified(
           scannedStock.symbol,

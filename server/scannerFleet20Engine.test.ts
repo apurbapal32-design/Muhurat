@@ -4,9 +4,13 @@ import {
   SCANNER_FLEET_20_DEFINITIONS,
   ScannerFleet20Manager,
   classifyMarketVolatilityRegime,
+  computeAgentEntryPlan,
   computeVolatilityAdjustedStopLoss,
+  evaluateAgentTradeLifecycle,
   evaluateStockForScanner20,
 } from './scannerFleet20Engine';
+import { calculateCPRAndPivots } from '../src/utils/technicalAnalysis';
+import { StickyScannerRegistry, applyUniversalGateToApexAlphaReport } from './scannerUniversalGate';
 import { ScannedStock } from '../src/types';
 
 function makeStock(
@@ -29,7 +33,9 @@ function makeStock(
     signal: isUp ? 'BUY' : 'SELL',
     aiScore: overrides.aiScore ?? 84,
     listedAt: overrides.listedAt ?? '10:30:00',
-    bidAskRatio: isUp ? 1.35 : 0.72,
+    bidAskRatio: overrides.bidAskRatio ?? (isUp ? 1.35 : 0.72),
+    ...(overrides.fixedEntryPrice !== undefined ? { fixedEntryPrice: overrides.fixedEntryPrice } : {}),
+    ...(overrides.fixedStopLoss !== undefined ? { fixedStopLoss: overrides.fixedStopLoss } : {}),
     indicators: {
       price,
       open: isUp ? price * 0.985 : price * 1.015,
@@ -448,5 +454,264 @@ test('Global Reset clears all 20 agent statuses, stop-loss levels, Auto-Opt togg
   assert.ok(resumedRep.fleetSummary.totalManagedPositions > 0);
   assert.equal(resumedRep.fleetSummary.autonomousOptimizedAgents, 0);
 });
+
+test('Audit Fix 1: calculateCPRAndPivots never inverts TC below BC on bearish prior days', () => {
+  // Bearish prior day: high=1050, low=1000, close=1005 (below midpoint 1025)
+  const bearishCpr = calculateCPRAndPivots(1050, 1000, 1005);
+  assert.ok(
+    bearishCpr.cprTC >= bearishCpr.cprBC,
+    `Expected cprTC (${bearishCpr.cprTC}) >= cprBC (${bearishCpr.cprBC}) on bearish prior day`
+  );
+  assert.ok(bearishCpr.cprPivot >= bearishCpr.cprBC && bearishCpr.cprPivot <= bearishCpr.cprTC);
+
+  // Bullish prior day: high=1050, low=1000, close=1045
+  const bullishCpr = calculateCPRAndPivots(1050, 1000, 1045);
+  assert.ok(bullishCpr.cprTC >= bullishCpr.cprBC);
+});
+
+test('Audit Fix 2: DI-Aligned ADX rejects counter-trend traps across ALL 20 scanners', () => {
+  const buyStock = makeStock({ symbol: 'COUNTERBUY', price: 500, changePercent: 2.0 });
+  const sellStock = makeStock({ symbol: 'COUNTERSELL', price: 500, changePercent: -2.0 });
+
+  for (const def of SCANNER_FLEET_20_DEFINITIONS) {
+    // Strong ADX=35, but -DI=34 > +DI=11 -> MUST reject BUY
+    assert.equal(
+      evaluateStockForScanner20(def.scannerId, buyStock, 3.0, 1.8, 35, 11, 34),
+      null,
+      `${def.scannerId} must reject BUY when -DI > +DI`
+    );
+    // Strong ADX=35, +DI=34 > -DI=11 -> BUY passes
+    assert.notEqual(
+      evaluateStockForScanner20(def.scannerId, buyStock, 3.0, 1.8, 35, 34, 11),
+      null,
+      `${def.scannerId} should allow BUY when +DI > -DI`
+    );
+    // Strong ADX=35, but +DI=34 > -DI=11 -> MUST reject SELL
+    assert.equal(
+      evaluateStockForScanner20(def.scannerId, sellStock, 3.0, 1.8, 35, 34, 11),
+      null,
+      `${def.scannerId} must reject SELL when +DI > -DI`
+    );
+    // Strong ADX=35, -DI=34 > +DI=11 -> SELL passes
+    assert.notEqual(
+      evaluateStockForScanner20(def.scannerId, sellStock, 3.0, 1.8, 35, 11, 34),
+      null,
+      `${def.scannerId} should allow SELL when -DI > +DI`
+    );
+  }
+});
+
+test('Audit Fix 3: Universal anti-exhaustion & wick-trap guards block chasing and shooting stars', () => {
+  // Overextended +7.5% above VWAP
+  const overextended = makeStock({
+    symbol: 'CHASEME',
+    price: 537.5,
+    changePercent: 7.5,
+    indicators: { vwap: 500 },
+  });
+  // Shooting star rejection wick: high=530, low=490, price=498 (dayRangePct=20%)
+  const shootingStar = makeStock({
+    symbol: 'WICKTRAP',
+    price: 498,
+    changePercent: 1.5,
+    indicators: { high: 530, low: 490, vwap: 494 },
+  });
+
+  for (const def of SCANNER_FLEET_20_DEFINITIONS) {
+    assert.equal(
+      evaluateStockForScanner20(def.scannerId, overextended, 3.0, 2.0, 32),
+      null,
+      `${def.scannerId} must reject >6.5% VWAP overextension`
+    );
+    assert.equal(
+      evaluateStockForScanner20(def.scannerId, shootingStar, 3.0, 2.0, 32),
+      null,
+      `${def.scannerId} must reject shooting-star opposing wick trap`
+    );
+  }
+});
+
+test('Audit Fix 4: Individual scanner formula regressions (#04, #09, #10, #11, #13, #14, #15, #19, #20)', () => {
+  // #20 oi-short-cover: neutral PCR=1.00 & NEUTRAL OI MUST NOT trigger BUY or SELL
+  const neutralOiBuy = makeStock({
+    symbol: 'NEUTOI',
+    price: 500,
+    changePercent: 1.5,
+    indicators: { oiState: 'NEUTRAL', pcr: 1.0, oiChangePct: 0.2 },
+  });
+  assert.equal(evaluateStockForScanner20('oi-short-cover', neutralOiBuy, 3.0, 1.8, 30), null);
+
+  const genuineShortCover = makeStock({
+    symbol: 'SCOVER',
+    price: 500,
+    changePercent: 1.5,
+    indicators: { oiState: 'SHORT_COVERING', pcr: 1.22, oiChangePct: -4.2 },
+  });
+  assert.notEqual(evaluateStockForScanner20('oi-short-cover', genuineShortCover, 3.0, 1.8, 30), null);
+
+  // #11 titan & #14 titan-cash: heavy whale selling (bidAsk=0.45) must NEVER pass BUY even with +1.5% chg
+  const bearishFlowBuy = makeStock({
+    symbol: 'WHALESELL',
+    price: 500,
+    changePercent: 1.5,
+    bidAskRatio: 0.45,
+  });
+  assert.equal(evaluateStockForScanner20('titan', bearishFlowBuy, 3.0, 1.8, 30), null);
+  assert.equal(evaluateStockForScanner20('titan-cash', bearishFlowBuy, 3.0, 1.8, 30), null);
+
+  // #13 elite-pro: negative MACD histogram (-0.15) must NOT pass BUY
+  const negMacdBuy = makeStock({
+    symbol: 'NEGMACD',
+    price: 500,
+    changePercent: 1.5,
+    indicators: { macdHist: -0.15 },
+  });
+  assert.equal(evaluateStockForScanner20('elite-pro', negMacdBuy, 3.0, 1.8, 30), null);
+
+  // #15 cloud-ai: enforces stated aiScore >= 72 (rejects 65)
+  const lowAi = makeStock({ symbol: 'LOWAI', price: 500, changePercent: 1.5, aiScore: 65 });
+  assert.equal(evaluateStockForScanner20('cloud-ai', lowAi, 3.0, 1.8, 30), null);
+
+  // #04 claude-fno: rejects SHORT_BUILDUP on BUY even when chg=+1.5%
+  const shortBuildupBuy = makeStock({
+    symbol: 'SBUILD',
+    price: 500,
+    changePercent: 1.5,
+    indicators: { oiState: 'SHORT_BUILDUP', pcr: 0.72 },
+  });
+  assert.equal(evaluateStockForScanner20('claude-fno', shortBuildupBuy, 3.0, 1.8, 30), null);
+
+  // #10 sonic: symmetric OI requirement on SELL (rejects zero OI change + NEUTRAL)
+  const flatOiSell = makeStock({
+    symbol: 'FLATOISELL',
+    price: 500,
+    changePercent: -1.5,
+    indicators: { oiState: 'NEUTRAL', oiChangePct: 0.1 },
+  });
+  assert.equal(evaluateStockForScanner20('sonic', flatOiSell, 3.0, 1.8, 30), null);
+
+  // #19 vwap-surge: rejects small 0.38% VWAP distance (<0.55%) and overextended 5.1% (>4.5%)
+  const tinyVwapDist = makeStock({
+    symbol: 'TINYVWAP',
+    price: 501.9,
+    changePercent: 1.0,
+    indicators: { vwap: 500 },
+  });
+  const hugeVwapDist = makeStock({
+    symbol: 'HUGEVWAP',
+    price: 525.5,
+    changePercent: 5.1,
+    indicators: { vwap: 500 },
+  });
+  assert.equal(evaluateStockForScanner20('vwap-surge', tinyVwapDist, 3.0, 1.8, 30), null);
+  assert.equal(evaluateStockForScanner20('vwap-surge', hugeVwapDist, 3.0, 1.8, 30), null);
+
+  // #09 strong: safely normalizes inverted raw cprTC < cprBC (price below true top CPR rejected on BUY)
+  const invertedCprRejected = makeStock({
+    symbol: 'INVCPR',
+    price: 500,
+    changePercent: 1.5,
+    indicators: { cprTC: 495, cprBC: 510 }, // inverted raw input: true top CPR is 510!
+  });
+  assert.equal(evaluateStockForScanner20('strong', invertedCprRejected, 3.0, 1.8, 30), null);
+});
+
+test('Audit Fix 5: computeAgentEntryPlan bounds wide SL and evaluateAgentTradeLifecycle computes true blended 50% T1 + 50% runner R', () => {
+  const agent = SCANNER_FLEET_20_DEFINITIONS[0].agent;
+  // Inherited fixedStopLoss 8% away (460 vs 500) must be rejected and replaced by bounded intraday ATR SL
+  const wideSlStock = makeStock({
+    symbol: 'WIDESL',
+    price: 500,
+    fixedEntryPrice: 500,
+    fixedStopLoss: 460,
+    indicators: { atr: 5 },
+  });
+  const plan = computeAgentEntryPlan(wideSlStock, 'BUY', agent, 500_000);
+  const slDistPct = ((plan.entryPrice - plan.initialStopLoss) / plan.entryPrice) * 100;
+  assert.ok(slDistPct >= 0.4 && slDistPct <= 2.5, `Expected bounded SL distance (0.4%..2.5%), got ${slDistPct.toFixed(2)}%`);
+
+  // Blended P&L check: Entry=100, SL=96 (risk=4), T1=106 (+1.5R), T2=110 (+2.5R), qty=100
+  const baseTrade = {
+    symbol: 'BLEND',
+    name: 'Blend Co',
+    sector: 'IT',
+    side: 'BUY' as const,
+    listedAt: '10:00:00',
+    formulaReason: 'Test',
+    formulaScore: 90,
+    entryPrice: 100,
+    initialStopLoss: 96,
+    activeStopLoss: 96,
+    target1: 106,
+    target2: 110,
+    positionQty: 100,
+    riskCapitalRs: 400,
+    peakFavorablePrice: 106.5, // Already hit T1 (+1.5R)
+    peakRvol: 3.0,
+    peakXTimeVolume: 1.8,
+    peakAdx: 32,
+    lastLtp: 106,
+    lastChangePercent: 2.0,
+    lastAtr: 1.5,
+    lastRangePct: 2.4,
+    t1Booked: true,
+  };
+
+  // Case A: Remaining 50% hits T2 (110 = +2.5R) -> blended R = (1.5R * 50 + 2.5R * 50) / 100 = +2.00R (₹800)
+  const t2Res = evaluateAgentTradeLifecycle(baseTrade, agent, 110, false);
+  assert.equal(t2Res.actionStatus, 'TARGET_HIT_EXIT');
+  assert.equal(t2Res.liveRMultiple, 2.0);
+  assert.equal(t2Res.livePnlRs, 800);
+
+  // Case B: After T1 booked (+1.5R), price pulls back to trailed SL 103 (+0.75R) -> blended R = (1.5R + 0.75R) / 2 = +1.13R (₹450)
+  const trailSlRes = evaluateAgentTradeLifecycle(baseTrade, agent, 103, false);
+  assert.equal(trailSlRes.actionStatus, 'SL_HIT_EXIT');
+  assert.equal(trailSlRes.liveRMultiple, 1.13);
+  assert.equal(trailSlRes.livePnlRs, 450);
+  assert.ok(trailSlRes.actionBadge.includes('PROFIT LOCKED'));
+});
+
+test('Audit Fix 6: applyUniversalGateToApexAlphaReport reads rvol5m instead of dropping rows with 0', () => {
+  const reg = new StickyScannerRegistry();
+  const stock = makeStock({
+    symbol: 'APEXOK',
+    price: 500,
+    changePercent: 2.1,
+    indicators: { rvol: 3.1, xTimeVolume: 1.9, adx: 32 },
+  });
+  const apexReport = {
+    isMidnightCleared: false,
+    categories: {
+      qualifiedAlpha: [
+        {
+          symbol: 'APEXOK',
+          direction: 'BUY',
+          price: 500,
+          entryPrice: 500,
+          stopLoss: 493,
+          rvol5m: 3.1, // ApexAlphaRow stores rvol in rvol5m, NOT rvol!
+          xTimeVolume: 1.9,
+          adx: 32,
+        },
+      ],
+      vwapCoilSetups: [],
+      pdhPdlReclaim: [],
+      buySetups: [],
+      sellSetups: [],
+      nearTriggerWatch: [],
+    },
+  };
+
+  const gated = applyUniversalGateToApexAlphaReport(
+    apexReport,
+    [stock],
+    () => undefined,
+    new Map(),
+    reg
+  );
+  assert.equal(gated.categories.qualifiedAlpha.length, 1);
+  assert.ok(gated.categories.qualifiedAlpha[0].rvol >= 3.0);
+});
+
 
 

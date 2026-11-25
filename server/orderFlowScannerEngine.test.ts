@@ -7,6 +7,7 @@ import {
   computeVolumeProfile,
   evaluateFiveOrderFlowSignals,
   evaluateOrderFlowCandidate,
+  resolveOrderFlowListedAtSec,
 } from './orderFlowScannerEngine';
 import { ClaudeFnoBar } from './claudeFnoEngine';
 import { getLockedSessionWindowStatus } from './systemFiveRules';
@@ -392,3 +393,126 @@ test('Zero Fake Signals (Rule 3) rejects weak RVOL/VolX stocks, enforces Best 10
   assert.equal(reportFlush.upPicks.length, 0);
   assert.equal(reportFlush.downPicks.length, 0);
 });
+
+test('Listed At Timestamp: resolves authentic per-stock Order Flow ignition bar time (not 15:15:00) and locks exact live IST admission time', () => {
+  // Post-market snapshot (18:10 IST) with candles running all the way to 15:25:00
+  const postMarketSession = getLockedSessionWindowStatus(new Date('2026-11-24T12:40:00.000Z'), false);
+  assert.equal(postMarketSession.phase, 'POST_SCAN_LOCKED');
+
+  // Stock A ignites at 10:05:00 (bar idx 8), Stock B ignites at 11:45:00 (bar idx 28), both have bars until 15:25:00
+  const makeSessionBarsWithSpike = (spikeBarIdx: number): ClaudeFnoBar[] => {
+    const out: ClaudeFnoBar[] = [];
+    let px = 1000;
+    for (let i = 0; i < 73; i++) {
+      const secIST = 9 * 3600 + 25 * 60 + i * 300; // 09:25 .. 15:25
+      const h = Math.floor(secIST / 3600);
+      const m = Math.floor((secIST % 3600) / 60);
+      const timeIST = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+      const isSpike = i === spikeBarIdx;
+      const open = px;
+      const close = isSpike ? px + 8 : i < spikeBarIdx ? px - 0.1 : px + 0.3;
+      out.push({
+        timeIST,
+        dateIST: '2026-11-24',
+        secIST,
+        open: Number(open.toFixed(2)),
+        high: Number((Math.max(open, close) + 0.5).toFixed(2)),
+        low: Number((Math.min(open, close) - 0.5).toFixed(2)),
+        close: Number(close.toFixed(2)),
+        volume: isSpike ? 600000 : 100000,
+      });
+      px = close;
+    }
+    return out;
+  };
+
+  const barsA = makeSessionBarsWithSpike(8); // 10:05:00
+  const barsB = makeSessionBarsWithSpike(28); // 11:45:00
+
+  const secA = resolveOrderFlowListedAtSec({
+    bars: barsA,
+    direction: 'BUY',
+    poc: 1002,
+    vwap: 1002,
+    session: postMarketSession,
+    isIncrementalLiveAdmission: false,
+  });
+  const secB = resolveOrderFlowListedAtSec({
+    bars: barsB,
+    direction: 'BUY',
+    poc: 1002,
+    vwap: 1002,
+    session: postMarketSession,
+    isIncrementalLiveAdmission: false,
+  });
+
+  assert.equal(secA, 10 * 3600 + 5 * 60, 'Stock A must list at 10:05:00, not 15:15:00');
+  assert.equal(secB, 11 * 3600 + 45 * 60, 'Stock B must list at 11:45:00, not 15:15:00');
+  assert.notEqual(secA, 15 * 3600 + 15 * 60);
+  assert.notEqual(secB, 15 * 3600 + 15 * 60);
+
+  // Incremental live admission inside 09:20-15:15 IST stamps exact live IST second and locks it permanently
+  const mgr = new OrderFlowScannerManager();
+  const t1 = new Date('2026-11-24T04:40:00.000Z'); // 10:10:00 IST
+  const barsInit = makeIntradayBars({
+    startPrice: 1180,
+    stepPerBar: 3.5,
+    baseVol: 110000,
+    surgeLastBars: true,
+    lowerWickAbsorption: true,
+    count: 10,
+  });
+  const stock1 = makeMockStock({
+    symbol: 'FIRSTFLOW',
+    price: barsInit[barsInit.length - 1].close,
+    changePercent: 2.5,
+    indicators: {
+      open: 1180,
+      high: barsInit[barsInit.length - 1].high,
+      low: barsInit[0].low,
+      vwap: 1195,
+      rvol: 3.4,
+      xTimeVolume: 2.3,
+      adx: 34,
+    } as any,
+  });
+  const rep1 = mgr.syncAndBuildReport({
+    allStocks: [stock1],
+    getExtendedBarsFn: () => barsInit as any,
+    now: t1,
+    upstoxConnected: true,
+    bypassCache: true,
+  });
+  assert.equal(rep1.upPicks.length, 1);
+  const firstListedAt = rep1.upPicks[0].listedAt;
+
+  // 60 seconds later at 10:11:00 IST, a brand-new stock qualifies -> stamped 10:11:00 IST & sorted first (Z->A)
+  const t2 = new Date('2026-11-24T04:41:00.000Z'); // 10:11:00 IST
+  const stock2 = makeMockStock({
+    symbol: 'SECONDFLOW',
+    price: barsInit[barsInit.length - 1].close,
+    changePercent: 2.8,
+    indicators: {
+      open: 1180,
+      high: barsInit[barsInit.length - 1].high,
+      low: barsInit[0].low,
+      vwap: 1195,
+      rvol: 3.6,
+      xTimeVolume: 2.4,
+      adx: 36,
+    } as any,
+  });
+  const rep2 = mgr.syncAndBuildReport({
+    allStocks: [stock1, stock2],
+    getExtendedBarsFn: () => barsInit as any,
+    now: t2,
+    upstoxConnected: true,
+    bypassCache: true,
+  });
+  assert.equal(rep2.upPicks.length, 2);
+  assert.equal(rep2.upPicks[0].symbol, 'SECONDFLOW', 'Newly admitted stock at 10:11:00 must sort first (Z->A)');
+  assert.equal(rep2.upPicks[0].listedAt, '10:11:00');
+  assert.equal(rep2.upPicks[1].symbol, 'FIRSTFLOW');
+  assert.equal(rep2.upPicks[1].listedAt, firstListedAt, 'Original stock listedAt must stay permanently locked');
+});
+

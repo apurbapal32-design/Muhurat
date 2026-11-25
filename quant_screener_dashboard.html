@@ -6474,7 +6474,7 @@
                 <h2 class="text-base md:text-lg font-black text-white">⚡ VWAP DEVIATION &amp; GAMMA SURGE SCANNER</h2>
               </div>
               <p class="text-xs text-slate-300 mt-1 font-sans">
-                Formula: VWAP Expansion Band (&gt;&plusmn;0.35% VWAP) + RSI Momentum + RVOL &gt; 2.00 + Vol Bazaar X-Time &gt; 1.00X + ADX 25+ &bull; Best 10 UP &amp; Best 10 DOWN strictly managed by <strong>Vikram AI (He)</strong> (Entry, Initial SL, +1R BE Trail, T1/T2 &amp; 15:15 Exit).
+                Formula: VWAP Expansion Band (&plusmn;0.55% to &plusmn;4.50% vs VWAP) + ATR Range Surge + RSI (56&ndash;82 / 18&ndash;44) + RVOL &gt; 2.00 + Vol Bazaar X-Time &gt; 1.00X + DI-Aligned ADX 25+ &bull; Best 10 UP &amp; Best 10 DOWN strictly managed by <strong>Vikram AI (He)</strong> (Entry, Bounded ATR SL, +1R BE Trail, 50% T1 / 50% T2 &amp; 15:15 Exit).
               </p>
             </div>
             <div class="flex items-center gap-2 flex-wrap text-[11px]">
@@ -6529,7 +6529,7 @@
                 <h2 class="text-base md:text-lg font-black text-white">🧲 OI BREAKOUT &amp; SHORT-COVERING TRAP SCANNER</h2>
               </div>
               <p class="text-xs text-slate-300 mt-1 font-sans">
-                Formula: Short-Covering / Long-Unwinding Trap + PCR Shift + RVOL &gt; 2.00 + Vol Bazaar X-Time &gt; 1.00X + ADX 25+ &bull; Best 10 UP &amp; Best 10 DOWN strictly managed by <strong>Meera AI (She)</strong> (Entry, Initial SL, +0.95R BE Trail, T1/T2 &amp; 15:15 Exit).
+                Formula: VWAP-Aligned Short-Covering / Long-Unwinding Trap + Extreme PCR (&ge;1.15 / &le;0.85) or OI &Delta; &ge;2% + RVOL &gt; 2.00 + Vol Bazaar X-Time &gt; 1.00X + DI-Aligned ADX 25+ &bull; Best 10 UP &amp; Best 10 DOWN strictly managed by <strong>Meera AI (She)</strong> (Entry, Bounded ATR SL, +0.95R BE Trail, 50% T1 / 50% T2 &amp; 15:15 Exit).
               </p>
             </div>
             <div class="flex items-center gap-2 flex-wrap text-[11px]">
@@ -6768,6 +6768,9 @@
               </p>
             </div>
             <div class="flex items-center gap-2 flex-wrap text-xs shrink-0">
+              <span id="of-refresh-countdown" class="px-3 py-2 rounded-lg border border-slate-800 bg-[#0b1120] text-slate-300 font-mono tabular-nums whitespace-nowrap">
+                Auto-refresh 60s &middot; 60s
+              </span>
               <a href="/order-flow-scanner" class="px-3.5 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium transition-colors whitespace-nowrap">
                 Dedicated Order Flow View &rarr;
               </a>
@@ -15115,6 +15118,8 @@ function renderJournal() {
       showFormula: false,
       selectedSymbol: null,
       _timer: null,
+      _tickTimer: null,
+      _countdownSec: 60,
 
       fmtInr(v) {
         const n = Number(v);
@@ -15146,14 +15151,28 @@ function renderJournal() {
           .replace(/"/g, '&quot;');
       },
 
+      updateCountdownLabel() {
+        const el = document.getElementById('of-refresh-countdown');
+        if (el) el.textContent = `Auto-refresh 60s · ${this._countdownSec}s`;
+      },
+
       ensurePolling() {
-        if (this._timer) return;
-        this._timer = setInterval(() => {
-          const pane = document.getElementById('tab-order-flow-scanner');
-          if (pane && !pane.classList.contains('hidden')) {
-            this.load(false);
-          }
-        }, 6000);
+        if (!this._timer) {
+          this._timer = setInterval(() => {
+            const pane = document.getElementById('tab-order-flow-scanner');
+            if (pane && !pane.classList.contains('hidden')) {
+              this.load(false);
+            }
+          }, 60000);
+        }
+        if (!this._tickTimer) {
+          this._tickTimer = setInterval(() => {
+            const pane = document.getElementById('tab-order-flow-scanner');
+            if (!pane || pane.classList.contains('hidden')) return;
+            this._countdownSec = this._countdownSec <= 1 ? 60 : this._countdownSec - 1;
+            this.updateCountdownLabel();
+          }, 1000);
+        }
       },
 
       async load(force) {
@@ -15173,6 +15192,8 @@ function renderJournal() {
           const data = await res.json();
           if (data && data.status === 'ok') {
             this.lastReport = data;
+            this._countdownSec = 60;
+            this.updateCountdownLabel();
             const all = [...(data.upPicks || []), ...(data.downPicks || [])];
             if (!this.selectedSymbol || !all.some((r) => r.symbol === this.selectedSymbol)) {
               this.selectedSymbol = all[0] ? all[0].symbol : null;
@@ -15462,7 +15483,7 @@ function renderJournal() {
                 <div class="text-[10px] text-slate-400">${this.esc(row.convictionGrade)}</div>
               </td>
               <td class="py-2.5 px-2.5 font-mono tabular-nums text-slate-200">
-                <div>${this.esc(row.listedAt)}</div>
+                <div>${this.esc(row.listedAt)} IST</div>
                 <div class="text-[10px] text-slate-400">Locked</div>
               </td>
               <td class="py-2.5 px-2.5 text-right font-mono tabular-nums">
