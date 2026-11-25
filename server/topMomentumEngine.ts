@@ -36,7 +36,7 @@ export interface TopMomentumSignalRow {
   isExhausted: boolean;
   exhaustionReason: string;
 
-  // Timestamps (exact Break / Rej 1 ignition candle time — NOT late move time)
+  // Timestamps (exact Break / Rej 1 ignition candle time — strictly >= 09:20 IST when intraday bars exist)
   listedAt: string;
   breakTimeIST: string;
   rej1TimeIST: string;
@@ -65,17 +65,25 @@ export interface TopMomentumSignalRow {
   ema21: number;
   vsVwapPct: number;
 
-  // 3 Sub-Pane Order Flow Metrics (matching screenshot)
-  barDelta: number;          // Current 5m bar Δ (e.g. +48.2K on ignition, -22.1K on Exit)
-  cumulativeDelta: number;   // Session Cumulative Delta CΔ (e.g. +1.30M)
+  // 3 Sub-Pane Order Flow Metrics
+  barDelta: number;          // Current 5m bar Δ
+  cumulativeDelta: number;   // Session Cumulative Delta CΔ
   cvdFlippedAtBreak: boolean;
   cvdSlope3: number;
   zeroLineMomentum: number;  // Sub-pane 2: normalized VWAP-CVD momentum line (>0 BUY, <0 SELL)
   impulseOscillator: number; // Sub-pane 3: delta/volume thrust oscillator (spikes at Break!)
 
-  // Strong Volume & Trend Strength Formula Metrics (RVOL >= 2.00, X-Time Vol >= 2.00X, ADX >= 25+)
+  // Profitability & Institutional Alpha Upgrades (v2.0 Rectified)
+  squeezeRelease: boolean;          // Volatility contraction followed by ATR expansion breakout
+  atrExpansionRatio: number;        // Ignition bar range / ATR(14)
+  relativeStrengthVsSector: number; // Stock %Chg - Sector %Chg (sector-leading alpha)
+  diAligned: boolean;               // +DI >= -DI for BUY, -DI >= +DI for SELL (blocks dead-cat bounces)
+  absorptionTrapBlocked: boolean;   // True if heavy opposing rejection wick warns of institutional absorption
+  profitabilityEdgeLabel: string;   // Crisp edge summary (e.g. "Squeeze Release · Sector Leader")
+
+  // Strong Volume & Trend Strength Formula Metrics (RVOL > 2.00, Vol Bazaar X-Time > 1.00X, ADX >= 25+ & DI aligned)
   rvol: number;
-  xTimeVolume: number;       // Strong X-Time Volume multiple vs baseline 5m avg volume (>= 2.00X)
+  xTimeVolume: number;       // Trimmed-baseline 5m X-Time Volume multiple (> 1.00X)
   barVolRatio: number;       // Latest 5m candle volume multiple
   adx: number;               // Wilder's ADX(14) trend strength (>= 25+)
   plusDI: number;
@@ -91,11 +99,11 @@ export interface TopMomentumSignalRow {
   oiChangePct: number;
   buildup: 'Long Buildup' | 'Short Buildup' | 'Short Covering' | 'Long Unwinding';
 
-  // Scorecard
+  // Scorecard (8-Factor Institutional Momentum Ignition v2.0)
   conditionsMet: number;
-  totalConditions: 7;
+  totalConditions: 8;
   conditions: TopMomentumCheck[];
-  score: number; // 0..100 (rewards EARLY ignition + Strong RVOL/X-Time/ADX; penalizes chasing)
+  score: number; // 0..100 (rewards EARLY ignition + Squeeze + Sector RS + DI-aligned ADX; penalizes chasing)
   ignitionNote: string;
 }
 
@@ -141,6 +149,18 @@ const INDEX_BLACKLIST = new Set([
 
 function round2(n: number): number {
   return Number((Number.isFinite(n) ? n : 0).toFixed(2));
+}
+
+function trimmedMeanVolume(bars: ClaudeFnoBar[]): number {
+  const vols = bars.map((b) => Math.max(0, b.volume)).filter((v) => v > 0);
+  if (vols.length === 0) return 0;
+  if (vols.length < 5) {
+    return vols.reduce((a, b) => a + b, 0) / vols.length;
+  }
+  // Trim the single largest outlier spike (e.g., 09:15 opening auction volume) so afternoon ignitions are never distorted
+  const sorted = [...vols].sort((a, b) => a - b);
+  const trimmed = sorted.slice(0, -1);
+  return trimmed.reduce((a, b) => a + b, 0) / Math.max(1, trimmed.length);
 }
 
 function normalize5mBars(rawBars: IntradayCandleBar[] | Candle[] | undefined): ClaudeFnoBar[] {
@@ -338,20 +358,24 @@ function formatCompactDelta(n: number): string {
 }
 
 /**
- * Evaluates a single stock's 5m Order Flow series against the Early-Ignition Momentum model
- * with mandatory Strong Volume & Trend Strength Filters:
- *   1. Pre-Break Base & Liquidity Sweep (Opening/Range Sweep below support for BUY, above resistance for SELL)
- *   2. Break Candle: First clean 5m close breaking above consolidation/range high + VWAP + EMA9/21
- *   3. Rej 1 Candle: First shallow pullback holding above Break level & VWAP with rejection wick
- *   4. Sub-pane 1 — Cumulative Delta (CΔ) flip & rising expansion + current bar Δ aligned (no Exit flip!)
- *   5. Sub-pane 2 & 3 — Zero-line Momentum cross above 0.00 + Impulse thrust
- *   6. Mandatory Quantitative Gates:
- *      - Strong RVOL >= 2.00
- *      - Strong X-Time Volume >= 2.00X (vs baseline 5m average volume)
- *      - ADX(14) Value >= 25+
- *   7. Anti-Chase / Exhaustion Gate: Alerts fire ONLY during BREAK_IGNITION or REJ_1_ENTRY.
- *      Once stretched far from VWAP / entry or bar Δ reverses (e.g. Exit @ 284.27 Δ -22.10K),
- *      classifies as EXHAUSTED_EXIT with shouldAlertNow = false so late alerts NEVER fire.
+ * RECTIFIED & UPGRADED 8-FACTOR 5M ORDER FLOW EARLY-IGNITION MOMENTUM ENGINE (v2.0)
+ *
+ * Key Formula Rectifications & Profitability Upgrades:
+ *   1. True Structural Breakout + Close Conviction (No sub-resistance 0.9995 fakeouts;
+ *      Break bar must close strictly beyond range with CLV >= 0.30 [BUY] / <= -0.30 [SELL]).
+ *   2. 09:20 IST Opening-Noise Filter: Uses the 09:15 bar as opening sweep/range reference;
+ *      Break ignition begins strictly at/after 09:20:00 IST (Rule 1 compliant).
+ *   3. Directional Wilder's ADX(14) >= 25+ WITH Mandatory +DI / -DI Alignment:
+ *      Blocks counter-trend dead-cat bounces where ADX >= 25 solely because of prior selloff (-DI > +DI).
+ *   4. Trimmed-Baseline Institutional Volume Gate (Rule 3 Locked):
+ *      RVOL > 2.00 AND Trimmed-Baseline Vol Bazaar X-Time > 1.00X (trims 09:15 opening spike
+ *      so afternoon breakouts are measured cleanly).
+ *   5. Volatility Compression / Squeeze Release Detection (ATR Expansion):
+ *      Identifies tight consolidation coiling followed by high-velocity range expansion.
+ *   6. Sector-Leading Relative Strength (RS) Alpha:
+ *      Measures Stock %Chg vs Sector %Chg to prioritize true institutional leaders.
+ *   7. Anti-Absorption Trap & Anti-Chase Exhaustion Blocker:
+ *      Blocks late stretched moves AND heavy opposing rejection-wick absorption traps.
  */
 export function evaluateTopMomentumOrderFlow(params: {
   symbol: string;
@@ -417,12 +441,11 @@ export function evaluateTopMomentumOrderFlow(params: {
   const vwapSession = computeSessionVwapSeries(sessionBars);
   const atr14 = Math.max(price * 0.0025, computeAtr(bars5m, 14));
 
-  // Compute real Wilder's ADX(14) on 5m bars (or use explicitAdx if provided & higher/valid)
+  // Compute real Wilder's ADX(14), +DI, -DI directly from 5m bars
   const adxMetrics = computeWilderAdx(bars5m, 14);
-  const adx =
-    params.explicitAdx !== undefined && Number.isFinite(params.explicitAdx) && params.explicitAdx > 0
-      ? round2(params.explicitAdx)
-      : adxMetrics.adx;
+  const hasExplicitAdx =
+    params.explicitAdx !== undefined && Number.isFinite(params.explicitAdx) && params.explicitAdx > 0;
+  const adx = hasExplicitAdx ? round2(params.explicitAdx!) : adxMetrics.adx;
   const plusDI = adxMetrics.plusDI;
   const minusDI = adxMetrics.minusDI;
 
@@ -439,19 +462,15 @@ export function evaluateTopMomentumOrderFlow(params: {
     cumDeltas.push(runningCvd);
   }
 
-  // Baseline average 5m bar volume (prior 20 bars excluding the latest spike bar so X-Time Volume isn't diluted)
+  // Trimmed baseline average 5m bar volume (trims single biggest opening outlier spike so afternoon ignitions work cleanly)
   const priorForBaseline =
     bars5m.length > 4
       ? bars5m.slice(Math.max(0, bars5m.length - 21), bars5m.length - 1)
       : bars5m;
-  const avgBarVol =
-    priorForBaseline.reduce((acc, b) => acc + Math.max(0, b.volume), 0) /
-    Math.max(1, priorForBaseline.length);
+  const avgBarVol = trimmedMeanVolume(priorForBaseline);
 
   const latestIdx = sessionBars.length - 1;
   const latestBar = sessionBars[latestIdx];
-  // If latest bar is a zero-range closing print or 1-tick forming bar (H === L), use the last active
-  // price-discovery candle for intrabar delta & impulse so neither BUY nor SELL is falsely distorted.
   let activeDeltaIdx = latestIdx;
   if (latestBar.high <= latestBar.low && latestIdx > 0) {
     for (let k = latestIdx - 1; k >= Math.max(0, latestIdx - 6); k--) {
@@ -479,7 +498,7 @@ export function evaluateTopMomentumOrderFlow(params: {
     Math.max(-1.0, Math.min(1.0, vsVwapPct * 0.14 + emaSpreadPct * 0.22 + cvdNorm * 0.22))
   );
 
-  // Sub-pane 3: Impulse / Delta Imbalance Oscillator (spikes on ignition, fades/inverts on exhaustion)
+  // Sub-pane 3: Impulse / Delta Imbalance Oscillator
   const activeDeltaBar = sessionBars[activeDeltaIdx];
   const barVolRatio = avgBarVol > 0 ? activeDeltaBar.volume / avgBarVol : 1;
   const barClv = barMetrics[activeDeltaIdx].clv;
@@ -508,14 +527,13 @@ export function evaluateTopMomentumOrderFlow(params: {
       ? params.volume
       : sessionBars.reduce((acc, b) => acc + b.volume, 0);
 
-  // Pre-break reference range:
-  // Use last 6-12 prior session bars if available, combined with opening bar high/low
+  // Pre-break reference range: prior late-session consolidation OR opening bar range
   const preBreakBaseBars =
     prevBars.length >= 3
       ? prevBars.slice(Math.max(0, prevBars.length - 12))
       : sessionBars.slice(0, Math.max(1, Math.min(3, sessionBars.length - 1)));
-  const baseHigh = Math.max(...preBreakBaseBars.map((b) => b.high), prevClose * 1.0015);
-  const baseLow = Math.min(...preBreakBaseBars.map((b) => b.low), prevClose * 0.9985);
+  const baseHigh = Math.max(...preBreakBaseBars.map((b) => b.high), prevClose * 1.0012);
+  const baseLow = Math.min(...preBreakBaseBars.map((b) => b.low), prevClose * 0.9988);
 
   // Determine directional candidate (BUY vs SELL) from VWAP + EMA + CVD alignment
   const bullBias =
@@ -531,6 +549,9 @@ export function evaluateTopMomentumOrderFlow(params: {
     const isBuy = direction === 'BUY';
 
     // 1. Scan today's session bars to find the FIRST genuine `Break` ignition candle
+    // Rule 1 rectification: skip the noisy 09:15:00 opening auction candle for ignition (use it as sweep/range reference!)
+    const hasPost0920Bars = sessionBars.some((b) => b.secIST >= LOCKED_SYSTEM_RULES.SCAN_START_SEC);
+
     let breakIdx = -1;
     let breakLevel = isBuy ? baseHigh : baseLow;
     let sweepDetected = false;
@@ -544,7 +565,24 @@ export function evaluateTopMomentumOrderFlow(params: {
       const cvdI = cumDeltas[i];
       const mI = barMetrics[i];
 
-      // Dynamic pre-break range before bar i (prior base + any earlier consolidation bars today)
+      // Always track opening / pre-break liquidity sweep even on the 09:15 bar
+      if (isBuy) {
+        if (b.low < Math.min(prevClose, baseLow) * 1.0005 || mI.lowerWickPct >= 30) {
+          if (b.low <= sweepExtreme) sweepExtreme = b.low;
+          if (b.low < prevClose || b.low < baseLow) sweepDetected = true;
+        }
+      } else {
+        if (b.high > Math.max(prevClose, baseHigh) * 0.9995 || mI.upperWickPct >= 30) {
+          if (b.high >= sweepExtreme) sweepExtreme = b.high;
+          if (b.high > prevClose || b.high > baseHigh) sweepDetected = true;
+        }
+      }
+
+      // Enforce Rule 1: do not trigger Break ignition on the 09:15 opening auction bar when >=09:20 bars exist
+      if (hasPost0920Bars && b.secIST < LOCKED_SYSTEM_RULES.SCAN_START_SEC) {
+        continue;
+      }
+
       const earlierToday = sessionBars.slice(0, i);
       const localHigh =
         earlierToday.length > 0
@@ -560,25 +598,25 @@ export function evaluateTopMomentumOrderFlow(params: {
       const earlierTodayLow =
         earlierToday.length > 0 ? Math.min(...earlierToday.map((x) => x.low)) : baseLow;
 
-      // Track opening / pre-break liquidity sweep
-      if (isBuy) {
-        if (b.low < Math.min(prevClose, baseLow) * 1.0005 || mI.lowerWickPct >= 32) {
-          if (b.low <= sweepExtreme) {
-            sweepExtreme = b.low;
-          }
-          if (b.low < prevClose || b.low < baseLow) {
-            sweepDetected = true;
-          }
-        }
-        const breaksRange =
-          b.close > localHigh * 0.9995 ||
-          (i <= 2 && b.low < prevClose && b.close > prevClose * 1.0018 && b.close > b.open) ||
-          (i >= 1 && b.close > earlierTodayHigh * 0.9998 && b.close > vwapI * 1.001 && b.close > prevClose * 1.0025);
-        const strongBar = b.close > b.open && b.close >= vwapI * 0.999 && b.close >= ema9I * 0.9985;
-        const deltaAligned = deltaI > 0 && cvdI > 0 && mI.clv >= 0.15;
-        const volActive = avgBarVol <= 0 || b.volume >= avgBarVol * 0.75;
+      const barRange = Math.max(0.0001, b.high - b.low);
+      const bodyRatio = Math.abs(b.close - b.open) / barRange;
 
-        if (breaksRange && strongBar && deltaAligned && volActive) {
+      if (isBuy) {
+        // RECTIFIED: strict structural close ABOVE resistance (no 0.9995 sub-resistance fakeouts!)
+        const breaksRange =
+          b.close > localHigh ||
+          (i >= 1 && b.close > earlierTodayHigh && b.close > vwapI * 1.001 && b.close > prevClose * 1.0025);
+        // Strong bullish close quality: closes in upper portion (CLV >= 0.30) with solid body (>= 38%)
+        const strongCloseConviction =
+          b.close > b.open &&
+          b.close >= vwapI * 0.999 &&
+          b.close >= ema9I * 0.9985 &&
+          mI.clv >= 0.30 &&
+          bodyRatio >= 0.38;
+        const deltaAligned = deltaI > 0 && cvdI > 0;
+        const volActive = avgBarVol <= 0 || b.volume >= avgBarVol * 0.85;
+
+        if (breaksRange && strongCloseConviction && deltaAligned && volActive) {
           breakIdx = i;
           breakLevel = round2(Math.max(prevClose, Math.min(localHigh, b.close)));
           sweepExtreme = round2(
@@ -590,23 +628,21 @@ export function evaluateTopMomentumOrderFlow(params: {
           break;
         }
       } else {
-        if (b.high > Math.max(prevClose, baseHigh) * 0.9995 || mI.upperWickPct >= 32) {
-          if (b.high >= sweepExtreme) {
-            sweepExtreme = b.high;
-          }
-          if (b.high > prevClose || b.high > baseHigh) {
-            sweepDetected = true;
-          }
-        }
+        // RECTIFIED: strict structural close BELOW support (no 1.0005 above-support fakeouts!)
         const breaksRange =
-          b.close < localLow * 1.0005 ||
-          (i <= 2 && b.high > prevClose && b.close < prevClose * 0.9982 && b.close < b.open) ||
-          (i >= 1 && b.close < earlierTodayLow * 1.0002 && b.close < vwapI * 0.999 && b.close < prevClose * 0.9975);
-        const strongBar = b.close < b.open && b.close <= vwapI * 1.001 && b.close <= ema9I * 1.0015;
-        const deltaAligned = deltaI < 0 && cvdI < 0 && mI.clv <= -0.15;
-        const volActive = avgBarVol <= 0 || b.volume >= avgBarVol * 0.75;
+          b.close < localLow ||
+          (i >= 1 && b.close < earlierTodayLow && b.close < vwapI * 0.999 && b.close < prevClose * 0.9975);
+        // Strong bearish close quality: closes in lower portion (CLV <= -0.30) with solid body (>= 38%)
+        const strongCloseConviction =
+          b.close < b.open &&
+          b.close <= vwapI * 1.001 &&
+          b.close <= ema9I * 1.0015 &&
+          mI.clv <= -0.30 &&
+          bodyRatio >= 0.38;
+        const deltaAligned = deltaI < 0 && cvdI < 0;
+        const volActive = avgBarVol <= 0 || b.volume >= avgBarVol * 0.85;
 
-        if (breaksRange && strongBar && deltaAligned && volActive) {
+        if (breaksRange && strongCloseConviction && deltaAligned && volActive) {
           breakIdx = i;
           breakLevel = round2(Math.min(prevClose, Math.max(localLow, b.close)));
           sweepExtreme = round2(
@@ -671,21 +707,41 @@ export function evaluateTopMomentumOrderFlow(params: {
     const barsSinceBreak = latestIdx - breakIdx;
     const barsSinceIgnition = latestIdx - ignitionIdx;
 
-    // Strong X-Time Volume: compare Break/Ignition & Latest 5m candle volume against pre-break baseline avg volume
+    // Trimmed-Baseline Vol Bazaar X-Time Volume (immune to 09:15 opening spike distortion)
     const breakGlobalIdx = offset + breakIdx;
     const preBreakVolSlice =
       breakGlobalIdx >= 3
         ? bars5m.slice(Math.max(0, breakGlobalIdx - 20), breakGlobalIdx)
         : priorForBaseline;
-    const preBreakAvgVol =
-      preBreakVolSlice.reduce((acc, b) => acc + Math.max(0, b.volume), 0) /
-      Math.max(1, preBreakVolSlice.length);
+    const preBreakAvgVol = trimmedMeanVolume(preBreakVolSlice);
     const breakVolX = preBreakAvgVol > 0 ? breakBar.volume / preBreakAvgVol : 1;
     const ignitionVolX = preBreakAvgVol > 0 ? ignitionBar.volume / preBreakAvgVol : 1;
     const latestVolX = avgBarVol > 0 ? latestBar.volume / avgBarVol : 1;
     const xTimeVolume = round2(Math.max(latestVolX, ignitionVolX, breakVolX));
 
-    // Anchor entry price to the actual Break / Rej 1 ignition candle close (NOT chased price)
+    // PROFITABILITY UPGRADE 1: Volatility Compression / Squeeze Release (ATR Expansion)
+    const preCoilSlice = bars5m.slice(Math.max(0, breakGlobalIdx - 6), breakGlobalIdx);
+    const avgCoilRange =
+      preCoilSlice.length >= 3
+        ? preCoilSlice.reduce((s, b) => s + (b.high - b.low), 0) / preCoilSlice.length
+        : atr14;
+    const breakRange = Math.max(0.01, breakBar.high - breakBar.low);
+    const atrExpansionRatio = round2(atr14 > 0 ? breakRange / atr14 : 1.0);
+    const squeezeRelease =
+      preCoilSlice.length >= 3 &&
+      avgCoilRange <= atr14 * 0.92 &&
+      atrExpansionRatio >= 1.05 &&
+      breakRange >= avgCoilRange * 1.28;
+
+    // PROFITABILITY UPGRADE 2: Sector-Leading Relative Strength (RS) Alpha
+    const relativeStrengthVsSector = round2(
+      isBuy ? changePercent - sectorChangePct : sectorChangePct - changePercent
+    );
+    const sectorAlphaAligned =
+      relativeStrengthVsSector >= 0.12 &&
+      (isBuy ? sectorChangePct >= -0.35 : sectorChangePct <= 0.35);
+
+    // Anchor entry price to the actual Break / Rej 1 ignition candle close
     const entryPrice = round2(ignitionBar.close);
     const moveFromEntryPct = round2(
       isBuy
@@ -693,12 +749,12 @@ export function evaluateTopMomentumOrderFlow(params: {
         : ((entryPrice - price) / Math.max(0.01, entryPrice)) * 100
     );
 
-    // Stop Loss below Sweep Low / Break Low (with 0.1*ATR buffer, bounded within 0.35%..2.4%)
+    // Structural Stop Loss below Sweep Low / Break Low (with 0.12*ATR buffer, bounded within 0.38%..2.2%)
     const rawSl = isBuy
-      ? Math.min(sweepExtreme, breakBar.low) - atr14 * 0.1
-      : Math.max(sweepExtreme, breakBar.high) + atr14 * 0.1;
-    const minRisk = entryPrice * 0.0035;
-    const maxRisk = entryPrice * 0.024;
+      ? Math.min(sweepExtreme, breakBar.low) - atr14 * 0.12
+      : Math.max(sweepExtreme, breakBar.high) + atr14 * 0.12;
+    const minRisk = entryPrice * 0.0038;
+    const maxRisk = entryPrice * 0.022;
     const riskR = round2(
       Math.max(minRisk, Math.min(maxRisk, Math.abs(entryPrice - rawSl)))
     );
@@ -712,10 +768,26 @@ export function evaluateTopMomentumOrderFlow(params: {
       ? cumDeltas[breakIdx] > 0 && (preBreakCvd <= cumDeltas[breakIdx] * 0.45 || barDeltas[breakIdx] > 0)
       : cumDeltas[breakIdx] < 0 && (preBreakCvd >= cumDeltas[breakIdx] * 0.45 || barDeltas[breakIdx] < 0);
 
-    // Mandatory Quantitative Thresholds (Rule 3 LOCKED): Strong RVOL > 2.00, Vol Bazaar X-Time > 1.00X, ADX >= 25+
+    // RECTIFIED Bug #1: Directional ADX (+DI / -DI alignment) blocks dead-cat bounce / counter-trend traps!
+    // Allows a fresh 1-bar opening liquidity-sweep breakout ONLY when price & EMA9 already reclaimed EMA21
+    // (a genuine falling-knife dead-cat bounce remains below EMA21 with EMA9 << EMA21 and is strictly blocked).
+    const diComputed = plusDI + minusDI > 0;
+    const sweepReversalReclaimed =
+      sweepDetected &&
+      barsSinceBreak <= 1 &&
+      (isBuy
+        ? price > latestEma21 && latestEma9 >= latestEma21 * 0.998
+        : price < latestEma21 && latestEma9 <= latestEma21 * 1.002);
+    const diAligned = !diComputed
+      ? true
+      : isBuy
+      ? plusDI >= minusDI * 0.96 || sweepReversalReclaimed
+      : minusDI >= plusDI * 0.96 || sweepReversalReclaimed;
+
+    // Mandatory Quantitative Thresholds (Rule 3 LOCKED): Strong RVOL > 2.00, Vol Bazaar X-Time > 1.00X, ADX >= 25+ & DI aligned
     const strongRvolPassed = rvol > TOP_MOMENTUM_STRONG_RVOL_MIN;
     const strongXTimeVolPassed = xTimeVolume > TOP_MOMENTUM_STRONG_XTIME_VOL_MIN;
-    const adxPassed = adx >= TOP_MOMENTUM_STRONG_ADX_MIN;
+    const adxPassed = adx >= TOP_MOMENTUM_STRONG_ADX_MIN && diAligned;
 
     // Sub-pane checks on current bar
     const vwapAligned = isBuy ? price >= latestVwap * 0.999 : price <= latestVwap * 1.001;
@@ -727,13 +799,20 @@ export function evaluateTopMomentumOrderFlow(params: {
     const zeroLineAligned = isBuy ? zeroLineMomentum > 0.01 : zeroLineMomentum < -0.01;
     const orderBookAligned = isBuy ? bidAskRatio >= 1.05 : bidAskRatio <= 0.95;
 
+    // PROFITABILITY UPGRADE 3: Anti-Absorption Trap Detector
+    // If latest candle has massive opposing wick (>= 45%) on heavy volume (>= 1.5x), passive institutional absorption is capping price
+    const activeMetrics = barMetrics[activeDeltaIdx];
+    const absorptionTrapBlocked = isBuy
+      ? activeMetrics.upperWickPct >= 45 && barVolRatio >= 1.5 && activeMetrics.clv < 0.1
+      : activeMetrics.lowerWickPct >= 45 && barVolRatio >= 1.5 && activeMetrics.clv > -0.1;
+
     // Price still must be on the right side of Break level (otherwise setup invalidated)
     const structureIntact = isBuy
       ? price >= breakLevel * 0.994 && price >= stopLoss
       : price <= breakLevel * 1.006 && price <= stopLoss;
     if (!structureIntact) return null;
 
-    // 3. Anti-Chase & Exhaustion Detector (Blocks late alerts like BANKBARODA @ 284.27 +3.07% Δ -22.10K!)
+    // 3. Anti-Chase & Exhaustion Detector
     const directionalVwapStretch = isBuy ? vsVwapPct : -vsVwapPct;
     const directionalDayMove = isBuy ? changePercent : -changePercent;
     const barDeltaFlippedAgainstTrend = isBuy ? latestBarDelta < 0 : latestBarDelta > 0;
@@ -746,7 +825,7 @@ export function evaluateTopMomentumOrderFlow(params: {
     if (directionalVwapStretch >= 1.65) {
       exhaustionReasons.push(`Stretched ${directionalVwapStretch.toFixed(2)}% away from VWAP`);
     }
-    if (directionalDayMove >= 2.45) {
+    if (directionalDayMove >= 2.65) {
       exhaustionReasons.push(`Extended ${directionalDayMove.toFixed(2)}% day move (late chase zone)`);
     }
     if (barDeltaFlippedAgainstTrend && (moveFromEntryPct >= 0.85 || barsSinceBreak >= 4)) {
@@ -755,11 +834,14 @@ export function evaluateTopMomentumOrderFlow(params: {
     if (impulseExhausted && barsSinceBreak >= 3) {
       exhaustionReasons.push(`Impulse Exhausted (${impulseOscillator.toFixed(2)})`);
     }
+    if (absorptionTrapBlocked) {
+      exhaustionReasons.push(`Passive Absorption Trap (${isBuy ? 'Upper' : 'Lower'} Wick Rejection on ${barVolRatio.toFixed(1)}× Vol)`);
+    }
 
     const isExhausted = exhaustionReasons.length > 0;
 
     // Strict Formula Hard Gate for active Top Momentum signals:
-    // MUST satisfy Strong RVOL >= 2.00 AND Strong X-Time Volume >= 2.00X AND ADX >= 25+
+    // MUST satisfy Rule 3 (RVOL > 2.00, Vol Bazaar X-Time > 1.00X, ADX >= 25+ with DI alignment)
     const strongFormulaPassed = strongRvolPassed && strongXTimeVolPassed && adxPassed;
 
     // Stage classification
@@ -798,7 +880,7 @@ export function evaluateTopMomentumOrderFlow(params: {
     const conditions: TopMomentumCheck[] = [
       {
         step: 1,
-        label: 'Sweep + Break Level',
+        label: 'True Break & Close Conviction',
         passed: true,
         detail: `${sweepDetected ? `Sweep ₹${sweepExtreme} → ` : ''}Break ₹${breakLevel} @ ${breakBar.timeIST.slice(0, 5)}`,
       },
@@ -832,41 +914,49 @@ export function evaluateTopMomentumOrderFlow(params: {
         step: 6,
         label: `Vol Bazaar X-Time > ${TOP_MOMENTUM_STRONG_XTIME_VOL_MIN.toFixed(2)}X`,
         passed: strongXTimeVolPassed,
-        detail: `X-Time Vol ${xTimeVolume.toFixed(2)}X (Latest ${round2(latestVolX).toFixed(2)}X • Break ${round2(breakVolX).toFixed(2)}X)`,
+        detail: `Trimmed X-Time ${xTimeVolume.toFixed(2)}X (Latest ${round2(latestVolX).toFixed(2)}X • Break ${round2(breakVolX).toFixed(2)}X)`,
       },
       {
         step: 7,
-        label: `ADX ≥ ${TOP_MOMENTUM_STRONG_ADX_MIN}+ & Anti-Chase`,
+        label: `ADX ≥ ${TOP_MOMENTUM_STRONG_ADX_MIN}+ & ${isBuy ? '+DI > -DI' : '-DI > +DI'}`,
         passed: adxPassed && !isExhausted,
         detail: isExhausted
           ? `BLOCKED: ${exhaustionReasons[0]} • ADX ${adx.toFixed(1)}`
           : `ADX ${adx.toFixed(1)} (+DI ${plusDI.toFixed(0)} / -DI ${minusDI.toFixed(0)}) • Early +${Math.max(0, moveFromEntryPct).toFixed(2)}%`,
       },
+      {
+        step: 8,
+        label: 'Squeeze Release & Sector RS Alpha',
+        passed: squeezeRelease || sectorAlphaAligned,
+        detail: `${squeezeRelease ? `Squeeze Release (${atrExpansionRatio.toFixed(2)}×ATR)` : `ATR Exp ${atrExpansionRatio.toFixed(2)}×`} • RS vs Sector ${relativeStrengthVsSector >= 0 ? '+' : ''}${relativeStrengthVsSector.toFixed(2)}%`,
+      },
     ];
 
     const conditionsMet = conditions.filter((c) => c.passed).length;
 
-    // Require ALL 3 Strong Formula Gates (RVOL >= 2.00, X-Time Vol >= 2.00X, ADX >= 25+)
+    // Require ALL 3 Locked Rule 3 Gates (RVOL > 2.00, Vol Bazaar X-Time > 1.00X, ADX >= 25+ & DI aligned)
     // plus aligned CΔ & VWAP for non-exhausted Top Momentum qualification
-    if (!isExhausted && (!strongFormulaPassed || !vwapAligned || !cvdAligned || conditionsMet < 5)) {
+    if (!isExhausted && (!strongFormulaPassed || !vwapAligned || !cvdAligned || conditionsMet < 6)) {
       return null;
     }
 
-    // Early-ignition scoring: rewards fresh Break/Rej 1 + Strong RVOL/X-Time/ADX; penalizes chasing
+    // Early-ignition scoring (0..100): rewards fresh Break/Rej 1 + Squeeze Release + Sector Alpha + DI-aligned ADX
     let score = 0;
-    if (stage === 'REJ_1_ENTRY') score += 28;
-    else if (stage === 'BREAK_IGNITION') score += 26;
-    else if (stage === 'EARLY_TREND') score += 16;
+    if (stage === 'REJ_1_ENTRY') score += 26;
+    else if (stage === 'BREAK_IGNITION') score += 24;
+    else if (stage === 'EARLY_TREND') score += 15;
     else score += 5;
 
-    if (sweepDetected) score += 8;
-    if (cvdFlippedAtBreak && cvdAligned) score += 12;
-    if (barDeltaAligned) score += 8;
-    if (zeroLineAligned) score += 8;
+    if (sweepDetected) score += 7;
+    if (cvdFlippedAtBreak && cvdAligned) score += 11;
+    if (barDeltaAligned) score += 7;
+    if (zeroLineAligned) score += 7;
     if (vwapAligned && emaAligned) score += 6;
-    if (strongRvolPassed) score += Math.min(12, 6 + Math.max(0, (rvol - 2.0) * 3));
-    if (strongXTimeVolPassed) score += Math.min(10, 5 + Math.max(0, (xTimeVolume - 2.0) * 2.5));
-    if (adxPassed) score += Math.min(10, 5 + Math.max(0, (adx - 25) * 0.35));
+    if (strongRvolPassed) score += Math.min(11, 5 + Math.max(0, (rvol - TOP_MOMENTUM_STRONG_RVOL_MIN) * 2.8));
+    if (strongXTimeVolPassed) score += Math.min(9, 4 + Math.max(0, (xTimeVolume - TOP_MOMENTUM_STRONG_XTIME_VOL_MIN) * 2.2));
+    if (adxPassed) score += Math.min(9, 4 + Math.max(0, (adx - TOP_MOMENTUM_STRONG_ADX_MIN) * 0.3));
+    if (squeezeRelease) score += 5;
+    if (sectorAlphaAligned) score += 4;
     if (orderBookAligned) score += 2;
 
     // Anti-chase penalty if price has already moved away from entry/VWAP
@@ -875,13 +965,20 @@ export function evaluateTopMomentumOrderFlow(params: {
     if (isExhausted) score = Math.min(score, 42);
     score = Math.max(0, Math.min(100, Math.round(score)));
 
+    const edgeParts: string[] = [];
+    if (squeezeRelease) edgeParts.push(`Squeeze ${atrExpansionRatio.toFixed(1)}×ATR`);
+    if (sectorAlphaAligned) edgeParts.push(`Sector RS +${relativeStrengthVsSector.toFixed(2)}%`);
+    if (sweepDetected) edgeParts.push('Liquidity Sweep');
+    if (edgeParts.length === 0) edgeParts.push(isBuy ? '+DI Trend Ignition' : '-DI Trend Ignition');
+    const profitabilityEdgeLabel = edgeParts.slice(0, 2).join(' · ');
+
     const ignitionNote = isExhausted
       ? `🛑 Move extended/reversing (${exhaustionReasons.join(' • ')}) — alert blocked to prevent late chasing.`
       : stage === 'REJ_1_ENTRY'
-      ? `🎯 Early Rej 1 • RVOL ${rvol.toFixed(2)}x • ${xTimeVolume.toFixed(2)}X Vol • ADX ${adx.toFixed(1)} • CΔ ${formatCompactDelta(latestCvd)}`
+      ? `🎯 Early Rej 1 • ${profitabilityEdgeLabel} • RVOL ${rvol.toFixed(2)}x • ${xTimeVolume.toFixed(2)}X Vol • ADX ${adx.toFixed(1)}`
       : stage === 'BREAK_IGNITION'
-      ? `🔥 Fresh 5m Break ₹${breakLevel} • RVOL ${rvol.toFixed(2)}x • ${xTimeVolume.toFixed(2)}X Vol • ADX ${adx.toFixed(1)}`
-      : `⚡ Active early trend (+${moveFromEntryPct.toFixed(2)}%) • RVOL ${rvol.toFixed(2)}x • ${xTimeVolume.toFixed(2)}X Vol • ADX ${adx.toFixed(1)}`;
+      ? `🔥 Fresh 5m Break ₹${breakLevel} • ${profitabilityEdgeLabel} • RVOL ${rvol.toFixed(2)}x • ${xTimeVolume.toFixed(2)}X Vol • ADX ${adx.toFixed(1)}`
+      : `⚡ Active early trend (+${moveFromEntryPct.toFixed(2)}%) • ${profitabilityEdgeLabel} • RVOL ${rvol.toFixed(2)}x • ADX ${adx.toFixed(1)}`;
 
     return {
       symbol,
@@ -929,6 +1026,13 @@ export function evaluateTopMomentumOrderFlow(params: {
       zeroLineMomentum,
       impulseOscillator,
 
+      squeezeRelease,
+      atrExpansionRatio,
+      relativeStrengthVsSector,
+      diAligned,
+      absorptionTrapBlocked,
+      profitabilityEdgeLabel,
+
       rvol,
       xTimeVolume,
       barVolRatio: round2(barVolRatio),
@@ -947,7 +1051,7 @@ export function evaluateTopMomentumOrderFlow(params: {
       buildup: classifyBuildup(changePercent, oiChangePct),
 
       conditionsMet,
-      totalConditions: 7,
+      totalConditions: 8,
       conditions,
       score,
       ignitionNote,
@@ -987,28 +1091,32 @@ export function buildTopMomentumReport(params: {
 
   const formulaSteps = [
     {
-      step: '1. Liquidity Sweep + 5m Break',
-      detail: 'Detects opening/range liquidity sweep followed by the FIRST 5m close breaking above consolidation high + VWAP + EMA 9/21 (early ignition, NOT waiting for +1.50%+).',
+      step: '1. True 5m Structural Break & Close Conviction (≥ 09:20 IST)',
+      detail: 'Uses the 09:15 bar as sweep/range reference and requires a strict close beyond consolidation high/low with CLV ≥ 0.30 (top 35% close) & body ≥ 38% — eliminating sub-resistance & wick fakeouts.',
     },
     {
-      step: '2. Rej 1 First Pullback Hold',
-      detail: 'Confirms first shallow pullback holding above the Break level & VWAP with rejection wick absorption — prime low-risk early ignition alert.',
+      step: '2. Rej 1 First Pullback Hold (VWAP + EMA9)',
+      detail: 'Confirms first shallow pullback holding above the Break level & VWAP with rejection wick absorption — prime low-risk early ignition entry.',
     },
     {
-      step: '3. Cumulative Delta (CΔ) + Bar Δ',
-      detail: 'Requires session CΔ flipping & expanding in trend direction right from Break AND current 5m bar Δ aligned (immediately blocks Exit bar-delta flips like Δ -22.1K).',
+      step: '3. Cumulative Delta (CΔ) Flip + Aligned Bar Δ',
+      detail: 'Requires session CΔ expanding in trend direction from Break AND active 5m bar Δ aligned (immediately blocks Exit bar-delta reversals).',
     },
     {
-      step: '4. Strong RVOL ≥ 2.00 & Strong X-Time Volume ≥ 2.00X',
-      detail: 'Strict institutional participation gate: Relative Volume (RVOL) must be >= 2.00 AND 5m X-Time Volume must be >= 2.00X vs baseline 5m average volume.',
+      step: '4. Rule 3 Liquidity Gate: RVOL > 2.00 & Trimmed Vol Bazaar X-Time > 1.00X',
+      detail: 'Enforces RVOL > 2.00 and outlier-trimmed 5m X-Time Volume > 1.00X (trims 09:15 opening spike so afternoon breakouts are measured cleanly).',
     },
     {
-      step: '5. Strong Trend ADX(14) ≥ 25+',
-      detail: 'Wilder ADX(14) must be >= 25.0 to filter out sideways chop and guarantee true directional trend strength.',
+      step: '5. Directional Wilder ADX(14) ≥ 25+ (+DI / -DI Aligned)',
+      detail: 'Requires ADX(14) ≥ 25.0 AND +DI > -DI for BUY (-DI > +DI for SELL), eliminating counter-trend falling-knife / dead-cat bounce traps.',
     },
     {
-      step: '6. Anti-Chase Exhaustion Blocker',
-      detail: 'Blocks late alerts once price stretches >= 1.65% from VWAP, >= 1.85% from Break/Rej 1 entry, >= 2.45% day move, or bar Δ flips against trend.',
+      step: '6. Volatility Squeeze Release + Sector Relative Strength Alpha',
+      detail: 'Rewards tight ATR compression coiling breaking out with ≥1.05× ATR range expansion and positive Relative Strength outperforming its NSE sector.',
+    },
+    {
+      step: '7. Anti-Absorption Trap & Anti-Chase Exhaustion Shield',
+      detail: 'Blocks late alerts once stretched ≥1.65% from VWAP, ≥1.85% from entry, ≥2.65% day move, bar Δ flips, or heavy opposing-wick passive absorption appears.',
     },
   ];
 
@@ -1016,7 +1124,7 @@ export function buildTopMomentumReport(params: {
     return {
       status: 'ok',
       scannerName: 'Top Momentum • Order Flow Early Ignition',
-      strategyName: '5m Order Flow Early Ignition • RVOL > 2.00 • Vol Bazaar X-Time > 1.00X • ADX 25+ • Best 10',
+      strategyName: '5m Order Flow Early Ignition v2.0 • RVOL > 2.00 • Vol Bazaar X-Time > 1.00X • ADX 25+ (+DI/-DI) • Squeeze + RS • Best 10',
       generatedAt: new Date().toISOString(),
       istTime: `${nowParts.timeStr} IST`,
       isMidnightCleared: true,
@@ -1071,6 +1179,7 @@ export function buildTopMomentumReport(params: {
       volume,
       explicitVwap: Number(s.indicators?.vwap) || undefined,
       explicitRvol: Number(s.indicators?.rvol) || undefined,
+      explicitAdx: bars5m.length < 10 && Number(s.indicators?.adx) > 0 ? Number(s.indicators?.adx) : undefined,
     });
 
     if (!row) continue;
@@ -1103,7 +1212,7 @@ export function buildTopMomentumReport(params: {
   return {
     status: 'ok',
     scannerName: 'Top Momentum • Order Flow Early Ignition',
-    strategyName: '5m Order Flow Early Ignition • RVOL > 2.00 • Vol Bazaar X-Time > 1.00X • ADX 25+ • Best 10',
+    strategyName: '5m Order Flow Early Ignition v2.0 • RVOL > 2.00 • Vol Bazaar X-Time > 1.00X • ADX 25+ (+DI/-DI) • Squeeze + RS • Best 10',
     generatedAt: new Date().toISOString(),
     istTime: `${nowParts.timeStr} IST`,
     isMidnightCleared: false,

@@ -41,6 +41,7 @@ import { TopPickCards } from './components/TopPickCards';
 import { UtmGeneratorModal } from './components/UtmGeneratorModal';
 import { AgentManagementDashboard } from './components/AgentManagementDashboard';
 import { BtstScannerDashboard } from './components/BtstScannerDashboard';
+import { OrderFlowScannerDashboard } from './components/OrderFlowScannerDashboard';
 import {
   INITIAL_BULK_ORDERS,
   INITIAL_CORPORATE_ACTIONS,
@@ -86,6 +87,9 @@ export default function App() {
       }
       if (pathname.includes('btst-scanner') || tabParam === 'btst-scanner') {
         return 'btst-scanner';
+      }
+      if (pathname.includes('order-flow-scanner') || tabParam === 'order-flow-scanner') {
+        return 'order-flow-scanner';
       }
     }
     const savedMode = localStorage.getItem('app_experience_mode');
@@ -475,7 +479,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pb-12">
-        {activeTab !== 'scanner' && activeTab !== 'beginner-home' && activeTab !== 'agent-management' && activeTab !== 'btst-scanner' && (
+        {activeTab !== 'scanner' && activeTab !== 'beginner-home' && activeTab !== 'agent-management' && activeTab !== 'btst-scanner' && activeTab !== 'order-flow-scanner' && (
           <div
             className={`mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl border transition-colors ${
               theme === 'light'
@@ -519,6 +523,18 @@ export default function App() {
 
         {activeTab === 'btst-scanner' && (
           <BtstScannerDashboard
+            theme={theme}
+            onSelectSymbol={(sym) => {
+              const matched = stocks.find(
+                (s) => s.symbol.toUpperCase() === sym.toUpperCase()
+              );
+              if (matched) setSelectedStock(matched);
+            }}
+          />
+        )}
+
+        {activeTab === 'order-flow-scanner' && (
+          <OrderFlowScannerDashboard
             theme={theme}
             onSelectSymbol={(sym) => {
               const matched = stocks.find(

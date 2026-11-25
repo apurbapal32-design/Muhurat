@@ -46,6 +46,7 @@ import {
   ScannerId20,
 } from './server/scannerFleet20Engine';
 import { btstScannerManager } from './server/btstScannerEngine';
+import { orderFlowScannerManager } from './server/orderFlowScannerEngine';
 import { PYTHON_PROJECT_FILES } from './src/utils/pythonCodeGenerator';
 import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine';
 import { calculateMarketStatus } from './src/data/marketSchedule';
@@ -1818,6 +1819,46 @@ async function startServer() {
   };
   app.get('/api/btst-scanner/scan', handleBtstScannerRequest);
   app.get('/api/btst-scanner', handleBtstScannerRequest);
+
+  // 3-STEP INSTITUTIONAL ORDER FLOW SCANNER (Volume Profile · Footprint · 5 Signals · Rudra AI)
+  const handleOrderFlowScannerRequest = async (req: express.Request, res: express.Response) => {
+    try {
+      const force = req.query.force === '1' || req.query.force === 'true';
+      const scanData = scannerService.getScanResults();
+      const sessionState = scanData.sessionState || scannerService.getSessionStatus();
+      const accessToken = scannerService.getEffectiveUpstoxToken();
+      const upstoxConnected = upstoxService.isTokenVerified(accessToken);
+      const isMarketOffDay = Boolean(sessionState?.brokerSchedule?.isMarketOffDay);
+      const isCleared = Boolean(sessionState?.isMidnightCleared);
+      const stocks = scanData.stocks || scannerService.getAllStocksDirect() || [];
+
+      if (!isCleared && stocks.length > 0 && !autonomousPriceService.getExtendedBars(stocks[0].symbol)) {
+        await autonomousPriceService.ensureInitialBarsLoaded().catch(() => {});
+      }
+
+      const report = orderFlowScannerManager.syncAndBuildReport({
+        allStocks: stocks,
+        getExtendedBarsFn: (sym: string) => autonomousPriceService.getExtendedBars(sym),
+        candlesMap: scannerService.getAllCandlesMap(),
+        isMarketOffDay,
+        liveFeedProvider: upstoxConnected
+          ? 'UPSTOX_API_V2_LIVE'
+          : sessionState?.quoteSource || 'UPSTOX_API_SYNC',
+        upstoxConnected,
+        forceCleared: isCleared,
+        bypassCache: force,
+      });
+
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({
+        status: 'error',
+        error: error?.message || 'Failed to compute Order Flow Scanner report',
+      });
+    }
+  };
+  app.get('/api/order-flow-scanner/scan', handleOrderFlowScannerRequest);
+  app.get('/api/order-flow-scanner', handleOrderFlowScannerRequest);
 
   // Autonomous Everyday AI Trading Journal (Max 5 BUY/SELL trades/day + MTM + Trail Lock + 5x Beep Alerts)
   const runAiJournalSync = async (forceScan: boolean = false, reqAccessToken?: string) => {

@@ -1019,6 +1019,14 @@
             <span class="nav-meta">2:45–3:20</span>
           </button>
 
+          <button type="button" id="nav-order-flow-scanner" class="sidebar-link" onclick="switchTab('order-flow-scanner')" title="Order Flow Scanner — Step 1 Volume Profile (VAH/VAL/POC/HVN/LVN), Step 2 Footprint (Sellers Left × Buyers Right), Step 3 Five Signals · Rudra AI">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              <span class="nav-label">Order Flow</span>
+            </span>
+            <span class="nav-meta">VP+FP</span>
+          </button>
+
           <button type="button" id="nav-pre-open" class="sidebar-link" onclick="switchTab('pre-open')" title="NSE / BSE Pre-Open Market Session (09:00 - 09:15 IST)">
             <span class="nav-label-wrap">
               <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2"/></svg>
@@ -6038,15 +6046,15 @@
           <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
               <div class="flex items-center gap-2 flex-wrap">
-                <h2 class="text-lg font-bold text-white">Top Momentum &bull; 5m Order Flow Early Ignition</h2>
-                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold text-[10px]">RVOL &ge; 2.00</span>
-                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 font-bold text-[10px]">X-TIME VOL &ge; 2.00X</span>
-                <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-400/40 font-bold text-[10px]">ADX 25+</span>
-                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold text-[10px]">SWEEP &rarr; BREAK &rarr; REJ 1</span>
+                <h2 class="text-lg font-bold text-white">Top Momentum &bull; 5m Order Flow Early Ignition v2.0</h2>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 font-bold text-[10px]">RVOL &gt; 2.00</span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/40 font-bold text-[10px]">VOL X-TIME &gt; 1.00X</span>
+                <span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-400/40 font-bold text-[10px]">ADX 25+ (+DI/-DI)</span>
+                <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 font-bold text-[10px]">SQUEEZE + SECTOR RS</span>
                 <span class="px-2 py-0.5 rounded bg-rose-500/15 text-rose-300 border border-rose-400/40 font-bold text-[10px]">ZERO LATE CHASE</span>
               </div>
               <p class="text-xs text-slate-300 mt-1 max-w-3xl font-sans">
-                Alerts <span class="text-emerald-300 font-bold">BEFORE</span> the big move — strictly filtering for <span class="text-emerald-300 font-bold">Strong RVOL &ge; 2.00</span>, <span class="text-amber-300 font-bold">Strong X-Time Volume &ge; 2.00X</span>, and <span class="text-purple-300 font-bold">ADX(14) &ge; 25+</span> right at the 5m <span class="text-cyan-300 font-bold">Break</span> &amp; <span class="text-amber-300 font-bold">Rej 1</span> VWAP hold with Cumulative Delta (C&Delta;) surge. Automatically blocks late over-extended stocks &amp; Exit bar-&Delta; reversals.
+                Rectified 8-Factor Institutional Formula — alerts <span class="text-emerald-300 font-bold">BEFORE</span> the big move starting 09:20 IST: strict structural <span class="text-cyan-300 font-bold">Break</span> &amp; close conviction (zero wick fakeouts), <span class="text-amber-300 font-bold">Rej 1</span> VWAP hold, <span class="text-emerald-300 font-bold">RVOL &gt; 2.00</span>, outlier-trimmed <span class="text-amber-300 font-bold">Vol Bazaar X-Time &gt; 1.00X</span>, directional <span class="text-purple-300 font-bold">ADX(14) &ge; 25+ (+DI/-DI)</span>, Volatility Squeeze Release &amp; Sector RS Alpha. Blocks late chases &amp; absorption traps.
               </p>
             </div>
             <div class="flex flex-col md:items-end gap-1.5 font-mono text-xs text-slate-400">
@@ -6074,19 +6082,19 @@
               <div id="momentum-kpi-sell" class="text-sm font-black text-rose-400 mt-0.5">0 Ignition (0 Total)</div>
             </div>
             <div class="bg-[#0b101b] border border-amber-500/25 rounded-lg p-2.5">
-              <div class="text-[10px] text-slate-400 uppercase font-bold">Blocked Late / Exit Zone</div>
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Blocked Late / Trap Zone</div>
               <div id="momentum-kpi-blocked" class="text-sm font-black text-amber-300 mt-0.5">0 Blocked (No Late Alerts)</div>
             </div>
             <div class="bg-[#0b101b] border border-cyan-500/25 rounded-lg p-2.5">
-              <div class="text-[10px] text-slate-400 uppercase font-bold">Strict Formula Gate</div>
-              <div class="text-xs font-bold text-cyan-300 mt-0.5">RVOL &ge; 2.00 &bull; X-Time &ge; 2.00X &bull; ADX 25+</div>
+              <div class="text-[10px] text-slate-400 uppercase font-bold">Rectified Formula Gate</div>
+              <div class="text-xs font-bold text-cyan-300 mt-0.5">RVOL &gt; 2.00 &bull; VolX &gt; 1.00X &bull; ADX 25+ (+DI/-DI)</div>
             </div>
           </div>
         </div>
 
         <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl">
           <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between flex-wrap gap-2">
-            <span class="font-bold text-sm text-emerald-400">🔥 Top Upside Early-Ignition Leaders (RVOL &ge; 2.00 &bull; X-Time &ge; 2.00X &bull; ADX 25+)</span>
+            <span class="font-bold text-sm text-emerald-400">🔥 Top Upside Early-Ignition Leaders (RVOL &gt; 2.00 &bull; VolX &gt; 1.00X &bull; ADX 25+ &bull; +DI &gt; -DI)</span>
             <span id="momentum-buy-badge" class="text-xs font-mono text-emerald-300">Scanning 5m Order Flow...</span>
           </div>
           <div class="overflow-x-auto">
@@ -6096,7 +6104,7 @@
 
         <div class="card overflow-hidden bg-[#0d111a] border border-[#172033] rounded-xl">
           <div class="bg-[#121622] px-4 py-3 border-b border-[#1c2230] flex items-center justify-between flex-wrap gap-2">
-            <span class="font-bold text-sm text-rose-400">🔥 Top Downside Early-Ignition Leaders (RVOL &ge; 2.00 &bull; X-Time &ge; 2.00X &bull; ADX 25+)</span>
+            <span class="font-bold text-sm text-rose-400">🔥 Top Downside Early-Ignition Leaders (RVOL &gt; 2.00 &bull; VolX &gt; 1.00X &bull; ADX 25+ &bull; -DI &gt; +DI)</span>
             <span id="momentum-sell-badge" class="text-xs font-mono text-rose-300">Scanning 5m Order Flow...</span>
           </div>
           <div class="overflow-x-auto">
@@ -6712,6 +6720,173 @@
               </thead>
               <tbody id="tbody-btst-down" class="divide-y divide-slate-800/70">
                 <tr><td colspan="10" class="py-6 text-center text-slate-400">Evaluating NSE 200 universe for STBT Downside leaders...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- TAB: ORDER FLOW SCANNER (VOLUME PROFILE · FOOTPRINT · 5 SIG) -->
+      <!-- Step 1: VAH/VAL/POC/HVN/LVN · Step 2: Footprint · Rudra AI   -->
+      <!-- ============================================================ -->
+      <section id="tab-order-flow-scanner" class="tab-pane hidden space-y-5">
+        <div class="rounded-xl border border-slate-800 bg-[#0f172a] p-5">
+          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-4 border-b border-slate-800">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap text-xs text-slate-400">
+                <span>3-Step Institutional Order Flow</span>
+                <span aria-hidden="true">/</span>
+                <span class="font-mono tabular-nums text-sky-400 font-medium">Volume Profile &middot; Footprint &middot; 5 Signals</span>
+                <span aria-hidden="true">&middot;</span>
+                <span id="of-window-phase-label" class="font-mono tabular-nums text-slate-300">Syncing 09:20&ndash;15:15 IST...</span>
+              </div>
+              <h2 class="text-xl font-semibold tracking-tight text-slate-100 mt-1">Order Flow Scanner &mdash; Who Is Behind the Candles</h2>
+              <p class="text-xs text-slate-400 mt-1 max-w-3xl leading-relaxed">
+                Three-step institutional process: Step 1 Volume Profile (VAH, VAL, POC, HVN acceptance &amp; LVN fast-move zones), Step 2 Footprint Ladder (Sellers Left &times; Buyers Right), and Step 3 Five Signals (Stacked Imbalance &ge;3, Absorption, Exhaustion, Delta, and The Tape). Managed by <strong class="text-slate-200">Rudra AI (AI-AGENT-ORDERFLOW)</strong>.
+              </p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap text-xs shrink-0">
+              <a href="/order-flow-scanner" class="px-3.5 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium transition-colors whitespace-nowrap">
+                Dedicated Order Flow View &rarr;
+              </a>
+              <button type="button" id="of-btn-formula" onclick="OrderFlowScannerClient.toggleFormula()" class="px-3.5 py-2 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 font-medium transition-colors cursor-pointer whitespace-nowrap">
+                3-Step Formula
+              </button>
+              <button type="button" id="of-btn-scan" onclick="OrderFlowScannerClient.load(true)" class="px-3.5 py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold transition-colors cursor-pointer whitespace-nowrap">
+                Scan Now
+              </button>
+            </div>
+          </div>
+
+          <!-- 6-Cell KPI Strip -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-800 border border-slate-800 my-4 bg-[#0b1120] rounded-lg">
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Assigned AI Agent</div>
+              <div id="of-kpi-agent" class="text-slate-100 font-semibold text-sm mt-0.5">Rudra AI (He)</div>
+              <div id="of-kpi-agent-sub" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">AI-AGENT-ORDERFLOW &middot; 1% Risk</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Order Flow UP</div>
+              <div id="of-kpi-up" class="text-emerald-400 font-mono tabular-nums font-semibold text-lg mt-0.5">0 / 10</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Zero Fake Signals</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Order Flow DOWN</div>
+              <div id="of-kpi-down" class="text-rose-400 font-mono tabular-nums font-semibold text-lg mt-0.5">0 / 10</div>
+              <div class="text-[11px] text-slate-400 mt-0.5">Seller Control</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Stacked Imb (&ge;3)</div>
+              <div id="of-kpi-stacked" class="text-sky-400 font-mono tabular-nums font-semibold text-lg mt-0.5">0</div>
+              <div id="of-kpi-absorb" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">0 Absorption &middot; 0 Tape</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Net Desk Delta</div>
+              <div id="of-kpi-delta" class="text-emerald-400 font-mono tabular-nums font-semibold text-lg mt-0.5">0</div>
+              <div id="of-kpi-score" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">Avg Score 0/100</div>
+            </div>
+            <div class="p-3.5">
+              <div class="text-[11px] text-slate-400">Rudra Live MTM</div>
+              <div id="of-kpi-pnl" class="text-emerald-400 font-mono tabular-nums font-semibold text-lg mt-0.5">₹0</div>
+              <div id="of-kpi-clock" class="text-[11px] font-mono tabular-nums text-slate-400 mt-0.5">IST --:--:--</div>
+            </div>
+          </div>
+
+          <!-- Collapsible 3-Step Order Flow Formula Specification -->
+          <div id="of-formula-panel" class="hidden bg-[#0b1120] border border-slate-800 rounded-lg p-4 mb-4">
+            <div class="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-slate-800">
+              <div class="text-xs font-semibold text-slate-100">3-Step Institutional Order Flow Formula Specification</div>
+              <div class="text-[11px] font-mono tabular-nums text-slate-400">Rule 3: RVOL &gt; 2.00 &middot; Vol Bazaar X-Time &gt; 1.00X &middot; ADX 25+ &middot; 09:20&ndash;15:15 IST</div>
+            </div>
+            <div id="of-formula-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-3 text-xs"></div>
+          </div>
+
+          <!-- Search & Filter Controls -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 text-xs">
+            <div class="relative flex-1 max-w-sm">
+              <label for="of-search-input" class="sr-only">Search Order Flow symbol, sector, or signal</label>
+              <svg class="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+              <input id="of-search-input" type="search" oninput="OrderFlowScannerClient.setSearch(this.value)" placeholder="Search symbol, sector, VAH, LVN, stacked..." class="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#0b1120] border border-slate-800 text-slate-100 placeholder:text-slate-500 text-xs outline-none focus:border-sky-500" />
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <div class="inline-flex items-center p-0.5 rounded-lg bg-[#0b1120] border border-slate-800" role="group" aria-label="Filter by Order Flow signal">
+                <button type="button" id="of-sig-ALL" onclick="OrderFlowScannerClient.setSignalFilter('ALL')" class="px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer transition-colors">All Signals</button>
+                <button type="button" id="of-sig-STACKED" onclick="OrderFlowScannerClient.setSignalFilter('STACKED')" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">Stacked &ge;3</button>
+                <button type="button" id="of-sig-ABSORPTION" onclick="OrderFlowScannerClient.setSignalFilter('ABSORPTION')" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">Absorption</button>
+                <button type="button" id="of-sig-TAPE" onclick="OrderFlowScannerClient.setSignalFilter('TAPE')" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">Big Tape</button>
+              </div>
+              <div class="inline-flex items-center p-0.5 rounded-lg bg-[#0b1120] border border-slate-800" role="group" aria-label="Filter Order Flow scanner by direction">
+                <button type="button" id="of-dir-ALL" onclick="OrderFlowScannerClient.setDirection('ALL')" class="px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer transition-colors">All Picks</button>
+                <button type="button" id="of-dir-BUY" onclick="OrderFlowScannerClient.setDirection('BUY')" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">UP (Best 10)</button>
+                <button type="button" id="of-dir-SELL" onclick="OrderFlowScannerClient.setDirection('SELL')" class="px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors">DOWN (Best 10)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive 3-Step Order Flow Inspector (Volume Profile + Footprint + 5 Signals & Tape) -->
+        <div id="of-inspector-panel" class="hidden rounded-xl border border-slate-800 bg-[#0f172a] overflow-hidden"></div>
+
+        <!-- Table 1: Order Flow Bullish Best 10 (UP) -->
+        <div id="of-up-section" class="rounded-xl border border-slate-800 bg-[#0f172a] overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-emerald-400">Order Flow Bullish Leaders (Best 10 UP)</span>
+              <span id="of-up-count-label" class="text-xs font-mono tabular-nums text-slate-400">&middot; 0 / 10 Qualified</span>
+            </div>
+            <span class="text-xs font-mono tabular-nums text-slate-400">Above POC &middot; Buyers &gt; Sellers &middot; Sorted Listed At Z &rarr; A</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-[#0b1120] text-slate-400 border-b border-slate-800 text-[11px] font-medium">
+                  <th class="py-2.5 px-3">Stock &amp; Sector</th>
+                  <th class="py-2.5 px-2.5">Flow Score</th>
+                  <th class="py-2.5 px-2.5">Listed At</th>
+                  <th class="py-2.5 px-2.5 text-right">LTP / Chg%</th>
+                  <th class="py-2.5 px-2.5">Step 1: Volume Profile</th>
+                  <th class="py-2.5 px-2.5">Step 2: Footprint</th>
+                  <th class="py-2.5 px-2.5">Step 3: 5 Signals</th>
+                  <th class="py-2.5 px-2.5 text-right">Delta (B&minus;S)</th>
+                  <th class="py-2.5 px-2.5 text-right">Rudra Entry / SL</th>
+                  <th class="py-2.5 px-3 text-right">T1 / T2</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-of-up" class="divide-y divide-slate-800/70">
+                <tr><td colspan="10" class="py-6 text-center text-slate-400">Evaluating NSE 200 Volume Profile, Footprint &amp; 5 Order Flow Signals...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Table 2: Order Flow Bearish Best 10 (DOWN) -->
+        <div id="of-down-section" class="rounded-xl border border-slate-800 bg-[#0f172a] overflow-hidden">
+          <div class="px-4 py-3 border-b border-slate-800 bg-[#0b1120] flex items-center justify-between flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-rose-400">Order Flow Bearish Leaders (Best 10 DOWN)</span>
+              <span id="of-down-count-label" class="text-xs font-mono tabular-nums text-slate-400">&middot; 0 / 10 Qualified</span>
+            </div>
+            <span class="text-xs font-mono tabular-nums text-slate-400">Below POC &middot; Sellers &gt; Buyers &middot; Sorted Listed At Z &rarr; A</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-[#0b1120] text-slate-400 border-b border-slate-800 text-[11px] font-medium">
+                  <th class="py-2.5 px-3">Stock &amp; Sector</th>
+                  <th class="py-2.5 px-2.5">Flow Score</th>
+                  <th class="py-2.5 px-2.5">Listed At</th>
+                  <th class="py-2.5 px-2.5 text-right">LTP / Chg%</th>
+                  <th class="py-2.5 px-2.5">Step 1: Volume Profile</th>
+                  <th class="py-2.5 px-2.5">Step 2: Footprint</th>
+                  <th class="py-2.5 px-2.5">Step 3: 5 Signals</th>
+                  <th class="py-2.5 px-2.5 text-right">Delta (B&minus;S)</th>
+                  <th class="py-2.5 px-2.5 text-right">Rudra Entry / SL</th>
+                  <th class="py-2.5 px-3 text-right">T1 / T2</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-of-down" class="divide-y divide-slate-800/70">
+                <tr><td colspan="10" class="py-6 text-center text-slate-400">Evaluating NSE 200 Volume Profile, Footprint &amp; 5 Order Flow Signals...</td></tr>
               </tbody>
             </table>
           </div>
@@ -8985,6 +9160,10 @@
         } else if (tabId === 'btst-scanner') {
           if (typeof BtstScannerClient !== 'undefined') {
             BtstScannerClient.load(false);
+          }
+        } else if (tabId === 'order-flow-scanner') {
+          if (typeof OrderFlowScannerClient !== 'undefined') {
+            OrderFlowScannerClient.load(false);
           }
         }
       } catch (err) {
@@ -14519,6 +14698,9 @@ function renderJournal() {
       if (typeof BtstScannerClient !== 'undefined' && BtstScannerClient.lastReport && isElementVisiblePane(document.getElementById('tab-btst-scanner'))) {
         BtstScannerClient.render();
       }
+      if (typeof OrderFlowScannerClient !== 'undefined' && OrderFlowScannerClient.lastReport && isElementVisiblePane(document.getElementById('tab-order-flow-scanner'))) {
+        OrderFlowScannerClient.render();
+      }
     }
 
     // ============================================================
@@ -14900,6 +15082,459 @@ function renderJournal() {
     };
 
     // ============================================================
+    // 3-STEP INSTITUTIONAL ORDER FLOW SCANNER CLIENT (RUDRA AI)
+    // Volume Profile (VAH/VAL/POC/HVN/LVN) · Footprint · 5 Signals
+    // ============================================================
+    const OrderFlowScannerClient = {
+      lastReport: null,
+      loading: false,
+      direction: 'ALL',
+      signalFilter: 'ALL',
+      search: '',
+      showFormula: false,
+      selectedSymbol: null,
+      _timer: null,
+
+      fmtInr(v) {
+        const n = Number(v);
+        if (!Number.isFinite(n)) return '₹0.00';
+        return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      },
+
+      fmtSignedInr(v) {
+        const n = Math.round(Number(v) || 0);
+        const sign = n > 0 ? '+' : n < 0 ? '-' : '';
+        return sign + '₹' + Math.abs(n).toLocaleString('en-IN');
+      },
+
+      fmtCompact(v, signed) {
+        const n = Number(v) || 0;
+        const abs = Math.abs(n);
+        const sign = n < 0 ? '-' : signed && n > 0 ? '+' : '';
+        if (abs >= 1e7) return sign + (abs / 1e7).toFixed(2) + 'Cr';
+        if (abs >= 1e5) return sign + (abs / 1e5).toFixed(1) + 'L';
+        if (abs >= 1e3) return sign + (abs / 1e3).toFixed(1) + 'K';
+        return sign + Math.round(abs);
+      },
+
+      esc(str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      },
+
+      ensurePolling() {
+        if (this._timer) return;
+        this._timer = setInterval(() => {
+          const pane = document.getElementById('tab-order-flow-scanner');
+          if (pane && !pane.classList.contains('hidden')) {
+            this.load(false);
+          }
+        }, 6000);
+      },
+
+      async load(force) {
+        this.ensurePolling();
+        if (this.loading && !force) return;
+        this.loading = true;
+        const btn = document.getElementById('of-btn-scan');
+        if (btn && force) {
+          btn.disabled = true;
+          btn.textContent = 'Scanning...';
+        }
+        try {
+          const res = await fetch('/api/order-flow-scanner/scan' + (force ? '?force=1' : ''), {
+            cache: 'no-store',
+          });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const data = await res.json();
+          if (data && data.status === 'ok') {
+            this.lastReport = data;
+            const all = [...(data.upPicks || []), ...(data.downPicks || [])];
+            if (!this.selectedSymbol || !all.some((r) => r.symbol === this.selectedSymbol)) {
+              this.selectedSymbol = all[0] ? all[0].symbol : null;
+            }
+            this.render();
+          }
+        } catch (err) {
+          console.warn('Order Flow Scanner fetch error:', err);
+          const upBody = document.getElementById('tbody-of-up');
+          if (upBody && !this.lastReport) {
+            upBody.innerHTML = '<tr><td colspan="10" class="py-6 text-center text-rose-400">Unable to reach Order Flow engine. Click Scan Now to retry.</td></tr>';
+          }
+        } finally {
+          this.loading = false;
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Scan Now';
+          }
+        }
+      },
+
+      setDirection(dir) {
+        this.direction = dir;
+        ['ALL', 'BUY', 'SELL'].forEach((k) => {
+          const el = document.getElementById('of-dir-' + k);
+          if (!el) return;
+          el.className = k === dir
+            ? 'px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer transition-colors'
+            : 'px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors';
+        });
+        this.render();
+      },
+
+      setSignalFilter(sig) {
+        this.signalFilter = sig;
+        ['ALL', 'STACKED', 'ABSORPTION', 'TAPE'].forEach((k) => {
+          const el = document.getElementById('of-sig-' + k);
+          if (!el) return;
+          el.className = k === sig
+            ? 'px-2.5 py-1 rounded-md bg-sky-500/20 text-sky-300 font-semibold cursor-pointer transition-colors'
+            : 'px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors';
+        });
+        this.render();
+      },
+
+      setSearch(q) {
+        this.search = String(q || '').trim().toLowerCase();
+        this.render();
+      },
+
+      toggleFormula() {
+        this.showFormula = !this.showFormula;
+        const panel = document.getElementById('of-formula-panel');
+        if (panel) panel.classList.toggle('hidden', !this.showFormula);
+      },
+
+      selectRow(symbol) {
+        this.selectedSymbol = symbol;
+        this.render();
+      },
+
+      filterList(list) {
+        return (list || []).filter((r) => {
+          if (this.search) {
+            const hay = `${r.symbol} ${r.name} ${r.sector} ${r.headlineSignal} ${r.volumeProfile.priceZoneLabel}`.toLowerCase();
+            if (!hay.includes(this.search)) return false;
+          }
+          if (this.signalFilter === 'STACKED' && !r.signals.stackedImbalance.passed) return false;
+          if (this.signalFilter === 'ABSORPTION' && !r.signals.absorption.detected) return false;
+          if (this.signalFilter === 'TAPE' && !r.signals.tape.confirmed) return false;
+          return true;
+        });
+      },
+
+      renderInspector(row) {
+        const panel = document.getElementById('of-inspector-panel');
+        if (!panel) return;
+        if (!row) {
+          panel.classList.add('hidden');
+          return;
+        }
+        panel.classList.remove('hidden');
+
+        const isBuy = row.direction === 'BUY';
+        const vp = row.volumeProfile;
+        const fp = row.footprint;
+        const sig = row.signals;
+
+        // Build SVG Volume Profile Histogram
+        const svgW = 360;
+        const rowH = 21;
+        const padTop = 6;
+        const priceColW = 72;
+        const barAreaX = 78;
+        const barAreaW = 198;
+        const svgH = padTop + vp.bins.length * rowH + 6;
+        const vpRowsSvg = vp.bins
+          .map((bin, idx) => {
+            const y = padTop + idx * rowH;
+            const totalW = Math.max(4, Math.round((bin.pctOfMax / 100) * barAreaW));
+            const buyFrac = bin.totalVolume > 0 ? bin.buyVolume / bin.totalVolume : 0.5;
+            const buyW = Math.round(totalW * buyFrac);
+            const sellW = Math.max(0, totalW - buyW);
+            const fillBuy = bin.isPoc ? '#f59e0b' : bin.nodeType === 'LVN' ? '#38bdf8' : bin.inValueArea ? '#10b981' : '#334155';
+            const fillSell = bin.isPoc ? '#d97706' : bin.nodeType === 'LVN' ? '#0284c7' : bin.inValueArea ? '#f43f5e' : '#1e293b';
+            const tag = bin.isPoc ? 'POC' : bin.isVah ? 'VAH' : bin.isVal ? 'VAL' : bin.nodeType === 'HVN' ? 'HVN' : bin.nodeType === 'LVN' ? 'LVN' : '';
+            const tagFill = bin.isPoc ? '#fbbf24' : bin.isVah ? '#38bdf8' : bin.isVal ? '#818cf8' : bin.nodeType === 'HVN' ? '#34d399' : '#94a3b8';
+            return `<g>
+              ${bin.isCurrentPriceBin ? `<rect x="0" y="${y - 1}" width="${svgW}" height="${rowH}" rx="3" fill="#0c4a6e" fill-opacity="0.38" />` : ''}
+              <text x="${priceColW}" y="${y + 13}" text-anchor="end" fill="${bin.isCurrentPriceBin ? '#38bdf8' : '#94a3b8'}" font-size="10" font-family="ui-monospace, monospace" font-weight="${bin.isCurrentPriceBin || bin.isPoc ? '700' : '400'}">${Number(bin.priceMid).toFixed(1)}</text>
+              <rect x="${barAreaX}" y="${y + 3}" width="${buyW}" height="${rowH - 7}" rx="2" fill="${fillBuy}" fill-opacity="0.9" />
+              ${sellW > 0 ? `<rect x="${barAreaX + buyW}" y="${y + 3}" width="${sellW}" height="${rowH - 7}" rx="1" fill="${fillSell}" fill-opacity="0.78" />` : ''}
+              ${tag ? `<text x="${barAreaX + barAreaW + 8}" y="${y + 13}" fill="${tagFill}" font-size="10" font-family="ui-monospace, monospace" font-weight="700">${tag}</text>` : ''}
+              ${bin.isCurrentPriceBin ? `<text x="${svgW - 4}" y="${y + 13}" text-anchor="end" fill="#38bdf8" font-size="9" font-family="ui-monospace, monospace" font-weight="700">LTP</text>` : ''}
+            </g>`;
+          })
+          .join('');
+
+        // Build Footprint Ladder rows (Sellers Left × Buyers Right)
+        const fpRowsHtml = fp.levels
+          .map((lv) => {
+            const trCls = lv.isCurrentPrice ? 'bg-sky-500/15' : lv.inStackedImbalance ? (isBuy ? 'bg-emerald-500/10' : 'bg-rose-500/10') : '';
+            const tag = lv.isCurrentPrice ? 'LTP' : lv.isPoc ? 'POC' : lv.isVah ? 'VAH' : lv.isVal ? 'VAL' : lv.isAbsorptionLevel ? 'ABS' : lv.isExhaustionLevel ? 'EXH' : '';
+            const bidCls = lv.sellImbalance ? 'text-rose-300 font-bold bg-rose-500/20' : (lv.isAbsorptionLevel && isBuy ? 'text-amber-300 font-bold bg-amber-500/15' : 'text-slate-400');
+            const askCls = lv.buyImbalance ? 'text-emerald-300 font-bold bg-emerald-500/20' : (lv.isAbsorptionLevel && !isBuy ? 'text-amber-300 font-bold bg-amber-500/15' : 'text-slate-400');
+            const deltaCls = lv.levelDelta > 0 ? 'text-emerald-400' : lv.levelDelta < 0 ? 'text-rose-400' : 'text-slate-400';
+            return `<tr class="${trCls}">
+              <td class="py-1.5 px-2.5 text-right ${bidCls}">${this.fmtCompact(lv.sellersBidVol, false)}${lv.sellImbalance ? '<span class="ml-1 text-[9px] text-rose-400">3×</span>' : ''}</td>
+              <td class="py-1.5 px-2 text-center font-semibold text-slate-100">${Number(lv.price).toFixed(2)}${tag ? `<span class="ml-1 text-[9px] text-sky-400">${tag}</span>` : ''}</td>
+              <td class="py-1.5 px-2.5 text-left ${askCls}">${this.fmtCompact(lv.buyersAskVol, false)}${lv.buyImbalance ? '<span class="ml-1 text-[9px] text-emerald-400">3×</span>' : ''}</td>
+              <td class="py-1.5 px-2 text-right ${deltaCls}">${this.fmtCompact(lv.levelDelta, true)}</td>
+            </tr>`;
+          })
+          .join('');
+
+        // Build Tape Prints rows
+        const tapeRowsHtml = (sig.tape.prints || [])
+          .slice(0, 5)
+          .map((p) => {
+            const buyFlow = p.side === 'BUY_SWEEP' || p.side === 'ABSORB_BID';
+            const sideLbl = p.side === 'BUY_SWEEP' ? 'BUY SWEEP' : p.side === 'SELL_SWEEP' ? 'SELL HIT' : p.side === 'ABSORB_BID' ? 'ABSORB BID' : 'ABSORB ASK';
+            return `<tr class="${p.isBigPrint ? (buyFlow ? 'bg-emerald-500/10' : 'bg-rose-500/10') : ''}">
+              <td class="py-1 text-slate-400">${this.esc(p.timeIST)}</td>
+              <td class="py-1 text-right text-slate-200">${Number(p.price).toFixed(2)}</td>
+              <td class="py-1 text-right text-slate-300">${this.fmtCompact(p.qty, false)}</td>
+              <td class="py-1 text-right ${p.isBigPrint ? 'font-semibold text-sky-400' : 'text-slate-400'}">₹${Number(p.valueLakhs).toFixed(0)}L</td>
+              <td class="py-1 text-right font-semibold ${buyFlow ? 'text-emerald-400' : 'text-rose-400'}">${sideLbl}</td>
+            </tr>`;
+          })
+          .join('');
+
+        panel.innerHTML = `
+          <div class="px-4 py-3 border-b border-slate-800 bg-[#0b1120] flex flex-col lg:flex-row lg:items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap text-xs">
+                <span class="text-sm font-semibold text-slate-100">${this.esc(row.symbol)}</span>
+                <span class="text-slate-400">${this.esc(row.name)}</span>
+                <span class="text-slate-600">&middot;</span>
+                <span class="font-mono font-semibold ${isBuy ? 'text-emerald-400' : 'text-rose-400'}">${isBuy ? 'ORDER FLOW UP' : 'ORDER FLOW DOWN'}</span>
+                <span class="text-slate-600">&middot;</span>
+                <span class="font-mono tabular-nums text-slate-100 font-semibold">${this.fmtInr(row.price)} (${row.changePercent >= 0 ? '+' : ''}${Number(row.changePercent).toFixed(2)}%)</span>
+                <span class="text-slate-600">&middot;</span>
+                <span class="font-mono tabular-nums text-sky-400 font-semibold">Score ${row.orderFlowScore}/100</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">${this.esc(row.agentDirective)}</p>
+            </div>
+            <div class="text-xs font-mono tabular-nums text-slate-400 shrink-0">
+              Entry ${this.fmtInr(row.entryPrice)} &middot; SL <span class="text-rose-400">${this.fmtInr(row.stopLoss)}</span> &middot; T1 <span class="text-emerald-400">${this.fmtInr(row.target1)}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-12 divide-y xl:divide-y-0 xl:divide-x divide-slate-800">
+            <!-- Step 1: Volume Profile -->
+            <div class="xl:col-span-4 p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-[11px] font-mono uppercase tracking-wider text-sky-400 font-semibold">Step 1 &middot; Volume Profile</div>
+                  <div class="text-sm font-semibold text-slate-100">VAH, VAL, POC &amp; Volume Nodes</div>
+                </div>
+                <span class="text-[11px] font-mono text-slate-400">VA ${Number(vp.valueAreaVolumePct).toFixed(0)}%</span>
+              </div>
+              <div class="grid grid-cols-3 divide-x divide-slate-800 border border-slate-800 bg-[#0b1120] rounded-lg text-xs">
+                <div class="p-2"><div class="text-[10px] text-slate-400">VAH</div><div class="font-mono tabular-nums font-semibold text-sky-400">${this.fmtInr(vp.vah)}</div></div>
+                <div class="p-2"><div class="text-[10px] text-slate-400">POC</div><div class="font-mono tabular-nums font-semibold text-amber-400">${this.fmtInr(vp.poc)}</div></div>
+                <div class="p-2"><div class="text-[10px] text-slate-400">VAL</div><div class="font-mono tabular-nums font-semibold text-indigo-400">${this.fmtInr(vp.val)}</div></div>
+              </div>
+              <div class="rounded-lg border border-slate-800 bg-[#0b1120] p-2">
+                <svg viewBox="0 0 ${svgW} ${svgH}" class="w-full h-auto block" role="img" aria-label="Volume Profile for ${this.esc(row.symbol)}">${vpRowsSvg}</svg>
+              </div>
+              <div class="text-xs space-y-1">
+                <div class="flex justify-between"><span class="text-slate-400">HVN (Acceptance)</span><span class="font-mono text-emerald-400">${vp.hvnCount} nodes &middot; ${this.fmtInr(vp.nearestHvn)}</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">LVN (Fast Move)</span><span class="font-mono text-sky-400">${vp.lvnCount} nodes &middot; ${this.fmtInr(vp.nearestLvn)}</span></div>
+              </div>
+            </div>
+
+            <!-- Step 2: Footprint Ladder -->
+            <div class="xl:col-span-4 p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-[11px] font-mono uppercase tracking-wider text-sky-400 font-semibold">Step 2 &middot; Footprint Ladder</div>
+                  <div class="text-sm font-semibold text-slate-100">Sellers (Left) &times; Buyers (Right)</div>
+                </div>
+                <span class="text-[11px] font-mono text-slate-400">Tick ${Number(fp.tickStep).toFixed(2)}</span>
+              </div>
+              <div class="rounded-lg border border-slate-800 bg-[#0b1120] overflow-hidden">
+                <table class="w-full text-xs font-mono tabular-nums border-collapse">
+                  <thead>
+                    <tr class="border-b border-slate-800 bg-slate-900/70 text-[10px] uppercase">
+                      <th class="py-2 px-2.5 text-right text-rose-400">Sellers (Bid)</th>
+                      <th class="py-2 px-2 text-center text-slate-400">Price</th>
+                      <th class="py-2 px-2.5 text-left text-emerald-400">Buyers (Ask)</th>
+                      <th class="py-2 px-2 text-right text-slate-400">Delta</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-800/60">${fpRowsHtml}</tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Step 3: 5 Institutional Signals + The Tape -->
+            <div class="xl:col-span-4 p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-[11px] font-mono uppercase tracking-wider text-sky-400 font-semibold">Step 3 &middot; 5 Order Flow Signals</div>
+                  <div class="text-sm font-semibold text-slate-100">Confluence &amp; Live Tape</div>
+                </div>
+                <span class="text-xs font-mono font-semibold text-emerald-400">${sig.confirmedCount} / 5 Active</span>
+              </div>
+              <div class="rounded-lg border border-slate-800 bg-[#0b1120] divide-y divide-slate-800 text-xs">
+                <div class="p-2.5 flex justify-between gap-2">
+                  <div><div class="font-semibold text-slate-100">1. Stacked Imbalance (&ge;3)</div><div class="text-[11px] text-slate-400">${this.esc(sig.stackedImbalance.summary)}</div></div>
+                  <span class="text-[10px] font-mono font-semibold ${sig.stackedImbalance.passed ? 'text-emerald-400' : 'text-slate-500'}">${sig.stackedImbalance.passed ? 'CONFIRMED' : 'WATCH'}</span>
+                </div>
+                <div class="p-2.5 flex justify-between gap-2">
+                  <div><div class="font-semibold text-slate-100">2. Absorption</div><div class="text-[11px] text-slate-400">${this.esc(sig.absorption.summary)}</div></div>
+                  <span class="text-[10px] font-mono font-semibold ${sig.absorption.detected ? 'text-amber-400' : 'text-slate-500'}">${sig.absorption.detected ? 'DETECTED' : 'NONE'}</span>
+                </div>
+                <div class="p-2.5 flex justify-between gap-2">
+                  <div><div class="font-semibold text-slate-100">3. Exhaustion</div><div class="text-[11px] text-slate-400">${this.esc(sig.exhaustion.summary)}</div></div>
+                  <span class="text-[10px] font-mono font-semibold ${sig.exhaustion.detected ? 'text-rose-400' : 'text-emerald-400'}">${sig.exhaustion.detected ? 'TIRED' : 'CLEAR'}</span>
+                </div>
+                <div class="p-2.5 flex justify-between gap-2">
+                  <div><div class="font-semibold text-slate-100">4. Delta (Buyers &minus; Sellers)</div><div class="text-[11px] text-slate-400">${this.esc(sig.delta.summary)}</div></div>
+                  <span class="text-[10px] font-mono font-semibold ${sig.delta.passed ? (isBuy ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500'}">${sig.delta.deltaPct >= 0 ? '+' : ''}${Number(sig.delta.deltaPct).toFixed(1)}%</span>
+                </div>
+                <div class="p-2.5 space-y-2">
+                  <div class="flex justify-between gap-2">
+                    <div><div class="font-semibold text-slate-100">5. The Tape (Big Prints)</div><div class="text-[11px] text-slate-400">${this.esc(sig.tape.summary)}</div></div>
+                    <span class="text-[10px] font-mono font-semibold ${sig.tape.confirmed ? 'text-emerald-400' : 'text-slate-500'}">${sig.tape.confirmed ? 'CONFIRMED' : 'LIGHT'}</span>
+                  </div>
+                  <table class="w-full text-[11px] font-mono tabular-nums border-collapse">
+                    <thead><tr class="border-b border-slate-800/80 text-[10px] text-slate-400"><th class="py-1 text-left">IST</th><th class="py-1 text-right">Price</th><th class="py-1 text-right">Qty</th><th class="py-1 text-right">Val</th><th class="py-1 text-right">Flow</th></tr></thead>
+                    <tbody class="divide-y divide-slate-800/50">${tapeRowsHtml}</tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      },
+
+      renderTableRows(tbodyId, rows, isUp, isCleared) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        if (!rows || rows.length === 0) {
+          const msg = isCleared
+            ? '23:59 IST Auto-Flush active — awaiting 09:20 IST live Order Flow scan.'
+            : 'Zero fake signals: no symbols currently pass all 3 Order Flow steps + Rule 3 thresholds.';
+          tbody.innerHTML = `<tr><td colspan="10" class="py-6 text-center text-slate-400">${this.esc(msg)}</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = rows
+          .map((row) => {
+            const isSelected = this.selectedSymbol === row.symbol;
+            const s = row.signals;
+            const zoneShort =
+              row.volumeProfile.priceZone === 'ABOVE_VAH' ? 'Above VAH' :
+              row.volumeProfile.priceZone === 'BELOW_VAL' ? 'Below VAL' :
+              row.volumeProfile.priceZone === 'AT_POC' ? 'At POC' :
+              row.volumeProfile.priceZone === 'INSIDE_VALUE_UPPER' ? 'POC → VAH' : 'VAL → POC';
+            return `<tr onclick="OrderFlowScannerClient.selectRow('${this.esc(row.symbol)}')" class="cursor-pointer transition-colors ${isSelected ? 'bg-sky-500/15' : 'hover:bg-slate-800/45'}">
+              <td class="py-2.5 px-3">
+                <div class="font-semibold text-slate-100">${this.esc(row.symbol)}${isSelected ? ' <span class="text-[10px] font-mono text-sky-400">INSPECTING</span>' : ''}</div>
+                <div class="text-[11px] text-slate-400">${this.esc(row.sector)} &middot; RVOL ${Number(row.rvol).toFixed(1)}x &middot; VolX ${Number(row.xTimeVolume).toFixed(1)}X</div>
+              </td>
+              <td class="py-2.5 px-2.5 font-mono tabular-nums">
+                <div class="font-semibold text-sky-400">${row.orderFlowScore}/100</div>
+                <div class="text-[10px] text-slate-400">${this.esc(row.convictionGrade)}</div>
+              </td>
+              <td class="py-2.5 px-2.5 font-mono tabular-nums text-slate-200">
+                <div>${this.esc(row.listedAt)}</div>
+                <div class="text-[10px] text-slate-400">Locked</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums">
+                <div class="font-semibold text-slate-100">${this.fmtInr(row.price)}</div>
+                <div class="text-[11px] ${row.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${row.changePercent >= 0 ? '+' : ''}${Number(row.changePercent).toFixed(2)}%</div>
+              </td>
+              <td class="py-2.5 px-2.5 font-mono tabular-nums">
+                <div class="text-slate-200">${zoneShort}${row.volumeProfile.inFastLvnZone ? ' <span class="text-sky-400">&middot; LVN</span>' : ''}</div>
+                <div class="text-[10px] text-slate-400">POC ₹${Number(row.volumeProfile.poc).toFixed(1)} &middot; VAH ₹${Number(row.volumeProfile.vah).toFixed(1)}</div>
+              </td>
+              <td class="py-2.5 px-2.5 font-mono tabular-nums">
+                <div class="${s.stackedImbalance.passed ? (isUp ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold') : 'text-slate-400'}">${s.stackedImbalance.count}× Stacked ${isUp ? 'Buy' : 'Sell'}</div>
+                <div class="text-[10px] text-slate-400">${isUp ? row.footprint.buyImbalanceCount + ' Buy Imb' : row.footprint.sellImbalanceCount + ' Sell Imb'}</div>
+              </td>
+              <td class="py-2.5 px-2.5 font-mono tabular-nums">
+                <div class="text-slate-100 font-semibold">${s.confirmedCount}/5 Confirmed</div>
+                <div class="text-[10px] text-slate-400">${s.absorption.detected ? 'Absorb · ' : ''}${s.tape.confirmed ? 'Big Tape · ' : ''}${s.exhaustion.detected ? 'Tired' : 'Fresh'}</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums">
+                <div class="font-semibold ${s.delta.footprintDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${this.fmtCompact(s.delta.footprintDelta, true)}</div>
+                <div class="text-[10px] text-slate-400">${s.delta.deltaPct >= 0 ? '+' : ''}${Number(s.delta.deltaPct).toFixed(1)}%</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums">
+                <div class="text-slate-200">${this.fmtInr(row.entryPrice)}</div>
+                <div class="text-[11px] text-rose-400">SL ${this.fmtInr(row.stopLoss)}</div>
+              </td>
+              <td class="py-2.5 px-3 text-right font-mono tabular-nums">
+                <div class="text-emerald-400">${this.fmtInr(row.target1)}</div>
+                <div class="text-[11px] text-sky-400">T2 ${this.fmtInr(row.target2)}</div>
+              </td>
+            </tr>`;
+          })
+          .join('');
+      },
+
+      render() {
+        const rep = this.lastReport;
+        if (!rep) return;
+
+        const setTxt = (id, val) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = val;
+        };
+        setTxt('of-window-phase-label', rep.session ? rep.session.phaseLabel : '09:20–15:15 IST');
+        setTxt('of-kpi-agent', `${rep.agent.name} (${rep.agent.genderLabel})`);
+        setTxt('of-kpi-agent-sub', `${rep.agent.agentId} · ${rep.agent.riskPerTradePct}% Risk`);
+        setTxt('of-kpi-up', `${rep.summary.upCount} / 10`);
+        setTxt('of-kpi-down', `${rep.summary.downCount} / 10`);
+        setTxt('of-kpi-stacked', String(rep.summary.stackedImbalanceCount));
+        setTxt('of-kpi-absorb', `${rep.summary.absorptionCount} Absorption · ${rep.summary.tapeConfirmedCount} Tape`);
+        const deltaEl = document.getElementById('of-kpi-delta');
+        if (deltaEl) {
+          deltaEl.textContent = this.fmtCompact(rep.summary.netDeskDelta, true);
+          deltaEl.className = `font-mono tabular-nums font-semibold text-lg mt-0.5 ${rep.summary.netDeskDelta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+        setTxt('of-kpi-score', `Avg Score ${rep.summary.avgOrderFlowScore}/100`);
+        const pnlEl = document.getElementById('of-kpi-pnl');
+        if (pnlEl) {
+          pnlEl.textContent = this.fmtSignedInr(rep.summary.totalLivePnlRs);
+          pnlEl.className = `font-mono tabular-nums font-semibold text-lg mt-0.5 ${rep.summary.totalLivePnlRs >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+        setTxt('of-kpi-clock', rep.istTime || 'IST --:--:--');
+
+        const fGrid = document.getElementById('of-formula-grid');
+        if (fGrid && Array.isArray(rep.formulaSteps) && fGrid.children.length === 0) {
+          fGrid.innerHTML = rep.formulaSteps
+            .map((s) => `<div class="rounded-lg border border-slate-800 bg-[#0f172a] p-3">
+              <div class="font-semibold text-sky-400">${this.esc(s.title)}</div>
+              <p class="text-slate-200 mt-1 leading-relaxed">${this.esc(s.rule)}</p>
+              <p class="text-[11px] text-slate-400 mt-1">${this.esc(s.interpretation)}</p>
+            </div>`)
+            .join('');
+        }
+
+        const upRows = this.filterList(rep.upPicks || []);
+        const dnRows = this.filterList(rep.downPicks || []);
+        setTxt('of-up-count-label', `· ${upRows.length} / 10 Qualified`);
+        setTxt('of-down-count-label', `· ${dnRows.length} / 10 Qualified`);
+
+        const upSec = document.getElementById('of-up-section');
+        const dnSec = document.getElementById('of-down-section');
+        if (upSec) upSec.classList.toggle('hidden', this.direction === 'SELL');
+        if (dnSec) dnSec.classList.toggle('hidden', this.direction === 'BUY');
+
+        const all = [...(rep.upPicks || []), ...(rep.downPicks || [])];
+        const inspected = all.find((r) => r.symbol === this.selectedSymbol) || all[0] || null;
+        this.renderInspector(inspected);
+        this.renderTableRows('tbody-of-up', upRows, true, rep.isMidnightCleared);
+        this.renderTableRows('tbody-of-down', dnRows, false, rep.isMidnightCleared);
+      },
+    };
+
+    // ============================================================
     // DUAL AI TRADE MANAGEMENT DESK CLIENT (ARYAN AI [HE] & ARIA AI [SHE])
     // Fetches /api/ai-agent/desk every 5s • Strictly obeys all 5 Locked Rules
     // ============================================================
@@ -14911,6 +15546,12 @@ function renderJournal() {
         this.refresh();
         if (this._timer) clearInterval(this._timer);
         this._timer = setInterval(() => this.refresh(), 5000);
+        if (!this._escBound) {
+          this._escBound = true;
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') this.closeGlobalResetModal();
+          });
+        }
       },
       setSideFilter(mode) {
         this.sideFilter = mode || 'ALL';
@@ -16025,20 +16666,25 @@ function renderJournal() {
     }`
       },
       momentum: {
-        title: "Top Momentum &bull; 5m Order Flow Early Ignition (Strong RVOL &ge; 2.00 &bull; X-Time Vol &ge; 2.00X &bull; ADX 25+)",
+        title: "Top Momentum &bull; 5m Order Flow Early Ignition v2.0 (RVOL &gt; 2.00 &bull; VolX &gt; 1.00X &bull; ADX 25+ +DI/-DI)",
         file: "server/topMomentumEngine.ts (/api/top-momentum/scan)",
-        desc: "Catches institutional momentum RIGHT AT IGNITION — BEFORE the stock becomes extended! Strictly enforces Strong RVOL >= 2.00, Strong X-Time Volume >= 2.00X (vs baseline 5m avg volume), and Wilder ADX(14) >= 25+ alongside 5m Sweep -> Break -> Rej 1 VWAP hold, Cumulative Delta (CΔ) flip + aligned Bar Δ, and Zero-Line Momentum cross. Automatically blocks late alerts once price stretches >= 1.65% from VWAP, >= 1.85% from Break/Rej 1 entry, >= 2.45% day move, or Bar Δ flips against the trend (Exit Zone).",
-        code: `def top_momentum_order_flow_ignition(bars_5m, vwap, ema9, ema21, rvol, x_time_vol, adx14, bid_ask_ratio):
-    # 1. Sweep + First 5m Break above pre-break consolidation high + VWAP + EMA9
-    break_ok = bar.close > base_high and bar.close >= vwap and bar_delta > 0 and cum_delta > 0
+        desc: "Rectified 8-Factor Institutional Momentum Formula: eliminates sub-resistance fakeouts, 09:15 opening auction whipsaws, and counter-trend ADX dead-cat bounces. Enforces strict close breakout with CLV >= 0.30 & body >= 38% (starting 09:20 IST), Rej 1 VWAP hold, Cumulative Delta (CΔ) + Bar Δ alignment, RVOL > 2.00, outlier-trimmed Vol Bazaar X-Time > 1.00X, directional Wilder ADX(14) >= 25+ (+DI > -DI for BUY / -DI > +DI for SELL), Volatility Squeeze Release (ATR expansion), and Sector Relative Strength Alpha while blocking late chases & passive absorption traps.",
+        code: `def top_momentum_order_flow_ignition_v2(bars_5m, vwap, ema9, ema21, rvol, trimmed_xtime_vol, adx14, plus_di, minus_di, sector_chg):
+    # 1. Strict 5m Break >= 09:20 IST + Close Conviction (zero sub-resistance / wick fakeouts)
+    break_ok = (bar.close > local_high) and (bar.clv >= 0.30) and (bar.body_ratio >= 0.38) and (bar_delta > 0) and (cum_delta > 0)
     # 2. Rej 1: First micro-pullback holding Break level & VWAP with rejection wick
     rej1_ok = pullback.low >= sweep_low and pullback.close >= max(vwap, break_level * 0.9965)
-    # 3. Mandatory Strong Volume & Trend Strength Gate
-    strong_gate = (rvol >= 2.00) and (x_time_vol >= 2.00) and (adx14 >= 25.0)
-    # 4. Zero-Line Momentum > 0 & Anti-Chase Exhaustion Blocker (NEVER alert after the move!)
-    exhausted = (move_from_entry_pct >= 1.85) or (vs_vwap_pct >= 1.65) or (day_chg_pct >= 2.45) or (bar_delta < 0)
+    # 3. Rule 3 Locked + Directional ADX Gate (blocks dead-cat bounce traps!)
+    di_aligned = (plus_di >= minus_di * 0.96) if is_buy else (minus_di >= plus_di * 0.96)
+    strong_gate = (rvol > 2.00) and (trimmed_xtime_vol > 1.00) and (adx14 >= 25.0) and di_aligned
+    # 4. Profitability Alpha: Volatility Squeeze Release (ATR Expansion) & Sector Relative Strength
+    squeeze_release = (avg_coil_range <= atr14 * 0.92) and (break_range / atr14 >= 1.05)
+    sector_rs_alpha = (stock_chg - sector_chg) >= 0.12
+    # 5. Anti-Absorption Trap & Anti-Chase Blocker (NEVER alert late or into opposing wick absorption!)
+    absorption_trap = (bar.upper_wick_pct >= 45) and (bar_vol_ratio >= 1.5)
+    exhausted = absorption_trap or (move_from_entry_pct >= 1.85) or (vs_vwap_pct >= 1.65) or (day_chg_pct >= 2.65) or (bar_delta < 0)
     should_alert_now = (not exhausted) and strong_gate and (stage in ("BREAK_IGNITION", "REJ_1_ENTRY")) and (zero_line_mom > 0.01)
-    return {"stage": "EXHAUSTED_EXIT" if exhausted else stage, "should_alert_now": should_alert_now}`
+    return {"stage": "EXHAUSTED_EXIT" if exhausted else stage, "squeeze": squeeze_release, "should_alert_now": should_alert_now}`
       },
       liquidity: {
         title: "Market Liquidity &bull; Turnover (₹ Cr) & Order Depth Imbalance",
@@ -21173,7 +21819,7 @@ function renderJournal() {
               <th class="p-2.5">Zero-Line &amp; VWAP</th>
               <th class="p-2.5">RVOL &bull; X-Time Vol &bull; ADX</th>
               <th class="p-2.5">Ignition Time</th>
-              <th class="p-2.5">Checklist (7/7) &bull; Score</th>
+              <th class="p-2.5">Checklist (8/8) &bull; Score</th>
               <th class="p-2.5">Ignition Entry / SL / T1-T2</th>
               <th class="p-2.5 text-right">Action</th>
             </tr>
@@ -21182,10 +21828,10 @@ function renderJournal() {
 
         if (!items || items.length === 0) {
           const emptyMsg = isMidnightCleared
-            ? '🌙 Midnight Auto-Flush Active — Waiting for fresh 09:15 AM IST 5m Order Flow candles (Zero stale signals).'
+            ? '🌙 23:59 Auto-Flush Active — Waiting for fresh 09:20 AM IST 5m Order Flow candles (Zero stale signals).'
             : (this.earlyOnly && rawTotalCount > 0)
-            ? `No fresh Break / Rej 1 ${isBuy ? 'BUY' : 'SELL'} ignitions on the latest 2 candles (${rawTotalCount} active early trends passing RVOL ≥ 2.00, X-Time ≥ 2.00X & ADX 25+). <button type="button" onclick="TopMomentumOrderFlowEngine.toggleEarlyOnlyMode()" class="ml-2 px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-bold cursor-pointer">Show Active Early (${rawTotalCount})</button>`
-            : `No ${isBuy ? 'BUY' : 'SELL'} stocks currently pass strict Strong RVOL ≥ 2.00 + Strong X-Time Vol ≥ 2.00X + ADX 25+ early-ignition criteria. Weak-volume chop and late extended moves are automatically filtered out.`;
+            ? `No fresh Break / Rej 1 ${isBuy ? 'BUY' : 'SELL'} ignitions on the latest 2 candles (${rawTotalCount} active early trends passing RVOL > 2.00, VolX > 1.00X & ADX 25+ DI-aligned). <button type="button" onclick="TopMomentumOrderFlowEngine.toggleEarlyOnlyMode()" class="ml-2 px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-bold cursor-pointer">Show Active Early (${rawTotalCount})</button>`
+            : `No ${isBuy ? 'BUY' : 'SELL'} stocks currently pass rectified RVOL > 2.00 + Vol Bazaar X-Time > 1.00X + Directional ADX 25+ (+DI/-DI) early-ignition criteria. Counter-trend traps, wick fakeouts & late chases are blocked.`;
           html += `<tr><td colspan="9" class="p-8 text-center text-slate-400 font-sans text-xs">${emptyMsg}</td></tr>`;
         } else {
           items.forEach(item => {
@@ -21223,7 +21869,7 @@ function renderJournal() {
                     ${item.shouldAlertNow ? '<span class="px-1 py-0.5 rounded text-[8.5px] font-black bg-emerald-500 text-black">🔔 ALERT</span>' : ''}
                   </div>
                   <div class="text-[10px] font-bold mt-1 ${chg >= 0 ? 'text-emerald-300' : 'text-rose-300'}">LTP ₹${Number(item.price).toLocaleString('en-IN')} (${chg >= 0 ? '+' : ''}${chg.toFixed(2)}%)</div>
-                  <div class="text-[9px] text-slate-400 mt-0.5">${item.sector} &bull; ${mvEntry >= 0 ? '+' : ''}${mvEntry.toFixed(2)}% vs Entry</div>
+                  <div class="text-[9px] text-slate-400 mt-0.5">${item.sector} &bull; ${item.profitabilityEdgeLabel || `${mvEntry >= 0 ? '+' : ''}${mvEntry.toFixed(2)}% vs Entry`}</div>
                 </td>
                 <td class="p-2.5 text-[10px]">
                   <div class="text-white font-bold">Break ₹${Number(item.breakLevel).toLocaleString('en-IN')} <span class="text-slate-400">@ ${String(item.breakTimeIST || '--').slice(0, 5)}</span></div>
@@ -21243,7 +21889,7 @@ function renderJournal() {
                 <td class="p-2.5 text-[10px]">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="text-emerald-300 font-black">RVOL ${rvol.toFixed(2)}x</span>
-                    <span class="text-amber-300 font-black">X-Time ${xTimeVol.toFixed(2)}X</span>
+                    <span class="text-amber-300 font-black">VolX ${xTimeVol.toFixed(2)}X</span>
                   </div>
                   <div class="text-purple-300 font-black mt-0.5">ADX ${adxVal.toFixed(1)} <span class="text-[9px] font-normal text-slate-400">(+DI ${plusDI.toFixed(0)} / -DI ${minusDI.toFixed(0)})</span></div>
                   <div class="text-[9px] text-slate-400">B/A ${ba.toFixed(2)}x &bull; ₹${Number(item.turnoverCr || 0).toFixed(1)} Cr &bull; ${item.buildup}</div>
@@ -21253,7 +21899,7 @@ function renderJournal() {
                   <div class="text-[9px] text-slate-400 mt-1">${item.barsSinceIgnition === 0 ? 'LIVE BAR' : `${item.barsSinceIgnition} bar(s) ago`}</div>
                 </td>
                 <td class="p-2.5 text-[10px]">
-                  <div class="font-black ${item.score >= 80 ? 'text-emerald-300' : (item.score >= 65 ? 'text-amber-300' : 'text-slate-200')}">${item.score}/100 &bull; ${item.conditionsMet}/${item.totalConditions || 7}</div>
+                  <div class="font-black ${item.score >= 80 ? 'text-emerald-300' : (item.score >= 65 ? 'text-amber-300' : 'text-slate-200')}">${item.score}/100 &bull; ${item.conditionsMet}/${item.totalConditions || 8}</div>
                   <div class="flex items-center gap-1 mt-1">${dots}</div>
                   <div class="text-[9px] text-slate-400 mt-1 max-w-[170px] truncate" title="${item.ignitionNote}">${item.ignitionNote}</div>
                 </td>

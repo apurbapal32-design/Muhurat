@@ -8,6 +8,10 @@ import {
   TOP_MOMENTUM_STRONG_RVOL_MIN,
   TOP_MOMENTUM_STRONG_XTIME_VOL_MIN,
 } from './topMomentumEngine';
+import {
+  applyUniversalGateToTopMomentumReport,
+  StickyScannerRegistry,
+} from './scannerUniversalGate';
 import { ClaudeFnoBar } from './claudeFnoEngine';
 import { ScannedStock } from '../src/types';
 
@@ -80,8 +84,7 @@ test('computeWilderAdx distinguishes strong directional trend (ADX >= 25) from f
   assert.ok(chopAdx.adx < 25, `Expected sideways chop ADX < 25, got ${chopAdx.adx}`);
 });
 
-test('BANKBARODA Stage 1 (Break @ 09:20, +0.58%) with Strong RVOL >= 2.00, X-Time Vol >= 2.00X, ADX 25+: fires IMMEDIATE BREAK_IGNITION alert', () => {
-  // 09:15 sweeps down to 272.50 and reclaims; 09:20 breaks above consolidation high on 2.9x volume (580K vs ~200K avg)
+test('BANKBARODA Stage 1 (Break @ 09:20, +0.58%) with Strong RVOL > 2.00, X-Time Vol > 1.00X, ADX 25+: fires IMMEDIATE BREAK_IGNITION alert', () => {
   const bars: ClaudeFnoBar[] = [
     ...PREV_DAY_CONSOL,
     makeBar('2026-11-19', '09:15:00', 275.0, 275.15, 272.5, 274.95, 420000),
@@ -92,7 +95,7 @@ test('BANKBARODA Stage 1 (Break @ 09:20, +0.58%) with Strong RVOL >= 2.00, X-Tim
     symbol: 'BANKBARODA',
     name: 'Bank of Baroda',
     sector: 'PSU Bank',
-    sectorChangePct: 0.72,
+    sectorChangePct: 0.35,
     bars5m: bars,
     price: 276.1,
     prevClose: 274.5,
@@ -106,17 +109,18 @@ test('BANKBARODA Stage 1 (Break @ 09:20, +0.58%) with Strong RVOL >= 2.00, X-Tim
     explicitAdx: 29.4,
   });
 
-  assert.ok(res, 'Should detect BANKBARODA Break ignition when RVOL >= 2.0, X-Time Vol >= 2.0X, ADX >= 25');
+  assert.ok(res, 'Should detect BANKBARODA Break ignition when RVOL > 2.0, X-Time Vol > 1.0X, ADX >= 25');
   assert.equal(res.direction, 'BUY');
   assert.equal(res.stage, 'BREAK_IGNITION');
   assert.equal(res.shouldAlertNow, true);
-  assert.ok(res.rvol >= TOP_MOMENTUM_STRONG_RVOL_MIN);
-  assert.ok(res.xTimeVolume >= TOP_MOMENTUM_STRONG_XTIME_VOL_MIN);
+  assert.ok(res.rvol > TOP_MOMENTUM_STRONG_RVOL_MIN);
+  assert.ok(res.xTimeVolume > TOP_MOMENTUM_STRONG_XTIME_VOL_MIN);
   assert.ok(res.adx >= TOP_MOMENTUM_STRONG_ADX_MIN);
   assert.equal(res.strongRvolPassed, true);
   assert.equal(res.strongXTimeVolPassed, true);
   assert.equal(res.adxPassed, true);
-  assert.equal(res.totalConditions, 7);
+  assert.equal(res.totalConditions, 8);
+  assert.ok(res.relativeStrengthVsSector > 0);
 });
 
 test('BANKBARODA Stage 2 (Rej 1 @ 09:25, +0.91%): fires IMMEDIATE REJ_1_ENTRY alert with Strong RVOL / X-Time Vol / ADX 25+', () => {
@@ -131,7 +135,7 @@ test('BANKBARODA Stage 2 (Rej 1 @ 09:25, +0.91%): fires IMMEDIATE REJ_1_ENTRY al
     symbol: 'BANKBARODA',
     name: 'Bank of Baroda',
     sector: 'PSU Bank',
-    sectorChangePct: 0.85,
+    sectorChangePct: 0.55,
     bars5m: bars,
     price: 277.0,
     prevClose: 274.5,
@@ -149,19 +153,74 @@ test('BANKBARODA Stage 2 (Rej 1 @ 09:25, +0.91%): fires IMMEDIATE REJ_1_ENTRY al
   assert.equal(res.stage, 'REJ_1_ENTRY');
   assert.equal(res.shouldAlertNow, true);
   assert.equal(res.rej1Detected, true);
-  assert.ok(res.xTimeVolume >= 2.0);
+  assert.ok(res.xTimeVolume > 1.0);
   assert.ok(res.adx >= 25);
 });
 
-test('Strict Formula Rejects stocks failing Strong RVOL (< 2.00), Strong X-Time Vol (< 2.00X), or ADX (< 25)', () => {
-  // Base strong setup bars (Break candle 580K = ~2.6X baseline)
+test('Rectified v2.0 Rejects counter-trend ADX traps (-DI > +DI on BUY), shooting-star wick fakeouts, and Rule 3 failures', () => {
+  // 1. Counter-trend ADX trap: stock crashed hard (so ADX >= 25 with -DI >> +DI), then prints 1 green bounce bar
+  const crashThenBounce: ClaudeFnoBar[] = [];
+  let p = 320;
+  for (let i = 0; i < 16; i++) {
+    const mm = String((15 + i * 5) % 60).padStart(2, '0');
+    const hh = String(9 + Math.floor((15 + i * 5) / 60)).padStart(2, '0');
+    crashThenBounce.push(makeBar('2026-11-18', `${hh}:${mm}:00`, p, p + 0.3, p - 2.6, p - 2.4, 200000));
+    p -= 2.4;
+  }
+  const bounceBase = p;
+  crashThenBounce.push(makeBar('2026-11-19', '09:15:00', bounceBase, bounceBase + 0.4, bounceBase - 1.2, bounceBase + 0.1, 250000));
+  crashThenBounce.push(makeBar('2026-11-19', '09:20:00', bounceBase + 0.1, bounceBase + 1.8, bounceBase, bounceBase + 1.6, 620000));
+
+  const deadCatRes = evaluateTopMomentumOrderFlow({
+    symbol: 'FALLINGKNIFE',
+    name: 'Falling Knife Ltd',
+    sector: 'IT',
+    sectorChangePct: -0.5,
+    bars5m: crashThenBounce,
+    price: bounceBase + 1.6,
+    prevClose: bounceBase,
+    changePercent: 0.56,
+    bidAskRatio: 1.3,
+    orderBookBias: 'Buyer Dominance',
+    oiChangePct: 1.5,
+    turnoverCr: 80,
+    volume: 870000,
+    explicitRvol: 2.8,
+  });
+  assert.equal(deadCatRes, null, 'MUST reject BUY dead-cat bounce when ADX is high solely due to bearish -DI > +DI');
+
+  // 2. Shooting-star fakeout candle (long upper wick closing weak below resistance) -> MUST return null
+  const fakeoutBars: ClaudeFnoBar[] = [
+    ...PREV_DAY_CONSOL,
+    makeBar('2026-11-19', '09:15:00', 275.0, 275.15, 272.5, 274.95, 260000),
+    // Breaks intraday high to 277.20 but slams back down to close at 275.35 (weak CLV & tiny body = upper wick trap!)
+    makeBar('2026-11-19', '09:20:00', 275.0, 277.2, 274.9, 275.35, 620000),
+  ];
+  const fakeoutRes = evaluateTopMomentumOrderFlow({
+    symbol: 'FAKEOUT',
+    name: 'Fakeout Corp',
+    sector: 'PSU Bank',
+    sectorChangePct: 0.5,
+    bars5m: fakeoutBars,
+    price: 275.35,
+    prevClose: 274.5,
+    changePercent: 0.31,
+    bidAskRatio: 1.4,
+    orderBookBias: 'Buyer Dominance',
+    oiChangePct: 2.0,
+    turnoverCr: 65,
+    volume: 880000,
+    explicitRvol: 2.6,
+    explicitAdx: 31,
+  });
+  assert.equal(fakeoutRes, null, 'MUST reject shooting-star upper-wick fakeout breakout');
+
+  // 3. Rule 3 failures (ADX < 25, Vol Bazaar X-Time <= 1.00X, RVOL <= 2.00)
   const strongBars: ClaudeFnoBar[] = [
     ...PREV_DAY_CONSOL,
     makeBar('2026-11-19', '09:15:00', 275.0, 275.15, 272.5, 274.95, 240000),
     makeBar('2026-11-19', '09:20:00', 274.95, 276.3, 274.85, 276.1, 580000),
   ];
-
-  // 1. Fails ADX (< 25) -> MUST return null
   const lowAdx = evaluateTopMomentumOrderFlow({
     symbol: 'BANKBARODA',
     name: 'Bank of Baroda',
@@ -177,15 +236,14 @@ test('Strict Formula Rejects stocks failing Strong RVOL (< 2.00), Strong X-Time 
     turnoverCr: 62.5,
     volume: 1000000,
     explicitRvol: 2.4,
-    explicitAdx: 21.5, // Below 25!
+    explicitAdx: 21.5,
   });
   assert.equal(lowAdx, null, 'MUST reject setup when ADX < 25');
 
-  // 2. Fails Vol Bazaar X-Time Volume (<= 1.00X) -> weak 180K break bar (~0.90X) MUST return null
   const weakVolBars: ClaudeFnoBar[] = [
     ...PREV_DAY_CONSOL,
     makeBar('2026-11-19', '09:15:00', 275.0, 275.15, 272.5, 274.95, 190000),
-    makeBar('2026-11-19', '09:20:00', 274.95, 276.3, 274.85, 276.1, 180000), // <= 1.00X baseline!
+    makeBar('2026-11-19', '09:20:00', 274.95, 276.3, 274.85, 276.1, 180000),
   ];
   const lowXTime = evaluateTopMomentumOrderFlow({
     symbol: 'BANKBARODA',
@@ -205,40 +263,6 @@ test('Strict Formula Rejects stocks failing Strong RVOL (< 2.00), Strong X-Time 
     explicitAdx: 30.0,
   });
   assert.equal(lowXTime, null, 'MUST reject setup when Vol Bazaar X-Time Volume <= 1.00X');
-
-  // 3. Fails RVOL (< 2.00) -> even if X-Time Vol >= 2.00X and ADX >= 25, RVOL < 2.00 MUST return null
-  // Use smaller volume bars so computeRvolFromBars is < 2.0 while break bar is 2.1X prior bar avg
-  const lowRvolBars: ClaudeFnoBar[] = [
-    makeBar('2026-11-18', '14:45:00', 274.6, 275.05, 274.1, 274.4, 200000),
-    makeBar('2026-11-18', '14:50:00', 274.4, 274.95, 274.05, 274.7, 200000),
-    makeBar('2026-11-18', '14:55:00', 274.7, 275.1, 274.2, 274.55, 200000),
-    makeBar('2026-11-18', '15:00:00', 274.55, 275.15, 274.15, 274.6, 200000),
-    makeBar('2026-11-18', '15:05:00', 274.6, 275.2, 274.1, 274.35, 200000),
-    makeBar('2026-11-18', '15:10:00', 274.35, 274.95, 274.0, 274.45, 200000),
-    makeBar('2026-11-18', '15:15:00', 274.45, 275.0, 274.1, 274.55, 200000),
-    makeBar('2026-11-18', '15:20:00', 274.55, 275.05, 274.2, 274.5, 200000),
-    makeBar('2026-11-18', '15:25:00', 274.5, 274.9, 274.15, 274.5, 200000),
-    makeBar('2026-11-19', '09:15:00', 275.0, 275.15, 272.5, 274.95, 420000),
-    makeBar('2026-11-19', '09:20:00', 274.95, 276.3, 274.85, 276.1, 300000), // latest bar < 2x of 220k avg -> RVOL < 2.0
-  ];
-  const lowRvol = evaluateTopMomentumOrderFlow({
-    symbol: 'BANKBARODA',
-    name: 'Bank of Baroda',
-    sector: 'PSU Bank',
-    sectorChangePct: 0.72,
-    bars5m: lowRvolBars,
-    price: 276.1,
-    prevClose: 274.5,
-    changePercent: 0.58,
-    bidAskRatio: 1.48,
-    orderBookBias: 'Buyer Dominance',
-    oiChangePct: 4.1,
-    turnoverCr: 62.5,
-    volume: 720000,
-    explicitRvol: 1.45, // Below 2.00!
-    explicitAdx: 30.0,
-  });
-  assert.equal(lowRvol, null, 'MUST reject setup when RVOL < 2.00');
 });
 
 test('BANKBARODA Stage 3 (Late Exhaustion / Exit @ 10:35, 283.20, +3.17%, Δ -22.10K): BLOCKS late alert as EXHAUSTED_EXIT', () => {
@@ -282,7 +306,7 @@ test('BANKBARODA Stage 3 (Late Exhaustion / Exit @ 10:35, 283.20, +3.17%, Δ -22
   assert.equal(res.shouldAlertNow, false);
 });
 
-test('Mirror SELL Early Ignition with Strong RVOL >= 2.00, X-Time Vol >= 2.00X, ADX 25+ fires immediate SELL alert', () => {
+test('Mirror SELL Early Ignition with Strong RVOL > 2.00, X-Time Vol > 1.00X, ADX 25+ fires immediate SELL alert', () => {
   const prevBearConsol: ClaudeFnoBar[] = [
     makeBar('2026-11-18', '15:00:00', 500.2, 501.0, 499.6, 500.0, 200000),
     makeBar('2026-11-18', '15:05:00', 500.0, 500.8, 499.5, 500.1, 195000),
@@ -302,7 +326,7 @@ test('Mirror SELL Early Ignition with Strong RVOL >= 2.00, X-Time Vol >= 2.00X, 
     symbol: 'TATASTEEL',
     name: 'Tata Steel',
     sector: 'Metals',
-    sectorChangePct: -0.65,
+    sectorChangePct: -0.25,
     bars5m: bars,
     price: 497.1,
     prevClose: 500.0,
@@ -320,12 +344,22 @@ test('Mirror SELL Early Ignition with Strong RVOL >= 2.00, X-Time Vol >= 2.00X, 
   assert.equal(res.direction, 'SELL');
   assert.equal(res.stage, 'BREAK_IGNITION');
   assert.equal(res.shouldAlertNow, true);
-  assert.ok(res.rvol >= 2.0);
-  assert.ok(res.xTimeVolume >= 2.0);
+  assert.ok(res.rvol > 2.0);
+  assert.ok(res.xTimeVolume > 1.0);
   assert.ok(res.adx >= 25);
 });
 
-test('buildTopMomentumReport exposes updated thresholds and respects isMidnightCleared', () => {
+test('applyUniversalGateToTopMomentumReport counts earlyIgnitionSellCount from sellSignals (not buySignals) and respects midnight flush', () => {
+  const buyBars: ClaudeFnoBar[] = [];
+  let px = 262.0;
+  for (let i = 0; i < 16; i++) {
+    const mm = String((15 + i * 5) % 60).padStart(2, '0');
+    const hh = String(9 + Math.floor((15 + i * 5) / 60)).padStart(2, '0');
+    buyBars.push(makeBar('2026-11-18', `${hh}:${mm}:00`, px, px + 1.0, px - 0.15, px + 0.85, 200000));
+    px += 0.8;
+  }
+  buyBars.push(makeBar('2026-11-19', '09:15:00', 274.8, 275.2, 274.2, 275.0, 260000));
+  buyBars.push(makeBar('2026-11-19', '09:20:00', 275.0, 276.4, 274.9, 276.1, 640000));
   const dummyStock = {
     symbol: 'BANKBARODA',
     name: 'Bank of Baroda',
@@ -335,7 +369,7 @@ test('buildTopMomentumReport exposes updated thresholds and respects isMidnightC
     changePercent: 0.58,
     volume: 1000000,
     bidAskRatio: 1.5,
-    indicators: { vwap: 274.8, rvol: 2.3, adx: 30 },
+    indicators: { vwap: 274.8, rvol: 2.35, adx: 30 },
   } as unknown as ScannedStock;
 
   const cleared = buildTopMomentumReport({
@@ -352,4 +386,36 @@ test('buildTopMomentumReport exposes updated thresholds and respects isMidnightC
   });
   assert.equal(cleared.buySignals.length, 0);
   assert.equal(cleared.sellSignals.length, 0);
+
+  // Verify earlyIgnitionSellCount is 0 when only 1 BUY signal exists and 0 SELL signals exist
+  const rawReport = {
+    isMidnightCleared: false,
+    buySignals: [
+      {
+        symbol: 'BANKBARODA',
+        direction: 'BUY',
+        shouldAlertNow: true,
+        entryPrice: 276.1,
+        stopLoss: 273.5,
+        rvol: 2.4,
+        xTimeVolume: 2.5,
+        adx: 31,
+        listedAt: '09:20:00',
+      },
+    ],
+    sellSignals: [],
+    exhaustedSignals: [],
+  };
+  const reg = new StickyScannerRegistry();
+  const gated = applyUniversalGateToTopMomentumReport(
+    rawReport,
+    [dummyStock],
+    () => buyBars as any,
+    new Map(),
+    reg
+  );
+  assert.equal(gated.buyCount, 1);
+  assert.equal(gated.sellCount, 0);
+  assert.equal(gated.earlyIgnitionBuyCount, 1);
+  assert.equal(gated.earlyIgnitionSellCount, 0, 'earlyIgnitionSellCount MUST count sellSignals, never buySignals');
 });

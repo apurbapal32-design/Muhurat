@@ -66,6 +66,7 @@ const BEGINNER_NAV_TABS: NavTabConfig[] = [
   { id: 'beginner-home', label: 'Beginner Overview', Icon: Sparkles },
   { id: 'agent-management', label: 'Agent Management', meta: '20', Icon: ShieldCheck },
   { id: 'btst-scanner', label: 'BTST Scanner', meta: '2:45–3:20', Icon: Moon },
+  { id: 'order-flow-scanner', label: 'Order Flow', meta: 'VP+FP', Icon: Layers },
   { id: 'momentum-dashboard', label: 'Live Momentum', meta: '15', Icon: Flame },
   { id: 'tredye-dashboard', label: 'Tredye Flow Matrix', Icon: Activity },
   { id: 'quant-screener', label: 'Quant Screener', Icon: BarChart3 },
@@ -80,6 +81,7 @@ const BEGINNER_NAV_TABS: NavTabConfig[] = [
 const PRO_NAV_TABS: NavTabConfig[] = [
   { id: 'agent-management', label: 'Agent Management', meta: '20', Icon: ShieldCheck },
   { id: 'btst-scanner', label: 'BTST Scanner', meta: '2:45–3:20', Icon: Moon },
+  { id: 'order-flow-scanner', label: 'Order Flow', meta: 'VP+FP', Icon: Layers },
   { id: 'v9-vega-greeks', label: 'V9 Vega & Greeks', Icon: Zap },
   { id: 'momentum-dashboard', label: 'Live Momentum', meta: '15', Icon: Flame },
   { id: 'tredye-dashboard', label: 'Tredye Flow Matrix', Icon: Activity },
