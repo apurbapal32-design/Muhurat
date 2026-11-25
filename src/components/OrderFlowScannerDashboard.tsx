@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Activity,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   BookOpen,
   Layers,
   RefreshCw,
@@ -13,6 +16,15 @@ import type {
   OrderFlowScanReport,
   OrderFlowSignalRow,
 } from '../../server/orderFlowScannerEngine';
+import {
+  DEFAULT_ORDER_FLOW_SORT,
+  formatOrderFlowSortSummary,
+  isDefaultOrderFlowSort,
+  sortOrderFlowRows,
+  toggleOrderFlowSort,
+  type OrderFlowSortColumn,
+  type OrderFlowSortState,
+} from '../utils/orderFlowSorting';
 import { OrderFlowInspector } from './OrderFlowInspector';
 
 interface OrderFlowScannerDashboardProps {
@@ -58,6 +70,11 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
   const [showFormula, setShowFormula] = useState<boolean>(false);
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
   const [nextRefreshSec, setNextRefreshSec] = useState<number>(60);
+  const [sortState, setSortState] = useState<OrderFlowSortState>(DEFAULT_ORDER_FLOW_SORT);
+
+  const handleSort = useCallback((column: OrderFlowSortColumn) => {
+    setSortState((prev) => toggleOrderFlowSort(prev, column));
+  }, []);
 
   const loadReport = useCallback(async (force: boolean = false) => {
     if (force) setRefreshing(true);
@@ -115,12 +132,12 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
   );
 
   const filteredUp = useMemo(
-    () => (report?.upPicks || []).filter(matchesFilters),
-    [report, matchesFilters]
+    () => sortOrderFlowRows((report?.upPicks || []).filter(matchesFilters), sortState),
+    [report, matchesFilters, sortState]
   );
   const filteredDown = useMemo(
-    () => (report?.downPicks || []).filter(matchesFilters),
-    [report, matchesFilters]
+    () => sortOrderFlowRows((report?.downPicks || []).filter(matchesFilters), sortState),
+    [report, matchesFilters, sortState]
   );
 
   const inspectedRow = useMemo(() => {
@@ -140,6 +157,54 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
     ? 'bg-slate-50 border-slate-200'
     : 'bg-[#0b1120] border-slate-800';
   const mutedText = isLight ? 'text-slate-600' : 'text-slate-400';
+
+  const renderSortableTh = (
+    label: string,
+    column: OrderFlowSortColumn,
+    align: 'left' | 'right' = 'left',
+    ariaLabel?: string
+  ) => {
+    const isActive = sortState.column === column;
+    const ariaSort: 'ascending' | 'descending' | 'none' = isActive
+      ? sortState.direction === 'asc'
+        ? 'ascending'
+        : 'descending'
+      : 'none';
+    return (
+      <th
+        scope="col"
+        aria-sort={ariaSort}
+        className={`py-2.5 px-2.5 ${align === 'right' ? 'text-right' : 'text-left'}`}
+      >
+        <button
+          type="button"
+          onClick={() => handleSort(column)}
+          aria-label={ariaLabel || `Sort by ${label}`}
+          data-sort-column={column}
+          className={`inline-flex items-center gap-1 font-medium transition-colors cursor-pointer whitespace-nowrap ${
+            align === 'right' ? 'justify-end ml-auto' : 'justify-start'
+          } ${
+            isActive
+              ? 'text-sky-400 font-semibold'
+              : isLight
+              ? 'text-slate-600 hover:text-slate-900'
+              : 'text-slate-400 hover:text-slate-100'
+          }`}
+        >
+          <span>{label}</span>
+          {isActive ? (
+            sortState.direction === 'desc' ? (
+              <ArrowDown className="w-3 h-3 shrink-0" aria-hidden="true" />
+            ) : (
+              <ArrowUp className="w-3 h-3 shrink-0" aria-hidden="true" />
+            )
+          ) : (
+            <ArrowUpDown className="w-3 h-3 shrink-0 opacity-50" aria-hidden="true" />
+          )}
+        </button>
+      </th>
+    );
+  };
 
   const renderTable = (
     title: string,
@@ -172,11 +237,24 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
             · {rows.length} / 10 Qualified
           </span>
         </div>
-        <span className={`text-xs font-mono tabular-nums ${mutedText}`}>
-          {isUp
-            ? 'Above POC · Buyers > Sellers · Sorted Listed At Z → A'
-            : 'Below POC · Sellers > Buyers · Sorted Listed At Z → A'}
-        </span>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span
+            data-testid={isUp ? 'order-flow-up-sort-status' : 'order-flow-down-sort-status'}
+            className={`text-xs font-mono tabular-nums ${mutedText}`}
+          >
+            {isUp ? 'Above POC · Buyers > Sellers' : 'Below POC · Sellers > Buyers'} ·{' '}
+            {formatOrderFlowSortSummary(sortState)}
+          </span>
+          {!isDefaultOrderFlowSort(sortState) && (
+            <button
+              type="button"
+              onClick={() => setSortState(DEFAULT_ORDER_FLOW_SORT)}
+              className="text-[11px] font-mono text-sky-400 hover:text-sky-300 underline underline-offset-2 cursor-pointer"
+            >
+              Reset to Time
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -189,28 +267,29 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
                   : 'border-slate-800 bg-[#0b1120] text-slate-400'
               }`}
             >
-              <th className="py-2.5 px-3">Stock &amp; Sector</th>
-              <th className="py-2.5 px-2.5">Flow Score</th>
-              <th className="py-2.5 px-2.5">Listed At</th>
-              <th className="py-2.5 px-2.5 text-right">LTP / Chg%</th>
-              <th className="py-2.5 px-2.5">Step 1: Volume Profile</th>
-              <th className="py-2.5 px-2.5">Step 2: Footprint</th>
-              <th className="py-2.5 px-2.5">Step 3: 5 Signals</th>
-              <th className="py-2.5 px-2.5 text-right">Delta (B&minus;S)</th>
-              <th className="py-2.5 px-2.5 text-right">Rudra Entry / SL</th>
-              <th className="py-2.5 px-3 text-right">T1 / T2</th>
+              <th scope="col" className="py-2.5 px-3">Stock &amp; Sector</th>
+              {renderSortableTh('Flow Score', 'score', 'left', 'Sort by Flow Score')}
+              {renderSortableTh('Time', 'time', 'left', 'Sort by Time')}
+              {renderSortableTh('Volume', 'volume', 'right', 'Sort by Volume')}
+              {renderSortableTh('Price Impact', 'priceImpact', 'right', 'Sort by Price Impact')}
+              <th scope="col" className="py-2.5 px-2.5">Step 1: Volume Profile</th>
+              <th scope="col" className="py-2.5 px-2.5">Step 2: Footprint</th>
+              <th scope="col" className="py-2.5 px-2.5">Step 3: 5 Signals</th>
+              {renderSortableTh('Delta (B−S)', 'delta', 'right', 'Sort by Delta')}
+              <th scope="col" className="py-2.5 px-2.5 text-right">Rudra Entry / SL</th>
+              <th scope="col" className="py-2.5 px-3 text-right">T1 / T2</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800/70">
             {loading && rows.length === 0 ? (
               <tr>
-                <td colSpan={10} className={`py-8 text-center ${mutedText}`}>
+                <td colSpan={11} className={`py-8 text-center ${mutedText}`}>
                   Evaluating NSE 200 auction profile, footprint imbalances, and tape prints...
                 </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={10} className={`py-8 text-center ${mutedText}`}>
+                <td colSpan={11} className={`py-8 text-center ${mutedText}`}>
                   {report?.isMidnightCleared
                     ? '23:59 IST Auto-Flush active — awaiting 09:20 IST live Order Flow scan.'
                     : 'Zero fake signals: no symbols currently pass all 3 Order Flow steps + Rule 3 thresholds.'}
@@ -220,9 +299,14 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
               rows.map((row) => {
                 const isSelected = inspectedRow?.symbol === row.symbol;
                 const s = row.signals;
+                const volumeHeadline =
+                  Number(row.turnoverCr) > 0
+                    ? `₹${row.turnoverCr.toFixed(1)}Cr`
+                    : `${fmtCompactDelta(row.volumeProfile?.totalProfileVolume || 0).replace(/^\+/, '')} sh`;
                 return (
                   <tr
                     key={row.symbol}
+                    data-symbol={row.symbol}
                     onClick={() => setSelectedSymbol(row.symbol)}
                     className={`cursor-pointer transition-colors ${
                       isSelected
@@ -244,7 +328,7 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
                         )}
                       </div>
                       <div className={`text-[11px] ${mutedText}`}>
-                        {row.sector} · RVOL {row.rvol.toFixed(1)}× · VolX {row.xTimeVolume.toFixed(1)}×
+                        {row.sector}
                       </div>
                     </td>
 
@@ -258,6 +342,13 @@ export const OrderFlowScannerDashboard: React.FC<OrderFlowScannerDashboardProps>
                     <td className="py-2.5 px-2.5 font-mono tabular-nums">
                       <div>{row.listedAt} IST</div>
                       <div className={`text-[10px] ${mutedText}`}>Locked</div>
+                    </td>
+
+                    <td className="py-2.5 px-2.5 text-right font-mono tabular-nums">
+                      <div className="font-semibold">{volumeHeadline}</div>
+                      <div className={`text-[10px] ${mutedText}`}>
+                        RVOL {row.rvol.toFixed(1)}× · VolX {row.xTimeVolume.toFixed(1)}×
+                      </div>
                     </td>
 
                     <td className="py-2.5 px-2.5 text-right font-mono tabular-nums">

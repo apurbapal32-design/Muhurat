@@ -6859,26 +6859,30 @@
               <span class="text-sm font-semibold text-emerald-400">Order Flow Bullish Leaders (Best 10 UP)</span>
               <span id="of-up-count-label" class="text-xs font-mono tabular-nums text-slate-400">&middot; 0 / 10 Qualified</span>
             </div>
-            <span class="text-xs font-mono tabular-nums text-slate-400">Above POC &middot; Buyers &gt; Sellers &middot; Sorted Listed At Z &rarr; A</span>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span id="of-up-sort-status" class="text-xs font-mono tabular-nums text-slate-400">Above POC &middot; Buyers &gt; Sellers &middot; Sorted by Time (Latest &rarr; Earliest)</span>
+              <button type="button" id="of-up-sort-reset" onclick="OrderFlowScannerClient.resetSort()" class="hidden text-[11px] font-mono text-sky-400 hover:text-sky-300 underline underline-offset-2 cursor-pointer">Reset to Time</button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-[#0b1120] text-slate-400 border-b border-slate-800 text-[11px] font-medium">
-                  <th class="py-2.5 px-3">Stock &amp; Sector</th>
-                  <th class="py-2.5 px-2.5">Flow Score</th>
-                  <th class="py-2.5 px-2.5">Listed At</th>
-                  <th class="py-2.5 px-2.5 text-right">LTP / Chg%</th>
-                  <th class="py-2.5 px-2.5">Step 1: Volume Profile</th>
-                  <th class="py-2.5 px-2.5">Step 2: Footprint</th>
-                  <th class="py-2.5 px-2.5">Step 3: 5 Signals</th>
-                  <th class="py-2.5 px-2.5 text-right">Delta (B&minus;S)</th>
-                  <th class="py-2.5 px-2.5 text-right">Rudra Entry / SL</th>
-                  <th class="py-2.5 px-3 text-right">T1 / T2</th>
+                  <th scope="col" class="py-2.5 px-3">Stock &amp; Sector</th>
+                  <th scope="col" class="py-2.5 px-2.5" data-of-sort-th="score" aria-sort="none"><button type="button" onclick="OrderFlowScannerClient.toggleSort('score')" aria-label="Sort by Flow Score" class="inline-flex items-center gap-1 font-medium text-slate-400 hover:text-slate-100 cursor-pointer whitespace-nowrap"><span>Flow Score</span><span data-of-sort-arrow="score" class="text-[10px] opacity-50">&#8597;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5" data-of-sort-th="time" aria-sort="descending"><button type="button" onclick="OrderFlowScannerClient.toggleSort('time')" aria-label="Sort by Time" class="inline-flex items-center gap-1 font-semibold text-sky-400 hover:text-sky-300 cursor-pointer whitespace-nowrap"><span>Time</span><span data-of-sort-arrow="time" class="text-[10px]">&#9660;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5 text-right" data-of-sort-th="volume" aria-sort="none"><button type="button" onclick="OrderFlowScannerClient.toggleSort('volume')" aria-label="Sort by Volume" class="inline-flex items-center justify-end gap-1 ml-auto font-medium text-slate-400 hover:text-slate-100 cursor-pointer whitespace-nowrap"><span>Volume</span><span data-of-sort-arrow="volume" class="text-[10px] opacity-50">&#8597;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5 text-right" data-of-sort-th="priceImpact" aria-sort="none"><button type="button" onclick="OrderFlowScannerClient.toggleSort('priceImpact')" aria-label="Sort by Price Impact" class="inline-flex items-center justify-end gap-1 ml-auto font-medium text-slate-400 hover:text-slate-100 cursor-pointer whitespace-nowrap"><span>Price Impact</span><span data-of-sort-arrow="priceImpact" class="text-[10px] opacity-50">&#8597;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5">Step 1: Volume Profile</th>
+                  <th scope="col" class="py-2.5 px-2.5">Step 2: Footprint</th>
+                  <th scope="col" class="py-2.5 px-2.5">Step 3: 5 Signals</th>
+                  <th scope="col" class="py-2.5 px-2.5 text-right" data-of-sort-th="delta" aria-sort="none"><button type="button" onclick="OrderFlowScannerClient.toggleSort('delta')" aria-label="Sort by Delta" class="inline-flex items-center justify-end gap-1 ml-auto font-medium text-slate-400 hover:text-slate-100 cursor-pointer whitespace-nowrap"><span>Delta (B&minus;S)</span><span data-of-sort-arrow="delta" class="text-[10px] opacity-50">&#8597;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5 text-right">Rudra Entry / SL</th>
+                  <th scope="col" class="py-2.5 px-3 text-right">T1 / T2</th>
                 </tr>
               </thead>
               <tbody id="tbody-of-up" class="divide-y divide-slate-800/70">
-                <tr><td colspan="10" class="py-6 text-center text-slate-400">Evaluating NSE 200 Volume Profile, Footprint &amp; 5 Order Flow Signals...</td></tr>
+                <tr><td colspan="11" class="py-6 text-center text-slate-400">Evaluating NSE 200 Volume Profile, Footprint &amp; 5 Order Flow Signals...</td></tr>
               </tbody>
             </table>
           </div>
@@ -6891,26 +6895,30 @@
               <span class="text-sm font-semibold text-rose-400">Order Flow Bearish Leaders (Best 10 DOWN)</span>
               <span id="of-down-count-label" class="text-xs font-mono tabular-nums text-slate-400">&middot; 0 / 10 Qualified</span>
             </div>
-            <span class="text-xs font-mono tabular-nums text-slate-400">Below POC &middot; Sellers &gt; Buyers &middot; Sorted Listed At Z &rarr; A</span>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span id="of-down-sort-status" class="text-xs font-mono tabular-nums text-slate-400">Below POC &middot; Sellers &gt; Buyers &middot; Sorted by Time (Latest &rarr; Earliest)</span>
+              <button type="button" id="of-down-sort-reset" onclick="OrderFlowScannerClient.resetSort()" class="hidden text-[11px] font-mono text-sky-400 hover:text-sky-300 underline underline-offset-2 cursor-pointer">Reset to Time</button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
               <thead>
                 <tr class="bg-[#0b1120] text-slate-400 border-b border-slate-800 text-[11px] font-medium">
-                  <th class="py-2.5 px-3">Stock &amp; Sector</th>
-                  <th class="py-2.5 px-2.5">Flow Score</th>
-                  <th class="py-2.5 px-2.5">Listed At</th>
-                  <th class="py-2.5 px-2.5 text-right">LTP / Chg%</th>
-                  <th class="py-2.5 px-2.5">Step 1: Volume Profile</th>
-                  <th class="py-2.5 px-2.5">Step 2: Footprint</th>
-                  <th class="py-2.5 px-2.5">Step 3: 5 Signals</th>
-                  <th class="py-2.5 px-2.5 text-right">Delta (B&minus;S)</th>
-                  <th class="py-2.5 px-2.5 text-right">Rudra Entry / SL</th>
-                  <th class="py-2.5 px-3 text-right">T1 / T2</th>
+                  <th scope="col" class="py-2.5 px-3">Stock &amp; Sector</th>
+                  <th scope="col" class="py-2.5 px-2.5" data-of-sort-th="score" aria-sort="none"><button type="button" onclick="OrderFlowScannerClient.toggleSort('score')" aria-label="Sort by Flow Score" class="inline-flex items-center gap-1 font-medium text-slate-400 hover:text-slate-100 cursor-pointer whitespace-nowrap"><span>Flow Score</span><span data-of-sort-arrow="score" class="text-[10px] opacity-50">&#8597;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5" data-of-sort-th="time" aria-sort="descending"><button type="button" onclick="OrderFlowScannerClient.toggleSort('time')" aria-label="Sort by Time" class="inline-flex items-center gap-1 font-semibold text-sky-400 hover:text-sky-300 cursor-pointer whitespace-nowrap"><span>Time</span><span data-of-sort-arrow="time" class="text-[10px]">&#9660;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5 text-right" data-of-sort-th="volume" aria-sort="none"><button type="button" onclick="OrderFlowScannerClient.toggleSort('volume')" aria-label="Sort by Volume" class="inline-flex items-center justify-end gap-1 ml-auto font-medium text-slate-400 hover:text-slate-100 cursor-pointer whitespace-nowrap"><span>Volume</span><span data-of-sort-arrow="volume" class="text-[10px] opacity-50">&#8597;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5 text-right" data-of-sort-th="priceImpact" aria-sort="none"><button type="button" onclick="OrderFlowScannerClient.toggleSort('priceImpact')" aria-label="Sort by Price Impact" class="inline-flex items-center justify-end gap-1 ml-auto font-medium text-slate-400 hover:text-slate-100 cursor-pointer whitespace-nowrap"><span>Price Impact</span><span data-of-sort-arrow="priceImpact" class="text-[10px] opacity-50">&#8597;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5">Step 1: Volume Profile</th>
+                  <th scope="col" class="py-2.5 px-2.5">Step 2: Footprint</th>
+                  <th scope="col" class="py-2.5 px-2.5">Step 3: 5 Signals</th>
+                  <th scope="col" class="py-2.5 px-2.5 text-right" data-of-sort-th="delta" aria-sort="none"><button type="button" onclick="OrderFlowScannerClient.toggleSort('delta')" aria-label="Sort by Delta" class="inline-flex items-center justify-end gap-1 ml-auto font-medium text-slate-400 hover:text-slate-100 cursor-pointer whitespace-nowrap"><span>Delta (B&minus;S)</span><span data-of-sort-arrow="delta" class="text-[10px] opacity-50">&#8597;</span></button></th>
+                  <th scope="col" class="py-2.5 px-2.5 text-right">Rudra Entry / SL</th>
+                  <th scope="col" class="py-2.5 px-3 text-right">T1 / T2</th>
                 </tr>
               </thead>
               <tbody id="tbody-of-down" class="divide-y divide-slate-800/70">
-                <tr><td colspan="10" class="py-6 text-center text-slate-400">Evaluating NSE 200 Volume Profile, Footprint &amp; 5 Order Flow Signals...</td></tr>
+                <tr><td colspan="11" class="py-6 text-center text-slate-400">Evaluating NSE 200 Volume Profile, Footprint &amp; 5 Order Flow Signals...</td></tr>
               </tbody>
             </table>
           </div>
@@ -15117,6 +15125,8 @@ function renderJournal() {
       search: '',
       showFormula: false,
       selectedSymbol: null,
+      sortColumn: 'time',
+      sortDirection: 'desc',
       _timer: null,
       _tickTimer: null,
       _countdownSec: 60,
@@ -15204,7 +15214,7 @@ function renderJournal() {
           console.warn('Order Flow Scanner fetch error:', err);
           const upBody = document.getElementById('tbody-of-up');
           if (upBody && !this.lastReport) {
-            upBody.innerHTML = '<tr><td colspan="10" class="py-6 text-center text-rose-400">Unable to reach Order Flow engine. Click Scan Now to retry.</td></tr>';
+            upBody.innerHTML = '<tr><td colspan="11" class="py-6 text-center text-rose-400">Unable to reach Order Flow engine. Click Scan Now to retry.</td></tr>';
           }
         } finally {
           this.loading = false;
@@ -15225,6 +15235,120 @@ function renderJournal() {
             : 'px-2.5 py-1 rounded-md text-slate-400 hover:text-slate-200 font-medium cursor-pointer transition-colors';
         });
         this.render();
+      },
+
+      toggleSort(column) {
+        if (this.sortColumn === column) {
+          this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc';
+        } else {
+          this.sortColumn = column;
+          this.sortDirection = 'desc';
+        }
+        this.render();
+      },
+
+      resetSort() {
+        this.sortColumn = 'time';
+        this.sortDirection = 'desc';
+        this.render();
+      },
+
+      parseListedSec(listedAt) {
+        if (!listedAt || typeof listedAt !== 'string') return 0;
+        const parts = listedAt.trim().split(':').map((p) => Number(p));
+        if (parts.length < 2 || parts.some((n) => !Number.isFinite(n) || n < 0)) return 0;
+        return parts[0] * 3600 + parts[1] * 60 + (parts[2] || 0);
+      },
+
+      getSortMetric(row, column) {
+        if (column === 'time') {
+          const sec = Number(row.listedAtSec);
+          return Number.isFinite(sec) && sec > 0 ? sec : this.parseListedSec(row.listedAt);
+        }
+        if (column === 'volume') {
+          const turnover = Number(row.turnoverCr);
+          if (Number.isFinite(turnover) && turnover > 0) return turnover;
+          const profileVol = Number(row.volumeProfile && row.volumeProfile.totalProfileVolume);
+          if (Number.isFinite(profileVol) && profileVol > 0) return profileVol;
+          const rvol = Number(row.rvol);
+          return Number.isFinite(rvol) ? rvol : 0;
+        }
+        if (column === 'priceImpact') {
+          const chg = Number(row.changePercent);
+          return Number.isFinite(chg) ? Math.abs(chg) : 0;
+        }
+        if (column === 'score') {
+          const sc = Number(row.orderFlowScore);
+          return Number.isFinite(sc) ? sc : 0;
+        }
+        if (column === 'delta') {
+          const d = Number(row.signals && row.signals.delta && row.signals.delta.footprintDelta);
+          return Number.isFinite(d) ? Math.abs(d) : 0;
+        }
+        return 0;
+      },
+
+      sortRows(rows) {
+        if (!Array.isArray(rows) || rows.length <= 1) return Array.isArray(rows) ? [...rows] : [];
+        const col = this.sortColumn || 'time';
+        const dirMult = this.sortDirection === 'asc' ? 1 : -1;
+        return [...rows].sort((a, b) => {
+          const va = this.getSortMetric(a, col);
+          const vb = this.getSortMetric(b, col);
+          if (va !== vb) return (va - vb) * dirMult;
+          if (col === 'volume') {
+            const rv = (Number(a.rvol) || 0) - (Number(b.rvol) || 0);
+            if (rv !== 0) return rv * dirMult;
+          }
+          const ta = this.getSortMetric(a, 'time');
+          const tb = this.getSortMetric(b, 'time');
+          if (ta !== tb) return tb - ta;
+          return String(a.symbol || '').localeCompare(String(b.symbol || ''));
+        });
+      },
+
+      formatSortSummary() {
+        const d = this.sortDirection;
+        if (this.sortColumn === 'volume') return d === 'desc' ? 'Sorted by Volume (High → Low)' : 'Sorted by Volume (Low → High)';
+        if (this.sortColumn === 'priceImpact') return d === 'desc' ? 'Sorted by Price Impact (High → Low)' : 'Sorted by Price Impact (Low → High)';
+        if (this.sortColumn === 'score') return d === 'desc' ? 'Sorted by Flow Score (High → Low)' : 'Sorted by Flow Score (Low → High)';
+        if (this.sortColumn === 'delta') return d === 'desc' ? 'Sorted by Delta (High → Low)' : 'Sorted by Delta (Low → High)';
+        return d === 'desc' ? 'Sorted by Time (Latest → Earliest)' : 'Sorted by Time (Earliest → Latest)';
+      },
+
+      updateSortHeadersUI() {
+        const col = this.sortColumn;
+        const dir = this.sortDirection;
+        const pane = document.getElementById('tab-order-flow-scanner');
+        if (pane) {
+          pane.querySelectorAll('th[data-of-sort-th]').forEach((th) => {
+            const c = th.getAttribute('data-of-sort-th');
+            const active = c === col;
+            th.setAttribute('aria-sort', active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none');
+            const btn = th.querySelector('button');
+            if (btn) {
+              btn.classList.toggle('text-sky-400', active);
+              btn.classList.toggle('font-semibold', active);
+              btn.classList.toggle('text-slate-400', !active);
+              btn.classList.toggle('font-medium', !active);
+            }
+            const arrow = th.querySelector('[data-of-sort-arrow]');
+            if (arrow) {
+              arrow.textContent = active ? (dir === 'desc' ? '▼' : '▲') : '↕';
+              arrow.classList.toggle('opacity-50', !active);
+            }
+          });
+        }
+        const summary = this.formatSortSummary();
+        const isDefault = col === 'time' && dir === 'desc';
+        const upStatus = document.getElementById('of-up-sort-status');
+        const dnStatus = document.getElementById('of-down-sort-status');
+        if (upStatus) upStatus.textContent = `Above POC · Buyers > Sellers · ${summary}`;
+        if (dnStatus) dnStatus.textContent = `Below POC · Sellers > Buyers · ${summary}`;
+        const upReset = document.getElementById('of-up-sort-reset');
+        const dnReset = document.getElementById('of-down-sort-reset');
+        if (upReset) upReset.classList.toggle('hidden', isDefault);
+        if (dnReset) dnReset.classList.toggle('hidden', isDefault);
       },
 
       setSignalFilter(sig) {
@@ -15461,7 +15585,7 @@ function renderJournal() {
           const msg = isCleared
             ? '23:59 IST Auto-Flush active — awaiting 09:20 IST live Order Flow scan.'
             : 'Zero fake signals: no symbols currently pass all 3 Order Flow steps + Rule 3 thresholds.';
-          tbody.innerHTML = `<tr><td colspan="10" class="py-6 text-center text-slate-400">${this.esc(msg)}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="11" class="py-6 text-center text-slate-400">${this.esc(msg)}</td></tr>`;
           return;
         }
         tbody.innerHTML = rows
@@ -15473,10 +15597,13 @@ function renderJournal() {
               row.volumeProfile.priceZone === 'BELOW_VAL' ? 'Below VAL' :
               row.volumeProfile.priceZone === 'AT_POC' ? 'At POC' :
               row.volumeProfile.priceZone === 'INSIDE_VALUE_UPPER' ? 'POC → VAH' : 'VAL → POC';
-            return `<tr onclick="OrderFlowScannerClient.selectRow('${this.esc(row.symbol)}')" class="cursor-pointer transition-colors ${isSelected ? 'bg-sky-500/15' : 'hover:bg-slate-800/45'}">
+            const volumeHeadline = Number(row.turnoverCr) > 0
+              ? `₹${Number(row.turnoverCr).toFixed(1)}Cr`
+              : `${this.fmtCompact(row.volumeProfile ? row.volumeProfile.totalProfileVolume : 0, false)} sh`;
+            return `<tr data-symbol="${this.esc(row.symbol)}" onclick="OrderFlowScannerClient.selectRow('${this.esc(row.symbol)}')" class="cursor-pointer transition-colors ${isSelected ? 'bg-sky-500/15' : 'hover:bg-slate-800/45'}">
               <td class="py-2.5 px-3">
                 <div class="font-semibold text-slate-100">${this.esc(row.symbol)}${isSelected ? ' <span class="text-[10px] font-mono text-sky-400">INSPECTING</span>' : ''}</div>
-                <div class="text-[11px] text-slate-400">${this.esc(row.sector)} &middot; RVOL ${Number(row.rvol).toFixed(1)}x &middot; VolX ${Number(row.xTimeVolume).toFixed(1)}X</div>
+                <div class="text-[11px] text-slate-400">${this.esc(row.sector)}</div>
               </td>
               <td class="py-2.5 px-2.5 font-mono tabular-nums">
                 <div class="font-semibold text-sky-400">${row.orderFlowScore}/100</div>
@@ -15485,6 +15612,10 @@ function renderJournal() {
               <td class="py-2.5 px-2.5 font-mono tabular-nums text-slate-200">
                 <div>${this.esc(row.listedAt)} IST</div>
                 <div class="text-[10px] text-slate-400">Locked</div>
+              </td>
+              <td class="py-2.5 px-2.5 text-right font-mono tabular-nums">
+                <div class="font-semibold text-slate-100">${volumeHeadline}</div>
+                <div class="text-[10px] text-slate-400">RVOL ${Number(row.rvol).toFixed(1)}× &middot; VolX ${Number(row.xTimeVolume).toFixed(1)}×</div>
               </td>
               <td class="py-2.5 px-2.5 text-right font-mono tabular-nums">
                 <div class="font-semibold text-slate-100">${this.fmtInr(row.price)}</div>
@@ -15558,10 +15689,11 @@ function renderJournal() {
             .join('');
         }
 
-        const upRows = this.filterList(rep.upPicks || []);
-        const dnRows = this.filterList(rep.downPicks || []);
+        const upRows = this.sortRows(this.filterList(rep.upPicks || []));
+        const dnRows = this.sortRows(this.filterList(rep.downPicks || []));
         setTxt('of-up-count-label', `· ${upRows.length} / 10 Qualified`);
         setTxt('of-down-count-label', `· ${dnRows.length} / 10 Qualified`);
+        this.updateSortHeadersUI();
 
         const upSec = document.getElementById('of-up-section');
         const dnSec = document.getElementById('of-down-section');
