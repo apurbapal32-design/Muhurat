@@ -52,7 +52,8 @@ import { generateHollySignals, HOLLY_STRATEGIES } from './src/utils/hollyEngine'
 import { calculateMarketStatus } from './src/data/marketSchedule';
 import { NIFTY_200_STOCKS } from './src/data/nifty200';
 import { autonomousPriceService, UnifiedMarketQuote } from './server/autonomousPriceService';
-import { requireAuth, AuthRequest } from './src/middleware/auth';
+import { requireAuth, requireVerifiedAdmin, AuthRequest } from './src/middleware/auth';
+import { MASTER_ADMIN_EMAIL } from './src/utils/adminAuthSecurity';
 import {
   addUserWatchlistItem,
   getOrCreateUser,
@@ -148,7 +149,15 @@ async function startServer() {
   marketWebSocketServer.setAccessTokenResolver(() => scannerService.getEffectiveUpstoxToken());
   marketWebSocketServer.init(httpServer);
 
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
+
+  // Baseline HTTP security headers (preserves iframe preview compatibility without X-Frame-Options)
+  app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
 
   // API Health Routes
   app.get('/health', (req, res) => {
@@ -2078,6 +2087,40 @@ async function startServer() {
     } catch (error: any) {
       res.status(500).json({ error: error?.message || 'Failed to load scanner alerts' });
     }
+  });
+
+  // Cryptographically verified Firebase ID token session introspection
+  app.get('/api/auth/session', requireAuth, (req: AuthRequest, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const email = typeof req.user.email === 'string' ? req.user.email.trim().toLowerCase() : '';
+    const emailVerified = req.user.email_verified === true;
+    res.json({
+      status: 'ok',
+      uid: req.user.uid,
+      email,
+      emailVerified,
+      isMasterAdmin: emailVerified && email === MASTER_ADMIN_EMAIL,
+      authTime: req.user.auth_time || null,
+    });
+  });
+
+  // Administrator-only security posture inspection endpoint (verified Firebase ID token + Master Admin)
+  app.get('/api/admin/security-status', requireAuth, requireVerifiedAdmin, (_req: AuthRequest, res) => {
+    res.json({
+      status: 'ok',
+      policy: 'ADMIN_ONLY_SIGNUP',
+      masterAdminEmail: MASTER_ADMIN_EMAIL,
+      protections: {
+        verifiedGoogleOAuth: true,
+        publicSelfSignupDisabled: true,
+        firestoreEightPillarRules: true,
+        zeroEnumerationAllowlist: true,
+        immutableAuditTrail: true,
+        serverTokenVerification: true,
+        securityHeadersEnabled: true,
+      },
+      checkedAt: new Date().toISOString(),
+    });
   });
 
   // Catch-all 404 for API endpoints so API calls never receive HTML

@@ -26,11 +26,196 @@ service cloud.firestore {
     }
 
     function isVerifiedUser() {
-      return isSignedIn() && request.auth.token.email_verified == true;
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email is string
+        && request.auth.token.email.size() >= 3
+        && request.auth.token.email.size() <= 254;
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Deterministic, collision-resistant safe Firestore doc ID for lowercase emails
+    function emailToDocId(email) {
+      return email.lower()
+        .replace('_', '__')
+        .replace('@', '_at_')
+        .replace('\\.', '_dot_')
+        .replace('\\+', '_plus_')
+        .replace('-', '_dash_');
+    }
+
+    function isBootstrappedAdmin() {
+      return isVerifiedUser() && request.auth.token.email.lower() == 'apurbapal32@gmail.com';
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        isBootstrappedAdmin() ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Checks whether the signed-in verified user has an ACTIVE admin-provisioned allowlist entry
+    function isAuthorizedActiveEmail() {
+      return isVerifiedUser()
+        && exists(/databases/$(database)/documents/authorizedUsers/$(emailToDocId(request.auth.token.email)))
+        && get(/databases/$(database)/documents/authorizedUsers/$(emailToDocId(request.auth.token.email))).data.status == 'ACTIVE';
+    }
+
+    // =========================================================================
+    // VALIDATION BLUEPRINTS (Pillar 2: Anti-Update-Gap)
+    // =========================================================================
+
+    function isValidAdminRecord(data, adminUid) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'grantedBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'grantedBy', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid.size() >= 1 && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == adminUid
+        && data.email is string
+        && data.email.size() >= 3 && data.email.size() <= 254
+        && data.displayName is string
+        && data.displayName.size() >= 1 && data.displayName.size() <= 80
+        && data.grantedBy is string
+        && data.grantedBy.size() >= 1 && data.grantedBy.size() <= 254
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAuthorizedUser(data, emailKey) {
+      return data.keys().hasAll([
+          'emailKey',
+          'email',
+          'displayName',
+          'role',
+          'planTier',
+          'status',
+          'provisionedBy',
+          'provisionedByUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'emailKey',
+          'email',
+          'displayName',
+          'role',
+          'planTier',
+          'status',
+          'department',
+          'notes',
+          'provisionedBy',
+          'provisionedByUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.emailKey is string
+        && data.emailKey.size() >= 3 && data.emailKey.size() <= 128
+        && data.emailKey.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.emailKey == emailKey
+        && data.email is string
+        && data.email.size() >= 3 && data.email.size() <= 254
+        && data.email == data.email.lower()
+        && emailToDocId(data.email) == emailKey
+        && data.displayName is string
+        && data.displayName.size() >= 1 && data.displayName.size() <= 80
+        && data.role is string
+        && data.role.size() >= 1 && data.role.size() <= 16
+        && data.role in ['TRADER', 'ANALYST', 'ADMIN']
+        && data.planTier is string
+        && data.planTier.size() >= 1 && data.planTier.size() <= 24
+        && data.planTier in ['PRO', 'INSTITUTIONAL', 'ADMIN_MASTER']
+        && data.status is string
+        && data.status.size() >= 1 && data.status.size() <= 16
+        && data.status in ['ACTIVE', 'SUSPENDED', 'REVOKED']
+        && (!('department' in data) || (data.department is string && data.department.size() <= 80))
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 200))
+        && data.provisionedBy is string
+        && data.provisionedBy.size() >= 3 && data.provisionedBy.size() <= 254
+        && data.provisionedByUid is string
+        && data.provisionedByUid.size() >= 1 && data.provisionedByUid.size() <= 128
+        && data.provisionedByUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAccessRequest(data, requestUid) {
+      return data.keys().hasAll([
+          'uid',
+          'email',
+          'displayName',
+          'requestedRole',
+          'reason',
+          'status',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'email',
+          'displayName',
+          'requestedRole',
+          'reason',
+          'status',
+          'reviewedBy',
+          'reviewNote',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid is string
+        && data.uid.size() >= 1 && data.uid.size() <= 128
+        && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == requestUid
+        && data.email is string
+        && data.email.size() >= 3 && data.email.size() <= 254
+        && data.email == data.email.lower()
+        && data.displayName is string
+        && data.displayName.size() >= 1 && data.displayName.size() <= 80
+        && data.requestedRole is string
+        && data.requestedRole.size() >= 1 && data.requestedRole.size() <= 16
+        && data.requestedRole in ['TRADER', 'ANALYST']
+        && data.reason is string
+        && data.reason.size() <= 240
+        && data.status is string
+        && data.status.size() >= 1 && data.status.size() <= 16
+        && data.status in ['PENDING', 'APPROVED', 'REJECTED']
+        && (!('reviewedBy' in data) || (data.reviewedBy is string && data.reviewedBy.size() <= 254))
+        && (!('reviewNote' in data) || (data.reviewNote is string && data.reviewNote.size() <= 200))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdminAuditLog(data) {
+      return data.keys().hasAll(['actorUid', 'actorEmail', 'action', 'targetEmail', 'detail', 'createdAt'])
+        && data.keys().hasOnly(['actorUid', 'actorEmail', 'action', 'targetEmail', 'detail', 'createdAt'])
+        && data.actorUid is string
+        && data.actorUid.size() >= 1 && data.actorUid.size() <= 128
+        && data.actorUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.actorUid == request.auth.uid
+        && data.actorEmail is string
+        && data.actorEmail.size() >= 3 && data.actorEmail.size() <= 254
+        && data.action is string
+        && data.action.size() >= 1 && data.action.size() <= 32
+        && data.action in [
+          'PROVISION_USER',
+          'APPROVE_REQUEST',
+          'REJECT_REQUEST',
+          'UPDATE_ROLE',
+          'SUSPEND_USER',
+          'REACTIVATE_USER',
+          'REVOKE_USER',
+          'GRANT_ADMIN',
+          'REVOKE_ADMIN'
+        ]
+        && data.targetEmail is string
+        && data.targetEmail.size() >= 3 && data.targetEmail.size() <= 254
+        && data.detail is string
+        && data.detail.size() >= 1 && data.detail.size() <= 240
+        && data.createdAt is timestamp;
     }
 
     function isValidUserProfile(data, userId) {
@@ -40,7 +225,6 @@ service cloud.firestore {
         && data.uid.size() >= 1 && data.uid.size() <= 128
         && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
         && data.uid == userId
-        && data.uid == request.auth.uid
         && data.email is string
         && data.email.size() >= 3 && data.email.size() <= 254
         && data.displayName is string
@@ -105,26 +289,154 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
-    match /users/{userId} {
-      // PII isolated strictly to authenticated owner
-      allow get: if isValidId(userId) && isOwner(userId);
-      allow list: if false;
+    // =========================================================================
+    // 1. ADMINS COLLECTION (RBAC Master Trust Registry)
+    // =========================================================================
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && (isOwner(adminUid) || isAdmin());
+      allow list: if isBootstrappedAdmin();
 
+      allow create: if isValidId(adminUid)
+        && isValidAdminRecord(incoming(), adminUid)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+
+      allow update: if isValidId(adminUid)
+        && isValidAdminRecord(incoming(), adminUid)
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt'])
+        && isAdmin();
+
+      allow delete: if isValidId(adminUid)
+        && isAdmin()
+        && existing().email != 'apurbapal32@gmail.com';
+    }
+
+    // =========================================================================
+    // 2. AUTHORIZED USERS (Admin-Only Sign-Up Allowlist)
+    // =========================================================================
+    match /authorizedUsers/{emailKey} {
+      // Zero-enumeration: regular users may ONLY get the exact key of their own verified email
+      allow get: if isValidId(emailKey) && (
+        (isVerifiedUser()
+          && emailKey == emailToDocId(request.auth.token.email)
+          && (resource == null || existing().email == request.auth.token.email.lower()))
+        || isAdmin()
+      );
+      allow list: if isBootstrappedAdmin();
+
+      allow create: if isValidId(emailKey)
+        && isValidAuthorizedUser(incoming(), emailKey)
+        && incoming().provisionedByUid == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+
+      allow update: if isValidId(emailKey)
+        && isValidAuthorizedUser(incoming(), emailKey)
+        && incoming().emailKey == existing().emailKey
+        && incoming().email == existing().email
+        && incoming().provisionedBy == existing().provisionedBy
+        && incoming().provisionedByUid == existing().provisionedByUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'role',
+          'planTier',
+          'status',
+          'department',
+          'notes',
+          'updatedAt'
+        ])
+        && isAdmin();
+
+      allow delete: if isValidId(emailKey) && isAdmin();
+    }
+
+    // =========================================================================
+    // 3. ACCESS REQUESTS (Pending Admin Approval Queue)
+    // =========================================================================
+    match /accessRequests/{requestUid} {
+      allow get: if isValidId(requestUid) && (isOwner(requestUid) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+
+      // Non-admin verified user may ONLY submit a PENDING non-admin request for themselves
+      allow create: if isValidId(requestUid)
+        && isVerifiedUser()
+        && isOwner(requestUid)
+        && isValidAccessRequest(incoming(), requestUid)
+        && incoming().uid == request.auth.uid
+        && incoming().email == request.auth.token.email.lower()
+        && incoming().status == 'PENDING'
+        && !('reviewedBy' in incoming())
+        && !('reviewNote' in incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      // Only Administrators may approve or reject an access request
+      allow update: if isValidId(requestUid)
+        && isValidAccessRequest(incoming(), requestUid)
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().requestedRole == existing().requestedRole
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'reviewedBy', 'reviewNote', 'updatedAt'])
+        && isAdmin();
+
+      allow delete: if isValidId(requestUid) && isAdmin();
+    }
+
+    // =========================================================================
+    // 4. IMMUTABLE ADMIN AUDIT LOGS (Append-Only)
+    // =========================================================================
+    match /adminAuditLogs/{logId} {
+      allow get: if isValidId(logId) && isAdmin();
+      allow list: if isBootstrappedAdmin();
+
+      allow create: if isValidId(logId)
+        && isValidAdminAuditLog(incoming())
+        && incoming().createdAt == request.time
+        && isAdmin();
+
+      // Strictly immutable: even administrators cannot alter or erase audit logs
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // =========================================================================
+    // 5. USERS & SUBCOLLECTIONS (Protected by Admin-Only Sign-Up Allowlist)
+    // =========================================================================
+    match /users/{userId} {
+      // PII isolated strictly to authenticated owner or verified admin
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isBootstrappedAdmin();
+
+      // Zero Self-Signup: user profile creation requires Admin OR Active Allowlist approval
       allow create: if isValidId(userId)
         && isVerifiedUser()
         && isOwner(userId)
         && isValidUserProfile(incoming(), userId)
+        && incoming().uid == request.auth.uid
+        && incoming().email == request.auth.token.email.lower()
         && incoming().createdAt == request.time
-        && incoming().updatedAt == request.time;
+        && incoming().updatedAt == request.time
+        && (isAdmin() || isAuthorizedActiveEmail());
 
       allow update: if isValidId(userId)
         && isVerifiedUser()
-        && isOwner(userId)
         && isValidUserProfile(incoming(), userId)
         && incoming().uid == existing().uid
+        && incoming().email == existing().email
         && incoming().createdAt == existing().createdAt
         && incoming().updatedAt == request.time
-        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt'])
+        && (isOwner(userId) || isAdmin());
 
       allow delete: if false;
 
@@ -173,9 +485,9 @@ service cloud.firestore {
         allow update: if isValidId(userId)
           && isValidId(alertId)
           && isVerifiedUser()
-          && isOwner(userId)
-          && existing().status != 'ARCHIVED'
+          && (isOwner(userId) || isAdmin())
           && isValidTradeAlert(incoming(), userId)
+          && (existing().status != 'ARCHIVED' || isAdmin())
           && incoming().uid == existing().uid
           && incoming().symbol == existing().symbol
           && incoming().strategy == existing().strategy

@@ -42,6 +42,8 @@ import { UtmGeneratorModal } from './components/UtmGeneratorModal';
 import { AgentManagementDashboard } from './components/AgentManagementDashboard';
 import { BtstScannerDashboard } from './components/BtstScannerDashboard';
 import { OrderFlowScannerDashboard } from './components/OrderFlowScannerDashboard';
+import { SignInPage } from './components/SignInPage';
+import { AdminControlPage } from './components/AdminControlPage';
 import {
   INITIAL_BULK_ORDERS,
   INITIAL_CORPORATE_ACTIONS,
@@ -91,10 +93,33 @@ export default function App() {
       if (pathname.includes('order-flow-scanner') || tabParam === 'order-flow-scanner') {
         return 'order-flow-scanner';
       }
+      if (pathname === '/sign-in' || pathname.startsWith('/sign-in/') || tabParam === 'sign-in') {
+        return 'sign-in';
+      }
+      if (pathname === '/admin' || pathname.startsWith('/admin/') || tabParam === 'admin') {
+        return 'admin';
+      }
     }
     const savedMode = localStorage.getItem('app_experience_mode');
     return savedMode === 'pro' ? 'v9-vega-greeks' : 'beginner-home';
   });
+
+  const handleNavigateTab = (nextTab: string) => {
+    setActiveTab(nextTab);
+    if (typeof window !== 'undefined') {
+      try {
+        if (nextTab === 'sign-in') {
+          window.history.replaceState(null, '', '/sign-in');
+        } else if (nextTab === 'admin') {
+          window.history.replaceState(null, '', '/admin');
+        } else if (window.location.pathname === '/sign-in' || window.location.pathname === '/admin') {
+          window.history.replaceState(null, '', `/?tab=${encodeURIComponent(nextTab)}`);
+        }
+      } catch {
+        // Ignore history restriction in sandboxed iframes
+      }
+    }
+  };
 
   const handleToggleExperienceMode = (mode: 'beginner' | 'pro') => {
     setExperienceMode(mode);
@@ -447,6 +472,10 @@ export default function App() {
     }
   };
 
+  if (activeTab === 'sign-in') {
+    return <SignInPage theme={theme} onNavigateTab={handleNavigateTab} />;
+  }
+
   return (
     <div
       className={`min-h-screen transition-colors duration-200 font-sans antialiased selection:bg-indigo-500 selection:text-white ${
@@ -468,7 +497,7 @@ export default function App() {
         soundEnabled={soundEnabled}
         onToggleSound={() => setSoundEnabled(!soundEnabled)}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleNavigateTab}
         onOpenUtmModal={() => setIsUtmModalOpen(true)}
         theme={theme}
         onSelectTheme={handleSelectTheme}
@@ -479,7 +508,7 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pb-12">
-        {activeTab !== 'scanner' && activeTab !== 'beginner-home' && activeTab !== 'agent-management' && activeTab !== 'btst-scanner' && activeTab !== 'order-flow-scanner' && (
+        {activeTab !== 'scanner' && activeTab !== 'beginner-home' && activeTab !== 'agent-management' && activeTab !== 'btst-scanner' && activeTab !== 'order-flow-scanner' && activeTab !== 'admin' && (
           <div
             className={`mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-xl border transition-colors ${
               theme === 'light'
@@ -489,7 +518,7 @@ export default function App() {
           >
             <button
               type="button"
-              onClick={() => setActiveTab(experienceMode === 'beginner' ? 'beginner-home' : 'scanner')}
+              onClick={() => handleNavigateTab(experienceMode === 'beginner' ? 'beginner-home' : 'scanner')}
               className={`px-3 py-1.5 rounded-lg text-xs font-display font-medium flex items-center gap-2 border transition-colors cursor-pointer ${
                 theme === 'light'
                   ? 'bg-slate-50 hover:bg-slate-100 text-slate-800 border-slate-200'
@@ -507,6 +536,10 @@ export default function App() {
               </span>
             </div>
           </div>
+        )}
+
+        {activeTab === 'admin' && (
+          <AdminControlPage theme={theme} onNavigateTab={handleNavigateTab} />
         )}
 
         {activeTab === 'agent-management' && (
@@ -1024,7 +1057,7 @@ export default function App() {
       />
 
       {/* Live UI Notification Stack (Cumulative Delta & Threshold Alerts) */}
-      {uiNotifications.length > 0 && (
+      {uiNotifications.length > 0 && activeTab !== 'admin' && (
         <div
           data-testid="ui-notification-stack"
           role="region"

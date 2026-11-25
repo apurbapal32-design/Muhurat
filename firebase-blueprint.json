@@ -1,8 +1,264 @@
 {
   "entities": {
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Explicit administrator privilege grant keyed by Firebase Auth UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Administrator Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified administrator email address (lowercase)",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Administrator display name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "grantedBy": {
+          "type": "string",
+          "description": "UID or email of granting administrator",
+          "minLength": 1,
+          "maxLength": 254
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp"
+        }
+      },
+      "required": ["uid", "email", "displayName", "grantedBy", "createdAt", "updatedAt"]
+    },
+    "AuthorizedUser": {
+      "title": "AuthorizedUser",
+      "description": "Admin-provisioned allowlist record controlling who is permitted to sign up and enter the terminal.",
+      "type": "object",
+      "properties": {
+        "emailKey": {
+          "type": "string",
+          "description": "Deterministic safe document ID derived from lowercase email",
+          "minLength": 3,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Authorized Google email address (lowercase)",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Full name assigned by admin",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "role": {
+          "type": "string",
+          "enum": ["TRADER", "ANALYST", "ADMIN"],
+          "description": "RBAC role granted by administrator"
+        },
+        "planTier": {
+          "type": "string",
+          "enum": ["PRO", "INSTITUTIONAL", "ADMIN_MASTER"],
+          "description": "Terminal subscription / access tier"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ACTIVE", "SUSPENDED", "REVOKED"],
+          "description": "Current account authorization state"
+        },
+        "department": {
+          "type": "string",
+          "description": "Optional desk or team label",
+          "minLength": 0,
+          "maxLength": 80
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional admin provisioning notes",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "provisionedBy": {
+          "type": "string",
+          "format": "email",
+          "description": "Email of admin who authorized the account",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "provisionedByUid": {
+          "type": "string",
+          "description": "Firebase Auth UID of provisioning admin",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp"
+        }
+      },
+      "required": [
+        "emailKey",
+        "email",
+        "displayName",
+        "role",
+        "planTier",
+        "status",
+        "provisionedBy",
+        "provisionedByUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AccessRequest": {
+      "title": "AccessRequest",
+      "description": "Sign-up approval request submitted by a verified user awaiting admin authorization.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Requester Firebase Auth UID",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified requester Google email (lowercase)",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Requester full name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "requestedRole": {
+          "type": "string",
+          "enum": ["TRADER", "ANALYST"],
+          "description": "Requested non-admin role"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Trading desk or onboarding justification",
+          "minLength": 0,
+          "maxLength": 240
+        },
+        "status": {
+          "type": "string",
+          "enum": ["PENDING", "APPROVED", "REJECTED"],
+          "description": "Admin approval workflow status"
+        },
+        "reviewedBy": {
+          "type": "string",
+          "format": "email",
+          "description": "Email of reviewing admin",
+          "minLength": 0,
+          "maxLength": 254
+        },
+        "reviewNote": {
+          "type": "string",
+          "description": "Optional decision note from admin",
+          "minLength": 0,
+          "maxLength": 200
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last update timestamp"
+        }
+      },
+      "required": ["uid", "email", "displayName", "requestedRole", "reason", "status", "createdAt", "updatedAt"]
+    },
+    "AdminAuditLog": {
+      "title": "AdminAuditLog",
+      "description": "Immutable append-only security audit event recorded on every admin RBAC action.",
+      "type": "object",
+      "properties": {
+        "actorUid": {
+          "type": "string",
+          "description": "Admin Firebase Auth UID who performed the action",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "actorEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Admin email who performed the action",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "PROVISION_USER",
+            "APPROVE_REQUEST",
+            "REJECT_REQUEST",
+            "UPDATE_ROLE",
+            "SUSPEND_USER",
+            "REACTIVATE_USER",
+            "REVOKE_USER",
+            "GRANT_ADMIN",
+            "REVOKE_ADMIN"
+          ],
+          "description": "Structured security action type"
+        },
+        "targetEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Affected user email",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "detail": {
+          "type": "string",
+          "description": "Human-readable audit event summary",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        }
+      },
+      "required": ["actorUid", "actorEmail", "action", "targetEmail", "detail", "createdAt"]
+    },
     "UserProfile": {
       "title": "UserProfile",
-      "description": "Authenticated trader profile stored under private user document.",
+      "description": "Authenticated and admin-authorized trader profile stored under private user document.",
       "type": "object",
       "properties": {
         "uid": {
@@ -167,9 +423,25 @@
     }
   },
   "firestore": {
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Explicit administrator privilege grants keyed by Firebase Auth UID."
+    },
+    "/authorizedUsers/{emailKey}": {
+      "schema": { "$ref": "#/entities/AuthorizedUser" },
+      "description": "Admin-only invite/allowlist controlling sign-up permission and account lifecycle."
+    },
+    "/accessRequests/{requestUid}": {
+      "schema": { "$ref": "#/entities/AccessRequest" },
+      "description": "Pending user access requests awaiting administrator approval or rejection."
+    },
+    "/adminAuditLogs/{logId}": {
+      "schema": { "$ref": "#/entities/AdminAuditLog" },
+      "description": "Immutable append-only security audit log for all administrator actions."
+    },
     "/users/{userId}": {
       "schema": { "$ref": "#/entities/UserProfile" },
-      "description": "Private user profile isolated to the authenticated owner."
+      "description": "Private user profile isolated to the authenticated owner and administrators."
     },
     "/users/{userId}/watchlists/{itemId}": {
       "schema": { "$ref": "#/entities/WatchlistItem" },

@@ -2,12 +2,15 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthAccessProvider } from './hooks/useAuthAccess';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <AuthAccessProvider>
+        <App />
+      </AuthAccessProvider>
     </ErrorBoundary>
   </StrictMode>,
 );

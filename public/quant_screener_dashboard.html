@@ -862,11 +862,15 @@
         <span id="notif-badge-count" class="w-4 h-4 rounded-full bg-rose-500 text-white font-mono text-[9px] font-black flex items-center justify-center animate-pulse">4</span>
       </button>
     <div class="flex items-center gap-2 md:gap-3 shrink-0">
-      <!-- Sign In Button (Desktop) -->
-      <button onclick="openAuthModal('signin')" class="hidden sm:flex px-2.5 py-1.5 rounded-lg bg-[#121927] hover:bg-[#1a2336] border border-[#223049] text-xs font-mono text-cyan-300 transition items-center gap-1.5 shadow-sm cursor-pointer">
+      <!-- Secure Sign-In Portal Link (Desktop) -->
+      <a href="/sign-in" class="hidden sm:flex px-2.5 py-1.5 rounded-lg bg-[#121927] hover:bg-[#1a2336] border border-[#223049] text-xs font-mono text-cyan-300 transition items-center gap-1.5 shadow-sm cursor-pointer" title="Open Institutional Sign-In Portal">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
         <span class="font-bold">Sign In</span>
-      </button>
+      </a>
+      <a href="/admin" class="hidden lg:flex px-2.5 py-1.5 rounded-lg bg-[#121927] hover:bg-[#1a2336] border border-amber-500/35 text-xs font-mono text-amber-300 transition items-center gap-1.5 shadow-sm cursor-pointer" title="Open Admin RBAC Control Center (Admin-Only Sign-Up)">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        <span class="font-bold">Admin</span>
+      </a>
 
       <!-- Logged-in User Profile with Admin Plan Badge -->
       <div class="flex items-center gap-1.5 md:gap-2 pl-2 border-l border-[#1c273c] cursor-pointer" onclick="switchTab('admin-plan')" title="Click to open Admin Plan Controls">
@@ -1298,6 +1302,22 @@
             </span>
             <span class="nav-meta">Master</span>
           </button>
+
+          <a href="/admin" id="nav-admin-rbac" class="sidebar-link" title="Admin-Only Sign-Up, RBAC Allowlist & Security Roadmap">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              <span class="nav-label">Admin RBAC Console</span>
+            </span>
+            <span class="nav-meta">RBAC</span>
+          </a>
+
+          <a href="/sign-in" id="nav-secure-signin" class="sidebar-link" title="Institutional Sign-In & Access Request Portal">
+            <span class="nav-label-wrap">
+              <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+              <span class="nav-label">Secure Sign-In</span>
+            </span>
+            <span class="nav-meta">Auth</span>
+          </a>
         </div>
 
         <!-- Section 5: Learning Center -->
@@ -4040,8 +4060,9 @@
               <p class="text-xs text-slate-300 mt-1 font-mono">Master controls for real-time algorithmic thresholds, Upstox API v2/v3 OAuth, Render cloud sync, and multi-tenant user access.</p>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <button onclick="openAuthModal('signin')" class="px-4 py-2 rounded-xl bg-[#172033] hover:bg-[#1f2b45] text-cyan-300 text-xs font-mono font-bold transition">Switch Account</button>
+          <div class="flex flex-wrap items-center gap-2">
+            <a href="/admin" class="px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 text-xs font-mono font-bold transition">Admin RBAC &amp; Sign-Up &rarr;</a>
+            <a href="/sign-in" class="px-4 py-2 rounded-xl bg-[#172033] hover:bg-[#1f2b45] text-cyan-300 text-xs font-mono font-bold transition">Secure Sign-In Portal</a>
             <button onclick="syncMarketLive()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs font-mono transition shadow-lg shadow-amber-500/20">Sync Live Quotes ⚡</button>
           </div>
         </div>

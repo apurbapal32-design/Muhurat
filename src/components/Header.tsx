@@ -33,10 +33,13 @@ import {
   Globe,
   PieChart,
   Scale,
+  Lock,
+  LogIn,
 } from 'lucide-react';
 import { BrokerConfig, MarketOverview } from '../types';
 import { calculateMarketStatus, formatTime12h } from '../data/marketSchedule';
 import { ScrollContainer } from './ScrollContainer';
+import { useAuthAccess } from '../hooks/useAuthAccess';
 
 interface HeaderProps {
   overview: MarketOverview;
@@ -76,6 +79,7 @@ const BEGINNER_NAV_TABS: NavTabConfig[] = [
   { id: 'news', label: 'Market News', Icon: Newspaper },
   { id: 'schedule', label: 'Market Timing', Icon: Clock },
   { id: 'broker', label: 'Broker Account', Icon: Server },
+  { id: 'admin', label: 'Admin Control', meta: 'RBAC', Icon: Lock },
 ];
 
 const PRO_NAV_TABS: NavTabConfig[] = [
@@ -111,6 +115,7 @@ const PRO_NAV_TABS: NavTabConfig[] = [
   { id: 'alerts', label: 'Alerts', Icon: AlertTriangle },
   { id: 'broker', label: 'Broker API', Icon: Server },
   { id: 'python-code', label: 'Python Export', Icon: ShieldCheck },
+  { id: 'admin', label: 'Admin Control', meta: 'RBAC', Icon: Lock },
 ];
 
 export const Header: React.FC<HeaderProps> = ({
@@ -134,6 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [marketStatus, setMarketStatus] = useState(() => calculateMarketStatus());
   const [isThemePickerOpen, setIsThemePickerOpen] = useState<boolean>(false);
   const themePickerRef = useRef<HTMLDivElement>(null);
+  const { firebaseUser, isAdmin, accessState } = useAuthAccess();
 
   const isDark = theme !== 'light';
 
@@ -576,6 +582,35 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Action & Control Buttons */}
         <div className="flex items-center gap-2.5 shrink-0 justify-end">
+          {/* Sign In / Authenticated Account Access Button */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('sign-in')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-display font-medium whitespace-nowrap shrink-0 cursor-pointer transition-colors ${
+              isDark
+                ? 'bg-slate-900 border-slate-700/90 text-slate-200 hover:bg-slate-800 hover:text-white'
+                : 'bg-white border-slate-300 text-slate-800 hover:bg-slate-100'
+            }`}
+            title={
+              firebaseUser?.email
+                ? `Signed in as ${firebaseUser.email} (${accessState})`
+                : 'Open Institutional Sign-In Portal'
+            }
+          >
+            {isAdmin ? (
+              <ShieldCheck className={`w-3.5 h-3.5 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+            ) : (
+              <LogIn className={`w-3.5 h-3.5 ${isDark ? 'text-sky-400' : 'text-sky-600'}`} />
+            )}
+            <span className="hidden sm:inline">
+              {firebaseUser?.displayName
+                ? firebaseUser.displayName.split(' ')[0]
+                : firebaseUser?.email
+                ? firebaseUser.email.split('@')[0]
+                : 'Sign In'}
+            </span>
+          </button>
+
           {/* Theme Palette Dropdown */}
           <div className="relative" ref={themePickerRef}>
             <button
