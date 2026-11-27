@@ -73,7 +73,7 @@ const EQUITY_ONLY_STOCKS = NIFTY_200_STOCKS.filter(
 const SESSION_STATE_FILE = path.join(os.tmpdir(), 'muhurat_scanner_session_state.json');
 const DAILY_SIGNAL_LEDGER_FILE = path.join(os.tmpdir(), 'muhurat_daily_signal_ledger.json');
 
-const LEDGER_VERSION = 2;
+const LEDGER_VERSION = 3;
 
 export type FormulaCode = 'STRONG_ORB' | 'SONIC_RVOL' | 'TITAN_WHALE' | 'QUANT_ELITE' | 'PRE_OPEN_IEP' | 'NONE';
 
@@ -408,7 +408,7 @@ export class ScannerService {
     istSec: number,
     marketSession: string,
     isMarketOpen: boolean,
-    _hadExistingEntriesToday: boolean
+    hadExistingEntriesToday: boolean
   ): { entry: DailySignalLedgerEntry; changed: boolean } {
     if (this.dailySignalLedger.dateIST !== dateIST) {
       this.dailySignalLedger = { dateIST, entries: {} };
@@ -495,8 +495,23 @@ export class ScannerService {
             bestMoveIdx = i;
           }
         }
+        // Prefer the most recent genuine directional breakout / expansion bar up to current live time
+        let latestMoverIdx = -1;
+        for (let i = realBars.length - 1; i >= 1; i--) {
+          const b = realBars[i];
+          if (b.secIST + 300 < dailyStartSec) continue;
+          const bPct = prevClose > 0 ? ((b.close - prevClose) / prevClose) * 100 : 0;
+          const crossed = isUpMove ? bPct >= 1.5 && b.close > b.open : bPct <= -1.5 && b.close < b.open;
+          const orbBreak = i >= 3 && (isUpMove ? b.close > orbHighM : b.close < orbLowM);
+          if (crossed && orbBreak) {
+            latestMoverIdx = i;
+            break;
+          }
+        }
         const chosenIdx =
-          orbIdxM >= 3
+          latestMoverIdx >= 1
+            ? latestMoverIdx
+            : orbIdxM >= 3
             ? orbIdxM
             : moverThresholdIdx >= 0
             ? moverThresholdIdx
@@ -559,6 +574,20 @@ export class ScannerService {
       triggerSource = 'PRE_OPEN_IEP';
       rawEntry = Number(lp.toFixed(2));
       listedSec = Math.max(9 * 3600, Math.min(9 * 3600 + 14 * 60 + 55, curSec));
+    } else if (
+      isMarketOpen &&
+      hadExistingEntriesToday &&
+      curSec >= dailyStartSec &&
+      curSec <= 15 * 3600 + 15 * 60 &&
+      lp > 0
+    ) {
+      // REAL-TIME LIVE DISCOVERY: When the session is already running and a brand-new stock
+      // crosses the formula live right now, lock its exact real-time IST listing clock!
+      triggerSource = 'INTRADAY_5M_BAR';
+      formulaCode = turnoverCr >= 25 && rvol >= 2.0 ? 'SONIC_RVOL' : 'STRONG_ORB';
+      formulaName = turnoverCr >= 25 && rvol >= 2.0 ? 'Live RVOL + VWAP Ignition' : 'Live Formula Breakout';
+      rawEntry = Number(lp.toFixed(2));
+      listedSec = curSec;
     } else if (hasRealBars) {
       triggerSource = 'INTRADAY_5M_BAR';
       const orbBars = realBars.slice(0, Math.min(3, realBars.length));
@@ -578,16 +607,47 @@ export class ScannerService {
         avgVolAt.push(cumV / (i + 1));
       }
 
-      const orbBreakIdx = realBars.findIndex(
-        (b, i) => i >= 3 && b.secIST >= 9 * 3600 + 15 * 60 && (isBull ? b.close > orbHigh : b.close < orbLow)
-      );
-      const rvolVwapIdx = realBars.findIndex(
-        (b, i) =>
-          i >= 1 &&
-          b.secIST + 300 >= dailyStartSec &&
-          b.volume >= avgVolAt[i] * 1.25 &&
-          (isBull ? b.close > vwapAt[i] && b.close >= b.open : b.close < vwapAt[i] && b.close <= b.open)
-      );
+      // Scan from MOST RECENT bar backwards so cold-start hydration surfaces genuine recent breakouts
+      // up to the live current clock instead of clustering every stock at 09:20-09:35 morning bars.
+      let recentRvolVwapIdx = -1;
+      let recentOrbBreakIdx = -1;
+      for (let i = realBars.length - 1; i >= 1; i--) {
+        const b = realBars[i];
+        if (b.secIST + 300 < dailyStartSec) continue;
+        const alignedVwap = isBull
+          ? b.close > vwapAt[i] && b.close > b.open
+          : b.close < vwapAt[i] && b.close < b.open;
+        if (recentRvolVwapIdx === -1 && alignedVwap && b.volume >= avgVolAt[i] * 1.25) {
+          recentRvolVwapIdx = i;
+        }
+        if (
+          recentOrbBreakIdx === -1 &&
+          i >= 3 &&
+          b.secIST >= 9 * 3600 + 15 * 60 &&
+          (isBull ? b.close > orbHigh && b.close >= b.open : b.close < orbLow && b.close <= b.open) &&
+          b.volume >= avgVolAt[i] * 1.1
+        ) {
+          recentOrbBreakIdx = i;
+        }
+        if (recentRvolVwapIdx !== -1 && recentOrbBreakIdx !== -1) break;
+      }
+
+      const orbBreakIdx =
+        recentOrbBreakIdx >= 3
+          ? recentOrbBreakIdx
+          : realBars.findIndex(
+              (b, i) => i >= 3 && b.secIST >= 9 * 3600 + 15 * 60 && (isBull ? b.close > orbHigh : b.close < orbLow)
+            );
+      const rvolVwapIdx =
+        recentRvolVwapIdx >= 1
+          ? recentRvolVwapIdx
+          : realBars.findIndex(
+              (b, i) =>
+                i >= 1 &&
+                b.secIST + 300 >= dailyStartSec &&
+                b.volume >= avgVolAt[i] * 1.25 &&
+                (isBull ? b.close > vwapAt[i] && b.close >= b.open : b.close < vwapAt[i] && b.close <= b.open)
+            );
 
       let whaleIdx = -1;
       let bestVolRatio = 0;
@@ -595,30 +655,35 @@ export class ScannerService {
         if (realBars[i].secIST + 300 < dailyStartSec) continue;
         const ratio = realBars[i].volume / Math.max(1, avgVolAt[i]);
         const aligned = isBull ? realBars[i].close > realBars[i].open : realBars[i].close < realBars[i].open;
-        if (aligned && ratio > bestVolRatio) {
+        if (aligned && ratio >= bestVolRatio) {
           bestVolRatio = ratio;
           whaleIdx = i;
         }
       }
 
       const pivotRef = (prevClose + openP) / 2 || scannedStock.indicators.cprPivot || prevClose;
-      const pivIdx = realBars.findIndex(
-        (b, i) =>
-          i >= 1 &&
+      let pivIdx = -1;
+      for (let i = realBars.length - 1; i >= 1; i--) {
+        const b = realBars[i];
+        if (
           b.secIST + 300 >= dailyStartSec &&
           (isBull ? b.close > pivotRef && b.close >= b.open : b.close < pivotRef && b.close <= b.open)
-      );
+        ) {
+          pivIdx = i;
+          break;
+        }
+      }
 
-      if (orbBreakIdx >= 3) {
-        const tb = realBars[orbBreakIdx];
-        formulaCode = 'STRONG_ORB';
-        formulaName = 'ORB 15m Breakout';
-        rawEntry = tb.close;
-        listedSec = barConfirmSec(tb);
-      } else if (rvolVwapIdx >= 1) {
+      if (rvolVwapIdx >= 1 && (orbBreakIdx < 3 || rvolVwapIdx >= orbBreakIdx)) {
         const tb = realBars[rvolVwapIdx];
         formulaCode = 'SONIC_RVOL';
         formulaName = 'HyperFlow RVOL + VWAP';
+        rawEntry = tb.close;
+        listedSec = barConfirmSec(tb);
+      } else if (orbBreakIdx >= 3) {
+        const tb = realBars[orbBreakIdx];
+        formulaCode = 'STRONG_ORB';
+        formulaName = 'ORB 15m Breakout';
         rawEntry = tb.close;
         listedSec = barConfirmSec(tb);
       } else if (whaleIdx >= 1 && (turnoverCr >= 25 || bestVolRatio >= 1.4 || rvol >= 1.25)) {

@@ -40,6 +40,12 @@ export interface TopMomentumSignalRow {
   listedAt: string;
   breakTimeIST: string;
   rej1TimeIST: string;
+  entryTimeIST: string;
+  exitTimeIST: string;
+  exitPrice: number | null;
+  stopLossTimeIST: string;
+  activeStopLoss: number;
+  stopLossStatus: 'SL_ACTIVE' | 'TRAIL_SL_ARMED' | 'TRAIL_SL_HIT' | 'SL_HIT';
   barsSinceIgnition: number;
 
   // Price & Trade Levels anchored at Ignition (Break / Rej 1)
@@ -840,6 +846,87 @@ export function evaluateTopMomentumOrderFlow(params: {
 
     const isExhausted = exhaustionReasons.length > 0;
 
+    // 3b. Authentic Entry Time, Exit-Zone Time & Price, and Stop-Loss / Trailing SL Time from real 5m sessionBars
+    const entryTimeIST = ignitionBar.timeIST;
+    let exitTimeIST = '--';
+    let exitPrice: number | null = null;
+    if (isExhausted) {
+      let exitBarIdx = latestIdx;
+      for (let k = ignitionIdx + 1; k <= latestIdx; k++) {
+        const bK = sessionBars[k];
+        const vwapK = vwapSession[k] || bK.close;
+        const moveK = isBuy
+          ? ((bK.close - entryPrice) / Math.max(0.01, entryPrice)) * 100
+          : ((entryPrice - bK.close) / Math.max(0.01, entryPrice)) * 100;
+        const vwapStretchK =
+          vwapK > 0
+            ? isBuy
+              ? ((bK.close - vwapK) / vwapK) * 100
+              : ((vwapK - bK.close) / vwapK) * 100
+            : 0;
+        const dayMoveK =
+          prevClose > 0
+            ? isBuy
+              ? ((bK.close - prevClose) / prevClose) * 100
+              : ((prevClose - bK.close) / prevClose) * 100
+            : 0;
+        const deltaFlipK = isBuy ? barDeltas[k] < 0 : barDeltas[k] > 0;
+        const mK = barMetrics[k];
+        const barVolK = avgBarVol > 0 ? bK.volume / avgBarVol : 1;
+        const absorbK = isBuy
+          ? mK.upperWickPct >= 45 && barVolK >= 1.5 && mK.clv < 0.1
+          : mK.lowerWickPct >= 45 && barVolK >= 1.5 && mK.clv > -0.1;
+
+        if (
+          moveK >= 1.85 ||
+          vwapStretchK >= 1.65 ||
+          dayMoveK >= 2.65 ||
+          (deltaFlipK && (moveK >= 0.85 || k - breakIdx >= 4)) ||
+          absorbK
+        ) {
+          exitBarIdx = k;
+          break;
+        }
+      }
+      const exitBar = sessionBars[exitBarIdx] || latestBar;
+      exitTimeIST = exitBar.timeIST;
+      exitPrice = round2(exitBarIdx === latestIdx ? price : exitBar.close);
+    }
+
+    let activeStopLoss = stopLoss;
+    let stopLossTimeIST = ignitionBar.timeIST;
+    let stopLossStatus: TopMomentumSignalRow['stopLossStatus'] = 'SL_ACTIVE';
+    let trailArmed = false;
+
+    for (let k = ignitionIdx + 1; k <= latestIdx; k++) {
+      const bK = sessionBars[k];
+      // Check if current active SL was breached on bar k
+      const slBreached = isBuy ? bK.low <= activeStopLoss : bK.high >= activeStopLoss;
+      if (slBreached) {
+        stopLossTimeIST = bK.timeIST;
+        stopLossStatus = trailArmed ? 'TRAIL_SL_HIT' : 'SL_HIT';
+        break;
+      }
+      // Advance Trailing SL at +1.0R (Breakeven) and +1.5R (T1 lock at +0.5R profit)
+      const peakFavK = isBuy ? bK.high : bK.low;
+      const favR = isBuy ? (peakFavK - entryPrice) / Math.max(0.05, riskR) : (entryPrice - peakFavK) / Math.max(0.05, riskR);
+      if (favR >= 1.5) {
+        const lockT1Sl = round2(isBuy ? entryPrice + riskR * 0.5 : entryPrice - riskR * 0.5);
+        const improved = isBuy ? lockT1Sl > activeStopLoss : lockT1Sl < activeStopLoss;
+        if (improved) {
+          activeStopLoss = lockT1Sl;
+          stopLossTimeIST = bK.timeIST;
+          stopLossStatus = 'TRAIL_SL_ARMED';
+          trailArmed = true;
+        }
+      } else if (favR >= 1.0 && !trailArmed) {
+        activeStopLoss = round2(entryPrice);
+        stopLossTimeIST = bK.timeIST;
+        stopLossStatus = 'TRAIL_SL_ARMED';
+        trailArmed = true;
+      }
+    }
+
     // Strict Formula Hard Gate for active Top Momentum signals:
     // MUST satisfy Rule 3 (RVOL > 2.00, Vol Bazaar X-Time > 1.00X, ADX >= 25+ with DI alignment)
     const strongFormulaPassed = strongRvolPassed && strongXTimeVolPassed && adxPassed;
@@ -996,6 +1083,12 @@ export function evaluateTopMomentumOrderFlow(params: {
       listedAt: ignitionBar.timeIST,
       breakTimeIST: breakBar.timeIST,
       rej1TimeIST: rej1Idx >= 0 ? sessionBars[rej1Idx].timeIST : '--',
+      entryTimeIST,
+      exitTimeIST,
+      exitPrice,
+      stopLossTimeIST,
+      activeStopLoss,
+      stopLossStatus,
       barsSinceIgnition,
 
       price: round2(price),
@@ -1203,7 +1296,11 @@ export function buildTopMomentumReport(params: {
 
   buySignals.sort(sortFreshFirst);
   sellSignals.sort(sortFreshFirst);
-  exhaustedSignals.sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent));
+  exhaustedSignals.sort(
+    (a, b) =>
+      parseClockSec(b.exitTimeIST || b.listedAt) - parseClockSec(a.exitTimeIST || a.listedAt) ||
+      Math.abs(b.changePercent) - Math.abs(a.changePercent)
+  );
 
   const topBuys = buySignals.slice(0, LOCKED_SYSTEM_RULES.MAX_STOCKS_PER_DIRECTION);
   const topSells = sellSignals.slice(0, LOCKED_SYSTEM_RULES.MAX_STOCKS_PER_DIRECTION);

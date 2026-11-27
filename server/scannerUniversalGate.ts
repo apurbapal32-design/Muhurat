@@ -4,7 +4,11 @@ import { IntradayCandleBar } from './autonomousPriceService';
 import { ClaudeFnoBar, formatClockHHMMSS, parseClockSec } from './claudeFnoEngine';
 import { computeRvolFromBars } from './smartMoneyConceptsEngine';
 import { computeWilderAdx } from './topMomentumEngine';
-import { LOCKED_SYSTEM_RULES, passesRule3Thresholds } from './systemFiveRules';
+import {
+  getLockedSessionWindowStatus,
+  LOCKED_SYSTEM_RULES,
+  passesRule3Thresholds,
+} from './systemFiveRules';
 
 export const UNIVERSAL_STRONG_RVOL_MIN = LOCKED_SYSTEM_RULES.MIN_RVOL_STRICT; // > 2.00
 export const UNIVERSAL_STRONG_XTIME_VOL_MIN = LOCKED_SYSTEM_RULES.MIN_VOL_BAZAAR_XTIME_STRICT; // > 1.00X (Volume Bazaar X-Time)
@@ -272,6 +276,7 @@ export interface StabilizeParams<T> {
   getBarsFn: (symbol: string) => IntradayCandleBar[] | Candle[] | undefined;
   isMidnightCleared: boolean;
   dateIST?: string;
+  now?: Date;
   maxRows?: number;
   getSymbol: (row: T) => string;
   getSide: (row: T) => 'BUY' | 'SELL';
@@ -301,13 +306,16 @@ export interface StabilizeParams<T> {
 export class StickyScannerRegistry {
   private sessionDateIST: string = '';
   private scanners: Map<string, Map<string, StickyEntry<any>>> = new Map();
+  private hydratedScanners: Set<string> = new Set();
 
   public resetAll(): void {
     this.scanners.clear();
+    this.hydratedScanners.clear();
   }
 
   public resetScanner(scannerKey: string): void {
     this.scanners.delete(scannerKey);
+    this.hydratedScanners.delete(scannerKey);
   }
 
   public getLockedCount(scannerKey: string): number {
@@ -317,17 +325,20 @@ export class StickyScannerRegistry {
   private ensureSession(dateIST: string, isMidnightCleared: boolean): void {
     if (isMidnightCleared) {
       if (this.scanners.size > 0) this.scanners.clear();
+      if (this.hydratedScanners.size > 0) this.hydratedScanners.clear();
       this.sessionDateIST = dateIST;
       return;
     }
     if (this.sessionDateIST && this.sessionDateIST !== dateIST) {
       this.scanners.clear();
+      this.hydratedScanners.clear();
     }
     this.sessionDateIST = dateIST;
   }
 
   public filterAndStabilizeRows<T>(params: StabilizeParams<T>): T[] {
-    const todayIST = params.dateIST || getISTDateParts().dateStr;
+    const liveSession = getLockedSessionWindowStatus(params.now || new Date());
+    const todayIST = params.dateIST || liveSession.dateIST;
     this.ensureSession(todayIST, params.isMidnightCleared);
 
     if (params.isMidnightCleared) {
@@ -339,6 +350,11 @@ export class StickyScannerRegistry {
       bucket = new Map<string, StickyEntry<T>>();
       this.scanners.set(params.scannerKey, bucket);
     }
+    const wasAlreadyHydrated = this.hydratedScanners.has(params.scannerKey);
+    const stampRealtimeAdmission =
+      wasAlreadyHydrated &&
+      liveSession.isLiveScanWindow &&
+      (!params.dateIST || params.dateIST === liveSession.dateIST);
 
     const effectiveMax =
       params.maxRows && params.maxRows > 0
@@ -450,9 +466,30 @@ export class StickyScannerRegistry {
       const stopLoss = params.getStopLoss
         ? params.getStopLoss(row)
         : Number((row as any).stopLoss ?? (row as any).sl ?? (row as any).stop ?? 0);
-      const enriched = params.enrichRow
+      let enriched = params.enrichRow
         ? params.enrichRow(row, metrics, false)
         : defaultEnrichRow(row, metrics, false);
+
+      // REAL-TIME LIVE ADMISSION: Stamp exact live IST clock when a brand-new stock enters a
+      // running live scanner (09:20-15:15 IST), or when input listedAt is missing/'--'.
+      const rawEnriched = enriched as any;
+      const hasValidListedAt =
+        typeof rawEnriched?.listedAt === 'string' &&
+        /^\d{2}:\d{2}(:\d{2})?$/.test(rawEnriched.listedAt.trim());
+      if (
+        rawEnriched &&
+        typeof rawEnriched === 'object' &&
+        (stampRealtimeAdmission || (!hasValidListedAt && liveSession.isLiveScanWindow))
+      ) {
+        const stamped: any = {
+          ...rawEnriched,
+          listedAt: liveSession.timeIST,
+        };
+        if ('listed_at' in stamped) stamped.listed_at = liveSession.timeIST;
+        if ('entryTime' in stamped) stamped.entryTime = liveSession.timeIST;
+        if ('signalListedAt' in stamped) stamped.signalListedAt = liveSession.timeIST;
+        enriched = stamped as T;
+      }
 
       bucket.set(sym, {
         symbol: sym,
@@ -466,6 +503,11 @@ export class StickyScannerRegistry {
         lockedAtMs: Date.now(),
       });
       newlyAdmitted.push(enriched);
+    }
+
+    // Mark scanner hydrated once it has completed an evaluation pass with market data present
+    if ((params.rows && params.rows.length > 0) || bucket.size > 0 || params.liveStockMap.size > 0) {
+      this.hydratedScanners.add(params.scannerKey);
     }
 
     const combined = [...bypassedRows.slice(0, effectiveMax), ...lockedRows, ...newlyAdmitted];

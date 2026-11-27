@@ -1758,6 +1758,7 @@ interface ScannerBookState {
  */
 export class ScannerFleet20Manager {
   private sessionDateIST: string = '';
+  private hasHydratedSession: boolean = false;
   private books: Map<ScannerId20, ScannerBookState> = new Map();
   private autonomousOptimizationMap: Map<ScannerId20, boolean> = new Map();
   private globalResetState: FleetGlobalResetState = {
@@ -1825,6 +1826,7 @@ export class ScannerFleet20Manager {
       state.upBook.clear();
       state.downBook.clear();
     }
+    this.hasHydratedSession = false;
   }
 
   private ensureSession(session: LockedSessionWindowStatus): void {
@@ -2038,9 +2040,12 @@ export class ScannerFleet20Manager {
             const plan = computeAgentEntryPlan(item.stock, side, def.agent, this.deskCapitalRs);
             if (plan.entryPrice <= 0) continue;
 
-            // RULE 1: listedAt must ALWAYS fall strictly inside the 09:20:00 - 15:15:00 IST scan window
+            // RULE 1: listedAt must ALWAYS fall strictly inside the 09:20:00 - 15:15:00 IST scan window.
+            // During a live running session (after initial hydration), brand-new admissions lock the exact live IST clock!
             let resolvedListedAt = '';
-            if (item.stock.listedAt && isTimeWithinScanWindow(item.stock.listedAt)) {
+            if (this.hasHydratedSession && session.isLiveScanWindow) {
+              resolvedListedAt = session.timeIST;
+            } else if (item.stock.listedAt && isTimeWithinScanWindow(item.stock.listedAt)) {
               resolvedListedAt = item.stock.listedAt;
             } else {
               const symBars = lookupBars(sym);
@@ -2318,6 +2323,10 @@ export class ScannerFleet20Manager {
         downTrades,
         allTrades,
       });
+    }
+
+    if (!isFleetEmptyMode && (params.allStocks?.length || 0) > 0) {
+      this.hasHydratedSession = true;
     }
 
     return {

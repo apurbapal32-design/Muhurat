@@ -846,7 +846,7 @@ function evaluateEquityClaudeRow(params: {
       oiChangePct,
     });
 
-    if (evalRes.score > bestScoreFound) {
+    if (evalRes.score >= bestScoreFound) {
       bestScoreFound = evalRes.score;
       bestGlobalIdx = gi;
       bestEval = evalRes;

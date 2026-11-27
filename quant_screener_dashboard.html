@@ -6138,7 +6138,7 @@
             <span class="font-bold text-xs text-amber-300">🛑 Anti-Chase Shield &bull; Extended / Exit-Zone Stocks (Alerts Blocked So You Never Chase Late)</span>
             <span id="momentum-blocked-badge" class="text-[11px] font-mono text-slate-400">0 blocked</span>
           </div>
-          <div id="momentum-exhausted-list" class="p-3 flex flex-wrap gap-2 text-[11px] font-mono"></div>
+          <div id="momentum-exhausted-list" class="overflow-x-auto"></div>
         </div>
       </section>
 
@@ -22078,7 +22078,8 @@ function renderJournal() {
                   <div class="text-[9px] text-slate-400 mt-1 max-w-[170px] truncate" title="${item.ignitionNote}">${item.ignitionNote}</div>
                 </td>
                 <td class="p-2.5 text-[10px] whitespace-nowrap">
-                  <div class="text-white font-black">In ₹${item.entryPrice} &bull; <span class="text-rose-300">SL ₹${item.stopLoss}</span></div>
+                  <div class="text-white font-black">In ₹${item.entryPrice} <span class="text-cyan-300 font-normal">@ ${item.entryTimeIST || item.listedAt || '--'}</span></div>
+                  <div class="text-rose-300 font-bold">SL ₹${item.activeStopLoss || item.stopLoss} <span class="text-[9px] text-amber-300 font-normal">(${item.stopLossStatus === 'TRAIL_SL_ARMED' ? 'Trail' : item.stopLossStatus === 'TRAIL_SL_HIT' ? 'Trail Hit' : item.stopLossStatus === 'SL_HIT' ? 'SL Hit' : 'Set'} @ ${item.stopLossTimeIST || item.entryTimeIST || item.listedAt || '--'})</span></div>
                   <div class="text-emerald-300 font-bold">T1 ₹${item.target1} &bull; T2 ₹${item.target2}</div>
                   <div class="text-[9px] text-cyan-300">Risk ₹${item.riskR} &bull; R:R ${item.rrRatio}</div>
                 </td>
@@ -22131,15 +22132,71 @@ function renderJournal() {
         if (exPanel && exList) {
           if (exhausted.length > 0 && !rpt.isMidnightCleared) {
             exPanel.classList.remove('hidden');
-            setEl('momentum-blocked-badge', `${rpt.blockedExhaustedCount || exhausted.length} late/exit stocks blocked from alerting`);
-            exList.innerHTML = exhausted.map(item => `
-              <div class="px-2.5 py-1.5 rounded-lg bg-[#141724] border border-amber-500/25 text-slate-300 flex items-center gap-2" title="${item.exhaustionReason}">
-                <span class="font-bold text-amber-300 cursor-pointer hover:underline" onclick="openTradingViewChart('${item.symbol}')">${item.symbol}</span>
-                <span class="${item.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400'} font-bold">${item.changePercent >= 0 ? '+' : ''}${Number(item.changePercent).toFixed(2)}%</span>
-                <span class="text-slate-400">Bar &Delta; ${this.formatCompactDelta(item.barDelta)}</span>
-                <span class="text-rose-300 text-[10px]">🛑 ${String(item.exhaustionReason || 'Extended').split('•')[0].trim()}</span>
-              </div>
-            `).join('');
+            setEl('momentum-blocked-badge', `${rpt.blockedExhaustedCount || exhausted.length} late/exit stocks blocked from alerting • Entry, Exit & SL Times Shown`);
+            exList.innerHTML = `
+              <table class="w-full text-left text-[11px] font-mono">
+                <thead class="bg-[#121420] text-slate-400 uppercase text-[10px] border-b border-amber-500/20">
+                  <tr>
+                    <th class="px-3 py-2">Stock / Side</th>
+                    <th class="px-3 py-2">LTP &amp; Bar &Delta;</th>
+                    <th class="px-3 py-2 text-emerald-300">Entry Price &amp; Time</th>
+                    <th class="px-3 py-2 text-amber-300">Exit Price &amp; Time</th>
+                    <th class="px-3 py-2 text-rose-300">Stop-Loss &amp; SL Time</th>
+                    <th class="px-3 py-2">Anti-Chase Shield Reason</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#1a2234]">
+                  ${exhausted.map(item => {
+                    const isBuyEx = item.direction !== 'SELL';
+                    const entryTime = item.entryTimeIST || item.listedAt || item.breakTimeIST || '--';
+                    const exitTime = item.exitTimeIST && item.exitTimeIST !== '--' ? item.exitTimeIST : (item.listedAt || '--');
+                    const exitPx = item.exitPrice != null ? Number(item.exitPrice) : Number(item.price || 0);
+                    const activeSl = Number(item.activeStopLoss || item.stopLoss || 0);
+                    const initSl = Number(item.stopLoss || 0);
+                    const slTime = item.stopLossTimeIST || entryTime;
+                    const slStatus = item.stopLossStatus || 'SL_ACTIVE';
+                    const slBadge = slStatus === 'TRAIL_SL_ARMED'
+                      ? `<span class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold">🛡️ TRAIL SL @ ${slTime}</span>`
+                      : slStatus === 'TRAIL_SL_HIT'
+                      ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/35 text-[9px] font-bold">⚠️ TRAIL HIT @ ${slTime}</span>`
+                      : slStatus === 'SL_HIT'
+                      ? `<span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[9px] font-bold">🛑 SL HIT @ ${slTime}</span>`
+                      : `<span class="px-1.5 py-0.5 rounded bg-slate-700/40 text-slate-200 border border-slate-600/40 text-[9px] font-bold">🎯 SL SET @ ${slTime}</span>`;
+                    const mvPct = Number(item.moveFromEntryPct || 0);
+                    return `
+                      <tr class="hover:bg-[#161927] transition" title="${item.exhaustionReason || ''}">
+                        <td class="px-3 py-2 whitespace-nowrap">
+                          <div class="flex items-center gap-1.5">
+                            <span class="font-black text-amber-300 cursor-pointer hover:underline" onclick="openTradingViewChart('${item.symbol}')">${item.symbol}</span>
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-black border ${isBuyEx ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35' : 'bg-rose-500/15 text-rose-300 border-rose-500/35'}">${isBuyEx ? 'BUY' : 'SELL'}</span>
+                          </div>
+                          <div class="text-[9px] text-slate-400 mt-0.5">${item.sector || 'NSE F&O'}</div>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap">
+                          <div class="font-bold text-white">₹${Number(item.price || 0).toLocaleString('en-IN')} <span class="${item.changePercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${item.changePercent >= 0 ? '+' : ''}${Number(item.changePercent || 0).toFixed(2)}%)</span></div>
+                          <div class="text-[9px] text-slate-400 mt-0.5">Bar &Delta; ${this.formatCompactDelta(item.barDelta)}</div>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap">
+                          <div class="font-black text-emerald-300">₹${Number(item.entryPrice || 0).toLocaleString('en-IN')}</div>
+                          <div class="text-[10px] text-cyan-300 mt-0.5">🕒 ${entryTime} IST <span class="text-slate-500">(${item.rej1Detected ? 'Rej 1' : 'Break'})</span></div>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap">
+                          <div class="font-black text-amber-300">₹${exitPx.toLocaleString('en-IN')} <span class="text-[9px] ${mvPct >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${mvPct >= 0 ? '+' : ''}${mvPct.toFixed(2)}%)</span></div>
+                          <div class="text-[10px] text-amber-200 mt-0.5">🕒 ${exitTime} IST <span class="text-slate-500">(Exit Zone)</span></div>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap">
+                          <div class="font-black text-rose-300">₹${activeSl.toLocaleString('en-IN')}${activeSl !== initSl ? ` <span class="text-[9px] text-slate-400 font-normal">(Init ₹${initSl.toLocaleString('en-IN')})</span>` : ''}</div>
+                          <div class="mt-0.5">${slBadge}</div>
+                        </td>
+                        <td class="px-3 py-2 text-[10px] text-rose-300 max-w-[260px]">
+                          <div class="truncate" title="${item.exhaustionReason || 'Extended'}">🛑 ${String(item.exhaustionReason || 'Extended').split('•')[0].trim()}</div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            `;
           } else {
             exPanel.classList.add('hidden');
           }

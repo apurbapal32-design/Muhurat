@@ -3,6 +3,7 @@ import {
   LOCKED_SYSTEM_RULES,
   LockedSessionWindowStatus,
   getLockedSessionWindowStatus,
+  isTimeWithinScanWindow,
   passesRule3Thresholds,
 } from './systemFiveRules';
 import { sortRowsByListedAtDescZtoA } from './scannerUniversalGate';
@@ -450,6 +451,7 @@ export function evaluateAriaExitManagement(
  */
 export class DualAiTradeManagerDesk {
   private sessionDateIST: string = '';
+  private hasHydratedSession: boolean = false;
   private upBook: Map<string, PersistedAgentTradeRecord> = new Map();
   private downBook: Map<string, PersistedAgentTradeRecord> = new Map();
   private readonly deskCapitalRs = 500_000;
@@ -458,6 +460,7 @@ export class DualAiTradeManagerDesk {
   public resetAll(): void {
     this.upBook.clear();
     this.downBook.clear();
+    this.hasHydratedSession = false;
   }
 
   private ensureSession(session: LockedSessionWindowStatus): void {
@@ -594,12 +597,21 @@ export class DualAiTradeManagerDesk {
         const plan = computeAryanEntryPlan(stock, side, this.deskCapitalRs, this.riskPerTradePct);
         if (plan.entryPrice <= 0) continue;
 
+        const resolvedListedAt =
+          this.hasHydratedSession && session.isLiveScanWindow
+            ? session.timeIST
+            : stock.listedAt && stock.listedAt !== '--' && isTimeWithinScanWindow(stock.listedAt)
+            ? stock.listedAt
+            : isTimeWithinScanWindow(session.timeIST)
+            ? session.timeIST
+            : LOCKED_SYSTEM_RULES.SCAN_END_IST;
+
         book.set(sym, {
           symbol: sym,
           name: stock.name || sym,
           sector: stock.sector || 'NSE F&O',
           side,
-          listedAt: stock.listedAt && stock.listedAt !== '--' ? stock.listedAt : session.timeIST,
+          listedAt: resolvedListedAt,
           formulaName: stock.formulaName || (side === 'BUY' ? 'Momentum Breakout' : 'Momentum Breakdown'),
           entryPrice: plan.entryPrice,
           initialStopLoss: plan.initialStopLoss,
@@ -622,6 +634,9 @@ export class DualAiTradeManagerDesk {
 
     admitDirection(params.topBuyStocks, this.upBook, 'BUY');
     admitDirection(params.topSellStocks, this.downBook, 'SELL');
+    if ((params.allStocks?.length || 0) > 0) {
+      this.hasHydratedSession = true;
+    }
 
     const materializeBook = (book: Map<string, PersistedAgentTradeRecord>): ManagedAiTrade[] => {
       const list: ManagedAiTrade[] = [];

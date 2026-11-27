@@ -373,10 +373,17 @@ class AutonomousPriceService {
     };
 
     if (this.lastBarsCache.has(clean)) {
-      this.lastBarsCache.set(clean, updateArr(this.lastBarsCache.get(clean)));
+      const updatedActive = updateArr(this.lastBarsCache.get(clean));
+      this.lastBarsCache.set(clean, updatedActive);
+      if (clean === 'NIFTY 50') this.lastBarsCache.set('NIFTY', updatedActive);
+      quote.intradayBars = updatedActive;
+      this.lastQuoteCache.set(clean, quote);
+      if (clean === 'NIFTY 50') this.lastQuoteCache.set('NIFTY', quote);
     }
     if (this.lastExtendedBarsCache.has(clean)) {
-      this.lastExtendedBarsCache.set(clean, updateArr(this.lastExtendedBarsCache.get(clean)).slice(-140));
+      const updatedExt = updateArr(this.lastExtendedBarsCache.get(clean)).slice(-140);
+      this.lastExtendedBarsCache.set(clean, updatedExt);
+      if (clean === 'NIFTY 50') this.lastExtendedBarsCache.set('NIFTY', updatedExt);
     }
   }
 
@@ -428,16 +435,18 @@ class AutonomousPriceService {
     const nowSec = Math.floor(Date.now() / 1000);
     const startSec = nowSec - 5 * 86400;
 
-    const jobs: Array<{ sym: string; url: string }> = [
+    const jobs: Array<{ sym: string; url: string; fallbackUrl: string }> = [
       ...GROWW_INDEX_SLUGS.map((idx) => ({
         sym: idx.sym,
-        url: `https://groww.in/v1/api/charting_service/v2/chart/delayed/exchange/${idx.exchange}/segment/CASH/${encodeURIComponent(idx.slug)}?endTimeInMillis=${nowSec * 1000}&intervalInMinutes=5&startTimeInMillis=${startSec * 1000}`,
+        url: `https://groww.in/v1/api/charting_service/v2/chart/exchange/${idx.exchange}/segment/CASH/${encodeURIComponent(idx.slug)}?endTimeInMillis=${nowSec * 1000}&intervalInMinutes=5&startTimeInMillis=${startSec * 1000}`,
+        fallbackUrl: `https://groww.in/v1/api/charting_service/v2/chart/delayed/exchange/${idx.exchange}/segment/CASH/${encodeURIComponent(idx.slug)}?endTimeInMillis=${nowSec * 1000}&intervalInMinutes=5&startTimeInMillis=${startSec * 1000}`,
       })),
       ...equitySymbols.map((sym) => {
         const gSym = GROWW_EQUITY_ALIASES[sym] || sym;
         return {
           sym,
-          url: `https://groww.in/v1/api/charting_service/v2/chart/delayed/exchange/NSE/segment/CASH/${encodeURIComponent(gSym)}?endTimeInMillis=${nowSec * 1000}&intervalInMinutes=5&startTimeInMillis=${startSec * 1000}`,
+          url: `https://groww.in/v1/api/charting_service/v2/chart/exchange/NSE/segment/CASH/${encodeURIComponent(gSym)}?endTimeInMillis=${nowSec * 1000}&intervalInMinutes=5&startTimeInMillis=${startSec * 1000}`,
+          fallbackUrl: `https://groww.in/v1/api/charting_service/v2/chart/delayed/exchange/NSE/segment/CASH/${encodeURIComponent(gSym)}?endTimeInMillis=${nowSec * 1000}&intervalInMinutes=5&startTimeInMillis=${startSec * 1000}`,
         };
       }),
     ];
@@ -445,19 +454,28 @@ class AutonomousPriceService {
     let cursor = 0;
     const workerCount = 16;
 
-    const runOne = async (job: { sym: string; url: string }) => {
+    const runOne = async (job: { sym: string; url: string; fallbackUrl: string }) => {
       try {
-        const controller = new AbortController();
-        const tid = setTimeout(() => controller.abort(), 3200);
-        const res = await fetch(job.url, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', Accept: 'application/json' },
-          signal: controller.signal,
-        });
-        clearTimeout(tid);
-        if (!res.ok) return;
+        const fetchCandles = async (targetUrl: string): Promise<any[]> => {
+          const controller = new AbortController();
+          const tid = setTimeout(() => controller.abort(), 3200);
+          try {
+            const res = await fetch(targetUrl, {
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', Accept: 'application/json' },
+              signal: controller.signal,
+            });
+            if (!res.ok) return [];
+            const json = await res.json();
+            return Array.isArray(json?.candles) ? json.candles : [];
+          } finally {
+            clearTimeout(tid);
+          }
+        };
 
-        const json = await res.json();
-        const rawCandles: any[] = Array.isArray(json?.candles) ? json.candles : [];
+        let rawCandles = await fetchCandles(job.url);
+        if (rawCandles.length === 0) {
+          rawCandles = await fetchCandles(job.fallbackUrl);
+        }
         if (rawCandles.length === 0) return;
 
         const bucketMap = new Map<string, IntradayCandleBar & { cumVol: number }>();
@@ -533,6 +551,19 @@ class AutonomousPriceService {
         const latestBarDate = bars.length > 0 ? bars[bars.length - 1].dateIST : todayDateIST;
         const activeDate = todayBars.length >= 2 ? todayDateIST : latestBarDate;
         const activeBars = bars.filter((b) => b.dateIST === activeDate);
+
+        // Preserve any newer live-tick forming bars already overlaid in memory so delayed feeds never roll back timestamps
+        const prevCachedActive = this.lastBarsCache.get(job.sym) || [];
+        const lastFetchedSec = activeBars.length > 0 ? activeBars[activeBars.length - 1].secIST : 0;
+        if (activeDate === todayDateIST && prevCachedActive.length > 0) {
+          const newerLiveBars = prevCachedActive.filter(
+            (b) => b.dateIST === todayDateIST && b.secIST > lastFetchedSec
+          );
+          if (newerLiveBars.length > 0) {
+            activeBars.push(...newerLiveBars);
+            bars.push(...newerLiveBars);
+          }
+        }
 
         if (activeBars.length > 0) {
           this.lastBarsCache.set(job.sym, activeBars);

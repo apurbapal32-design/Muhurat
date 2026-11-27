@@ -529,10 +529,9 @@ function evaluateEquityTimeframe(params: {
       (rawVolCheck ? 1 : 0) +
       1;
 
-    if (count > bestPassCount) {
+    if (count >= bestPassCount) {
       bestPassCount = count;
       bestGlobalIdx = gi;
-      if (count === 7) break;
     }
   }
 

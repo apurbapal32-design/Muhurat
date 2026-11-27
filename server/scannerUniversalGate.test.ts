@@ -447,4 +447,107 @@ test('Flat zero-range closing candles (O===H===L===C) produce neutral 0 delta in
   assert.equal(buySellRes.delta, 0, 'Flat bar buy/sell delta must be 0, never +0.5*vol');
 });
 
+test('Real-time live admission stamps exact IST clock (e.g. 12:27:14) on brand-new stocks and locks it across refreshes', async () => {
+  const { ScannerFleet20Manager } = await import('./scannerFleet20Engine');
+  const { DualAiTradeManagerDesk } = await import('./aiTradeManagerAgent');
+
+  const registry = new StickyScannerRegistry();
+  const strongUpBars = makeTrendingBars({ count: 24, startPrice: 500, step: 1.6, baseVol: 100_000, spikeVol: 340_000 });
+  const tHydrate = new Date('2026-11-27T04:35:00.000Z'); // 10:05:00 IST
+  const tLiveNew = new Date('2026-11-27T06:57:14.000Z'); // 12:27:14 IST
+  const tRefresh = new Date('2026-11-27T07:05:30.000Z'); // 12:35:30 IST
+
+  const stockEarly = makeMockStock('EARLYSTK', 530, 2.2, 3.1, 2.6, 33);
+  stockEarly.listedAt = '10:05:00';
+  const stockLate = makeMockStock('LATESTK', 540, 2.6, 3.4, 2.9, 36);
+  // Simulate an engine feeding an older morning candle timestamp when the stock finally crosses thresholds at 12:27:14 IST
+  stockLate.listedAt = '12:10:00';
+
+  const liveMap = new Map<string, ScannedStock>([
+    ['EARLYSTK', stockEarly],
+    ['LATESTK', stockLate],
+  ]);
+
+  // Cycle 1 (cold-start hydration at 10:05:00 IST)
+  const c1 = registry.filterAndStabilizeRows({
+    scannerKey: 'top-momentum:BUY',
+    rows: [{ symbol: 'EARLYSTK', price: 530, changePercent: 2.2, entryPrice: 528, stopLoss: 520, listedAt: '10:05:00', rvol: 3.1 }],
+    liveStockMap: liveMap,
+    getBarsFn: () => strongUpBars,
+    isMidnightCleared: false,
+    dateIST: '2026-11-27',
+    now: tHydrate,
+    getSymbol: (r) => r.symbol,
+    getSide: () => 'BUY',
+  });
+  assert.equal(c1.length, 1);
+  assert.equal(c1[0].listedAt, '10:05:00');
+
+  // Cycle 2 (live incremental admission at 12:27:14 IST) -> brand-new stock MUST stamp 12:27:14, NOT stale 12:10:00!
+  const c2 = registry.filterAndStabilizeRows({
+    scannerKey: 'top-momentum:BUY',
+    rows: [
+      { symbol: 'EARLYSTK', price: 532, changePercent: 2.4, entryPrice: 528, stopLoss: 520, listedAt: '10:05:00', rvol: 3.1 },
+      { symbol: 'LATESTK', price: 540, changePercent: 2.6, entryPrice: 538, stopLoss: 530, listedAt: '12:10:00', rvol: 3.4 },
+    ],
+    liveStockMap: liveMap,
+    getBarsFn: () => strongUpBars,
+    isMidnightCleared: false,
+    dateIST: '2026-11-27',
+    now: tLiveNew,
+    getSymbol: (r) => r.symbol,
+    getSide: () => 'BUY',
+  });
+  assert.equal(c2.length, 2);
+  assert.equal(c2[0].symbol, 'LATESTK', 'Newly admitted 12:27:14 stock must sort first (Z->A)');
+  assert.equal(c2[0].listedAt, '12:27:14', 'Live incremental admission must stamp exact live IST clock 12:27:14');
+  assert.equal(c2[1].symbol, 'EARLYSTK');
+  assert.equal(c2[1].listedAt, '10:05:00', 'Already-listed stock must preserve its original locked listedAt');
+
+  // Cycle 3 (refresh at 12:35:30 IST) -> both locked timestamps must remain permanently preserved
+  const c3 = registry.filterAndStabilizeRows({
+    scannerKey: 'top-momentum:BUY',
+    rows: [
+      { symbol: 'EARLYSTK', price: 535, changePercent: 2.7, entryPrice: 528, stopLoss: 520, listedAt: '10:05:00', rvol: 3.1 },
+      { symbol: 'LATESTK', price: 545, changePercent: 3.1, entryPrice: 538, stopLoss: 530, listedAt: '12:35:30', rvol: 3.5 },
+    ],
+    liveStockMap: liveMap,
+    getBarsFn: () => strongUpBars,
+    isMidnightCleared: false,
+    dateIST: '2026-11-27',
+    now: tRefresh,
+    getSymbol: (r) => r.symbol,
+    getSide: () => 'BUY',
+  });
+  assert.equal(c3[0].listedAt, '12:27:14', 'Locked live admission timestamp must not drift on refreshes');
+  assert.equal(c3[1].listedAt, '10:05:00');
+
+  // Also verify ScannerFleet20Manager & DualAiTradeManagerDesk stamp real-time 12:27:14 on incremental live admission
+  const fleet = new ScannerFleet20Manager();
+  fleet.syncAll20Scanners({ allStocks: [stockEarly], getExtendedBarsFn: () => strongUpBars as any, now: tHydrate });
+  const fleet2 = fleet.syncAll20Scanners({
+    allStocks: [stockEarly, stockLate],
+    getExtendedBarsFn: () => strongUpBars as any,
+    now: tLiveNew,
+  });
+  const matchedFleetRows = fleet2.scanners.flatMap((s) => s.upTrades).filter((t) => t.symbol === 'LATESTK');
+  assert.ok(matchedFleetRows.length > 0, 'Fleet 20 should admit LATESTK into at least one scanner');
+  for (const row of matchedFleetRows) {
+    assert.equal(row.listedAt, '12:27:14', `Fleet scanner ${row.scannerId} must stamp live IST clock 12:27:14`);
+  }
+
+  const desk = new DualAiTradeManagerDesk();
+  desk.syncAndBuildReport({ topBuyStocks: [stockEarly], topSellStocks: [], allStocks: [stockEarly], now: tHydrate });
+  const desk2 = desk.syncAndBuildReport({
+    topBuyStocks: [stockEarly, stockLate],
+    topSellStocks: [],
+    allStocks: [stockEarly, stockLate],
+    now: tLiveNew,
+  });
+  const lateDeskTrade = desk2.upTrades.find((t) => t.symbol === 'LATESTK');
+  assert.ok(lateDeskTrade, 'Dual AI Trade Manager Desk should admit LATESTK');
+  assert.equal(lateDeskTrade.listedAt, '12:27:14', 'Dual AI Desk must stamp live IST clock 12:27:14');
+});
+
+
 

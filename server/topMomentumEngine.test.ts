@@ -304,6 +304,18 @@ test('BANKBARODA Stage 3 (Late Exhaustion / Exit @ 10:35, 283.20, +3.17%, Δ -22
   assert.equal(res.stage, 'EXHAUSTED_EXIT');
   assert.equal(res.isExhausted, true);
   assert.equal(res.shouldAlertNow, false);
+  assert.equal(res.entryTimeIST, '09:25:00', 'Entry time must match Rej 1 ignition candle (09:25:00)');
+  assert.ok(
+    res.exitTimeIST >= '09:30:00' && res.exitTimeIST <= '10:35:00',
+    `Exit time (${res.exitTimeIST}) must capture the exact exhaustion bar between 09:30 and 10:35`
+  );
+  assert.ok(res.exitPrice !== null && res.exitPrice > res.entryPrice, 'Exit price must be populated on exhausted row');
+  assert.ok(
+    res.stopLossTimeIST >= res.entryTimeIST && res.stopLossTimeIST <= '10:35:00',
+    `Stop-loss time (${res.stopLossTimeIST}) must be valid IST time`
+  );
+  assert.equal(res.stopLossStatus, 'TRAIL_SL_ARMED', 'Extended winner (+3.17%) must arm trailing stop-loss');
+  assert.ok(res.activeStopLoss >= res.entryPrice, 'Armed trailing SL must protect entry or profit');
 });
 
 test('Mirror SELL Early Ignition with Strong RVOL > 2.00, X-Time Vol > 1.00X, ADX 25+ fires immediate SELL alert', () => {
